@@ -3,10 +3,10 @@ import QtQuick.Controls
 
 Label {
     text: model.text // qmllint disable
-    font.pixelSize: 16
+    font.pointSize: 10
     horizontalAlignment: Text.AlignHCenter
     wrapMode: Label.Wrap
-    width: parent.width
+    width: implicitWidth
     
     // Respect font sizing with padding
     topPadding: 8

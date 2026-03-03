@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-RowLayout {
+Row {
     id: root
 
     property string title
@@ -10,31 +10,44 @@ RowLayout {
 
     property color coverFill
 
-    Layout.alignment: Qt.AlignHCenter
+    width: cover.width + metadata.implicitWidth
+    height: 120 // bound to cover height
 
     Cover {
-        Layout.alignment: Qt.AlignHCenter
+        id: cover
+
+        width: 100
+        height: 100
+        anchors.verticalCenter: parent.verticalCenter
 
         fill: root.coverFill
     }
 
     ColumnLayout {
-        Label {
-            text: root.title
-            font.weight: Font.DemiBold
-            font.pointSize: 18
+        id: metadataContainer
 
-            visible: root.title.length > 0
+        height: parent.height
+        anchors.verticalCenter: parent.verticalCenter
 
-            Layout.fillWidth: true
-        }
+        ColumnLayout {
+            id: metadata
 
-        Label {
-            text: root.artist
+            Layout.alignment: Qt.AlignVCenter
 
-            visible: root.artist.length > 0
+            Label {
+                text: root.title
+                font.weight: Font.DemiBold
+                font.pointSize: 18
 
-            Layout.fillWidth: true
+                visible: root.title.length > 0
+            }
+
+            Label {
+                text: root.artist
+
+                visible: root.artist.length > 0
+            }
+
         }
     }
 }
