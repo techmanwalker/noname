@@ -5,7 +5,7 @@ import QtQuick.Controls
 
 import "delegates"
 
-Column {
+ColumnLayout {
     id: root
     Layout.fillWidth: true
     
@@ -18,6 +18,4 @@ Column {
         model: lyricsModel // qmllint disable
         delegate: LyricsDelegate {}
     }
-    
-    Behavior on height { NumberAnimation { duration: 150 } }
 }

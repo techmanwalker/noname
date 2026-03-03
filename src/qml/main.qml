@@ -10,23 +10,27 @@ ApplicationWindow {
     title: "Noname -"
     color: "#000"
 
-    width: contents.implicitWidth
-    height: contents.implicitHeight
-
-    ColumnLayout {
+    Row {
         id: contents
-        anchors.centerIn: parent
 
-        PlayingNowCard {
-            title: "How Soon Is Now?"
-            artist: "t.A.T.u"
-            coverFill: "#e6e6b0"
-            
-            Layout.alignment: Qt.AlignHCenter
+        anchors.fill: parent
+
+        Layout.alignment: Qt.AlignLeft
+
+        LeftSidebar {
+            width: font.pointSize * 6
+            height: contents.height
         }
 
-        Lyrics {
-            Layout.alignment: Qt.AlignHCenter
+        ColumnLayout {
+            PlayingNowCard {
+                title: "How Soon Is Now?"
+                artist: "t.A.T.u"
+                coverFill: "#e6e6b0"
+            }
+
+            Lyrics {
+            }
         }
     }
 }
