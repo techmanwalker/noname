@@ -4,12 +4,19 @@ import QtQuick.Layouts
 
 RowLayout {
     id: root
-    property string cover // alias to coverItem image
+    property string cover
     property string title
     property string artist
-    property string duration
+    property int duration: 0  // Duration in seconds
     property int coverWidth: 48
     property int coverHeight: 48
+
+    // Helper function to format seconds as mm:ss
+    function formatDuration(seconds) {
+        var m = Math.floor(seconds / 60)
+        var s = seconds % 60
+        return m + ":" + (s < 10 ? "0" + s : s)
+    }
 
     Cover {
         id: coverItem
@@ -23,7 +30,6 @@ RowLayout {
         
         Layout.preferredWidth: implicitWidth
         Layout.preferredHeight: implicitHeight
-
         Layout.alignment: Qt.AlignVCenter
 
         Label {
@@ -40,13 +46,12 @@ RowLayout {
 
         Layout.preferredWidth: implicitWidth
         Layout.preferredHeight: implicitHeight
-
         Layout.alignment: Qt.AlignRight
 
         Label {
-            id: duration
-            text: root.duration
-            visible: root.duration.length > 0
+            id: durationLabel
+            text: root.duration > 0 ? root.formatDuration(root.duration) : "--:--"
+            visible: root.duration > 0
         }
     }
 }

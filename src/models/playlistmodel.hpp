@@ -11,7 +11,7 @@ struct Song {
     QString artist;
     QString album;
     QString title;
-    qint64 durationSecs;    // Duration in seconds
+    qint64 duration;    // Duration in seconds
     QUrl sourcePath;        // Path to audio file
     QUrl coverPath;         // Original path to cover (for reloading)
 };
@@ -29,7 +29,6 @@ public:
         AlbumRole,
         TitleRole,
         DurationSecsRole,                   // Raw seconds
-        DurationFormattedRole,              // "mm:ss" or "hh:mm:ss"
         SourcePathRole,                     // Audio file path
         CoverPathRole                       // Original cover image path
     };
@@ -66,7 +65,6 @@ public:
     Q_INVOKABLE QString titleAt(int index) const;
     Q_INVOKABLE QString artistAt(int index) const;
     Q_INVOKABLE qint64 durationAt(int index) const;
-    Q_INVOKABLE QString formattedDurationAt(int index) const;
     Q_INVOKABLE QString coverPathAt(int index) const;  // Returns path, not image data
 
     Q_INVOKABLE static QString formatDuration(qint64 seconds);
