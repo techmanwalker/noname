@@ -12,9 +12,14 @@ FlexboxLayout {
 
     Layout.fillWidth: false
     Layout.fillHeight: false
+
+    width: implicitWidth
+    height: implicitHeight
     
     AccessibleSlider {
         id: volumeSlider
+        autoReset: true
+        
         orientation: 
             (root.direction === FlexboxLayout.Column
                 || root.direction === FlexboxLayout.ColumnReverse

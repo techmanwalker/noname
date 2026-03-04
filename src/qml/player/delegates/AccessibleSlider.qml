@@ -6,12 +6,13 @@ Slider {
     id: root
     from: 0
     to: 100
-    value: 65
+
+    property bool autoReset: false
 
     property int lastNonZeroValue: 65
 
     onValueChanged: {
-        if (value > 0) {
+        if (value > 0 && root.autoReset) {
             root.lastNonZeroValue = value
         }
     }

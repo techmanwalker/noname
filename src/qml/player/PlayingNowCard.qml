@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Row {
+Column {
     id: root
 
     property string title
@@ -10,59 +10,47 @@ Row {
 
     property color coverFill
 
-    width: cover.width + metadata.implicitWidth
-    height: 120 // bound to cover height
+    Row {
+        Cover {
+            id: cover
 
-    Column {
-        Row {
-            Cover {
-                id: cover
+            width: 100
+            height: 100
+            anchors.verticalCenter: parent.verticalCenter
 
-                width: 100
-                height: 100
-                anchors.verticalCenter: parent.verticalCenter
+            fill: root.coverFill
+        }
 
-                fill: root.coverFill
-            }
+        Column {
+            id: metadataContainer
+
+            height: parent.height
+            anchors.verticalCenter: parent.verticalCenter
 
             Column {
-                id: metadataContainer
+                id: metadata
 
-                height: parent.height
-                anchors.verticalCenter: parent.verticalCenter
+                Layout.alignment: Qt.AlignVCenter
 
-                Column {
-                    id: metadata
+                Label {
+                    text: root.title
+                    font.weight: Font.DemiBold
+                    font.pointSize: 18
 
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Label {
-                        text: root.title
-                        font.weight: Font.DemiBold
-                        font.pointSize: 18
-
-                        visible: root.title.length > 0
-                    }
-
-                    Label {
-                        text: root.artist
-
-                        visible: root.artist.length > 0
-                    }
-
+                    visible: root.title.length > 0
                 }
+
+                Label {
+                    text: root.artist
+
+                    visible: root.artist.length > 0
+                }
+
             }
         }
-
-        Lyrics {
-            width: parent.width
-        }
-
     }
 
-    Playlist {
-        Layout.alignment: Qt.AlignRight
-        id: nextQueue
-        model: NextQueue
+    Lyrics {
+        Layout.fillWidth: true
     }
 }

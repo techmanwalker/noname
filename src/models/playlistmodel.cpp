@@ -32,9 +32,7 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const
     case TitleRole:
         return song.title;
     case DurationSecsRole:
-        return QVariant::fromValue(song.durationSecs);
-    case DurationFormattedRole:
-        return formatDuration(song.durationSecs);
+        return QVariant::fromValue(song.duration);
     case SourcePathRole:
         return song.sourcePath;
     case CoverPathRole:
@@ -51,8 +49,7 @@ QHash<int, QByteArray> PlaylistModel::roleNames() const
     roles[ArtistRole] = "artist";
     roles[AlbumRole] = "album";
     roles[TitleRole] = "title";
-    roles[DurationSecsRole] = "durationSecs";
-    roles[DurationFormattedRole] = "duration";  // Formatted string
+    roles[DurationSecsRole] = "duration";
     roles[SourcePathRole] = "sourcePath";
     roles[CoverPathRole] = "coverPath";      // Path to cover file
     return roles;
@@ -84,7 +81,7 @@ void PlaylistModel::setPlaylistCoverFromFile(const QString &filePath)
 void PlaylistModel::appendSong(const QString &title, 
                                const QString &artist, 
                                const QString &album, 
-                               qint64 durationSecs,
+                               qint64 duration,
                                const QString &sourcePath,
                                const QString &coverPath)
 {
@@ -94,7 +91,7 @@ void PlaylistModel::appendSong(const QString &title,
     song.title = title;
     song.artist = artist;
     song.album = album;
-    song.durationSecs = durationSecs;
+    song.duration = duration;
     song.sourcePath = QUrl::fromUserInput(sourcePath);
     song.coverPath = QUrl::fromUserInput(coverPath);
     
@@ -199,12 +196,7 @@ qint64 PlaylistModel::durationAt(int index) const
 {
     if (index < 0 || index >= static_cast<int>(m_songs.size()))
         return 0;
-    return m_songs[index].durationSecs;
-}
-
-QString PlaylistModel::formattedDurationAt(int index) const
-{
-    return formatDuration(durationAt(index));
+    return m_songs[index].duration;
 }
 
 QString PlaylistModel::coverPathAt(int index) const

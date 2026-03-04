@@ -22,14 +22,52 @@ ApplicationWindow {
 
         LeftSidebar {
             id: sidebar
+
             Layout.preferredWidth: font.pointSize * 6
             Layout.preferredHeight: contents.height
         }
 
-        PlayingNowCard {
-            title: "How Soon Is Now?"
-            artist: "t.A.T.u"
-            coverFill: "#e6e6b0"
+        ColumnLayout {
+            Layout.fillWidth: true
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                PlayingNowCard {
+                    title: "How Soon Is Now?"
+                    artist: "t.A.T.u"
+                    coverFill: "#e6e6b0"
+
+                    Layout.fillWidth: true
+                }
+
+
+                Playlist {
+                    Layout.alignment: Qt.AlignRight
+                    
+                    id: nextQueue
+                    model: NextQueue
+                }
+            }
+
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                DurationControl {
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.fillWidth: true
+                }
+
+                VolumeControl {
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                BasicControls {
+                    Layout.alignment: Qt.AlignVCenter
+                }
+            }
+
         }
     }
 }
