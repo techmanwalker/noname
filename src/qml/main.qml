@@ -10,16 +10,18 @@ ApplicationWindow {
     title: "Noname -"
     color: "#000"
 
-    FlexboxLayout {
-        id: contents
+    width: contents.implicitWidth
+    height: contents.implicitHeight
 
-        direction: FlexboxLayout.RowReverse
+    RowLayout {
+        id: contents
 
         anchors.fill: parent
 
         Layout.alignment: Qt.AlignLeft
 
         LeftSidebar {
+            id: sidebar
             Layout.preferredWidth: font.pointSize * 6
             Layout.preferredHeight: contents.height
         }
@@ -37,6 +39,8 @@ ApplicationWindow {
         }
 
         Playlist {
+            Layout.alignment: Qt.AlignRight
+            id: nextQueue
             model: NextQueue
         }
     }

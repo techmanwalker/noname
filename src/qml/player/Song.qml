@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
-Row {
+RowLayout {
     id: root
     property string cover // alias to coverItem image
     property string title
@@ -10,23 +11,20 @@ Row {
     property int coverWidth: 48
     property int coverHeight: 48
 
-    width: coverWidth + metadata.width 
-    height: coverHeight
-
     Cover {
         id: coverItem
-        width: root.coverWidth
-        height: root.coverHeight
+        Layout.preferredWidth: root.coverWidth
+        Layout.preferredHeight: root.coverHeight
         fill: "#fff"
     }
 
     Column {
         id: metadata
         
-        width: implicitWidth
-        height: implicitHeight
+        Layout.preferredWidth: implicitWidth
+        Layout.preferredHeight: implicitHeight
 
-        anchors.verticalCenter: parent.verticalCenter
+        Layout.alignment: Qt.AlignVCenter
 
         Label {
             text: root.title.length > 0 ? root.title : "Untitled song"
@@ -40,10 +38,10 @@ Row {
     Column {
         id: durationContainer
 
-        width: implicitWidth
-        height: implicitHeight
-        
-        anchors.verticalCenter: parent.verticalCenter
+        Layout.preferredWidth: implicitWidth
+        Layout.preferredHeight: implicitHeight
+
+        Layout.alignment: Qt.AlignRight
 
         Label {
             id: duration
