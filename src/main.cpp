@@ -2,7 +2,8 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
-#include "lyricsmodel.hpp"
+#include "models/lyricsmodel.hpp"
+#include "models/playlistmodel.hpp"
 
 int
 main (int argc, char ** argv)
@@ -11,17 +12,25 @@ main (int argc, char ** argv)
     QGuiApplication app(argc, argv);
 
     // Create model
-    LyricsModel lyricsModel;
+    LyricsModel testLyrics;
     
     // Populate it (example - load from file or hardcode for testing)
-    lyricsModel.appendLyric(0, "You shut your mouth");
-    lyricsModel.appendLyric(5000, "How can you say I go about things the wrong way?");
-    lyricsModel.appendLyric(10000, "I am human and I need to be loved");
-    lyricsModel.appendLyric(15000, "Just like everybody else does");
+    testLyrics.appendLyric(0, "You shut your mouth");
+    testLyrics.appendLyric(5000, "How can you say I go about things the wrong way?");
+    testLyrics.appendLyric(10000, "I am human and I need to be loved");
+    testLyrics.appendLyric(15000, "Just like everybody else does");
+
+    // Playlist model
+    PlaylistModel testPlaylist;
+
+    // Populate it (example)
+    testPlaylist.appendSong("1004 KM", "Junior H", "$ad Boyz 4 Life", 282, "", "test/covers/sadboyz4life.jpg");
+    testPlaylist.appendSong("Ella", "Junior H", "Corridos tumbados", 261, "", "test/covers/corridostumbados.jpg");
 
     // create base engine
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("lyricsModel", &lyricsModel);
+    engine.rootContext()->setContextProperty("LyricsModel", &testLyrics);
+    engine.rootContext()->setContextProperty("NextQueue", &testPlaylist);
 
     // load qml
     const QUrl url = QUrl::fromLocalFile("src/qml/main.qml");

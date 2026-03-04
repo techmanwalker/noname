@@ -23,13 +23,13 @@ Row {
         fill: root.coverFill
     }
 
-    ColumnLayout {
+    Column {
         id: metadataContainer
 
         height: parent.height
         anchors.verticalCenter: parent.verticalCenter
 
-        ColumnLayout {
+        Column {
             id: metadata
 
             Layout.alignment: Qt.AlignVCenter
