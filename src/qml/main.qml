@@ -26,22 +26,10 @@ ApplicationWindow {
             Layout.preferredHeight: contents.height
         }
 
-        Column {
-            PlayingNowCard {
-                title: "How Soon Is Now?"
-                artist: "t.A.T.u"
-                coverFill: "#e6e6b0"
-            }
-
-            Lyrics {
-                width: parent.width
-            }
-        }
-
-        Playlist {
-            Layout.alignment: Qt.AlignRight
-            id: nextQueue
-            model: NextQueue
+        PlayingNowCard {
+            title: "How Soon Is Now?"
+            artist: "t.A.T.u"
+            coverFill: "#e6e6b0"
         }
     }
 }
