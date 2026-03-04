@@ -10,16 +10,18 @@ ApplicationWindow {
     title: "Noname -"
     color: "#000"
 
-    Row {
+    FlexboxLayout {
         id: contents
+
+        direction: FlexboxLayout.RowReverse
 
         anchors.fill: parent
 
         Layout.alignment: Qt.AlignLeft
 
         LeftSidebar {
-            width: font.pointSize * 6
-            height: contents.height
+            Layout.preferredWidth: font.pointSize * 6
+            Layout.preferredHeight: contents.height
         }
 
         Column {
