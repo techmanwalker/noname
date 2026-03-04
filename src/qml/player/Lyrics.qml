@@ -1,21 +1,19 @@
 // Lyrics.qml
 import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
 
 import "delegates"
 
-ColumnLayout {
+Column {
     id: root
-    Layout.fillWidth: true
-    
     spacing: 0
 
+    width: implicitWidth
     height: implicitHeight
     
     Repeater {
         id: repeater
-        model: lyricsModel // qmllint disable
-        delegate: LyricsDelegate {}
+
+        model: LyricsModel // qmllint disable
+        delegate: LyricsItemDelegate {} // qmllint disable
     }
 }

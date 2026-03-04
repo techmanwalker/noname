@@ -22,7 +22,7 @@ ApplicationWindow {
             height: contents.height
         }
 
-        ColumnLayout {
+        Column {
             PlayingNowCard {
                 title: "How Soon Is Now?"
                 artist: "t.A.T.u"
@@ -30,7 +30,12 @@ ApplicationWindow {
             }
 
             Lyrics {
+                width: parent.width
             }
+        }
+
+        Playlist {
+            model: NextQueue
         }
     }
 }

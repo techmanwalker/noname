@@ -11,7 +11,8 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
 
 qt_add_executable(${PROJECT_NAME}
     src/main.cpp
-    src/lyricsmodel.cpp
+    src/models/lyricsmodel.cpp
+    src/models/playlistmodel.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
