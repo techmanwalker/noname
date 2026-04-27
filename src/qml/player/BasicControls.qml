@@ -1,19 +1,19 @@
 import QtQuick
 import QtQuick.Controls
 
+import Player
+
 Row {
     id: root
     property bool paused: true
 
-    ToolButton {
-        icon.name: "media-skip-backward"
+    SkipBackward {
     }
 
-    ToolButton {
-        icon.name: (root.paused ? "media-playback-start" : "media-playback-pause")
+    PauseButton {
+        paused: paused
     }
 
-    ToolButton {
-        icon.name: "media-skip-forward"
+    SkipForward {
     }
 }

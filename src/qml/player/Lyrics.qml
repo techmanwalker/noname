@@ -1,7 +1,7 @@
 // Lyrics.qml
 import QtQuick
 
-import "delegates"
+import Player
 
 Column {
     id: root
