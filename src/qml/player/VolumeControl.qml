@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 
-import "delegates"
+import Player
 
 FlexboxLayout {
     id: root
