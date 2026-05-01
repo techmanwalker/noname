@@ -4,17 +4,17 @@ import QtQuick.Controls
 ToolButton {
     id: root
 
-    // Definimos los estados siguiendo tu estructura
+    // Define statuses
     enum RepeatMode {
         Off,
         RepeatSingle,
         RepeatAllTracks
     }
 
-    // Estado inicial
+    // Initial state
     property int currentMode: RepeatButton.RepeatMode.Off
 
-    // Mapeo de íconos según el estado
+    // Map state -> icon
     function getRepeatIcon(mode) {
         switch (mode) {
             case RepeatButton.RepeatMode.RepeatSingle:    return "media-playlist-repeat-song";
@@ -24,22 +24,22 @@ ToolButton {
         }
     }
 
-    // Asignación dinámica del ícono
+    // Assign icon dynamically
     icon.name: getRepeatIcon(root.currentMode)
 
-    // Lógica de rotación cíclica
+    // Cyclical rotation logic
     onClicked: {
-        // (0+1)%3 = 1 -> (1+1)%3 = 2 -> (2+1)%3 = 0 ... y así infinitamente
+        // (0+1)%3 = 1 -> (1+1)%3 = 2 -> (2+1)%3 = 0 ... and so on
         root.currentMode = (root.currentMode + 1) % 3;
     }
     
-    // Opcional: Un ToolTip para que el usuario sepa en qué modo está
+    // Hovered tooltip
     ToolTip.visible: hovered
     ToolTip.text: {
         switch (currentMode) {
-            case RepeatButton.RepeatMode.RepeatSingle:    return "Repetir una"
-            case RepeatButton.RepeatMode.RepeatAllTracks: return "Repetir todo"
-            default:                                      return "Repetición desactivada"
+            case RepeatButton.RepeatMode.RepeatSingle:    return "Repeat one"
+            case RepeatButton.RepeatMode.RepeatAllTracks: return "Repeat all"
+            default:                                      return "Repeat disabled"
         }
     }
 }

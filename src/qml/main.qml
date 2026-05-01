@@ -1,5 +1,5 @@
 import Player
 
-// dummy
 FullscreenPlayer {
+    
 }

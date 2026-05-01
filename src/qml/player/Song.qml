@@ -4,9 +4,9 @@ import QtQuick.Layouts
 
 RowLayout {
     id: root
-    property string cover
     property string title
     property string artist
+    property url cover
     property int duration: 0  // Duration in seconds
     property int coverWidth: 48
     property int coverHeight: 48
@@ -22,7 +22,7 @@ RowLayout {
         id: coverItem
         Layout.preferredWidth: root.coverWidth
         Layout.preferredHeight: root.coverHeight
-        fill: "#fff"
+        source: root.cover
     }
 
     Column {

@@ -2,80 +2,85 @@
 
 #include <QObject>
 #include <QAbstractListModel>
-#include <QImage>
 #include <QUrl>
+#include <QObject>
 #include <vector>
 
+
 struct Song {
-    QImage cover;           // Individual song cover (album artwork)
+    QString title;
     QString artist;
     QString album;
-    QString title;
-    qint64 duration;    // Duration in seconds
-    QUrl sourcePath;        // Path to audio file
-    QUrl coverPath;         // Original path to cover (for reloading)
+    qint64 duration;  // Duration in seconds
+    QUrl source;      // Path to audio file
+    QUrl cover;       // Original path to cover (for reloading)
 };
 
-class PlaylistModel : public QAbstractListModel
-{
+
+class PlaylistModel : public QAbstractListModel {
     Q_OBJECT
-    // Playlist-level cover (optional, e.g., for playlist thumbnail)
-    Q_PROPERTY(QString playlistCover READ playlistCover WRITE setPlaylistCover NOTIFY playlistCoverChanged)
+    Q_PROPERTY(QUrl playlistCover READ playlistCover WRITE setPlaylistCover NOTIFY playlistCoverChanged)
 
 public:
     enum Roles {
-        CoverRole = Qt::UserRole + 1,       // Song's individual cover (base64 for QML)
-        ArtistRole,
+        ArtistRole = Qt::UserRole + 1,
         AlbumRole,
         TitleRole,
-        DurationSecsRole,                   // Raw seconds
-        SourcePathRole,                     // Audio file path
-        CoverPathRole                       // Original cover image path
+        DurationSecsRole,  // Raw seconds
+        SourceRole,        // Audio file path
+        CoverRole          // Song cover image path
     };
+
     Q_ENUM(Roles)
 
     explicit PlaylistModel(QObject *parent = nullptr);
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    QHash<int, QByteArray> roleNames() const override;
+    // For list models, parent is always invalid
+    int
+    rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
-    // Playlist cover (optional, separate from song covers)
-    QString playlistCover() const;
-    void setPlaylistCover(const QString &base64Image);
-    Q_INVOKABLE void setPlaylistCoverFromFile(const QString &filePath);
+    QVariant
+    data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
-    // Add song with cover (pass cover as file path, URL, or empty)
-    Q_INVOKABLE void appendSong(const QString &title, 
-                                const QString &artist, 
-                                const QString &album, 
-                                qint64 durationSecs,
-                                const QString &sourcePath,
-                                const QString &coverPath = QString());
+    QHash<int, QByteArray>
+    roleNames() const override;
 
-    // Update a song's cover individually
-    Q_INVOKABLE void setSongCover(int index, const QString &filePath);
-    Q_INVOKABLE void setSongCoverFromBase64(int index, const QByteArray &base64Data);
+    // Append and so
+    Q_INVOKABLE void append (
+        const QString &title,
+        const QString &artist,
+        const QString &album,
+        const qint64   durationSecs,
+        const QUrl    &source = QUrl(),
+        const QUrl    &cover = QUrl()
+    );
 
-    Q_INVOKABLE void removeSong(int index);
+    // Remove a song
+    Q_INVOKABLE void removeFromPlaylist (
+        int index
+    );
+
+    // Clear the entire model and also unset playlistCover
     Q_INVOKABLE void clear();
-    Q_INVOKABLE void moveSong(int fromIndex, int toIndex);
 
     // Getters
     Q_INVOKABLE QString titleAt(int index) const;
     Q_INVOKABLE QString artistAt(int index) const;
-    Q_INVOKABLE qint64 durationAt(int index) const;
-    Q_INVOKABLE QString coverPathAt(int index) const;  // Returns path, not image data
+    Q_INVOKABLE qint64  durationAt(int index) const;
+    Q_INVOKABLE QUrl    coverAt(int index) const;  // Returns path, not image data
 
-    Q_INVOKABLE static QString formatDuration(qint64 seconds);
+    // For the playlist cover
+    QUrl playlistCover() const;
+    void setPlaylistCover(const QUrl &cover);
 
 signals:
     void playlistCoverChanged();
 
 private:
+    // Song list container
     std::vector<Song> m_songs;
-    QImage m_playlistCover;  // Optional playlist-level cover
-    
-    QString imageToBase64Url(const QImage &image) const;
-    bool loadImageFromPath(QImage &image, const QString &path);
+
+    // I shall be able to fetch this from QML but how?
+    QUrl m_playlistCover; // a cover that identifies the playlist itself
+
 };
