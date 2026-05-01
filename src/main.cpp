@@ -24,8 +24,8 @@ main (int argc, char ** argv)
     PlaylistModel testPlaylist;
 
     // Populate it (example)
-    testPlaylist.appendSong("1004 KM", "Junior H", "$ad Boyz 4 Life", 282, "", "test/covers/sadboyz4life.jpg");
-    testPlaylist.appendSong("Ella", "Junior H", "Corridos tumbados", 261, "", "test/covers/corridostumbados.jpg");
+    testPlaylist.append("1004 KM", "Junior H", "$ad Boyz 4 Life", 282, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/sadboyz4life.jpeg"));
+    testPlaylist.append("Ella", "Junior H", "Corridos tumbados", 261, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/corridostumbados.jpg"));
 
     // create base engine
     QQmlApplicationEngine engine;

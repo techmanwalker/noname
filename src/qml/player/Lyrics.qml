@@ -14,6 +14,10 @@ Column {
         id: repeater
 
         model: LyricsModel // qmllint disable
-        delegate: LyricsItemDelegate {} // qmllint disable
+        delegate: LyricsItemDelegate {
+            text: model.text
+            timestamp: model.timestamp
+
+        }
     }
 }

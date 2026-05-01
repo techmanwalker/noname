@@ -19,8 +19,9 @@ ColumnLayout {
         delegate: Song {
             Layout.fillWidth: true
             // Use just 'model' (the delegate's implicit model), not 'root.model'
-            cover: model.cover       // or model.coverPath if you want the path
+
             title: model.title
+            cover: model.cover
             artist: model.artist
             duration: model.duration
             coverWidth: root.songCoverWidth

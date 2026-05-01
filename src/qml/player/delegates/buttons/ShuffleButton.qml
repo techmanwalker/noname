@@ -29,4 +29,14 @@ ToolButton {
         const totalModes = 3; // Just hardcode them, QML won't help ya
         root.currentMode = ( (root.currentMode + 1 >= totalModes) ? 0 : root.currentMode + 1);
     }
+
+    // Hovered tooltip
+    ToolTip.visible: hovered
+    ToolTip.text: {
+        switch (currentMode) {
+            case ShuffleButton.ShuffleMode.ShuffleTracks:    return "Shuffle tracks"
+            case ShuffleButton.ShuffleMode.ShuffleAlbums:    return "Shuffle albums"
+            default:                                         return "No shuffle"
+        }
+    }
 }

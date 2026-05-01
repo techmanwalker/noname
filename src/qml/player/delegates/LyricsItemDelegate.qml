@@ -2,7 +2,11 @@ import QtQuick
 import QtQuick.Controls
 
 Label {
-    text: model.text // qmllint disable
+    property var lyric: ({})
+
+    property int timestamp: lyric.timestamp || -1 // no timestamp set
+
+    text: lyric.text || ""
     font.pointSize: 10
     horizontalAlignment: Text.AlignHCenter
     wrapMode: Label.Wrap
