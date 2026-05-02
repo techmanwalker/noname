@@ -4,58 +4,65 @@ import QtQuick.Layouts
 
 import Player
 
-ApplicationWindow {
+Item {
     id: root
-    visible: true
-    title: "Noname -"
-    color: "#000"
-
-    width: contents.implicitWidth
-    height: contents.implicitHeight
+    
+    Background {
+        source: Player.cover
+        anchors.fill: parent
+    }
 
     RowLayout {
         id: contents
 
         anchors.fill: parent
-
-        Layout.alignment: Qt.AlignLeft
+        anchors.margins: 20
 
         ColumnLayout {
-            Layout.fillWidth: false
+            id: leftcolumn
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: parent.height
+
             PlayingNowCard {
+                Layout.alignment: Qt.AlignTop
+
                 title: Player.title || "No song playing"
                 artist: Player.artist || "Play your favorite song here!"
                 album: Player.album
                 cover: Player.cover
-
-                Layout.fillHeight: true
             }
 
-            DurationControl {
-                Layout.alignment: Qt.AlignVCenter
+            Lyrics {
+                Layout.fillWidth: true
             }
 
-            RowLayout {
-                VolumeControl {
-                    Layout.alignment: Qt.AlignVCenter
-                    direction: FlexboxLayout.RowReverse
-                }
-
-                BasicControls {
+            ColumnLayout {
+                DurationControl {
                     Layout.alignment: Qt.AlignVCenter
                 }
 
-                ShuffleButton {
-                }
+                RowLayout {
+                    VolumeControl {
+                        Layout.alignment: Qt.AlignVCenter
+                        direction: FlexboxLayout.RowReverse
+                    }
 
-                RepeatButton {
+                    BasicControls {
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    ShuffleButton {
+                    }
+
+                    RepeatButton {
+                    }
                 }
             }
         }
 
-        Playlist {
-            Layout.alignment: Qt.AlignTop | Qt.AlignRight
-            
+        Playlist {    
+            Layout.alignment: Qt.AlignTop        
             id: nextQueue
             model: NextQueue
         }

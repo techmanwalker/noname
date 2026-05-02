@@ -27,8 +27,8 @@ main (int argc, char ** argv)
     PlaylistModel testPlaylist;
 
     // Populate it (example)
-    testPlaylist.append("1004 KM", "Junior H", "$ad Boyz 4 Life", 282, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/sadboyz4life.jpeg"));
-    testPlaylist.append("Ella", "Junior H", "Corridos tumbados", 261, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/corridostumbados.jpg"));
+    testPlaylist.append("Обезьянка ноль", "t.A.T.u", "Люди Инвалиды", 265, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/liudi.jpg"));
+    testPlaylist.append("Stars", "t.A.T.u", "200 km/h in the Wrong Lane", 247, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/200_kmh_ru.jpg"));
 
     // Dummy player test
     PlayerState playerState;
