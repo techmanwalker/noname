@@ -7,8 +7,9 @@ Column {
 
     property string title
     property string artist
+    property string album
 
-    property color coverFill
+    property url cover: ""
 
     Row {
         Cover {
@@ -18,7 +19,7 @@ Column {
             height: 100
             anchors.verticalCenter: parent.verticalCenter
 
-            fill: root.coverFill
+            source: root.cover
         }
 
         Column {
@@ -44,6 +45,12 @@ Column {
                     text: root.artist
 
                     visible: root.artist.length > 0
+                }
+
+                Label {
+                    text: root.album
+
+                    visible: root.album.length > 0
                 }
 
             }

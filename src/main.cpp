@@ -4,10 +4,13 @@
 
 #include "models/lyricsmodel.hpp"
 #include "models/playlistmodel.hpp"
+#include "models/playerstate.hpp"
 
 int
 main (int argc, char ** argv)
 {
+
+    // Currently, just a GUI test app
     // create base application
     QGuiApplication app(argc, argv);
 
@@ -27,10 +30,21 @@ main (int argc, char ** argv)
     testPlaylist.append("1004 KM", "Junior H", "$ad Boyz 4 Life", 282, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/sadboyz4life.jpeg"));
     testPlaylist.append("Ella", "Junior H", "Corridos tumbados", 261, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/corridostumbados.jpg"));
 
+    // Dummy player test
+    PlayerState playerState;
+
+    // Test player state
+    playerState.setTitle("How Soon Is Now");
+    playerState.setArtist("t.A.T.u");
+    playerState.setAlbum("200 km/h in the Wrong Lane");
+    playerState.setCover(QUrl::fromLocalFile("/home/lito/Imágenes/Covers/200_kmh.jpg"));
+    playerState.setPosition(0);
+
     // create base engine
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("LyricsModel", &testLyrics);
     engine.rootContext()->setContextProperty("NextQueue", &testPlaylist);
+    engine.rootContext()->setContextProperty("Player", &playerState);
 
     // load qml
     const QUrl url = QUrl::fromLocalFile("src/qml/main.qml");
