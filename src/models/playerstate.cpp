@@ -1,0 +1,63 @@
+#include "playerstate.hpp"
+
+PlayerState::PlayerState(QObject *parent)
+    : QObject(parent),
+      m_duration(0),
+      m_position(0)
+{
+}
+
+QString PlayerState::title() const { return m_title; }
+QString PlayerState::artist() const { return m_artist; }
+QString PlayerState::album() const { return m_album; }
+QUrl PlayerState::cover() const { return m_cover; }
+qint64 PlayerState::duration() const { return m_duration; }
+qint64 PlayerState::position() const { return m_position; }
+
+void PlayerState::setTitle(const QString &title)
+{
+    if (m_title != title) {
+        m_title = title;
+        emit titleChanged();
+    }
+}
+
+void PlayerState::setArtist(const QString &artist)
+{
+    if (m_artist != artist) {
+        m_artist = artist;
+        emit artistChanged();
+    }
+}
+
+void PlayerState::setAlbum(const QString &album)
+{
+    if (m_album != album) {
+        m_album = album;
+        emit albumChanged();
+    }
+}
+
+void PlayerState::setCover(const QUrl &cover)
+{
+    if (m_cover != cover) {
+        m_cover = cover;
+        emit coverChanged();
+    }
+}
+
+void PlayerState::setDuration(qint64 duration)
+{
+    if (m_duration != duration) {
+        m_duration = duration;
+        emit durationChanged();
+    }
+}
+
+void PlayerState::setPosition(qint64 position)
+{
+    if (m_position != position) {
+        m_position = position;
+        emit positionChanged();
+    }
+}

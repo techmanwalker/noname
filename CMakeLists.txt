@@ -11,8 +11,6 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
 
 qt_add_executable(${PROJECT_NAME}
     src/main.cpp
-    src/models/lyricsmodel.cpp
-    src/models/playlistmodel.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -22,11 +20,24 @@ target_link_libraries(${PROJECT_NAME}
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
+        player_models
 )
 
 file(GLOB_RECURSE PLAYER_MODULE_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/qml/player/*.qml"
+)
+
+# Intercommunication modules
+add_library(player_models STATIC 
+    src/models/lyricsmodel.cpp
+    src/models/playlistmodel.cpp
+    src/models/playerstate.cpp
+)
+
+target_link_libraries(player_models
+    PRIVATE
+        Qt6::Core
 )
 
 # The Player module

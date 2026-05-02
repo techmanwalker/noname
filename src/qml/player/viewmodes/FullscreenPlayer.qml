@@ -23,9 +23,10 @@ ApplicationWindow {
         ColumnLayout {
             Layout.fillWidth: false
             PlayingNowCard {
-                title: "How Soon Is Now?"
-                artist: "t.A.T.u"
-                coverFill: "#e6e6b0"
+                title: Player.title || "No song playing"
+                artist: Player.artist || "Play your favorite song here!"
+                album: Player.album
+                cover: Player.cover
 
                 Layout.fillHeight: true
             }
