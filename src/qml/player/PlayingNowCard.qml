@@ -56,8 +56,4 @@ Column {
             }
         }
     }
-
-    Lyrics {
-        Layout.fillWidth: true
-    }
 }
