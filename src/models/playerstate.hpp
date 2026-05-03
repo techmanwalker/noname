@@ -13,8 +13,9 @@ class PlayerState : public QObject
     Q_PROPERTY(QString artist READ artist WRITE setArtist NOTIFY artistChanged)
     Q_PROPERTY(QString album READ album WRITE setAlbum NOTIFY albumChanged)
     Q_PROPERTY(QUrl cover READ cover WRITE setCover NOTIFY coverChanged)
-    Q_PROPERTY(qint64 duration READ duration WRITE setDuration NOTIFY durationChanged)
-    Q_PROPERTY(qint64 position READ position WRITE setPosition NOTIFY positionChanged)
+    Q_PROPERTY(quint64 duration_ms READ duration_ms WRITE setDuration_ms NOTIFY durationChanged)
+    Q_PROPERTY(quint64 position_ms READ position_ms WRITE setPosition_ms NOTIFY positionChanged)
+    Q_PROPERTY(quint8 volume READ volume WRITE setVolume NOTIFY volumeChanged)
 
 public:
     explicit PlayerState(QObject *parent = nullptr);
@@ -23,17 +24,19 @@ public:
     QString title() const;
     QString artist() const;
     QString album() const;
-    QUrl cover() const;
-    qint64 duration() const;
-    qint64 position() const;
+    QUrl   cover() const;
+    quint64 duration_ms() const;
+    quint64 position_ms() const;
+    quint8 volume() const;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setTitle(const QString &title);
     void setArtist(const QString &artist);
     void setAlbum(const QString &album);
     void setCover(const QUrl &cover);
-    void setDuration(qint64 duration);
-    void setPosition(qint64 position);
+    void setDuration_ms(quint64 duration);
+    void setPosition_ms(quint64 position);
+    void setVolume (quint8 volume);
 
 signals:
     // Needed signals for QML to be reactive
@@ -43,12 +46,14 @@ signals:
     void coverChanged();
     void durationChanged();
     void positionChanged();
+    void volumeChanged();
 
 private:
     QString m_title;
     QString m_artist;
     QString m_album;
     QUrl m_cover;
-    qint64 m_duration;
-    qint64 m_position; // Current timestamp in ms
+    quint64 m_duration; // Song duration in ms
+    quint64 m_position; // Current timestamp in ms
+    quint8 m_volume = 100; // volume, from 0 to 100
 };
