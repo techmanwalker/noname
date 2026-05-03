@@ -12,6 +12,8 @@ Item {
     // ── Internal state ─────────────────────────────────────────────────────
     property var _chain: []
 
+    property alias outputSource: _outputSource
+
     // Hidden container for all intermediate passes
     Item {
         id: _passContainer
@@ -28,12 +30,6 @@ Item {
         height: root.height
         live:   !root.frozen
         hideSource: true
-    }
-
-    // Display visible — passthrough without shader custom (Qt built-in)
-    ShaderEffect {
-        anchors.fill: parent
-        property var source: _outputSource
     }
 
     // ── Templates ─────────────────────────────────────────────────────────
