@@ -6,55 +6,66 @@ import Player
 
 Item {
     id: root
-    
-    // Adjustable margin between gradient limits and container limits
+
+    // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
 
-    // Calculate global X position of the cover summing X of all its parents
-    // This creates a reactive binding: if window is resized, this is recalculated
     property real coverGlobalX: contents.x + mainRow.x + leftCol.x + nowplaying_cover.x
 
     Background {
         source: Player.cover
         anchors.fill: parent
 
-        // We use Math.max(1, root.width) to avoid QML to trigger errors of
-        // "zero division" during the milliseconds when the window is building.
-
-        // contents left (50px) minus the adjustable margin. Will become 0.0 if margin is 20.
-        playerLeft: (contents.x - root.gradientMargin) / Math.max(1, root.width) 
-        
-        // Global position of the cover from 0 to 1
-        coverLeft: root.coverGlobalX / Math.max(1, root.width)
-        
-        // Global position + the width of the cover itself
-        coverRight: (root.coverGlobalX + nowplaying_cover.width) / Math.max(1, root.width)
-        
-        // Extreme right of contents (x + width) + the adjustable margin
-        playerRight: (contents.x + contents.width + root.gradientMargin) / Math.max(1, root.width)
+        // Math.max(1, root.width) prevents zero-division errors during
+        // the brief moment when the window is still being constructed
+        playerLeft:  (contents.x - root.gradientMargin)                    / Math.max(1, root.width)
+        coverLeft:   root.coverGlobalX                                     / Math.max(1, root.width)
+        coverRight:  (root.coverGlobalX + nowplaying_cover.width)          / Math.max(1, root.width)
+        playerRight: (contents.x + contents.width + root.gradientMargin)   / Math.max(1, root.width)
     }
 
+    // ── Cover sizing ───────────────────────────────────────────────────────
+
+    // Ideal cover size — large enough to look great on 4K
+    readonly property real coverIdealSize: 600
+
+    // Vertical space consumed by controls and margins
+    // Reactive: recalculates if controls change height
+    readonly property real controlsHeight:  controls.implicitHeight + 40
+    readonly property real verticalPadding: 80  // top + bottom breathing room
+
+    // Actual size: shrinks when the window is too small, floats freely otherwise
+    readonly property real coverSize: Math.min(
+        coverIdealSize,
+        root.height - controlsHeight - verticalPadding
+    )
+
+    // ── Layout ─────────────────────────────────────────────────────────────
     RowLayout {
         id: contents
 
         anchors.fill: parent
+        anchors.centerIn: parent
         anchors.margins: 20
 
         Row {
             id: mainRow
             spacing: 20
-            Layout.alignment: Qt.AlignHCenter
+            Layout.alignment: Qt.AlignCenter
 
+            // Left column: cover + controls
             ColumnLayout {
                 id: leftCol
-                
+                spacing: basicControls.height / 2
+
+                anchors.verticalCenter: parent.verticalCenter
+
                 Cover {
                     id: nowplaying_cover
-
                     source: Player.cover
-                    Layout.preferredWidth: 350
-                    Layout.preferredHeight: 350
 
+                    Layout.preferredWidth:  root.coverSize
+                    Layout.preferredHeight: root.coverSize
                     Layout.alignment: Qt.AlignHCenter
                 }
 
@@ -67,10 +78,11 @@ Item {
                         Layout.fillWidth: true
                     }
 
+                    // Bottom bar: volume | playback | shuffle+repeat
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: basicControls.height
-                        
+
                         VolumeControl {
                             anchors.left: parent.left
                             width: 100
@@ -85,7 +97,7 @@ Item {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 5
-                            
+
                             ShuffleButton {
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -98,23 +110,24 @@ Item {
                 }
             }
 
+            // Right column: metadata + upcoming queue
             ColumnLayout {
-                id: rightcolumn
-                height: parent.height
+                id: rightColumn
+                height: leftCol.height
 
                 MetadataContainer {
-                    title: Player.title
+                    title:  Player.title
                     artist: Player.artist
-                    album: Player.album
+                    album:  Player.album
                 }
 
                 Playlist {
+                    id: nextQueue
+                    model: NextQueue
+
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-
-                    id: nextQueue
-                    model: NextQueue
                 }
             }
         }
