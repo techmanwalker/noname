@@ -18,10 +18,9 @@ Item {
         anchors.fill: parent
         anchors.margins: 20
 
-        Item { Layout.fillWidth: true }
-
         Row {
             spacing: 20
+            Layout.alignment: Qt.AlignHCenter
 
             ColumnLayout {
                 Cover {
@@ -92,7 +91,5 @@ Item {
                 }
             }
         }
-
-        Item { Layout.fillWidth: true }
     }
 }

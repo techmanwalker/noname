@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add ShaderTools to the required components
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools)
 
 qt_add_executable(${PROJECT_NAME}
     src/main.cpp
@@ -21,11 +21,13 @@ target_link_libraries(${PROJECT_NAME}
         Qt6::Quick
         Qt6::QuickControls2
         player_models
+        player_module
 )
 
 file(GLOB_RECURSE PLAYER_MODULE_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/qml/player/*.qml"
+    CONFIGURE_DEPENDS
+    "src/qml/*.qml"
 )
 
 # Intercommunication modules
@@ -53,6 +55,17 @@ qt_add_qml_module(player_module
         "${CMAKE_CURRENT_BINARY_DIR}/Player"
 )
 
+qt_add_shaders(player_module "player_shaders"
+    BATCHABLE
+    PRECOMPILE
+    OPTIMIZED
+    PREFIX "/shaders"
+    BASE "src/shaders"
+    FILES
+        src/shaders/kawase_down.frag
+        src/shaders/kawase_up.frag
+)
+
 target_link_libraries(player_module
     PRIVATE
         Qt6::Core
@@ -60,4 +73,5 @@ target_link_libraries(player_module
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
+        Qt6::ShaderTools
 )
