@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+//#include <QDirIterator>
 
 #include "models/lyricsmodel.hpp"
 #include "models/playlistmodel.hpp"
@@ -46,6 +47,13 @@ main (int argc, char ** argv)
     engine.rootContext()->setContextProperty("LyricsModel", &testLyrics);
     engine.rootContext()->setContextProperty("NextQueue", &testPlaylist);
     engine.rootContext()->setContextProperty("Player", &playerState);
+
+    /*
+    QDirIterator it(":", QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        qDebug() << it.next();
+    }
+    */
 
     // load qml
     const QUrl url = QUrl::fromLocalFile("src/qml/main.qml");
