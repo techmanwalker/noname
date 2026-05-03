@@ -11,10 +11,12 @@ QString PlayerState::title() const { return m_title; }
 QString PlayerState::artist() const { return m_artist; }
 QString PlayerState::album() const { return m_album; }
 QUrl PlayerState::cover() const { return m_cover; }
-qint64 PlayerState::duration() const { return m_duration; }
-qint64 PlayerState::position() const { return m_position; }
+quint64 PlayerState::duration_ms() const { return m_duration; }
+quint64 PlayerState::position_ms() const { return m_position; }
+quint8 PlayerState::volume() const { if (m_volume > 100) return 100; else return m_volume; }
 
-void PlayerState::setTitle(const QString &title)
+void
+PlayerState::setTitle(const QString &title)
 {
     if (m_title != title) {
         m_title = title;
@@ -22,7 +24,8 @@ void PlayerState::setTitle(const QString &title)
     }
 }
 
-void PlayerState::setArtist(const QString &artist)
+void
+PlayerState::setArtist(const QString &artist)
 {
     if (m_artist != artist) {
         m_artist = artist;
@@ -30,7 +33,8 @@ void PlayerState::setArtist(const QString &artist)
     }
 }
 
-void PlayerState::setAlbum(const QString &album)
+void
+PlayerState::setAlbum(const QString &album)
 {
     if (m_album != album) {
         m_album = album;
@@ -38,7 +42,8 @@ void PlayerState::setAlbum(const QString &album)
     }
 }
 
-void PlayerState::setCover(const QUrl &cover)
+void
+PlayerState::setCover(const QUrl &cover)
 {
     if (m_cover != cover) {
         m_cover = cover;
@@ -46,7 +51,8 @@ void PlayerState::setCover(const QUrl &cover)
     }
 }
 
-void PlayerState::setDuration(qint64 duration)
+void
+PlayerState::setDuration_ms(quint64 duration)
 {
     if (m_duration != duration) {
         m_duration = duration;
@@ -54,10 +60,20 @@ void PlayerState::setDuration(qint64 duration)
     }
 }
 
-void PlayerState::setPosition(qint64 position)
+void
+PlayerState::setPosition_ms(quint64 position)
 {
     if (m_position != position) {
         m_position = position;
         emit positionChanged();
+    }
+}
+
+void
+PlayerState::setVolume(quint8 volume)
+{
+    if (m_volume != volume) {
+        m_volume = ((volume > 100) ? 100 : volume);
+        emit volumeChanged();
     }
 }

@@ -7,35 +7,35 @@ import Player
 RowLayout {
     id: root
 
-    property int currentSeconds: 0
-    property int maximumSeconds: 0
-
     // Helper function to format seconds as mm:ss
-    function formatTime(seconds) {
-        var m = Math.floor(seconds / 60)
-        var s = seconds % 60
-        return m + ":" + (s < 10 ? "0" + s : s)
+    function formatTime(ms) {
+        let totalSeconds = Math.floor(ms / 1000)
+        let minutes = Math.floor(totalSeconds / 60)
+        let seconds = totalSeconds % 60
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
     Label {
         id: currentTime
-        text: root.formatTime(root.currentSeconds)
+        text: root.formatTime(Player.position_ms)
 
         Layout.alignment: Qt.AlignVCenter
     }
 
     AccessibleSlider {
         from: 0
-        to: root.maximumSeconds
-        value: root.currentSeconds
+        to: Player.duration_ms
+        value: Player.position_ms
 
-        Layout.fillWidth: true
+        onMoved: Player.position_ms = value
+
         Layout.alignment: Qt.AlignVCenter
+        Layout.fillWidth: true
     }
 
     Label {
         id: maximumTime
-        text: root.formatTime(root.maximumSeconds)
+        text: root.formatTime(Player.duration_ms)
 
         Layout.alignment: Qt.AlignVCenter
     }

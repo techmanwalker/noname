@@ -28,7 +28,7 @@ RowLayout {
     Column {
         id: metadata
         
-        Layout.preferredWidth: implicitWidth
+        Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
         Layout.alignment: Qt.AlignVCenter
 

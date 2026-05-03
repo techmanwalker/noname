@@ -38,7 +38,8 @@ main (int argc, char ** argv)
     playerState.setArtist("t.A.T.u");
     playerState.setAlbum("200 km/h in the Wrong Lane");
     playerState.setCover(QUrl::fromLocalFile("/home/lito/Imágenes/Covers/200_kmh.jpg"));
-    playerState.setPosition(0);
+    playerState.setDuration_ms(195000);
+    playerState.setPosition_ms(0);
 
     // create base engine
     QQmlApplicationEngine engine;

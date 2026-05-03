@@ -18,53 +18,81 @@ Item {
         anchors.fill: parent
         anchors.margins: 20
 
-        ColumnLayout {
-            id: leftcolumn
+        Item { Layout.fillWidth: true }
 
-            Layout.fillWidth: true
-            Layout.preferredHeight: parent.height
+        Row {
+            spacing: 20
 
-            PlayingNowCard {
-                Layout.alignment: Qt.AlignTop
+            ColumnLayout {
+                Cover {
+                    id: nowplaying_cover
 
-                title: Player.title || "No song playing"
-                artist: Player.artist || "Play your favorite song here!"
-                album: Player.album
-                cover: Player.cover
-            }
+                    source: Player.cover
+                    Layout.preferredWidth: 350
+                    Layout.preferredHeight: 350
 
-            Lyrics {
-                Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                ColumnLayout {
+                    id: controls
+
+                    Layout.alignment: Qt.AlignBottom
+
+                    DurationControl {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: basicControls.height
+                        
+                        VolumeControl {
+                            anchors.left: parent.left
+                            width: 100
+                        }
+
+                        BasicControls {
+                            id: basicControls
+                            anchors.centerIn: parent
+                        }
+
+                        RowLayout {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 5
+                            
+                            ShuffleButton {
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            RepeatButton {
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                        }
+                    }
+                }
+
             }
 
             ColumnLayout {
-                DurationControl {
-                    Layout.alignment: Qt.AlignVCenter
+                MetadataContainer {
+                    title: Player.title
+                    artist: Player.artist
+                    album: Player.album
                 }
 
-                RowLayout {
-                    VolumeControl {
-                        Layout.alignment: Qt.AlignVCenter
-                        direction: FlexboxLayout.RowReverse
-                    }
+                Playlist {
+                    Layout.alignment: Qt.AlignTop
+                    Layout.fillWidth: true
 
-                    BasicControls {
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    ShuffleButton {
-                    }
-
-                    RepeatButton {
-                    }
+                    id: nextQueue
+                    model: NextQueue
                 }
             }
         }
 
-        Playlist {    
-            Layout.alignment: Qt.AlignTop        
-            id: nextQueue
-            model: NextQueue
-        }
+        Item { Layout.fillWidth: true }
     }
 }
