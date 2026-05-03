@@ -61,7 +61,7 @@ Item {
                 ColumnLayout {
                     id: controls
                     Layout.alignment: Qt.AlignBottom
-                    
+
                     DurationControl {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.fillWidth: true
@@ -99,6 +99,9 @@ Item {
             }
 
             ColumnLayout {
+                id: rightcolumn
+                height: parent.height
+
                 MetadataContainer {
                     title: Player.title
                     artist: Player.artist
@@ -108,6 +111,7 @@ Item {
                 Playlist {
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
 
                     id: nextQueue
                     model: NextQueue

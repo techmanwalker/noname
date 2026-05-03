@@ -1,28 +1,36 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
-Column {
+ListView {
     id: root
     
-    // Make model switchable - can be NowQueue, PlaylistModel, or any QAbstractListModel
-    property var model
+    // Model is switchable: NowQueue, PlaylistModel, or any QAbstractListModel
+    // The 'model' property is natively handled by ListView
+    
     property int songCoverWidth: 48
     property int songCoverHeight: songCoverWidth
     
-    Repeater {
-        id: repeater
-        model: root.model
-        
-        delegate: Song {
-            width: root.width
+    // Prevents delegates from being rendered outside the ListView boundaries during scrolling
+    clip: true 
+    
+    spacing: 10
 
-            // Use just 'model' (the delegate's implicit model), not 'root.model'
+    delegate: Song {
+        // Delegate width matches the ListView width
+        width: root.width
 
-            title: model.title
-            cover: model.cover
-            artist: model.artist
-            duration: model.duration
-            coverWidth: root.songCoverWidth
-        }
+        // References the delegate's context model
+        title: model.title
+        cover: model.cover
+        artist: model.artist
+        duration: model.duration
+        coverWidth: root.songCoverWidth
+    }
+
+    // Provides visual and functional feedback for scrolling
+    ScrollBar.vertical: ScrollBar {
+        // Policy and appearance can be customized here
+        policy: ScrollBar.AsNeeded
     }
 }

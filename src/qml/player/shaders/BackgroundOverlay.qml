@@ -6,10 +6,11 @@ ShaderEffect {
     // Source — connect to output of DualKawaseBlur
     property ShaderEffectSource source: null
 
-    // ── Control points: vec4(x_normalizado, L_mult, C_mult, 0) ───────────
+    // ── Control points: vec4(x_normalized, L_mult, C_mult, 0) ───────────
     // x: 0.0 = left border, 1.0 = right border (bindable to UI items)
     // L_mult: 0.0 = black, 1.0 = no brightness change
     // C_mult: 0.0 = gray, 1.0 = no saturation change
+    // last is unused
 
     property vector4d pointA:  Qt.vector4d(0.00, 0.15, 0.20, 0) // extreme left
     property vector4d pointPA: Qt.vector4d(0.20, 0.55, 0.60, 0) // left player border
