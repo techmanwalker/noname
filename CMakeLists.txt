@@ -62,6 +62,7 @@ qt_add_shaders(player_module "player_shaders"
     PREFIX "/shaders"
     BASE "src/shaders"
     FILES
+        src/shaders/background_overlay.frag
         src/shaders/kawase_down.frag
         src/shaders/kawase_up.frag
 )
