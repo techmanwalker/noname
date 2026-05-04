@@ -11,6 +11,8 @@ Slider {
     property real  trackHeight:        4
     property real  trackOpacity:       1.0
 
+    hoverEnabled: true
+
     onValueChanged: {
         if (value > 0 && root.autoReset)
             root.lastNonZeroValue = value
@@ -61,5 +63,10 @@ Slider {
         height: width
         radius: width / 2
         color:  "#ffffff"
+        opacity: root.hovered ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: 75 }
+        }
     }
 }

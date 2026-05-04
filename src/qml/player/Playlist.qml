@@ -2,35 +2,33 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Player
+
 ListView {
     id: root
-    
-    // Model is switchable: NowQueue, PlaylistModel, or any QAbstractListModel
-    // The 'model' property is natively handled by ListView
-    
-    property int songCoverWidth: 48
+
+    property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
-    
-    // Prevents delegates from being rendered outside the ListView boundaries during scrolling
-    clip: true 
-    
-    spacing: 10
+    property int scrollBarWidth: 4
+
+    clip: true
+    spacing: 16
+
+    // Right padding reserves space for the scrollbar so it appears
+    // to float outside the list content without overlapping it
+    rightMargin: scrollBarWidth * 8
 
     delegate: Song {
-        // Delegate width matches the ListView width
-        width: root.width
+        width: root.width - root.rightMargin
 
-        // References the delegate's context model
-        title: model.title
-        cover: model.cover
-        artist: model.artist
-        duration: model.duration
+        title:      model.title
+        cover:      model.cover
+        artist:     model.artist
+        duration:   model.duration
         coverWidth: root.songCoverWidth
     }
 
-    // Provides visual and functional feedback for scrolling
-    ScrollBar.vertical: ScrollBar {
-        // Policy and appearance can be customized here
-        policy: ScrollBar.AsNeeded
+    ScrollBar.vertical: AccessibleScrollBar {
+        barWidth: root.scrollBarWidth
     }
 }
