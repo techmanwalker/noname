@@ -12,7 +12,6 @@ ListView {
     property int scrollBarWidth: 4
 
     clip: true
-    spacing: 16
 
     // Right padding reserves space for the scrollbar so it appears
     // to float outside the list content without overlapping it

@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-RowLayout {
+Item {
     id: root
     property string title
     property string artist
@@ -18,19 +18,26 @@ RowLayout {
         return m + ":" + (s < 10 ? "0" + s : s)
     }
 
+    height: coverHeight * 1.4
+
     Cover {
         id: coverItem
-        Layout.preferredWidth: root.coverWidth
-        Layout.preferredHeight: root.coverHeight
+
+        width: root.coverWidth
+        height: root.coverHeight
         source: root.cover
+
+        anchors.verticalCenter: parent.verticalCenter
     }
 
     Column {
         id: metadata
+
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: coverItem.right
+        anchors.right: durationContainer.left
         
-        Layout.fillWidth: true
-        Layout.preferredHeight: implicitHeight
-        Layout.alignment: Qt.AlignVCenter
+        anchors.leftMargin: 10
 
         Label {
             text: root.title.length > 0 ? root.title : "Untitled song"
@@ -43,10 +50,9 @@ RowLayout {
 
     Column {
         id: durationContainer
-
-        Layout.preferredWidth: implicitWidth
-        Layout.preferredHeight: implicitHeight
-        Layout.alignment: Qt.AlignRight
+        
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
 
         Label {
             id: durationLabel
