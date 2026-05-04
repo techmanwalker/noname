@@ -9,20 +9,44 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Add ShaderTools to the required components
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools)
 
+set(PLAYER_LINKED_LIBRARIES
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Qml
+    Qt6::Quick
+    Qt6::QuickControls2
+    player_models
+    player_module
+)
+
+set(PLAYER_INCLUDE_DIRECTORIES
+    src/models
+)
+
 qt_add_executable(${PROJECT_NAME}
+    # currently empty
     src/main.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Qml
-        Qt6::Quick
-        Qt6::QuickControls2
-        player_models
-        player_module
+        ${PLAYER_LINKED_LIBRARIES}
 )
+
+qt_add_executable(mockupv2
+    src/tests/mockupv2.cpp
+)
+
+target_link_libraries(mockupv2
+    PRIVATE
+        ${PLAYER_LINKED_LIBRARIES}
+)
+
+target_include_directories(mockupv2
+    PRIVATE
+        ${PLAYER_INCLUDE_DIRECTORIES}
+)
+
 
 file(GLOB_RECURSE PLAYER_MODULE_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"

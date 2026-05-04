@@ -71,7 +71,9 @@ Item {
 
                 ColumnLayout {
                     id: controls
-                    Layout.alignment: Qt.AlignBottom
+
+                    Layout.maximumWidth: nowplaying_cover.width * .75
+                    Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
                     DurationControl {
                         Layout.alignment: Qt.AlignHCenter
@@ -115,6 +117,10 @@ Item {
                 id: rightColumn
                 height: leftCol.height
 
+                // + scrollbar padding
+                property int scrollBarWidth: 4
+                width: (leftCol.width * .6) + (scrollBarWidth * 6)
+
                 MetadataContainer {
                     title:  Player.title
                     artist: Player.artist
@@ -128,6 +134,8 @@ Item {
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+
+                    scrollBarWidth: rightColumn.scrollBarWidth
                 }
             }
         }
