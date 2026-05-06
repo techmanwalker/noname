@@ -8,54 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools)
 
-set(BASIC_LIBRARIES
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Qml
-    Qt6::Quick
-    Qt6::QuickControls2
-)
 
-set(PLAYER_INCLUDE_DIRECTORIES
-    src/models
-)
-
-qt_add_executable(${PROJECT_NAME}
-    # currently empty
-    src/main.cpp
-)
-
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        ${BASIC_LIBRARIES}
-)
-
-if(BUILD_TESTS)
-    qt_add_executable(mockupv2
-        src/tests/mockupv2.cpp
-    )
-
-    target_link_libraries(mockupv2
-        PRIVATE
-            ${BASIC_LIBRARIES}
-            models
-            player
-    )
-
-    target_include_directories(mockupv2
-        PRIVATE
-            ${PLAYER_INCLUDE_DIRECTORIES}
-    )
-
-    qt_add_executable(mainpagetest
-        src/tests/mainpage.cpp
-    )
-
-    target_link_libraries(mainpagetest
-        PRIVATE
-            ${BASIC_LIBRARIES}
-    )
-endif()
+### Base build file listing
 
 file(GLOB_RECURSE PLAYER_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -69,7 +23,21 @@ file(GLOB_RECURSE STARTPAGE_QMLS
     "src/qml/startpage/*.qml"
 )
 
-# Intercommunication modules
+file(GLOB_RECURSE PRIMITIVES_QMLS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    CONFIGURE_DEPENDS
+    "src/qml/primitives/*.qml"
+)
+
+file(GLOB_RECURSE SHADERS_QMLS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    CONFIGURE_DEPENDS
+    "src/qml/shaders/*.qml"
+)
+
+
+### Inter-module communication
+
 add_library(models STATIC 
     src/models/lyricsmodel.cpp
     src/models/playlistmodel.cpp
@@ -79,6 +47,49 @@ add_library(models STATIC
 target_link_libraries(models
     PRIVATE
         Qt6::Core
+)
+
+
+### Modules
+
+# Primitives - the base of all modules
+
+add_library(primitives STATIC)
+
+qt_add_qml_module(primitives
+    URI Primitives
+    VERSION 1.0
+    RESOURCE_PREFIX /primitives
+    QML_FILES
+        ${PRIMITIVES_QMLS}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Primitives"
+)
+
+# Shaders - any module depends on these to look nice
+
+add_library(shaders STATIC)
+
+qt_add_qml_module(shaders
+    URI Shaders
+    VERSION 1.0
+    RESOURCE_PREFIX /shaders
+    QML_FILES
+        ${SHADERS_QMLS}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Shaders"
+)
+
+qt_add_shaders(shaders "_shaders"
+    BATCHABLE
+    PRECOMPILE
+    OPTIMIZED
+    PREFIX "/shaders"
+    BASE "src/shaders"
+    FILES
+        src/shaders/background_overlay.frag
+        src/shaders/kawase_down.frag
+        src/shaders/kawase_up.frag
 )
 
 # The Player module
@@ -94,18 +105,6 @@ qt_add_qml_module(player
         "${CMAKE_CURRENT_BINARY_DIR}/Player"
 )
 
-qt_add_shaders(player "player_shaders"
-    BATCHABLE
-    PRECOMPILE
-    OPTIMIZED
-    PREFIX "/shaders"
-    BASE "src/shaders"
-    FILES
-        src/shaders/background_overlay.frag
-        src/shaders/kawase_down.frag
-        src/shaders/kawase_up.frag
-)
-
 target_link_libraries(player
     PRIVATE
         Qt6::Core
@@ -115,7 +114,6 @@ target_link_libraries(player
         Qt6::QuickControls2
         Qt6::ShaderTools
 )
-
 
 
 # The Start page module
@@ -131,3 +129,67 @@ qt_add_qml_module(startpage
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/StartPage"
 )
+
+
+### General excecutable linking definitions
+
+set(BASIC_LIBRARIES
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Qml
+    Qt6::Quick
+    Qt6::QuickControls2
+    primitives
+)
+
+set(PLAYER_INCLUDE_DIRECTORIES
+    src/models
+)
+
+
+### Executable building
+
+# Actual main executable - currently empty
+
+qt_add_executable(${PROJECT_NAME}
+    # currently empty
+    src/main.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        ${BASIC_LIBRARIES}
+)
+
+
+# Executable tests per module - filled with dummy data for easy development
+
+if(BUILD_TESTS)
+    qt_add_executable(mockupv2
+        src/tests/mockupv2.cpp
+    )
+
+    target_link_libraries(mockupv2
+        PRIVATE
+            ${BASIC_LIBRARIES}
+            models
+            player
+            shaders
+            primitives
+    )
+
+    target_include_directories(mockupv2
+        PRIVATE
+            ${PLAYER_INCLUDE_DIRECTORIES}
+    )
+
+    qt_add_executable(mainpagetest
+        src/tests/mainpage.cpp
+    )
+
+    target_link_libraries(mainpagetest
+        PRIVATE
+            ${BASIC_LIBRARIES}
+            startpage
+    )
+endif()
