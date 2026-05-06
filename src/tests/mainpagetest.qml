@@ -2,6 +2,7 @@ import QtQuick.Controls
 import QtQuick
 import Player
 
+import StartPage
 
 ApplicationWindow {
     id: root
@@ -13,7 +14,7 @@ ApplicationWindow {
     width: 800
     height: 600
 
-    Label {
-        text: "hola"
+    StartPage {
+        
     }
 }

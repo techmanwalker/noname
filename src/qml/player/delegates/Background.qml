@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Effects // main defocus
 
-import Player
+import Shaders
 
 Item {
     id: root
