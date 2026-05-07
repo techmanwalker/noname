@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Player
+import Primitives
 
 Item {
     id: root

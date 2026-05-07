@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Primitives
+
 Item {
     id: root
     property string title
@@ -9,7 +11,10 @@ Item {
     property url cover
     property int duration: 0  // Duration in seconds
     property int coverWidth: 48
-    property int coverHeight: 48
+    property int coverHeight: coverWidth
+
+    // card form: suitable for the start page
+    property bool card: false
 
     // Helper function to format seconds as mm:ss
     function formatDuration(seconds) {
@@ -27,17 +32,18 @@ Item {
         height: root.coverHeight
         source: root.cover
 
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: root.card ? undefined : parent.verticalCenter
     }
 
     Column {
         id: metadata
 
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: coverItem.right
-        anchors.right: durationContainer.left
+        anchors.verticalCenter: root.card ? undefined : parent.verticalCenter
+        anchors.left: root.card ? undefined : coverItem.right
+        anchors.right: root.card ? undefined : durationContainer.left
+        anchors.top: root.card ? coverItem.bottom : undefined
         
-        anchors.leftMargin: 10
+        anchors.leftMargin: root.card ? undefined : 10
 
         Label {
             text: root.title.length > 0 ? root.title : "Untitled song"
@@ -51,8 +57,8 @@ Item {
     Column {
         id: durationContainer
         
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: root.card ? undefined : parent.right
+        anchors.verticalCenter: root.card ? undefined : parent.verticalCenter
 
         Label {
             id: durationLabel
