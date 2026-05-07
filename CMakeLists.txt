@@ -164,32 +164,37 @@ target_link_libraries(${PROJECT_NAME}
 
 # Executable tests per module - filled with dummy data for easy development
 
+qt_add_executable(mockupv2 EXCLUDE_FROM_ALL
+    src/tests/mockupv2.cpp
+)
+
+target_link_libraries(mockupv2
+    PRIVATE
+        ${BASIC_LIBRARIES}
+        models
+        player
+        shaders
+        primitives
+)
+
+target_include_directories(mockupv2
+    PRIVATE
+        ${PLAYER_INCLUDE_DIRECTORIES}
+)
+
+qt_add_executable(mainpagetest EXCLUDE_FROM_ALL
+    src/tests/mainpage.cpp
+)
+
+target_link_libraries(mainpagetest
+    PRIVATE
+        ${BASIC_LIBRARIES}
+        startpage
+)
+
+# If BUILD_TESTS, add them to the default build target
 if(BUILD_TESTS)
-    qt_add_executable(mockupv2
-        src/tests/mockupv2.cpp
-    )
-
-    target_link_libraries(mockupv2
-        PRIVATE
-            ${BASIC_LIBRARIES}
-            models
-            player
-            shaders
-            primitives
-    )
-
-    target_include_directories(mockupv2
-        PRIVATE
-            ${PLAYER_INCLUDE_DIRECTORIES}
-    )
-
-    qt_add_executable(mainpagetest
-        src/tests/mainpage.cpp
-    )
-
-    target_link_libraries(mainpagetest
-        PRIVATE
-            ${BASIC_LIBRARIES}
-            startpage
+    set_target_properties(mockupv2 mainpagetest
+        PROPERTIES EXCLUDE_FROM_ALL FALSE
     )
 endif()
