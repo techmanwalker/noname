@@ -40,6 +40,7 @@ file(GLOB_RECURSE SHADERS_QMLS
 
 add_library(models STATIC 
     src/models/lyricsmodel.cpp
+    src/models/abstractmodel.cpp
     src/models/playlistmodel.cpp
     src/models/playerstate.cpp
 )

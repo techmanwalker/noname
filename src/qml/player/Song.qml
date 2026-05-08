@@ -9,17 +9,18 @@ Item {
     property string title
     property string artist
     property url cover
-    property int duration: 0  // Duration in seconds
+    property int duration: 0  // Duration in milliseconds
     property int coverWidth: 48
     property int coverHeight: coverWidth
 
     // card form: suitable for the start page
     property bool card: false
 
-    // Helper function to format seconds as mm:ss
-    function formatDuration(seconds) {
-        var m = Math.floor(seconds / 60)
-        var s = seconds % 60
+    // Helper function to format milliseconds as mm:ss
+    function formatDuration(ms) {
+        var totalSeconds = Math.floor(ms / 1000)
+        var m = Math.floor(totalSeconds / 60)
+        var s = totalSeconds % 60
         return m + ":" + (s < 10 ? "0" + s : s)
     }
 
