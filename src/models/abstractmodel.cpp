@@ -16,7 +16,7 @@ QVariant AbstractModel::data(const QModelIndex &index, int role) const
         || index.row() >= static_cast<int>(m_items.size()))
         return {};
 
-    const Types::Item &item = m_items[index.row()];
+    const Types::Any &item = m_items[index.row()];
 
     // Roles common to both Song and Album
     switch (role) {
@@ -55,7 +55,7 @@ QHash<int, QByteArray> AbstractModel::roleNames() const
     };
 }
 
-void AbstractModel::append(const Types::Item &item)
+void AbstractModel::append(const Types::Any &item)
 {
     int row = static_cast<int>(m_items.size());
     beginInsertRows({}, row, row);
@@ -78,7 +78,7 @@ void AbstractModel::clearItems()
     endResetModel();
 }
 
-const Types::Item &AbstractModel::itemAt(int index) const
+const Types::Any &AbstractModel::itemAt(int index) const
 {
     return m_items.at(index);
 }

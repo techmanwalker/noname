@@ -15,6 +15,6 @@ ApplicationWindow {
     height: 600
 
     StartPage {
-        
+        anchors.fill: parent
     }
 }

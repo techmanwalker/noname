@@ -25,6 +25,7 @@ Item {
     }
 
     height: coverHeight * 1.4
+    width: root.card ? coverWidth : undefined
 
     Cover {
         id: coverItem

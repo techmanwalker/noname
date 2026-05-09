@@ -42,6 +42,7 @@ add_library(models STATIC
     src/models/lyricsmodel.cpp
     src/models/abstractmodel.cpp
     src/models/playlistmodel.cpp
+    src/models/shortcutsmodel.cpp
     src/models/playerstate.cpp
 )
 
@@ -191,6 +192,13 @@ target_link_libraries(mainpagetest
     PRIVATE
         ${BASIC_LIBRARIES}
         startpage
+        models
+        player
+)
+
+target_include_directories(mainpagetest
+    PRIVATE
+        ${PLAYER_INCLUDE_DIRECTORIES}
 )
 
 # If BUILD_TESTS, add them to the default build target
