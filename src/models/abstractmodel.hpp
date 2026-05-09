@@ -37,8 +37,8 @@ namespace Types {
 
     using Playlist = Album;
 
-    // abstract identifier
-    using Item     = std::variant<Song, Album>;
+    // abstract identifier - can mix all types by default
+    using Any      = std::variant<Song, Album>;
 
 }
 
@@ -78,14 +78,14 @@ public:
 
 protected:
     // Inherited models call these to manipulate the container
-    void append(const Types::Item &item);
+    void append(const Types::Any &item);
     void remove(int index);
     void clearItems();
 
     // Access to the raw item for inherited classes that need extra roles
-    const Types::Item &itemAt(int index) const;
+    const Types::Any &itemAt(int index) const;
     int itemCount() const;
 
 private:
-    std::vector<Types::Item> m_items;
+    std::vector<Types::Any> m_items;
 };

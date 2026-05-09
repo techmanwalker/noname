@@ -7,7 +7,7 @@ class PlaylistModel : public AbstractModel {
 public:
     explicit PlaylistModel(QObject *parent = nullptr);
 
-    // Solo acepta Songs
+    // only accepts songs
     Q_INVOKABLE void append(const Types::Song &song);
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
