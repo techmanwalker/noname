@@ -5,7 +5,8 @@ LyricsModel::LyricsModel(QObject *parent)
 {
 }
 
-int LyricsModel::rowCount(const QModelIndex &parent) const
+int
+LyricsModel::rowCount(const QModelIndex &parent) const
 {
     // For list models, parent is always invalid
     if (parent.isValid())
@@ -13,7 +14,8 @@ int LyricsModel::rowCount(const QModelIndex &parent) const
     return static_cast<int>(m_lyrics.size());
 }
 
-QVariant LyricsModel::data(const QModelIndex &index, int role) const
+QVariant
+LyricsModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid() || index.row() >= static_cast<int>(m_lyrics.size()))
         return QVariant();
@@ -30,7 +32,9 @@ QVariant LyricsModel::data(const QModelIndex &index, int role) const
     }
 }
 
-QHash<int, QByteArray> LyricsModel::roleNames() const
+QHash<int, QByteArray>
+LyricsModel::roleNames()
+    const
 {
     QHash<int, QByteArray> roles;
     roles[TimestampRole] = "timestamp";
@@ -38,14 +42,16 @@ QHash<int, QByteArray> LyricsModel::roleNames() const
     return roles;
 }
 
-void LyricsModel::appendLyric(unsigned long timestampInMs, const QString &text)
+void
+LyricsModel::appendLyric(unsigned long timestampInMs, const QString &text)
 {
     beginInsertRows(QModelIndex(), m_lyrics.size(), m_lyrics.size());
     m_lyrics.push_back({timestampInMs, text});
     endInsertRows();
 }
 
-void LyricsModel::removeLyric(int index)
+void
+LyricsModel::removeLyric(int index)
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
         return;
@@ -55,7 +61,8 @@ void LyricsModel::removeLyric(int index)
     endRemoveRows();
 }
 
-void LyricsModel::clear()
+void
+LyricsModel::clear()
 {
     if (m_lyrics.empty())
         return;
@@ -65,14 +72,17 @@ void LyricsModel::clear()
     endResetModel();
 }
 
-QString LyricsModel::textAt(int index) const
+QString
+LyricsModel::textAt(int index) const
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
         return QString();
     return m_lyrics[index].text;
 }
 
-unsigned long LyricsModel::timestampAt(int index) const
+unsigned
+long LyricsModel::timestampAt(int index)
+    const
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
         return 0;
