@@ -4,13 +4,15 @@ AbstractModel::AbstractModel(QObject *parent)
     : QAbstractListModel(parent)
 {}
 
-int AbstractModel::rowCount(const QModelIndex &parent) const
+int
+AbstractModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid()) return 0;
     return static_cast<int>(m_items.size());
 }
 
-QVariant AbstractModel::data(const QModelIndex &index, int role) const
+QVariant
+AbstractModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid() || index.row() < 0
         || index.row() >= static_cast<int>(m_items.size()))
@@ -44,7 +46,9 @@ QVariant AbstractModel::data(const QModelIndex &index, int role) const
     }
 }
 
-QHash<int, QByteArray> AbstractModel::roleNames() const
+QHash<int, QByteArray>
+AbstractModel::roleNames()
+    const
 {
     return {
         { TypeRole,     "type"     },
@@ -55,7 +59,8 @@ QHash<int, QByteArray> AbstractModel::roleNames() const
     };
 }
 
-void AbstractModel::append(const Types::Any &item)
+void
+AbstractModel::append(const Types::Any &item)
 {
     int row = static_cast<int>(m_items.size());
     beginInsertRows({}, row, row);
@@ -63,7 +68,8 @@ void AbstractModel::append(const Types::Any &item)
     endInsertRows();
 }
 
-void AbstractModel::remove(int index)
+void
+AbstractModel::remove(int index)
 {
     if (index < 0 || index >= static_cast<int>(m_items.size())) return;
     beginRemoveRows({}, index, index);
@@ -71,19 +77,22 @@ void AbstractModel::remove(int index)
     endRemoveRows();
 }
 
-void AbstractModel::clearItems()
+void
+AbstractModel::clearItems()
 {
     beginResetModel();
     m_items.clear();
     endResetModel();
 }
 
-const Types::Any &AbstractModel::itemAt(int index) const
+const
+Types::Any &AbstractModel::itemAt(int index) const
 {
     return m_items.at(index);
 }
 
-int AbstractModel::itemCount() const
+int
+AbstractModel::itemCount() const
 {
     return static_cast<int>(m_items.size());
 }

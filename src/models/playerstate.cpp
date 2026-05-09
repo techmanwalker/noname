@@ -7,13 +7,13 @@ PlayerState::PlayerState(QObject *parent)
 {
 }
 
-QString PlayerState::title() const { return m_title; }
-QString PlayerState::artist() const { return m_artist; }
-QString PlayerState::album() const { return m_album; }
-QUrl PlayerState::cover() const { return m_cover; }
+QString PlayerState::title()       const { return m_title;    }
+QString PlayerState::artist()      const { return m_artist;   }
+QString PlayerState::album()       const { return m_album;    }
+QUrl    PlayerState::cover()       const { return m_cover;    }
 quint64 PlayerState::duration_ms() const { return m_duration; }
 quint64 PlayerState::position_ms() const { return m_position; }
-quint8 PlayerState::volume() const { if (m_volume > 100) return 100; else return m_volume; }
+quint8  PlayerState::volume()      const { if (m_volume > 100) return 100; else return m_volume; }
 
 void
 PlayerState::setTitle(const QString &title)
