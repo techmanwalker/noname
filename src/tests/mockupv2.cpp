@@ -25,18 +25,12 @@ main (int argc, char ** argv)
     testLyrics.appendLyric(10000, "I am human and I need to be loved");
     testLyrics.appendLyric(15000, "Just like everybody else does");
 
-    qDebug() << "Lyrics appended.";
-
     // Playlist model
     PlaylistModel testPlaylist;
 
-    qDebug() << "Playlist model initialized.";
-
     // Populate it (example)
     testPlaylist.append(Types::Song{ "A Potion For Love",  "AURORA",          "The Gods We Can Touch",                216000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/apotionforlove.jpg")             });
-    qDebug() << "First song appended.";
     testPlaylist.append(Types::Song{ "All The Things She Said", "t.A.T.u",    "200 km/h in the Wrong Lane",           214000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/200_kmh.jpg")                    });
-    qDebug() << "Second song appended.";
     testPlaylist.append(Types::Song{ "Bitter Sweet Symphony", "The Verve",    "Urban Hymns",                          357000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/urbanhymns.jpg")                 });
     testPlaylist.append(Types::Song{ "Eric",                  "Mitski",       "Lush",                                 197000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/lush.jpg")                       });
     testPlaylist.append(Types::Song{ "Life in Mono",          "Mono",         "Formica Blues",                        223000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/formicablues.jpg")               });
@@ -46,8 +40,6 @@ main (int argc, char ** argv)
     testPlaylist.append(Types::Song{ "Runaway",               "AURORA",       "All My Demons Greeting Me As A Friend",248000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/allmydemonsgreetingmeasafriend.jpg") });
     testPlaylist.append(Types::Song{ "Telephones",            "Vacations",    "Changes",                              212000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/changes.jpg")                    });
     testPlaylist.append(Types::Song{ "YKWIM?",                "Yot Club",     "Bipolar",                              212000, QUrl(), QUrl::fromLocalFile("/home/lito/Imágenes/Covers/bipolar.jpg")                    });
-
-    qDebug() << "All songs appended.";
 
     // Dummy player test
     PlayerState playerState;
