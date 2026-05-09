@@ -11,7 +11,7 @@ Item {
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
 
-    property real coverGlobalX: contents.x + mainRow.x + leftCol.x + nowplaying_cover.x
+    property real coverGlobalX: mainRow.x + leftCol.x + nowplaying_cover.x
 
     Background {
         source: Player.cover
@@ -19,10 +19,10 @@ Item {
 
         // Math.max(1, root.width) prevents zero-division errors during
         // the brief moment when the window is still being constructed
-        playerLeft:  (contents.x - root.gradientMargin)                    / Math.max(1, root.width)
-        coverLeft:   root.coverGlobalX                                     / Math.max(1, root.width)
-        coverRight:  (root.coverGlobalX + nowplaying_cover.width)          / Math.max(1, root.width)
-        playerRight: (contents.x + contents.width + root.gradientMargin)   / Math.max(1, root.width)
+        playerLeft:  0
+        coverLeft:   root.coverGlobalX                                 / Math.max(1, root.width)
+        coverRight:  (root.coverGlobalX + nowplaying_cover.width)      / Math.max(1, root.width)
+        playerRight: root.width
     }
 
     // ── Cover sizing ───────────────────────────────────────────────────────
@@ -42,102 +42,96 @@ Item {
     )
 
     // ── Layout ─────────────────────────────────────────────────────────────
-    RowLayout {
-        id: contents
+    Row {
+        id: mainRow
+        spacing: 20
 
-        anchors.fill: parent
         anchors.centerIn: parent
         anchors.margins: 20
 
-        Row {
-            id: mainRow
-            spacing: 20
-            Layout.alignment: Qt.AlignCenter
+        // Left column: cover + controls
+        ColumnLayout {
+            id: leftCol
+            spacing: basicControls.height / 2
 
-            // Left column: cover + controls
+            anchors.verticalCenter: parent.verticalCenter
+
+            Cover {
+                id: nowplaying_cover
+                source: Player.cover
+
+                Layout.preferredWidth:  root.coverSize
+                Layout.preferredHeight: root.coverSize
+                Layout.alignment: Qt.AlignHCenter
+            }
+
             ColumnLayout {
-                id: leftCol
-                spacing: basicControls.height / 2
+                id: controls
 
-                anchors.verticalCenter: parent.verticalCenter
+                Layout.maximumWidth: nowplaying_cover.width * .75
+                Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
-                Cover {
-                    id: nowplaying_cover
-                    source: Player.cover
-
-                    Layout.preferredWidth:  root.coverSize
-                    Layout.preferredHeight: root.coverSize
+                DurationControl {
                     Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
                 }
 
-                ColumnLayout {
-                    id: controls
+                // Bottom bar: volume | playback | shuffle+repeat
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: basicControls.height
 
-                    Layout.maximumWidth: nowplaying_cover.width * .75
-                    Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-
-                    DurationControl {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.fillWidth: true
+                    VolumeControl {
+                        anchors.left: parent.left
+                        width: 100
                     }
 
-                    // Bottom bar: volume | playback | shuffle+repeat
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: basicControls.height
+                    BasicControls {
+                        id: basicControls
+                        anchors.centerIn: parent
+                    }
 
-                        VolumeControl {
-                            anchors.left: parent.left
-                            width: 100
+                    RowLayout {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 5
+
+                        ShuffleButton {
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
-                        BasicControls {
-                            id: basicControls
-                            anchors.centerIn: parent
-                        }
-
-                        RowLayout {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 5
-
-                            ShuffleButton {
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            RepeatButton {
-                                Layout.alignment: Qt.AlignVCenter
-                            }
+                        RepeatButton {
+                            Layout.alignment: Qt.AlignVCenter
                         }
                     }
                 }
             }
+        }
 
-            // Right column: metadata + upcoming queue
-            ColumnLayout {
-                id: rightColumn
-                height: leftCol.height
+        // Right column: metadata + upcoming queue
+        ColumnLayout {
+            id: rightColumn
+            height: leftCol.height
 
-                // + scrollbar padding
-                property int scrollBarWidth: 4
-                width: (leftCol.width * .6) + (scrollBarWidth * 6)
+            // + scrollbar padding
+            property int scrollBarWidth: 4
+            width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
-                MetadataContainer {
-                    title:  Player.title
-                    artist: Player.artist
-                    album:  Player.album
-                }
+            MetadataContainer {
+                title:  Player.title
+                artist: Player.artist
+                album:  Player.album
+            }
 
-                Playlist {
-                    id: nextQueue
-                    model: NextQueue
+            Playlist {
+                id: nextQueue
+                model: NextQueue
 
-                    Layout.alignment: Qt.AlignTop
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                Layout.alignment: Qt.AlignTop
+                Layout.fillWidth: true
+                Layout.fillHeight: true
 
-                    scrollBarWidth: rightColumn.scrollBarWidth
-                }
+                scrollBarWidth: rightColumn.scrollBarWidth
             }
         }
     }
