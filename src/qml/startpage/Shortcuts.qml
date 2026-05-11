@@ -6,29 +6,41 @@ import Primitives
 ListView {
     id: root
 
-    property int itemCoverWidth:  96
+    property int itemCoverWidth: 120
     property int itemCoverHeight: itemCoverWidth
-    
-    orientation: ListView.Horizontal
-    spacing: 20
-    clip: true
 
-    // keep updated with Song's card height
-    height: itemCoverHeight * 1.4
-    
-    // try to fit its parent
-    width: parent ? parent.width : 300 
+    // DUMMY delegate just to calculate the theoretical max height
+    Song {
+        id: dummy
+        visible: false
+        coverWidth: root.itemCoverWidth
+        card: true
+
+        hideDuration: true
+    }
+
+    orientation: ListView.Horizontal
+    spacing: 5
+    height: dummy.cardMaxHeight + scrollBar.logicalWidth
+    width: parent ? parent.width : 300
+
+    clip: true
 
     delegate: Song {
         title:      model.title
         cover:      model.cover
         artist:     model.artist
+        album:      model.album
         duration:   model.duration
         coverWidth: root.itemCoverWidth
-        
-        card: true
-        width: root.itemCoverWidth // horizontal scroll
+        card:       true
+
+        hideDuration: true
     }
 
-    ScrollBar.horizontal: AccessibleScrollBar {}
+    ScrollBar.horizontal: AccessibleScrollBar {
+        id: scrollBar
+
+        logicalWidth: scrollBar.barWidth
+    }
 }
