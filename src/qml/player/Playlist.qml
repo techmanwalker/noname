@@ -24,8 +24,11 @@ ListView {
         title:      model.title
         cover:      model.cover
         artist:     model.artist
+        album:      model.album
         duration:   model.duration
         coverWidth: root.songCoverWidth
+
+        maxSecondLineLines: 1
     }
 
     ScrollBar.vertical: AccessibleScrollBar {
