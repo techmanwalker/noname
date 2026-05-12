@@ -82,7 +82,7 @@ main (int argc, char ** argv)
     // load model
     engine.rootContext()->setContextProperty("ShortcutsList", &shortcuts);
 
-    const QUrl url = QUrl::fromLocalFile("src/tests/mainpagetest.qml");
+    const QUrl url = QUrl::fromLocalFile("src/tests/startpagetest.qml");
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &app, []() { QCoreApplication::exit(-1); },
                      Qt::QueuedConnection);

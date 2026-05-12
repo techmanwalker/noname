@@ -184,11 +184,11 @@ target_include_directories(mockupv2
         ${PLAYER_INCLUDE_DIRECTORIES}
 )
 
-qt_add_executable(mainpagetest EXCLUDE_FROM_ALL
-    src/tests/mainpage.cpp
+qt_add_executable(startpagetest EXCLUDE_FROM_ALL
+    src/tests/startpagetest.cpp
 )
 
-target_link_libraries(mainpagetest
+target_link_libraries(startpagetest
     PRIVATE
         ${BASIC_LIBRARIES}
         startpage
@@ -196,14 +196,14 @@ target_link_libraries(mainpagetest
         player
 )
 
-target_include_directories(mainpagetest
+target_include_directories(startpagetest
     PRIVATE
         ${PLAYER_INCLUDE_DIRECTORIES}
 )
 
 # If BUILD_TESTS, add them to the default build target
 if(BUILD_TESTS)
-    set_target_properties(mockupv2 mainpagetest
+    set_target_properties(mockupv2 startpagetest
         PROPERTIES EXCLUDE_FROM_ALL FALSE
     )
 endif()
