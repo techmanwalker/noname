@@ -19,7 +19,7 @@ main (int argc, char ** argv)
         "200 km/h in the Wrong Lane",
         249000,
         QUrl(),
-        QUrl::fromLocalFile("/home/lito/Imágenes/Covers/200_kmh_ru.jpg")
+        QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/200_kmh_ru.jpg")
     });
 
     shortcuts.append(Types::Song {
@@ -28,7 +28,7 @@ main (int argc, char ** argv)
         "Who Really Cares",
         167000,
         QUrl(),
-        QUrl::fromLocalFile("/home/lito/Imágenes/Covers/whoreallycares.jpg")
+        QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/whoreallycares.jpg")
     });
 
     shortcuts.append(Types::Song {
@@ -37,7 +37,7 @@ main (int argc, char ** argv)
         "Yummy (Righteous Remix)",
         164000,
         QUrl(),
-        QUrl::fromLocalFile("/home/lito/Imágenes/Covers/yummy.jpg")
+        QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/yummy.jpg")
     });
 
     shortcuts.append(Types::Song {
@@ -46,7 +46,7 @@ main (int argc, char ** argv)
         "Hey Kids",
         233000,
         QUrl(),
-        QUrl::fromLocalFile("/home/lito/Imágenes/Covers/heykids.jpg")
+        QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/heykids.jpg")
     });
     
     shortcuts.append(Types::Song {
@@ -55,7 +55,7 @@ main (int argc, char ** argv)
         "thank u, next",
         206000,
         QUrl(),
-        QUrl::fromLocalFile("/home/lito/Imágenes/Covers/thankunext.jpg")
+        QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/thankunext.jpg")
     });
 
     shortcuts.append(Types::Song {
@@ -64,7 +64,7 @@ main (int argc, char ** argv)
         "Formica Blues",
         206000,
         QUrl(),
-        QUrl::fromLocalFile("/home/lito/Imágenes/Covers/formicablues.jpg")
+        QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/formicablues.jpg")
     });
 
     shortcuts.append(Types::Song {
@@ -73,7 +73,7 @@ main (int argc, char ** argv)
         "Ribbed Music for the Numb Generation",
         181000,
         QUrl(),
-        QUrl::fromLocalFile("/home/lito/Imágenes/Covers/ribbed.jpg")
+        QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/ribbed.jpg")
     });
 
     // load qml
