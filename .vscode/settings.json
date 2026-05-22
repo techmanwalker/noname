@@ -1,0 +1,5 @@
+{
+    "qt-qml.qmlls.additionalImportPaths": [
+        "build"
+    ]
+}
