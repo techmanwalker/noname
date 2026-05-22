@@ -12,7 +12,7 @@ Column {
     Label {
         text: root.title
         font.weight: Font.DemiBold
-        font.pointSize: 18
+        font.pointSize: 20
 
         visible: root.title.length > 0
     }
