@@ -1,6 +1,5 @@
 import QtQuick.Controls
 import QtQuick
-import Player
 
 import StartPage
 
