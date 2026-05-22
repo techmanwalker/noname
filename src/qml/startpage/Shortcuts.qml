@@ -6,7 +6,7 @@ import Primitives
 ListView {
     id: root
 
-    property int itemCoverWidth: 120
+    property int itemCoverWidth: 144
     property int itemCoverHeight: itemCoverWidth
 
     // DUMMY delegate just to calculate the theoretical max height
@@ -40,6 +40,8 @@ ListView {
 
     ScrollBar.horizontal: AccessibleScrollBar {
         id: scrollBar
+
+        visible: false
 
         logicalWidth: scrollBar.barWidth
     }

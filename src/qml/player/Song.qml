@@ -62,6 +62,7 @@ Item {
         anchors.top: root.card ? coverItem.bottom : undefined
         
         anchors.leftMargin: root.card ? undefined : 10
+        anchors.topMargin: root.card ? 15 : undefined
 
         width: root.card ? root.width : undefined
         height: firstLine.height + secondLine.height
@@ -76,6 +77,10 @@ Item {
             wrapMode: Text.WordWrap
             elide: Text.ElideRight
             width: parent.width
+
+            // font properties
+            font.pointSize: root.card ? 14 : -1
+            font.weight: root.card ? Font.DemiBold : Font.Normal
         }
 
         Label {
