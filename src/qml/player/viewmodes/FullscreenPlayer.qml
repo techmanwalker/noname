@@ -14,7 +14,7 @@ Item {
     property real coverGlobalX: mainRow.x + leftCol.x + nowplaying_cover.x
 
     Background {
-        source: Player.cover
+        source: PlayerState.cover
         anchors.fill: parent
 
         // Math.max(1, root.width) prevents zero-division errors during
@@ -58,7 +58,7 @@ Item {
 
             Cover {
                 id: nowplaying_cover
-                source: Player.cover
+                source: PlayerState.cover
 
                 Layout.preferredWidth:  root.coverSize
                 Layout.preferredHeight: root.coverSize
@@ -74,6 +74,8 @@ Item {
                 DurationControl {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.fillWidth: true
+
+                    stateModel: PlayerState
                 }
 
                 // Bottom bar: volume | playback | shuffle+repeat
@@ -84,6 +86,8 @@ Item {
                     VolumeControl {
                         anchors.left: parent.left
                         width: 100
+
+                        stateModel: PlayerState
                     }
 
                     BasicControls {
@@ -118,9 +122,9 @@ Item {
             width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
             MetadataContainer {
-                title:  Player.title
-                artist: Player.artist
-                album:  Player.album
+                title:  PlayerState.title
+                artist: PlayerState.artist
+                album:  PlayerState.album
             }
 
             Playlist {

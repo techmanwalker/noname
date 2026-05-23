@@ -1,10 +1,30 @@
 #include "playerstate.hpp"
+#include <QQmlEngine>
 
 PlayerState::PlayerState(QObject *parent)
     : QObject(parent),
       m_duration(0),
-      m_position(0)
+      m_position(0),
+      m_volume(50)
 {
+}
+
+PlayerState &PlayerState::instance() {
+    static PlayerState s_instance;
+    return s_instance;
+}
+
+// qml factory
+PlayerState *PlayerState::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
+    Q_UNUSED(qmlEngine);
+    Q_UNUSED(jsEngine);
+
+    PlayerState *inst = &instance();
+    
+    // transfer ownership to c++
+    QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
+    
+    return inst;
 }
 
 QString PlayerState::title()       const { return m_title;    }

@@ -7,6 +7,8 @@ import Primitives
 RowLayout {
     id: root
 
+    required property var stateModel
+
     // Helper function to format seconds as mm:ss
     function formatTime(ms) {
         let totalSeconds = Math.floor(ms / 1000)
@@ -17,17 +19,17 @@ RowLayout {
 
     Label {
         id: currentTime
-        text: root.formatTime(Player.position_ms)
+        text: root.formatTime(root.stateModel.position_ms)
 
         Layout.alignment: Qt.AlignVCenter
     }
 
     AccessibleSlider {
         from: 0
-        to: Player.duration_ms
-        value: Player.position_ms
+        to: root.stateModel.duration_ms
+        value: root.stateModel.position_ms
 
-        onMoved: Player.position_ms = value
+        onMoved: root.stateModel.position_ms = value
 
         Layout.alignment: Qt.AlignVCenter
         Layout.fillWidth: true
@@ -35,7 +37,7 @@ RowLayout {
 
     Label {
         id: maximumTime
-        text: root.formatTime(Player.duration_ms)
+        text: root.formatTime(root.stateModel.duration_ms)
 
         Layout.alignment: Qt.AlignVCenter
     }

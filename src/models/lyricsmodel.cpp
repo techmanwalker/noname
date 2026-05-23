@@ -2,14 +2,16 @@
 #include <QQmlEngine>
 
 // meyers singleton implementation
-LyricsModel& LyricsModel::instance()
+LyricsModel &
+LyricsModel::instance()
 {
     static LyricsModel s_instance;
     return s_instance;
 }
 
 // qml factory
-LyricsModel* LyricsModel::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
+LyricsModel *
+LyricsModel::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 {
     Q_UNUSED(qmlEngine);
     Q_UNUSED(jsEngine);
