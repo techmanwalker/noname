@@ -2,7 +2,12 @@
 
 #include <QObject>
 #include <QAbstractListModel>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <vector>
+
+// forward declarations
+class QQmlEngine;
+class QJSEngine;
 
 struct Lyric {
     unsigned long timestampInMs;
@@ -12,15 +17,23 @@ struct Lyric {
 class LyricsModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
 
 public:
+    // disable copy and reassignment to guarantee a single instance
+    LyricsModel(const LyricsModel&) = delete;
+    LyricsModel& operator=(const LyricsModel&) = delete;
+
+    // singleton instantiation, global access in C++
+    static LyricsModel& instance();
+    static LyricsModel* create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+
     enum Roles {
         TimestampRole = Qt::UserRole + 1,
         TextRole
     };
     Q_ENUM(Roles)
-
-    explicit LyricsModel(QObject *parent = nullptr);
 
     // Required QAbstractListModel implementations
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -37,5 +50,8 @@ public:
     Q_INVOKABLE unsigned long timestampAt(int index) const;
 
 private:
+    // private constructor
+    explicit LyricsModel(QObject *parent = nullptr);
+    
     std::vector<Lyric> m_lyrics;
 };

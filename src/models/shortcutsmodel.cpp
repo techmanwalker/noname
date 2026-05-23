@@ -9,7 +9,7 @@ ShortcutsModel::ShortcutsModel(QObject *parent)
 {}
 
 ShortcutsModel *ShortcutsModel::instance() {
-    // Lo creamos con memoria dinámica para que viva durante toda la ejecución
+    // create with dinamic memory so it lives during the entire execution
     static ShortcutsModel *_instance = new ShortcutsModel();
     return _instance;
 }
@@ -17,8 +17,8 @@ ShortcutsModel *ShortcutsModel::instance() {
 ShortcutsModel *ShortcutsModel::create(QQmlEngine *engine, QJSEngine *scriptEngine) {
     ShortcutsModel *inst = instance();
     
-    // ¡CRÍTICO! Le decimos a QML que el dueño de este puntero es C++
-    // y que por ningún motivo intente destruirlo al cerrar la aplicación.
+    // CRITICAL: C++ is owner of this pointer
+    // so under no circumstance this should be destroyed when application is closed.
     if (engine) {
         QQmlEngine::setObjectOwnership(inst, QQmlEngine::CppOwnership);
     }

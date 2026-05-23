@@ -9,11 +9,13 @@ Column {
 
     width: implicitWidth
     height: implicitHeight
+
+    required property var model
     
     Repeater {
         id: repeater
 
-        model: LyricsModel
+        model: root.model
 
         delegate: LyricsItemDelegate {
             required property var model
