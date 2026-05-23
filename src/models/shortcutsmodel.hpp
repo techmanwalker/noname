@@ -12,13 +12,12 @@ class ShortcutsModel : public AbstractModel {
     QML_NAMED_ELEMENT(ShortcutsList)
     QML_SINGLETON
 public:
-    static ShortcutsModel *create(QQmlEngine *, QJSEngine *);
-
-    static ShortcutsModel *instance();
-
-    // must not copy nor reassign
+        // must not copy nor reassign
     ShortcutsModel(const ShortcutsModel&) = delete;
     ShortcutsModel& operator=(const ShortcutsModel&) = delete;
+
+    static ShortcutsModel &instance();
+    static ShortcutsModel *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // Accepts any type of item to be shown on shortcuts
     Q_INVOKABLE void append(const Types::Any &item);

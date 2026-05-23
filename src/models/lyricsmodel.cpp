@@ -1,7 +1,7 @@
 #include "lyricsmodel.hpp"
 #include <QQmlEngine>
 
-// meyers singleton implementation
+// Meyers singleton implementation
 LyricsModel &
 LyricsModel::instance()
 {

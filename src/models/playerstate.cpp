@@ -1,14 +1,7 @@
 #include "playerstate.hpp"
 #include <QQmlEngine>
 
-PlayerState::PlayerState(QObject *parent)
-    : QObject(parent),
-      m_duration(0),
-      m_position(0),
-      m_volume(50)
-{
-}
-
+// meyers singleton
 PlayerState &PlayerState::instance() {
     static PlayerState s_instance;
     return s_instance;
@@ -25,6 +18,15 @@ PlayerState *PlayerState::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
     
     return inst;
+}
+
+// private constructor
+PlayerState::PlayerState(QObject *parent)
+    : QObject(parent),
+      m_duration(0),
+      m_position(0),
+      m_volume(50)
+{
 }
 
 QString PlayerState::title()       const { return m_title;    }

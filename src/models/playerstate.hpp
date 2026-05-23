@@ -5,6 +5,7 @@
 #include <QString>
 #include <QtQmlIntegration/qqmlintegration.h>
 
+// forward declarations
 class QQmlEngine;
 class QJSEngine;
 
@@ -24,12 +25,13 @@ class PlayerState : public QObject
     Q_PROPERTY(quint8 volume READ volume WRITE setVolume NOTIFY volumeChanged)
 
 public:
-    static PlayerState &instance();
-    static PlayerState *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
-
-    // guarantee single instance
+    // disable copy and reassignment
     PlayerState(const PlayerState&) = delete;
     PlayerState &operator=(const PlayerState&) = delete;
+    
+    // singleton instantiation
+    static PlayerState &instance();
+    static PlayerState *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // Getters
     QString title() const;
