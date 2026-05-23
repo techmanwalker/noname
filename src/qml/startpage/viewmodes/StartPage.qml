@@ -2,6 +2,7 @@ import QtQuick
 
 import StartPage
 import Primitives
+import PlayerModels
 
 Item {
     id: root

@@ -11,9 +11,9 @@ main (int argc, char ** argv)
     QGuiApplication app(argc, argv);
 
     // define an example shortcuts model
-    ShortcutsModel shortcuts;
+    auto *shortcuts = ShortcutsModel::instance();
 
-    shortcuts.append(Types::Song {
+    shortcuts->append(Types::Song {
         "Stars",
         "t.A.T.u",
         "200 km/h in the Wrong Lane",
@@ -22,7 +22,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/200_kmh_ru.jpg")
     });
 
-    shortcuts.append(Types::Song {
+    shortcuts->append(Types::Song {
         "Not Allowed",
         "TV Girl",
         "Who Really Cares",
@@ -31,7 +31,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/whoreallycares.jpg")
     });
 
-    shortcuts.append(Types::Song {
+    shortcuts->append(Types::Song {
         "Yummy",
         "Ayesha Erotica",
         "Yummy (Righteous Remix)",
@@ -40,7 +40,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/yummy.jpg")
     });
 
-    shortcuts.append(Types::Song {
+    shortcuts->append(Types::Song {
         "Hey Kids",
         "Molina",
         "Hey Kids",
@@ -49,7 +49,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/heykids.jpg")
     });
     
-    shortcuts.append(Types::Song {
+    shortcuts->append(Types::Song {
         "thank u, next",
         "Ariana Grande",
         "thank u, next",
@@ -58,7 +58,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/thankunext.jpg")
     });
 
-    shortcuts.append(Types::Song {
+    shortcuts->append(Types::Song {
         "Life in Mono",
         "Mono",
         "Formica Blues",
@@ -67,7 +67,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/formicablues.jpg")
     });
 
-    shortcuts.append(Types::Song {
+    shortcuts->append(Types::Song {
         "Bang Bang Bang Bang",
         "Sohodolls",
         "Ribbed Music for the Numb Generation",
@@ -78,9 +78,6 @@ main (int argc, char ** argv)
 
     // load qml
     QQmlApplicationEngine engine;
-
-    // load model
-    engine.rootContext()->setContextProperty("ShortcutsList", &shortcuts);
 
     const QUrl url = QUrl::fromLocalFile("src/tests/startpagetest.qml");
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,

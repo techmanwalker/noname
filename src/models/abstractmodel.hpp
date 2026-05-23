@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QAbstractListModel>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include <QUrl>
 #include <QString>
 #include <QList>
@@ -65,6 +66,7 @@ using RoleDefinitions = std::vector<RoleDefinition>;
 */
 class AbstractModel : public QAbstractListModel {
     Q_OBJECT
+    QML_ANONYMOUS
 
 public:
     explicit AbstractModel(QObject *parent, std::vector<std::pair<QByteArray, RoleExtractor>> role_defs);
