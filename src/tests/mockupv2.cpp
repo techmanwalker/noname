@@ -5,7 +5,7 @@
 //#include <QDirIterator>
 
 #include "lyricsmodel.hpp"
-#include "playlistmodel.hpp"
+#include "nextqueue.hpp"
 #include "playerstate.hpp"
 
 int
@@ -26,20 +26,20 @@ main (int argc, char ** argv)
     testLyrics.appendLyric(15000, "Just like everybody else does");
 
     // Playlist model
-    PlaylistModel testPlaylist;
+    auto& nextQueue = NextQueue::instance();
 
     // Populate it (example)
-    testPlaylist.append(Types::Song{ "A Potion For Love",  "AURORA",          "The Gods We Can Touch",                216000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/apotionforlove.jpg")                 });
-    testPlaylist.append(Types::Song{ "All The Things She Said", "t.A.T.u",    "200 km/h in the Wrong Lane",           214000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/200_kmh.jpg")                        });
-    testPlaylist.append(Types::Song{ "Bitter Sweet Symphony", "The Verve",    "Urban Hymns",                          357000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/urbanhymns.jpg")                     });
-    testPlaylist.append(Types::Song{ "Eric",                  "Mitski",       "Lush",                                 197000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/lush.jpg")                           });
-    testPlaylist.append(Types::Song{ "Life in Mono",          "Mono",         "Formica Blues",                        223000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/formicablues.jpg")                   });
-    testPlaylist.append(Types::Song{ "Lilith",                "Saint Avangeline", "Gardener of Eden",                 255000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/gardenerofeden.jpg")                 });
-    testPlaylist.append(Types::Song{ "Only Time",             "Enya",         "A Day Without Rain",                   218000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/adaywithoutrain.jpg")                });
-    testPlaylist.append(Types::Song{ "Show Me How",           "Men I Trust",  "Show Me How",                          215000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/showmehow.jpg")                      });
-    testPlaylist.append(Types::Song{ "Runaway",               "AURORA",       "All My Demons Greeting Me As A Friend",248000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/allmydemonsgreetingmeasafriend.jpg") });
-    testPlaylist.append(Types::Song{ "Telephones",            "Vacations",    "Changes",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/changes.jpg")                        });
-    testPlaylist.append(Types::Song{ "YKWIM?",                "Yot Club",     "Bipolar",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/bipolar.jpg")                        });
+    nextQueue.append(Types::Song{ "A Potion For Love",  "AURORA",          "The Gods We Can Touch",                216000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/apotionforlove.jpg")                 });
+    nextQueue.append(Types::Song{ "All The Things She Said", "t.A.T.u",    "200 km/h in the Wrong Lane",           214000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/200_kmh.jpg")                        });
+    nextQueue.append(Types::Song{ "Bitter Sweet Symphony", "The Verve",    "Urban Hymns",                          357000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/urbanhymns.jpg")                     });
+    nextQueue.append(Types::Song{ "Eric",                  "Mitski",       "Lush",                                 197000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/lush.jpg")                           });
+    nextQueue.append(Types::Song{ "Life in Mono",          "Mono",         "Formica Blues",                        223000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/formicablues.jpg")                   });
+    nextQueue.append(Types::Song{ "Lilith",                "Saint Avangeline", "Gardener of Eden",                 255000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/gardenerofeden.jpg")                 });
+    nextQueue.append(Types::Song{ "Only Time",             "Enya",         "A Day Without Rain",                   218000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/adaywithoutrain.jpg")                });
+    nextQueue.append(Types::Song{ "Show Me How",           "Men I Trust",  "Show Me How",                          215000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/showmehow.jpg")                      });
+    nextQueue.append(Types::Song{ "Runaway",               "AURORA",       "All My Demons Greeting Me As A Friend",248000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/allmydemonsgreetingmeasafriend.jpg") });
+    nextQueue.append(Types::Song{ "Telephones",            "Vacations",    "Changes",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/changes.jpg")                        });
+    nextQueue.append(Types::Song{ "YKWIM?",                "Yot Club",     "Bipolar",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/bipolar.jpg")                        });
 
     // Dummy player test
     auto& playerState = PlayerState::instance();
@@ -54,7 +54,6 @@ main (int argc, char ** argv)
 
     // create base engine
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("NextQueue", &testPlaylist); // not yet ported to singleton
 
     /*
     QDirIterator it(":", QDirIterator::Subdirectories);
