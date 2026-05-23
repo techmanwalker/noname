@@ -33,8 +33,16 @@ Item {
         anchors.fill: parent
         source: root.source
         fillMode: Image.PreserveAspectCrop
-        asynchronous: true
         visible: false
+
+        mipmap: false
+        onStatusChanged: {
+            if (status === Image.Ready) {
+                mipmap = true;
+            } else if (status === Image.Null || status === Image.Error) {
+                mipmap = false;
+            }
+        }
     }
 
     DualKawaseBlur {
