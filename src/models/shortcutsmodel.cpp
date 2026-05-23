@@ -20,7 +20,7 @@ ShortcutsModel *ShortcutsModel::create(QQmlEngine *engine, QJSEngine *scriptEngi
     // CRITICAL: C++ is owner of this pointer
     // so under no circumstance this should be destroyed when application is closed.
     if (engine) {
-        QQmlEngine::setObjectOwnership(inst, QQmlEngine::CppOwnership);
+        QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
     }
     
     return inst;

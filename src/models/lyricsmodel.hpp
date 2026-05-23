@@ -5,6 +5,8 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <vector>
 
+// NOTE: use this as reference to implement new singleton models.
+
 // forward declarations
 class QQmlEngine;
 class QJSEngine;
@@ -29,6 +31,7 @@ public:
     static LyricsModel &instance();
     static LyricsModel *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
+    // fixed role list
     enum Roles {
         TimestampRole = Qt::UserRole + 1,
         TextRole
@@ -40,12 +43,12 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // Your custom methods - Q_INVOKABLE makes them callable from QML
+    // Q_INVOKABLE makes them callable from QML
     Q_INVOKABLE void appendLyric(unsigned long timestampInMs, const QString &text);
     Q_INVOKABLE void removeLyric(int index);
     Q_INVOKABLE void clear();
 
-    // Optional: get a specific lyric (useful for current time tracking)
+    // Get a specific lyric (useful for current time tracking)
     Q_INVOKABLE QString textAt(int index) const;
     Q_INVOKABLE unsigned long timestampAt(int index) const;
 

@@ -3,45 +3,54 @@
 #include "abstractmodel.hpp"
 #include <QVariant>
 
-// Roles that are common to all container models.
+// Helper to encapsulate the repetitive pattern of std::visit on the variant
+static auto make_visitor = [](auto&& projector) {
+    return [projector = std::forward<decltype(projector)>(projector)](const Types::Any &i) -> QVariant {
+        return std::visit([&](const auto &x) -> QVariant { 
+            return projector(x); 
+        }, i);
+    };
+};
+
+/**
+    @brief Roles that are common to all container models.
+    
+    @details These are mostly basic getters/setters for each role. Defines a list of roles that
+    are shared across most of models that inherit the Abstract Model.
+*/
 static const RoleDefinitions container_roles = {
-    { "title",    [](const Types::Any &i) -> QVariant { return std::visit([](const auto &x) -> QVariant { return x.title; }, i); }},
-    { "artist",   [](const Types::Any &i) -> QVariant { return std::visit([](const auto &x) -> QVariant { return x.artist; }, i); }},
-    { "album", [](const Types::Any &i) -> QVariant {
-        // if x is a song, return its album
-        return std::visit([](const auto &x) -> QVariant {
-            using T = std::decay_t<decltype(x)>; // whatever type X is
+    // Direct roles (thanks to the duck-typing of generic lambdas)
+    { "title",  make_visitor([](const auto &x) { return x.title; }) },
+    { "artist", make_visitor([](const auto &x) { return x.artist; }) },
+    { "cover",  make_visitor([](const auto &x) { return x.cover; }) },
 
-            if constexpr (std::is_same_v<T, Types::Song>)
-                return x.album;
-            else {
-                qDebug() << ".album is only defined for Songs themselves.";
-                return QVariant {};
-            }
-        }, i);
-    }},
+    // Conditional roles with specific logic
+    { "album", make_visitor([](const auto &x) -> QVariant {
+        using T = std::decay_t<decltype(x)>;
+        if constexpr (std::is_same_v<T, Types::Song>) {
+            return x.album;
+        } else {
+            qDebug() << ".album is only defined for Songs themselves.";
+            return QVariant{};
+        }
+    })},
 
-    { "cover",    [](const Types::Any &i) -> QVariant { return std::visit([](const auto &x) -> QVariant { return x.cover; }, i); }},
-    { "duration", [](const Types::Any &i) -> QVariant {
-        return std::visit([](const auto &x) -> QVariant {
-            using T = std::decay_t<decltype(x)>; // whatever type X is
-            
-            if constexpr (std::is_same_v<T, Types::Song>)
-                return x.duration;
-            else
-                // return x.duration(); when children can properly tell how long they are
-                return QVariant {}; // undefined
-        }, i);
-    }},
-    { "type", [](const Types::Any &i) -> QVariant {
-        return std::visit([](const auto &x) -> QVariant {
-            using T = std::decay_t<decltype(x)>;
-            if constexpr (std::is_same_v<T, Types::Song>)  return "song";
-            if constexpr (std::is_same_v<T, Types::Album>) return "album";
-            if constexpr (std::is_same_v<T, Types::Playlist>) return "playlist";
-            return "unknown";
-        }, i);
-    }}
+    { "duration", make_visitor([](const auto &x) -> QVariant {
+        using T = std::decay_t<decltype(x)>;
+        if constexpr (std::is_same_v<T, Types::Song>) {
+            return x.duration;
+        } else {
+            return QVariant{};
+        }
+    })},
+
+    { "type", make_visitor([](const auto &x) {
+        using T = std::decay_t<decltype(x)>;
+        if constexpr (std::is_same_v<T, Types::Song>)     return "song";
+        if constexpr (std::is_same_v<T, Types::Album>)    return "album";
+        if constexpr (std::is_same_v<T, Types::Playlist>) return "playlist";
+        return "unknown";
+    })}
 };
 
 // Enable concatenation of role definition lists

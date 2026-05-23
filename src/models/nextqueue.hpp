@@ -3,6 +3,8 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 #include "playlistmodel.hpp"
 
+// NOTE: use this as reference to implement singleton models inherited from non-singletons.
+
 class QQmlEngine;
 class QJSEngine;
 
