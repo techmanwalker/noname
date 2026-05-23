@@ -3,10 +3,16 @@
 #include <QObject>
 #include <QUrl>
 #include <QString>
+#include <QtQmlIntegration/qqmlintegration.h>
+
+class QQmlEngine;
+class QJSEngine;
 
 class PlayerState : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
 
     // Q_PROPERTY defines the magic variables that QML can read and listen
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
@@ -18,7 +24,12 @@ class PlayerState : public QObject
     Q_PROPERTY(quint8 volume READ volume WRITE setVolume NOTIFY volumeChanged)
 
 public:
-    explicit PlayerState(QObject *parent = nullptr);
+    static PlayerState &instance();
+    static PlayerState *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+
+    // guarantee single instance
+    PlayerState(const PlayerState&) = delete;
+    PlayerState &operator=(const PlayerState&) = delete;
 
     // Getters
     QString title() const;
@@ -49,6 +60,9 @@ signals:
     void volumeChanged();
 
 private:
+    // private constructor
+    explicit PlayerState(QObject *parent = nullptr);
+    
     QString m_title;
     QString m_artist;
     QString m_album;

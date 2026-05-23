@@ -7,6 +7,8 @@ import Primitives
 RowLayout {
     id: root
 
+    required property var stateModel
+
     ToolButton {
         id: muteButton
         icon.name: volumeSlider.value > 0 ? "audio-volume-high" : "audio-volume-muted"
@@ -26,12 +28,12 @@ RowLayout {
 
         from: 0
         to: 100
-        value: Player.volume
+        value: root.stateModel.volume
 
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
 
-        onMoved: Player.volume = value
+        onMoved: root.stateModel.volume = value
 
         implicitWidth: 0
         

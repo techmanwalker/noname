@@ -23,11 +23,11 @@ class LyricsModel : public QAbstractListModel
 public:
     // disable copy and reassignment to guarantee a single instance
     LyricsModel(const LyricsModel&) = delete;
-    LyricsModel& operator=(const LyricsModel&) = delete;
+    LyricsModel &operator=(const LyricsModel&) = delete;
 
     // singleton instantiation, global access in C++
-    static LyricsModel& instance();
-    static LyricsModel* create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+    static LyricsModel &instance();
+    static LyricsModel *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     enum Roles {
         TimestampRole = Qt::UserRole + 1,

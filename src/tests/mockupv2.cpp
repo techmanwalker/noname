@@ -42,7 +42,7 @@ main (int argc, char ** argv)
     testPlaylist.append(Types::Song{ "YKWIM?",                "Yot Club",     "Bipolar",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/bipolar.jpg")                        });
 
     // Dummy player test
-    PlayerState playerState;
+    auto& playerState = PlayerState::instance();
 
     // Test player state
     playerState.setTitle("Eric");
@@ -54,8 +54,7 @@ main (int argc, char ** argv)
 
     // create base engine
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("NextQueue", &testPlaylist);
-    engine.rootContext()->setContextProperty("Player", &playerState);
+    engine.rootContext()->setContextProperty("NextQueue", &testPlaylist); // not yet ported to singleton
 
     /*
     QDirIterator it(":", QDirIterator::Subdirectories);
