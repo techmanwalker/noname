@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player
+import PlayerModels
 import Primitives
 
 Item {

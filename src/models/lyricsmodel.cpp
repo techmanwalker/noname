@@ -1,5 +1,28 @@
 #include "lyricsmodel.hpp"
+#include <QQmlEngine>
 
+// meyers singleton implementation
+LyricsModel& LyricsModel::instance()
+{
+    static LyricsModel s_instance;
+    return s_instance;
+}
+
+// qml factory
+LyricsModel* LyricsModel::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
+{
+    Q_UNUSED(qmlEngine);
+    Q_UNUSED(jsEngine);
+    
+    LyricsModel *inst = &instance();
+
+    // prevent qml from freeing singleton memory on closure
+    QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
+
+    return inst;
+}
+
+// private constructor (now doing nothing special)
 LyricsModel::LyricsModel(QObject *parent)
     : QAbstractListModel(parent)
 {
