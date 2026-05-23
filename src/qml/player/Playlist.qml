@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 
@@ -18,6 +20,8 @@ ListView {
     rightMargin: scrollBarWidth * 8
 
     delegate: Song {
+        required property var model
+        
         width: root.width - root.rightMargin
 
         title:      model.title

@@ -66,25 +66,25 @@ Item {
         )
 
         pointPA: Qt.vector4d(
-            clamp(playerLeft), 
+            root.clamp(root.playerLeft), 
             root.inner_player_l, // luma multiplier
             root.inner_player_c, // chroma multiplier
             0     // unused
         )
         pointPB: Qt.vector4d(
-            clamp(playerRight), 
+            root.clamp(root.playerRight), 
             root.inner_player_l, 
             root.inner_player_c, 
             0
         )
         pointCA: Qt.vector4d(
-            clamp(coverLeft),
+            root.clamp(root.coverLeft),
             root.cover_back_l,
             root.cover_back_c,
             0
         )
         pointCB: Qt.vector4d(
-            clamp(coverRight),
+            root.clamp(root.coverRight),
             root.cover_back_l,
             root.cover_back_c,
             0

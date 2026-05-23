@@ -2,7 +2,7 @@ import QtQuick
 
 import StartPage
 import Primitives
-import PlayerModels
+import PlayerModels as PM
 
 Item {
     id: root
@@ -44,7 +44,7 @@ Item {
         }
 
         Shortcuts {     
-            model: ShortcutsList
+            model: PM.ShortcutsList
         }
     }
 }

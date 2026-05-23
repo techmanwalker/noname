@@ -13,8 +13,11 @@ Column {
     Repeater {
         id: repeater
 
-        model: LyricsModel // qmllint disable
+        model: LyricsModel
+
         delegate: LyricsItemDelegate {
+            required property var model
+
             text: model.text
             timestamp: model.timestamp
 
