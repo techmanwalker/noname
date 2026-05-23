@@ -22,9 +22,18 @@ Item {
         
         // Smooth scaling for better quality
         smooth: true
-        mipmap: true
+        mipmap: false
         
-        // Optional: show nothing if source is empty (shows root.fill color instead)
+        // show nothing if source is empty (shows root.fill color instead)
         visible: status === Image.Ready
+
+        // imperative mipmap toggling
+        onStatusChanged: {
+            if (status === Image.Ready) {
+                mipmap = true;
+            } else if (status === Image.Null || status === Image.Error) {
+                mipmap = false;
+            }
+        }
     }
 }
