@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import Player
@@ -27,6 +29,8 @@ ListView {
     clip: true
 
     delegate: Song {
+        required property var model
+        
         title:      model.title
         cover:      model.cover
         artist:     model.artist
