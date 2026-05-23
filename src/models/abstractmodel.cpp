@@ -2,7 +2,7 @@
 
 // Default role definitions for any AbstractModel
 
-
+/// Constructs the model and compiles the given role definitions into sequential Qt user roles.
 AbstractModel::AbstractModel(
     QObject *parent,
     RoleDefinitions role_defs
@@ -10,13 +10,14 @@ AbstractModel::AbstractModel(
     : QAbstractListModel(parent),
       m_roledefs(std::move(role_defs))
 {
-    // Build the Roles based on the s_defs provided
+    // Build the Roles based on the role_defs provided
 
     int n = Qt::UserRole + 1;
     for (auto &[name, extractor] : m_roledefs)
         m_compiledroles.push_back({ n++, name, std::move(extractor) });
 }
 
+// Count items (intended for QML)
 int
 AbstractModel::rowCount(
     const QModelIndex &parent
@@ -26,6 +27,14 @@ AbstractModel::rowCount(
     return static_cast<int>(m_items.size());
 }
 
+// Count items (intended for C++)
+int
+AbstractModel::itemCount() const
+{
+    return static_cast<int>(m_items.size());
+}
+
+/// Retrieves the value of a specific role for the item at the given index
 QVariant
 AbstractModel::data(
     const QModelIndex &index,
@@ -45,6 +54,7 @@ AbstractModel::data(
     return {};
 }
 
+/// Returns the role name map, allowing QML to resolve properties by their string names.
 QHash<int, QByteArray>
 AbstractModel::roleNames() const
 {
@@ -90,10 +100,4 @@ Types::Any &AbstractModel::itemAt(
 ) const
 {
     return m_items.at(index);
-}
-
-int
-AbstractModel::itemCount() const
-{
-    return static_cast<int>(m_items.size());
 }
