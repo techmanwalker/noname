@@ -38,7 +38,8 @@ file(GLOB_RECURSE SHADERS_QMLS
 file(GLOB_RECURSE MODELS_SOURCES
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
-    "src/models/*"
+    "src/models/*.hpp"
+    "src/models/*.cpp"
 )
 
 
