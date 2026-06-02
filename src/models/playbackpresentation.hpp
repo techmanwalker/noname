@@ -9,7 +9,30 @@
 class QQmlEngine;
 class QJSEngine;
 
-class PlayerState : public QObject
+/**
+    @class PlaybackViewModel
+    @brief Declarative and reactive representation of the playback state for the user interface.
+
+    This class acts as the view model (ViewModel) within the application architecture,
+    serving as the single source of truth for visual components (QML) regarding the current 
+    state of the audio engine. Its fundamental purpose is to structure and expose playback data 
+    efficiently, completely decoupling business logic and audio processing from the interface.
+
+    @section Data flow (detachment)
+    The information flow is strictly compartmentalized on the C++ axis:
+    - Input (Visual Update): A low-level audio controller (e.g., %PlaybackController) 
+    manipulates the audio hardware/backend and updates the data of this class through its public slots 
+    (@ref updateMetadata, @ref updatePosition).
+    - Output (User Requests): When the user interacts with the interface (such as dragging a progress 
+    bar or changing the volume), the class does not modify the internal state directly; instead, it emits 
+    request signals (@ref requestSeek, @ref requestVolumeChange) so that the C++ controller validates and executes 
+    the action on the audio engine.
+
+    @note This class is designed as a Singleton managed by the QML engine (@c QML_SINGLETON) and exposes 
+    read-only properties for static metadata, ensuring that the interface cannot corrupt 
+    the current media state directly.
+*/
+class PlaybackPresentation : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -26,12 +49,12 @@ class PlayerState : public QObject
 
 public:
     // disable copy and reassignment
-    PlayerState(const PlayerState&) = delete;
-    PlayerState &operator=(const PlayerState&) = delete;
+    PlaybackPresentation(const PlaybackPresentation&) = delete;
+    PlaybackPresentation &operator=(const PlaybackPresentation&) = delete;
     
     // singleton instantiation
-    static PlayerState &instance();
-    static PlayerState *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+    static PlaybackPresentation &instance();
+    static PlaybackPresentation *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // Getters
     QString title() const;
@@ -63,7 +86,7 @@ signals:
 
 private:
     // private constructor
-    explicit PlayerState(QObject *parent = nullptr);
+    explicit PlaybackPresentation(QObject *parent = nullptr);
     
     QString m_title;
     QString m_artist;
