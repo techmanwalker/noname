@@ -6,7 +6,7 @@
 
 #include "lyricsmodel.hpp"
 #include "nextqueue.hpp"
-#include "playerstate.hpp"
+#include "playbackpresentation.hpp"
 
 int
 main (int argc, char ** argv)
@@ -42,15 +42,15 @@ main (int argc, char ** argv)
     nextQueue.append(Types::Song{ "YKWIM?",                "Yot Club",     "Bipolar",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/bipolar.jpg")                        });
 
     // Dummy player test
-    auto& playerState = PlayerState::instance();
+    auto& PlaybackPresentation = PlaybackPresentation::instance();
 
     // Test player state
-    playerState.setTitle("Eric");
-    playerState.setArtist("Mitski");
-    playerState.setAlbum("Lush");
-    playerState.setCover(QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/lush.jpg"));
-    playerState.setDuration_ms(197000);
-    playerState.setPosition_ms(147000);
+    PlaybackPresentation.setTitle("Eric");
+    PlaybackPresentation.setArtist("Mitski");
+    PlaybackPresentation.setAlbum("Lush");
+    PlaybackPresentation.setCover(QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/lush.jpg"));
+    PlaybackPresentation.setDuration_ms(197000);
+    PlaybackPresentation.setPosition_ms(147000);
 
     // create base engine
     QQmlApplicationEngine engine;
