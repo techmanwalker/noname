@@ -13,7 +13,7 @@ class QQmlEngine;
 class QJSEngine;
 
 /**
-    @class PlaybackViewModel
+    @class PlaybackPresentation
     @brief Declarative and reactive representation of the playback state for the user interface.
 
     This class acts as the view model (ViewModel) within the application architecture,

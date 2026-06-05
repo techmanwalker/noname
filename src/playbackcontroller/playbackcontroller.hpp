@@ -54,7 +54,7 @@ public:
     bool is_loading() const;
 
     // Provides cached-in-memory covers to actually be able to load them
-    cover_provider m_cover_provider;
+    cover_provider *m_cover_provider = new cover_provider();
 
 signals:
     void position_changed();
@@ -92,5 +92,5 @@ private:
     // every time this timer ticks, a position_poll_requested signal
     // is triggered to avoid overloading the QML engine
     QTimer polling_position_timer;
-    static constexpr quint16 polling_position_timer_interval = 250; // tick every...;
+    static constexpr quint16 polling_position_timer_interval = 250; // tick every...
 };
