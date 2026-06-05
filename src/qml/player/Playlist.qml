@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Controls
 
 import Primitives
-import Player
+import PlayerModels
 
 ListView {
     id: root

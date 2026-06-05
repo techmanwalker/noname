@@ -1,4 +1,5 @@
 #include "playbackpresentation.hpp"
+#include "playbackcontroller.hpp"
 #include <QQmlEngine>
 
 // meyers singleton
@@ -20,73 +21,46 @@ PlaybackPresentation *PlaybackPresentation::create(QQmlEngine *qmlEngine, QJSEng
     return inst;
 }
 
-// private constructor
+// Private constructor
 PlaybackPresentation::PlaybackPresentation(QObject *parent)
-    : QObject(parent),
-      m_duration(0),
-      m_position(0),
-      m_volume(50)
+    : QObject(parent)
 {
+    // Listen to the audio controller; when metadata updates, notify the QML engine
+    connect(&playing, &playback_controller::track_changed,
+            this, &PlaybackPresentation::handleTrackChanged);
+
+    connect(&playing, &playback_controller::volume_changed,
+            this, &PlaybackPresentation::handleVolumeChangedInController);
+
+    connect(&playing, &playback_controller::playback_state_changed,
+            this, &PlaybackPresentation::playbackStateChanged);
+
+    connect(&playing, &playback_controller::position_poll_requested,
+            this, &PlaybackPresentation::positionChanged);
 }
 
-QString PlaybackPresentation::title()       const { return m_title;    }
-QString PlaybackPresentation::artist()      const { return m_artist;   }
-QString PlaybackPresentation::album()       const { return m_album;    }
-QUrl    PlaybackPresentation::cover()       const { return m_cover;    }
-quint64 PlaybackPresentation::duration_ms() const { return m_duration; }
-quint64 PlaybackPresentation::position_ms() const { return m_position; }
-quint8  PlaybackPresentation::volume()      const { if (m_volume > 100) return 100; else return m_volume; }
-
-void
-PlaybackPresentation::setTitle(const QString &title)
+QString PlaybackPresentation::title()       const { return playing.current_track().title;    }
+QString PlaybackPresentation::artist()      const { return playing.current_track().artist;   }
+QString PlaybackPresentation::album()       const { return playing.current_track().album;    }
+QUrl    PlaybackPresentation::cover()       const { return playing.current_track().cover;    }
+quint64 PlaybackPresentation::duration_ms() const { return playing.current_track().duration; }
+quint64 PlaybackPresentation::position_ms() const { return playing.current_position_ms();    }
+quint8  PlaybackPresentation::volume()      const { return playing.current_volume();         }
+QMediaPlayer::PlaybackState
+PlaybackPresentation::playbackState() const
 {
-    if (m_title != title) {
-        m_title = title;
-        emit titleChanged();
-    }
-}
-
-void
-PlaybackPresentation::setArtist(const QString &artist)
-{
-    if (m_artist != artist) {
-        m_artist = artist;
-        emit artistChanged();
-    }
-}
-
-void
-PlaybackPresentation::setAlbum(const QString &album)
-{
-    if (m_album != album) {
-        m_album = album;
-        emit albumChanged();
-    }
-}
-
-void
-PlaybackPresentation::setCover(const QUrl &cover)
-{
-    if (m_cover != cover) {
-        m_cover = cover;
-        emit coverChanged();
-    }
-}
-
-void
-PlaybackPresentation::setDuration_ms(quint64 duration)
-{
-    if (m_duration != duration) {
-        m_duration = duration;
-        emit durationChanged();
-    }
+    return playing.playback_state();
 }
 
 void
 PlaybackPresentation::setPosition_ms(quint64 position)
 {
-    if (m_position != position) {
-        m_position = position;
+    // If we touch this code path, it means that the user has moved the playhead manually.
+    if (playing.current_position_ms() != position) {     
+        // backend moves the playhead synchronously
+        playing.set_position(position);
+        
+        // trigger the signal to notify the GUI that the local value has changed due to manual drag
         emit positionChanged();
     }
 }
@@ -94,8 +68,40 @@ PlaybackPresentation::setPosition_ms(quint64 position)
 void
 PlaybackPresentation::setVolume(quint8 volume)
 {
-    if (m_volume != volume) {
-        m_volume = ((volume > 100) ? 100 : volume);
-        emit volumeChanged();
-    }
+    playing.set_volume(volume);
+}
+
+// --- Playback controls ---
+
+// Proxies for QML to be able to perform play, pause and more actions
+void
+PlaybackPresentation::play() const {
+    playing.play();
+}
+
+void
+PlaybackPresentation::pause() const
+{
+    playing.pause();
+}
+
+// --- Signal handlers
+
+void
+PlaybackPresentation::handleTrackChanged()
+{
+    
+    // Suddenly awake the QML declarative tree
+    emit titleChanged();
+    emit artistChanged();
+    emit albumChanged();
+    emit coverChanged();
+    emit durationChanged();
+    emit positionChanged();
+}
+
+void
+PlaybackPresentation::handleVolumeChangedInController()
+{
+    emit volumeChanged();
 }

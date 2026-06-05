@@ -17,7 +17,7 @@ namespace Types {
         QString title;
         QString artist;
         QString album;
-        qint64  duration; // ms
+        quint64 duration; // ms
         QUrl    source; // to the audio path
         QUrl    cover;
     };
@@ -29,8 +29,8 @@ namespace Types {
         QUrl         cover;
 
         // sum of all the children
-        qint64 duration() const {
-            qint64 total = 0;
+        quint64 duration() const {
+            quint64 total = 0;
             for (const Song &s : songs)
                 total += s.duration;
             return total;

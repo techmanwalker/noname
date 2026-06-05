@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration Multimedia)
 
 
 ### Base build file listing
@@ -35,13 +35,12 @@ file(GLOB_RECURSE SHADERS_QMLS
     "src/qml/shaders/*.qml"
 )
 
-file(GLOB_RECURSE MODELS_SOURCES
+file(GLOB_RECURSE QML_MODELS_SOURCES
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
     "src/models/*.hpp"
     "src/models/*.cpp"
 )
-
 
 ### Inter-module communication
 
@@ -52,23 +51,27 @@ qt_add_qml_module(playermodels
     VERSION 1.0
     RESOURCE_PREFIX /playermodels
     SOURCES
-        ${MODELS_SOURCES}
+        ${QML_MODELS_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/PlayerModels"
 )
 
 target_link_libraries(playermodels
+    PUBLIC
+        Qt6::Multimedia
     PRIVATE
         Qt6::Core
         Qt6::Qml
         Qt6::QmlIntegration
+        playbackcontroller
 )
 
 target_include_directories(playermodels
     PUBLIC
         src/models
+        src/playbackcontroller
 )
 
-### Modules
+### QML Modules
 
 # Primitives - the base of all modules
 
@@ -124,6 +127,8 @@ qt_add_qml_module(player
 )
 
 target_link_libraries(player
+    PUBLIC
+        playermodels
     PRIVATE
         Qt6::Core
         Qt6::Gui
@@ -131,6 +136,24 @@ target_link_libraries(player
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::ShaderTools
+)
+
+### C++ Modules
+
+# The Playback controller
+add_library(playbackcontroller STATIC
+    src/playbackcontroller/playbackcontroller.cpp
+)
+
+target_link_libraries(playbackcontroller
+    PRIVATE
+        Qt6::Core
+        Qt6::Multimedia
+)
+
+target_include_directories(playbackcontroller
+    PRIVATE
+        src/models
 )
 
 
@@ -197,12 +220,14 @@ qt_add_executable(mockupv2 EXCLUDE_FROM_ALL
 )
 
 target_link_libraries(mockupv2
-    PRIVATE
+    PUBLIC
         ${BASIC_LIBRARIES}
+    PRIVATE
         playermodels
         player
         shaders
         primitives
+        playbackcontroller
 )
 
 target_include_directories(mockupv2

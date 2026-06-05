@@ -7,6 +7,7 @@
 #include "lyricsmodel.hpp"
 #include "nextqueue.hpp"
 #include "playbackpresentation.hpp"
+#include "playbackcontroller.hpp"
 
 int
 main (int argc, char ** argv)
@@ -44,13 +45,9 @@ main (int argc, char ** argv)
     // Dummy player test
     auto& PlaybackPresentation = PlaybackPresentation::instance();
 
-    // Test player state
-    PlaybackPresentation.setTitle("Eric");
-    PlaybackPresentation.setArtist("Mitski");
-    PlaybackPresentation.setAlbum("Lush");
-    PlaybackPresentation.setCover(QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/lush.jpg"));
-    PlaybackPresentation.setDuration_ms(197000);
-    PlaybackPresentation.setPosition_ms(147000);
+    // Now that the manual setTitle function has vanished, now we need to formally play a song.
+
+    playback_controller::instance().load(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/eric.flac"));
 
     // create base engine
     QQmlApplicationEngine engine;
