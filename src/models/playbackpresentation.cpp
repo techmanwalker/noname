@@ -1,6 +1,8 @@
+
 #include "playbackpresentation.hpp"
 #include "playbackcontroller.hpp"
 #include <QQmlEngine>
+#include <qjsengine.h>
 
 // meyers singleton
 PlaybackPresentation &PlaybackPresentation::instance() {
@@ -10,13 +12,18 @@ PlaybackPresentation &PlaybackPresentation::instance() {
 
 // qml factory
 PlaybackPresentation *PlaybackPresentation::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
-    Q_UNUSED(qmlEngine);
     Q_UNUSED(jsEngine);
 
     PlaybackPresentation *inst = &instance();
+
+    if (qmlEngine) {
+        qmlEngine->addImageProvider("covers", &playback_controller::instance().m_cover_provider);
+    }
     
-    // transfer ownership to c++
+    // transfer ownership to c++; don't dare to destroy these
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
+    QJSEngine::setObjectOwnership(&playback_controller::instance().m_cover_provider, QJSEngine::CppOwnership);
+
     
     return inst;
 }

@@ -52,6 +52,8 @@ qt_add_qml_module(playermodels
     RESOURCE_PREFIX /playermodels
     SOURCES
         ${QML_MODELS_SOURCES}
+        src/playbackcontroller/coverprovider.hpp
+        src/playbackcontroller/coverprovider.cpp
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/PlayerModels"
 )
 
@@ -62,6 +64,7 @@ target_link_libraries(playermodels
         Qt6::Core
         Qt6::Qml
         Qt6::QmlIntegration
+        Qt6::Quick
         playbackcontroller
 )
 
@@ -143,12 +146,14 @@ target_link_libraries(player
 # The Playback controller
 add_library(playbackcontroller STATIC
     src/playbackcontroller/playbackcontroller.cpp
+    src/playbackcontroller/coverprovider.cpp
 )
 
 target_link_libraries(playbackcontroller
     PRIVATE
         Qt6::Core
         Qt6::Multimedia
+        Qt6::Quick
 )
 
 target_include_directories(playbackcontroller

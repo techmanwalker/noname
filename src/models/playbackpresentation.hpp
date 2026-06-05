@@ -5,7 +5,6 @@
 #include <QString>
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <QMediaPlayer>
-#include <qtmetamacros.h>
 
 #include "playbackcontroller.hpp"
 
