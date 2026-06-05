@@ -190,16 +190,16 @@ playback_controller::handle_media_status_changed()
         loaded_track.source = m_media_player.source();
         loaded_track.duration = static_cast<quint64>(m_media_player.duration());
         loaded_track.title = meta_data.value(QMediaMetaData::Title).toString();
-        loaded_track.artist = meta_data.value(QMediaMetaData::Author).toString();
+        loaded_track.artist = meta_data.value(QMediaMetaData::ContributingArtist).toString();
         loaded_track.album = meta_data.value(QMediaMetaData::AlbumTitle).toString();
 
         // cover needs extra handling
-        QString cover_uid = m_cover_provider.store(meta_data.value(QMediaMetaData::ThumbnailImage));
+        QString cover_uid = m_cover_provider->store(meta_data.value(QMediaMetaData::ThumbnailImage));
         if (!cover_uid.isEmpty()) {
             loaded_track.cover = cover_provider::schema + cover_uid;
         } else {
             // If it came empty or was not a valid image, use the default
-            loaded_track.cover = QUrl(QString(m_cover_provider.default_cover_uri));
+            loaded_track.cover = QUrl(QString(m_cover_provider->default_cover_uri));
         }
 
         if (loaded_track.title.isEmpty()) {

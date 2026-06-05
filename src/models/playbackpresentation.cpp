@@ -17,12 +17,12 @@ PlaybackPresentation *PlaybackPresentation::create(QQmlEngine *qmlEngine, QJSEng
     PlaybackPresentation *inst = &instance();
 
     if (qmlEngine) {
-        qmlEngine->addImageProvider("covers", &playback_controller::instance().m_cover_provider);
+        qmlEngine->addImageProvider("covers", playback_controller::instance().m_cover_provider);
     }
     
     // transfer ownership to c++; don't dare to destroy these
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
-    QJSEngine::setObjectOwnership(&playback_controller::instance().m_cover_provider, QJSEngine::CppOwnership);
+    QJSEngine::setObjectOwnership(playback_controller::instance().m_cover_provider, QJSEngine::CppOwnership);
 
     
     return inst;
