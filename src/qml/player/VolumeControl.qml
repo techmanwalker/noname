@@ -18,7 +18,13 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
         
         onClicked: {
-            volumeSlider.value = volumeSlider.value > 0 ? 0 : volumeSlider.lastNonZeroValue
+            // The slider is bound to this value so both backend and GUI
+            // change volume at a time
+            if (root.stateModel.volume > 0) {
+                root.stateModel.volume = 0
+            } else {
+                root.stateModel.volume = volumeSlider.lastNonZeroValue
+            }
         }
     }
     
