@@ -1,6 +1,6 @@
 #include "playbackcontroller.hpp"
 #include <QMediaMetaData>
-#include <qmediaplayer.h>
+#include <QMediaPlayer>
 
 // Meyers singleton implementation
 playback_controller &
@@ -192,7 +192,15 @@ playback_controller::handle_media_status_changed()
         loaded_track.title = meta_data.value(QMediaMetaData::Title).toString();
         loaded_track.artist = meta_data.value(QMediaMetaData::Author).toString();
         loaded_track.album = meta_data.value(QMediaMetaData::AlbumTitle).toString();
-        loaded_track.cover = meta_data.value(QMediaMetaData::ThumbnailImage).toUrl();
+
+        // cover needs extra handling
+        QString cover_uid = m_cover_provider.store(meta_data.value(QMediaMetaData::ThumbnailImage));
+        if (!cover_uid.isEmpty()) {
+            loaded_track.cover = cover_provider::schema + cover_uid;
+        } else {
+            // If it came empty or was not a valid image, use the default
+            loaded_track.cover = QUrl(QString(m_cover_provider.default_cover_uri));
+        }
 
         if (loaded_track.title.isEmpty()) {
             loaded_track.title = loaded_track.source.fileName();

@@ -9,6 +9,7 @@
 #include <QTimer>
 
 #include "abstractmodel.hpp" // for Types:: namespace
+#include "coverprovider.hpp"
 
 enum class metadata_load_status {
     idle,
@@ -52,6 +53,9 @@ public:
     metadata_load_status metadata_status()       const;
     bool is_loading() const;
 
+    // Provides cached-in-memory covers to actually be able to load them
+    cover_provider m_cover_provider;
+
 signals:
     void position_changed();
     void position_poll_requested(); // frequency limited to a maximum rate/interval, GUI safe
@@ -88,5 +92,5 @@ private:
     // every time this timer ticks, a position_poll_requested signal
     // is triggered to avoid overloading the QML engine
     QTimer polling_position_timer;
-    static constexpr quint16 polling_position_timer_interval = 250; // tick every...
+    static constexpr quint16 polling_position_timer_interval = 250; // tick every...;
 };
