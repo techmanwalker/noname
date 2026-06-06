@@ -1,5 +1,7 @@
 import QtQuick
 
+import Player
+
 Column {
     id: root
     spacing: 0
