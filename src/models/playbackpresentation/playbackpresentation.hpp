@@ -100,6 +100,4 @@ private:
     explicit PlaybackPresentation(QObject *parent = nullptr);
 
     playback_controller &playing = playback_controller::instance();
-
-    quint8  m_volume = 100; // volume, from 0 to 100
 };
