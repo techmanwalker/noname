@@ -84,6 +84,8 @@ qt_add_qml_module(playbackpresentation
     SOURCES
         src/models/playbackpresentation/playbackpresentation.hpp
         src/models/playbackpresentation/playbackpresentation.cpp
+    DEPENDENCIES
+        QtMultimedia
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlaybackPresentation"
 )
 

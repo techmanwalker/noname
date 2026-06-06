@@ -2,7 +2,7 @@ import QtQuick
 
 import StartPage
 import Primitives
-import PlayerModels as PM
+import Player.MediaSequences
 
 Item {
     id: root
@@ -44,7 +44,7 @@ Item {
         }
 
         Shortcuts {     
-            model: PM.ShortcutsList
+            model: ShortcutsList
         }
     }
 }
