@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player
-import PlayerModels
+import Player.PlaybackPresentation
+import Player.MediaSequences
 import Primitives
 
 Item {
@@ -129,7 +130,7 @@ Item {
 
             Playlist {
                 id: nextQueue
-                model: NextQueue
+                model: PlayQueue
 
                 Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true

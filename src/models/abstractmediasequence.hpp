@@ -73,17 +73,18 @@ using RoleDefinitions = std::vector<RoleDefinition>;
 
 
 /**
-    @brief List model that can contain any type of identifiable audio metadata organization forms, referred as "AudioFormTypes" at the beginning of this file.
+    @brief List of any form of playable media, enumerated in the Types:: namespace. 
     This is not intended to be instantiated directly but rather to use one of the inherited classes.
 
-    The intention is that inherited classes will restrict themselves to only hold 1 or more specified types and update their add(T) and remove(T) functions accordingly.
+    Inherited classes can restrict themselves to only hold 1 or more specified types and update
+    their add(T) and remove(T) functions accordingly.
 */
-class AbstractModel : public QAbstractListModel {
+class AbstractMediaSequence : public QAbstractListModel {
     Q_OBJECT
     QML_ANONYMOUS
 
 public:
-    explicit AbstractModel(QObject *parent, std::vector<std::pair<QByteArray, RoleExtractor>> role_defs);
+    explicit AbstractMediaSequence(QObject *parent, std::vector<std::pair<QByteArray, RoleExtractor>> role_defs);
 
     int                    rowCount(const QModelIndex &parent = QModelIndex())        const override;
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;

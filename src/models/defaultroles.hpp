@@ -1,6 +1,6 @@
 #pragma once
 
-#include "abstractmodel.hpp"
+#include "abstractmediasequence.hpp"
 #include <QVariant>
 
 // Helper to encapsulate the repetitive pattern of std::visit on the variant
