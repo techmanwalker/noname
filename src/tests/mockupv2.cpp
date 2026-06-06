@@ -4,9 +4,9 @@
 #include <QQuickWindow>
 //#include <QDirIterator>
 
-#include "lyricsmodel.hpp"
-#include "nextqueue.hpp"
-#include "playbackpresentation.hpp"
+#include "lyrics/lyricsmanifest.hpp"
+#include "sequences/playqueue.hpp"
+#include "playbackpresentation/playbackpresentation.hpp"
 #include "playbackcontroller.hpp"
 
 int
@@ -18,7 +18,7 @@ main (int argc, char ** argv)
     QGuiApplication app(argc, argv);
 
     // Create model
-    auto& testLyrics = LyricsModel::instance();
+    auto& testLyrics = LyricsManifest::instance();
     
     // Populate it (example - load from file or hardcode for testing)
     testLyrics.appendLyric(0, "You shut your mouth");
@@ -27,7 +27,7 @@ main (int argc, char ** argv)
     testLyrics.appendLyric(15000, "Just like everybody else does");
 
     // Playlist model
-    auto& nextQueue = NextQueue::instance();
+    auto& nextQueue = PlayQueue::instance();
 
     // Populate it (example)
     nextQueue.append(Types::Song{ "A Potion For Love",  "AURORA",          "The Gods We Can Touch",                216000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/apotionforlove.jpg")                 });

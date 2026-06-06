@@ -35,31 +35,59 @@ file(GLOB_RECURSE SHADERS_QMLS
     "src/qml/shaders/*.qml"
 )
 
-file(GLOB_RECURSE QML_MODELS_SOURCES
+file(GLOB QML_MODELS_SEQUENCES_SOURCES
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
-    "src/models/*.hpp"
-    "src/models/*.cpp"
+    "src/models/sequences/*.hpp"
+    "src/models/sequences/*.cpp"
+    "src/models/abstractmediasequence.hpp"
+    "src/models/abstractmediasequence.cpp"
+    "src/models/defaultroles.hpp"
 )
+
 
 ### Inter-module communication
 
-add_library(playermodels STATIC)
+# Media sequences - playlists, queues and shorcuts representations
 
-qt_add_qml_module(playermodels
-    URI PlayerModels
+qt_add_qml_module(mediasequences
+    STATIC
+    URI Player.MediaSequences
     VERSION 1.0
-    RESOURCE_PREFIX /playermodels
+    RESOURCE_PREFIX /player/sequences
     SOURCES
-        ${QML_MODELS_SOURCES}
-        src/playbackcontroller/coverprovider.hpp
-        src/playbackcontroller/coverprovider.cpp
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/PlayerModels"
+        ${QML_MODELS_SEQUENCES_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
 )
 
-target_link_libraries(playermodels
+target_link_libraries(mediasequences
+    PRIVATE
+        Qt6::Core
+        Qt6::Qml
+        Qt6::QmlIntegration
+)
+
+target_include_directories(mediasequences
     PUBLIC
-        Qt6::Multimedia
+        src/models
+    PRIVATE
+        src/models/sequences # to make qmltyperegistrar happy
+)
+
+# Playback presentation - everything that the C++ side exposes for your control and view
+
+qt_add_qml_module(playbackpresentation
+    STATIC
+    URI Player.PlaybackPresentation
+    VERSION 1.0
+    RESOURCE_PREFIX /player/playbackpresentation
+    SOURCES
+        src/models/playbackpresentation/playbackpresentation.hpp
+        src/models/playbackpresentation/playbackpresentation.cpp
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlaybackPresentation"
+)
+
+target_link_libraries(playbackpresentation
     PRIVATE
         Qt6::Core
         Qt6::Qml
@@ -68,19 +96,47 @@ target_link_libraries(playermodels
         playbackcontroller
 )
 
-target_include_directories(playermodels
+target_include_directories(playbackpresentation
     PUBLIC
         src/models
         src/playbackcontroller
+    PRIVATE
+        src/models/playbackpresentation
+)
+
+# Lyrics manifest - access the lyrics from your playing song anywhere
+
+qt_add_qml_module(lyricsmanifest
+    STATIC
+    URI Player.LyricsManifest
+    VERSION 1.0
+    RESOURCE_PREFIX /player/lyricsmanifest
+    SOURCES
+        src/models/lyrics/lyricsmanifest.hpp
+        src/models/lyrics/lyricsmanifest.cpp
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
+)
+
+target_link_libraries(lyricsmanifest
+    PRIVATE
+        Qt6::Core
+        Qt6::Qml
+        Qt6::QmlIntegration
+)
+
+target_include_directories(lyricsmanifest
+    PUBLIC
+        src/models
+    PRIVATE
+        src/models/lyrics
 )
 
 ### QML Modules
 
 # Primitives - the base of all modules
 
-add_library(primitives STATIC)
-
 qt_add_qml_module(primitives
+    STATIC
     URI Primitives
     VERSION 1.0
     RESOURCE_PREFIX /primitives
@@ -92,9 +148,8 @@ qt_add_qml_module(primitives
 
 # Shaders - any module depends on these to look nice
 
-add_library(shaders STATIC)
-
 qt_add_qml_module(shaders
+    STATIC
     URI Shaders
     VERSION 1.0
     RESOURCE_PREFIX /shaders
@@ -117,9 +172,8 @@ qt_add_shaders(shaders "_shaders"
 )
 
 # The Player module
-add_library(player STATIC)
-
 qt_add_qml_module(player
+    STATIC
     URI Player
     VERSION 1.0
     RESOURCE_PREFIX /player
@@ -131,7 +185,9 @@ qt_add_qml_module(player
 
 target_link_libraries(player
     PUBLIC
-        playermodels
+        mediasequences
+        playbackpresentation
+        lyricsmanifest
     PRIVATE
         Qt6::Core
         Qt6::Gui
@@ -141,32 +197,10 @@ target_link_libraries(player
         Qt6::ShaderTools
 )
 
-### C++ Modules
-
-# The Playback controller
-add_library(playbackcontroller STATIC
-    src/playbackcontroller/playbackcontroller.cpp
-    src/playbackcontroller/coverprovider.cpp
-)
-
-target_link_libraries(playbackcontroller
-    PRIVATE
-        Qt6::Core
-        Qt6::Multimedia
-        Qt6::Quick
-)
-
-target_include_directories(playbackcontroller
-    PRIVATE
-        src/models
-)
-
-
 # The Start page module
 
-add_library(startpage STATIC)
-
 qt_add_qml_module(startpage
+    STATIC
     URI StartPage
     VERSION 1.0
     RESOURCE_PREFIX /startpage
@@ -178,10 +212,32 @@ qt_add_qml_module(startpage
 
 target_link_libraries(startpage
     PRIVATE
-        playermodels
+        mediasequences
 )
 
 target_include_directories(startpage
+    PRIVATE
+        src/models
+)
+
+
+### C++ Modules
+
+# The Playback controller
+add_library(playbackcontroller STATIC
+    src/playbackcontroller/playbackcontroller.cpp
+    src/playbackcontroller/coverprovider.cpp
+)
+
+target_link_libraries(playbackcontroller
+    PUBLIC
+        Qt6::Multimedia # every module linked to playbackcontroller ends up needing this
+    PRIVATE
+        Qt6::Core
+        Qt6::Quick
+)
+
+target_include_directories(playbackcontroller
     PRIVATE
         src/models
 )
@@ -227,8 +283,6 @@ qt_add_executable(mockupv2 EXCLUDE_FROM_ALL
 target_link_libraries(mockupv2
     PUBLIC
         ${BASIC_LIBRARIES}
-    PRIVATE
-        playermodels
         player
         shaders
         primitives
@@ -248,7 +302,6 @@ target_link_libraries(startpagetest
     PRIVATE
         ${BASIC_LIBRARIES}
         startpage
-        playermodels
         player
 )
 

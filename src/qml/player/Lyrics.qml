@@ -1,7 +1,4 @@
-// Lyrics.qml
 import QtQuick
-
-import PlayerModels
 
 Column {
     id: root

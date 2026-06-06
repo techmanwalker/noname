@@ -1,22 +1,22 @@
-#include "lyricsmodel.hpp"
+#include "lyricsmanifest.hpp"
 #include <QQmlEngine>
 
 // Meyers singleton implementation
-LyricsModel &
-LyricsModel::instance()
+LyricsManifest &
+LyricsManifest::instance()
 {
-    static LyricsModel s_instance;
+    static LyricsManifest s_instance;
     return s_instance;
 }
 
 // qml factory
-LyricsModel *
-LyricsModel::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
+LyricsManifest *
+LyricsManifest::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 {
     Q_UNUSED(qmlEngine);
     Q_UNUSED(jsEngine);
     
-    LyricsModel *inst = &instance();
+    LyricsManifest *inst = &instance();
 
     // prevent qml from freeing singleton memory on closure
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
@@ -25,13 +25,13 @@ LyricsModel::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 }
 
 // private constructor (now doing nothing special)
-LyricsModel::LyricsModel(QObject *parent)
+LyricsManifest::LyricsManifest(QObject *parent)
     : QAbstractListModel(parent)
 {
 }
 
 int
-LyricsModel::rowCount(const QModelIndex &parent) const
+LyricsManifest::rowCount(const QModelIndex &parent) const
 {
     // For list models, parent is always invalid
     if (parent.isValid())
@@ -40,7 +40,7 @@ LyricsModel::rowCount(const QModelIndex &parent) const
 }
 
 QVariant
-LyricsModel::data(const QModelIndex &index, int role) const
+LyricsManifest::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid() || index.row() >= static_cast<int>(m_lyrics.size()))
         return QVariant();
@@ -58,7 +58,7 @@ LyricsModel::data(const QModelIndex &index, int role) const
 }
 
 QHash<int, QByteArray>
-LyricsModel::roleNames()
+LyricsManifest::roleNames()
     const
 {
     QHash<int, QByteArray> roles;
@@ -68,7 +68,7 @@ LyricsModel::roleNames()
 }
 
 void
-LyricsModel::appendLyric(unsigned long timestampInMs, const QString &text)
+LyricsManifest::appendLyric(unsigned long timestampInMs, const QString &text)
 {
     beginInsertRows(QModelIndex(), m_lyrics.size(), m_lyrics.size());
     m_lyrics.push_back({timestampInMs, text});
@@ -76,7 +76,7 @@ LyricsModel::appendLyric(unsigned long timestampInMs, const QString &text)
 }
 
 void
-LyricsModel::removeLyric(int index)
+LyricsManifest::removeLyric(int index)
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
         return;
@@ -87,7 +87,7 @@ LyricsModel::removeLyric(int index)
 }
 
 void
-LyricsModel::clear()
+LyricsManifest::clear()
 {
     if (m_lyrics.empty())
         return;
@@ -98,7 +98,7 @@ LyricsModel::clear()
 }
 
 QString
-LyricsModel::textAt(int index) const
+LyricsManifest::textAt(int index) const
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
         return QString();
@@ -106,7 +106,7 @@ LyricsModel::textAt(int index) const
 }
 
 unsigned
-long LyricsModel::timestampAt(int index)
+long LyricsManifest::timestampAt(int index)
     const
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))

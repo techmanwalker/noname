@@ -1,9 +1,9 @@
-#include "abstractmodel.hpp"
+#include "abstractmediasequence.hpp"
 
-// Default role definitions for any AbstractModel
+// Default role definitions for any AbstractMediaSequence
 
 /// Constructs the model and compiles the given role definitions into sequential Qt user roles.
-AbstractModel::AbstractModel(
+AbstractMediaSequence::AbstractMediaSequence(
     QObject *parent,
     RoleDefinitions role_defs
 )
@@ -19,7 +19,7 @@ AbstractModel::AbstractModel(
 
 // Count items (intended for QML)
 int
-AbstractModel::rowCount(
+AbstractMediaSequence::rowCount(
     const QModelIndex &parent
 ) const
 {
@@ -29,14 +29,14 @@ AbstractModel::rowCount(
 
 // Count items (intended for C++)
 int
-AbstractModel::itemCount() const
+AbstractMediaSequence::itemCount() const
 {
     return static_cast<int>(m_items.size());
 }
 
 /// Retrieves the value of a specific role for the item at the given index
 QVariant
-AbstractModel::data(
+AbstractMediaSequence::data(
     const QModelIndex &index,
     int role
 ) const
@@ -56,7 +56,7 @@ AbstractModel::data(
 
 /// Returns the role name map, allowing QML to resolve properties by their string names.
 QHash<int, QByteArray>
-AbstractModel::roleNames() const
+AbstractMediaSequence::roleNames() const
 {
     QHash<int, QByteArray> hash;
     for (const CompiledRole &r : m_compiledroles)
@@ -65,7 +65,7 @@ AbstractModel::roleNames() const
 }
 
 void
-AbstractModel::append(
+AbstractMediaSequence::append(
     const Types::Any &item
 )
 {
@@ -76,7 +76,7 @@ AbstractModel::append(
 }
 
 void
-AbstractModel::remove(
+AbstractMediaSequence::remove(
     int index
 )
 {
@@ -87,7 +87,7 @@ AbstractModel::remove(
 }
 
 void
-AbstractModel::clear()
+AbstractMediaSequence::clear()
 {
     beginResetModel();
     m_items.clear();
@@ -95,7 +95,7 @@ AbstractModel::clear()
 }
 
 const
-Types::Any &AbstractModel::itemAt(
+Types::Any &AbstractMediaSequence::itemAt(
     int index
 ) const
 {

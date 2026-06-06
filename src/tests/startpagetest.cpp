@@ -2,7 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
-#include "shortcutsmodel.hpp"
+#include "sequences/shortcutsmodel.hpp"
 
 int
 main (int argc, char ** argv)
@@ -11,7 +11,7 @@ main (int argc, char ** argv)
     QGuiApplication app(argc, argv);
 
     // define an example shortcuts model
-    auto& shortcuts = ShortcutsModel::instance();
+    auto& shortcuts = ShortcutsList::instance();
 
     shortcuts.append(Types::Song {
         "Stars",

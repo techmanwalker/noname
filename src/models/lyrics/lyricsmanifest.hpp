@@ -16,7 +16,8 @@ struct Lyric {
     QString text;
 };
 
-class LyricsModel : public QAbstractListModel
+// The lyrics of the current playing song, accessible from within the entire player.
+class LyricsManifest : public QAbstractListModel
 {
     Q_OBJECT
     QML_ELEMENT
@@ -24,12 +25,12 @@ class LyricsModel : public QAbstractListModel
 
 public:
     // disable copy and reassignment to guarantee a single instance
-    LyricsModel(const LyricsModel&) = delete;
-    LyricsModel &operator=(const LyricsModel&) = delete;
+    LyricsManifest(const LyricsManifest&) = delete;
+    LyricsManifest &operator=(const LyricsManifest&) = delete;
 
     // singleton instantiation, global access in C++
-    static LyricsModel &instance();
-    static LyricsModel *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+    static LyricsManifest &instance();
+    static LyricsManifest *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // fixed role list
     enum Roles {
@@ -54,7 +55,7 @@ public:
 
 private:
     // private constructor
-    explicit LyricsModel(QObject *parent = nullptr);
+    explicit LyricsManifest(QObject *parent = nullptr);
     
     std::vector<Lyric> m_lyrics;
 };

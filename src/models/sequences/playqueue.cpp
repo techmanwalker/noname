@@ -1,22 +1,22 @@
-#include "nextqueue.hpp"
+#include "playqueue.hpp"
 #include <QQmlEngine>
 
 // Meyers singleton implementation
-NextQueue &
-NextQueue::instance()
+PlayQueue &
+PlayQueue::instance()
 {
-    static NextQueue s_instance;
+    static PlayQueue s_instance;
     return s_instance;
 }
 
 // factory for the qml engine
-NextQueue *
-NextQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
+PlayQueue *
+PlayQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 {
     Q_UNUSED(qmlEngine);
     Q_UNUSED(jsEngine);
     
-    NextQueue *inst = &instance();
+    PlayQueue *inst = &instance();
 
     // avoid QML GC to try to free object memory
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
@@ -24,7 +24,7 @@ NextQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
     return inst;
 }
 
-NextQueue::NextQueue(QObject *parent)
-    : PlaylistModel(parent)
+PlayQueue::PlayQueue(QObject *parent)
+    : PlaylistSequence(parent)
 {
 }

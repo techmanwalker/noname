@@ -1,11 +1,12 @@
 #pragma once
 
-#include "abstractmodel.hpp"
+#include "abstractmediasequence.hpp"
 
-class PlaylistModel : public AbstractModel {
+class PlaylistSequence : public AbstractMediaSequence {
     Q_OBJECT
+    QML_ANONYMOUS
 public:
-    explicit PlaylistModel(QObject *parent = nullptr);
+    explicit PlaylistSequence(QObject *parent = nullptr);
 
     // only accepts songs
     Q_INVOKABLE void append(const Types::Song &song);

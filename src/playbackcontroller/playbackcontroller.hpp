@@ -8,7 +8,7 @@
 #include <QMediaPlayer>
 #include <QTimer>
 
-#include "abstractmodel.hpp" // for Types:: namespace
+#include "abstractmediasequence.hpp" // for Types:: namespace
 #include "coverprovider.hpp"
 
 enum class metadata_load_status {
