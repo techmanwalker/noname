@@ -31,6 +31,8 @@ RowLayout {
 
         onMoved: root.stateModel.position_ms = value
 
+        onPressedChanged: root.stateModel.duration_slider_pressed = pressed
+
         Layout.alignment: Qt.AlignVCenter
         Layout.fillWidth: true
     }

@@ -1,6 +1,7 @@
 #include "playbackcontroller.hpp"
 #include <QMediaMetaData>
 #include <QMediaPlayer>
+#include <qmediaplayer.h>
 
 // Meyers singleton implementation
 playback_controller &
@@ -16,14 +17,9 @@ playback_controller::playback_controller(QObject *parent)
 {
     m_media_player.setAudioOutput(&m_audio_output);
 
-    polling_position_timer.setInterval(polling_position_timer_interval);
-
+    // raw high frequency signal, unused
     connect(&m_media_player, &QMediaPlayer::positionChanged,
             this, &playback_controller::position_changed);
-
-    // For safe position tracking from the GUI, poll with a timer
-    connect(&polling_position_timer, &QTimer::timeout,
-            this, &playback_controller::position_poll_requested);
 
     connect(&m_media_player, &QMediaPlayer::durationChanged,
             this, &playback_controller::handle_duration_changed);
@@ -32,7 +28,12 @@ playback_controller::playback_controller(QObject *parent)
             this, &playback_controller::handle_media_status_changed);
 
     connect(&m_media_player, &QMediaPlayer::playbackStateChanged,
-            this, &playback_controller::handle_playback_state_changed);
+            this, &playback_controller::playback_state_changed);
+
+    // Assuming that PlaybackPresentation converted this class in the
+    // signal sender, let's do an autoconnect
+    connect(this, &playback_controller::r_duration_slider_pressed_changed,
+            this, &playback_controller::handle_duration_slider_pressed_changed);
 }
 
 void
@@ -42,18 +43,18 @@ playback_controller::play()
 
     // Playback change signal is automatically sent by QMediaPlayer
     // and connected on the constructor
-
-    // keep synced
-    // position_changed() is automagically reemitted
-    emit position_poll_requested();
 }
 
 void
 playback_controller::pause()
 {
     m_media_player.pause();
+}
 
-    emit position_poll_requested();
+void
+playback_controller::stop()
+{
+    m_media_player.stop();
 }
 
 void
@@ -78,7 +79,7 @@ void
 playback_controller::unload()
 {
     m_current_transaction_id++; // invalidate pending loads
-    m_media_player.stop();
+    stop();
     m_media_player.setSource(QUrl());
     
     // Reset atómico de la estructura local a valores por defecto (no nulos)
@@ -88,7 +89,6 @@ playback_controller::unload()
 
     emit track_changed();
     emit metadata_status_changed();
-    emit position_poll_requested();
     emit duration_changed();
 }
 
@@ -96,8 +96,6 @@ void
 playback_controller::set_position(const quint64 position_ms)
 {
     m_media_player.setPosition(static_cast<qint64>(position_ms));
-
-    emit position_poll_requested();
 }
 
 void
@@ -217,7 +215,7 @@ playback_controller::handle_media_status_changed()
         m_current_track = loaded_track; 
         m_status = metadata_load_status::ready;
 
-        // Notify the ViewModel the whole block of metadata at once
+        // Notify the PlaybackPresentation model the whole block of metadata at once
         emit track_changed();
         emit metadata_status_changed();
     }
@@ -228,26 +226,28 @@ playback_controller::handle_media_status_changed()
 }
 
 void
-playback_controller::handle_playback_state_changed()
+playback_controller::handle_duration_slider_pressed_changed(bool pressed)
 {
-    emit playback_state_changed();
-    
-    // Reactive bind to the throttled position changed QTimer
-    // to avoid repeating start() and stop() a bazillion times
-    switch (playback_state()) {
-        case QMediaPlayer::PlayingState:
-            emit position_poll_requested();
+    // Yet another reactive binding
 
-            if (!polling_position_timer.isActive()) {
-                polling_position_timer.start();
-            }
-            break;
-        default:
-            emit position_poll_requested();
-            
-            if (polling_position_timer.isActive()) {
-                polling_position_timer.stop();
-            }
-            break;
+    // if a drag started
+    if (pressed) {
+        playback_state_when_last_slider_drag_started = playback_state();
+        pause(); // you don't want it to sound while it is being dragged
+    } else {
+        // restore the playback to where it was
+        switch (playback_state_when_last_slider_drag_started) {
+            case QMediaPlayer::PlayingState:
+                play(); // if it was playing, start playing again
+                break;
+            case QMediaPlayer::PausedState:
+                pause();
+                break;
+            case QMediaPlayer::StoppedState:
+                stop();
+                break;
+
+            // no default this time
+        }
     }
 }
