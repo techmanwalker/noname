@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 
-import Primitives
+import Player.Primitives
 
 Item {
     id: root

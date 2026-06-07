@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import Player
 import Player.PlaybackPresentation
 import Player.MediaSequences
-import Primitives
+import Player.Primitives
 
 Item {
     id: root

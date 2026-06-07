@@ -29,10 +29,10 @@ file(GLOB_RECURSE PRIMITIVES_QMLS
     "src/qml/primitives/*.qml"
 )
 
-file(GLOB_RECURSE SHADERS_QMLS
+file(GLOB_RECURSE EFFECTS_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
-    "src/qml/shaders/*.qml"
+    "src/qml/effects/*.qml"
 )
 
 file(GLOB QML_MODELS_SEQUENCES_SOURCES
@@ -139,29 +139,29 @@ target_include_directories(lyricsmanifest
 
 qt_add_qml_module(primitives
     STATIC
-    URI Primitives
+    URI Player.Primitives
     VERSION 1.0
     RESOURCE_PREFIX /primitives
     QML_FILES
         ${PRIMITIVES_QMLS}
     OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Primitives"
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
 )
 
-# Shaders - any module depends on these to look nice
+# Effects - any module depends on these to look nice
 
-qt_add_qml_module(shaders
+qt_add_qml_module(playereffects
     STATIC
-    URI Shaders
+    URI Player.Effects
     VERSION 1.0
-    RESOURCE_PREFIX /shaders
+    RESOURCE_PREFIX /player/effects
     QML_FILES
-        ${SHADERS_QMLS}
+        ${EFFECTS_QMLS}
     OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Shaders"
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Effects"
 )
 
-qt_add_shaders(shaders "_shaders"
+qt_add_shaders(playereffects "_shaders"
     BATCHABLE
     PRECOMPILE
     OPTIMIZED
@@ -286,7 +286,7 @@ target_link_libraries(mockupv2
     PUBLIC
         ${BASIC_LIBRARIES}
         player
-        shaders
+        playereffects
         primitives
         playbackcontroller
 )
