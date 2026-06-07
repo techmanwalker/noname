@@ -7,6 +7,7 @@
 #include <QString>
 #include <QMediaPlayer>
 #include <QTimer>
+#include <memory>
 #include <qmediaplayer.h>
 
 #include "abstractmediasequence.hpp" // for Types:: namespace
@@ -56,7 +57,7 @@ public:
     bool is_loading() const;
 
     // Provides cached-in-memory covers to actually be able to load them
-    cover_provider *m_cover_provider = new cover_provider();
+    std::shared_ptr<cover_provider> m_cover_provider = std::make_shared<cover_provider>();
 
 signals:
     void position_changed();

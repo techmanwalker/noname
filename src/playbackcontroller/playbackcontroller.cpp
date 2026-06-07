@@ -1,4 +1,5 @@
 #include "playbackcontroller.hpp"
+#include "songfactory.hpp"
 #include <QMediaMetaData>
 #include <QMediaPlayer>
 #include <qmediaplayer.h>
@@ -177,52 +178,12 @@ playback_controller::handle_duration_changed()
 void
 playback_controller::handle_media_status_changed()
 {
-    if (media_status() == QMediaPlayer::LoadedMedia) {
-        // Locally save the ID that triggered this slot in the execution stack
-        const uint64_t transaction_at_callback = m_current_transaction_id;
-
-        const QMediaMetaData meta_data = m_media_player.metaData();
-        
-        // Build the temporary isolated container on the stack
-        Types::Song loaded_track;
-        loaded_track.source = m_media_player.source();
-        loaded_track.duration = static_cast<quint64>(m_media_player.duration());
-        loaded_track.title = meta_data.value(QMediaMetaData::Title).toString();
-        loaded_track.artist = meta_data.value(QMediaMetaData::ContributingArtist).toString();
-        loaded_track.album = meta_data.value(QMediaMetaData::AlbumTitle).toString();
-
-        // cover needs extra handling
-        QString cover_uid = m_cover_provider->store(meta_data.value(QMediaMetaData::ThumbnailImage));
-        if (!cover_uid.isEmpty()) {
-            loaded_track.cover = cover_provider::schema + cover_uid;
-        } else {
-            // If it came empty or was not a valid image, use the default
-            loaded_track.cover = QUrl(QString(m_cover_provider->default_cover_uri));
-        }
-
-        if (loaded_track.title.isEmpty()) {
-            loaded_track.title = loaded_track.source.fileName();
-        }
-
-        // RACE CONTROL:
-        // If current transaction_id changed while Qt processed the track,
-        // this means that the user called load() for another song. Discard.
-        if (transaction_at_callback != m_current_transaction_id) {
-            return; 
-        }
-
-        // 100% atomic replace, synced to the main thread
-        m_current_track = loaded_track; 
+    song_factory::extract(m_media_player.source(), [this](Types::Song loaded_track) {
+        m_current_track = loaded_track;
         m_status = metadata_load_status::ready;
-
-        // Notify the PlaybackPresentation model the whole block of metadata at once
         emit track_changed();
         emit metadata_status_changed();
-    }
-    else if (media_status() == QMediaPlayer::InvalidMedia) {
-        m_status = metadata_load_status::idle;
-        emit metadata_status_changed();
-    }
+    });
 }
 
 void

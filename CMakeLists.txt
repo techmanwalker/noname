@@ -223,6 +223,7 @@ target_include_directories(startpage
 add_library(playbackcontroller STATIC
     src/playbackcontroller/playbackcontroller.cpp
     src/playbackcontroller/coverprovider.cpp
+    src/playbackcontroller/songfactory.cpp
 )
 
 target_link_libraries(playbackcontroller
