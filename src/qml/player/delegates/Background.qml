@@ -58,43 +58,37 @@ Item {
         anchors.fill: parent
         source: bgBlur.outputSource
 
-        pointA: Qt.vector4d(
+        pointA: Qt.vector3d(
             0.00,
             root.outer_player_l,
             root.outer_player_c,
-            0
         )
 
-        pointPA: Qt.vector4d(
+        pointPA: Qt.vector3d(
             root.clamp(root.playerLeft), 
             root.inner_player_l, // luma multiplier
             root.inner_player_c, // chroma multiplier
-            0     // unused
         )
-        pointPB: Qt.vector4d(
+        pointPB: Qt.vector3d(
             root.clamp(root.playerRight), 
             root.inner_player_l, 
-            root.inner_player_c, 
-            0
+            root.inner_player_c
         )
-        pointCA: Qt.vector4d(
+        pointCA: Qt.vector3d(
             root.clamp(root.coverLeft),
             root.cover_back_l,
-            root.cover_back_c,
-            0
+            root.cover_back_c
         )
-        pointCB: Qt.vector4d(
+        pointCB: Qt.vector3d(
             root.clamp(root.coverRight),
             root.cover_back_l,
-            root.cover_back_c,
-            0
+            root.cover_back_c
         )
 
-        pointB: Qt.vector4d(
+        pointB: Qt.vector3d(
             1,
             root.outer_player_l,
             root.outer_player_c,
-            0
         )
     }
 }
