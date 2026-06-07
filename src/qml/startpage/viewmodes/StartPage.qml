@@ -1,7 +1,7 @@
 import QtQuick
 
 import StartPage
-import Primitives
+import Player.Primitives
 import Player.MediaSequences
 
 Item {

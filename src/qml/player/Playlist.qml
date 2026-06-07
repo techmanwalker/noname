@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
-import Primitives
+import Player.Primitives
 
 ListView {
     id: root

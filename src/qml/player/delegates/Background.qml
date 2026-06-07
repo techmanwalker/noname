@@ -1,6 +1,6 @@
 import QtQuick
 
-import Shaders
+import Player.Effects
 
 Item {
     id: root
