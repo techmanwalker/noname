@@ -5,7 +5,6 @@
 cover_provider::cover_provider ()
     : QQuickImageProvider(QQuickImageProvider::Image)
 {
-    
 }
 
 QString

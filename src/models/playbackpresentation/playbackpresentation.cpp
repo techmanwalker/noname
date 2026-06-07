@@ -17,13 +17,27 @@ PlaybackPresentation *PlaybackPresentation::create(QQmlEngine *qmlEngine, QJSEng
     PlaybackPresentation *inst = &instance();
 
     if (qmlEngine) {
-        qmlEngine->addImageProvider("covers", playback_controller::instance().m_cover_provider);
+        // fetch the original shared_ptr
+        auto cxx_shared = playback_controller::instance().m_cover_provider;
+
+        /*  Explanation of the proxy mechanism:
+
+            QQmlEngine will take ownership of this proxy, and upon program teardown,
+            will invoke 'delete' on it.
+            As m_real is a std::shared_ptr, when the proxy is destroyed it will
+            decrement the reference counter safely without prematurely freeing the
+            displaced memory block where the qml engine thinks the cover_provider is.
+        */
+        auto *proxy = new __cover_provider_PROXY(cxx_shared);
+
+        qmlEngine->addImageProvider("covers", proxy);
     }
     
-    // transfer ownership to c++; don't dare to destroy these
+    // Transfer ownership to C++; don't you dare to destroy these either.
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
-    QJSEngine::setObjectOwnership(playback_controller::instance().m_cover_provider, QJSEngine::CppOwnership);
 
+    // no need to use the CppOwnership sentence for the m_cover_provider because it's a shared_ptr
+    // and qml can't destroy it anyway
     
     return inst;
 }
@@ -118,4 +132,25 @@ void
 PlaybackPresentation::handleVolumeChangedInController()
 {
     emit volumeChanged();
+}
+
+
+// --- Cheats so the QQmlEngine doesn't hard kill the player every time it's closed
+// Please don't pay too much attention to the syntax here. Qt threatened me to do this.
+__cover_provider_PROXY::__cover_provider_PROXY(
+    std::shared_ptr<cover_provider> realProvider
+    )
+    : QQuickImageProvider(QQuickImageProvider::Image),
+      m_real(realProvider) 
+{
+}
+
+// Simply redirect requests to the real cover provider.
+QImage 
+__cover_provider_PROXY::requestImage(
+    const QString &id,
+    QSize *size,
+    const QSize &requestedSize)
+{
+        return m_real->requestImage(id, size, requestedSize);
 }
