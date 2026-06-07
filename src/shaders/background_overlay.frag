@@ -7,12 +7,12 @@ layout(std140, binding = 0) uniform buf {
     mat4  qt_Matrix;
     float qt_Opacity;
     // kfloat _pad0; float _pad1; float _pad2; // align to vec4
-    vec4  pointA;   // (x_norm, L_mult, C_mult, unused)
-    vec4  pointPA;
-    vec4  pointCA;
-    vec4  pointCB;
-    vec4  pointPB;
-    vec4  pointB;
+    vec3  pointA;   // (x_norm, L_mult, C_mult)
+    vec3  pointPA;
+    vec3  pointCA;
+    vec3  pointCB;
+    vec3  pointPB;
+    vec3  pointB;
 } ubuf;
 
 layout(binding = 1) uniform sampler2D source;
