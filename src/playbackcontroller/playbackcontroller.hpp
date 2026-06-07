@@ -7,6 +7,7 @@
 #include <QString>
 #include <QMediaPlayer>
 #include <QTimer>
+#include <qmediaplayer.h>
 
 #include "abstractmediasequence.hpp" // for Types:: namespace
 #include "coverprovider.hpp"
@@ -37,6 +38,7 @@ public:
 
     void play();
     void pause();
+    void stop();
     void unload();
     void set_position(const quint64 position_ms);
     void set_volume(quint8 volume_percent);
@@ -58,7 +60,6 @@ public:
 
 signals:
     void position_changed();
-    void position_poll_requested(); // frequency limited to a maximum rate/interval, GUI safe
     void duration_changed();
     void volume_changed();
     
@@ -67,10 +68,13 @@ signals:
     void playback_state_changed();
     void metadata_status_changed();
 
+    // Reverse signal from QML down to the controller
+    void r_duration_slider_pressed_changed(bool pressed);
+
 private slots:
     void handle_duration_changed();
     void handle_media_status_changed();
-    void handle_playback_state_changed();
+    void handle_duration_slider_pressed_changed(bool pressed);
 
 private:
     // Private constructor for the singleton pattern
@@ -83,14 +87,9 @@ private:
     // Protected internal status
     Types::Song m_current_track;
     metadata_load_status m_status = metadata_load_status::idle;
+
+    QMediaPlayer::PlaybackState playback_state_when_last_slider_drag_started;
     
     // The core of synchronization: control of load versions
     uint64_t m_current_transaction_id = 0;
-
-    // Throttle position_changed frequency for GUI by limiting to certain frequency
-    
-    // every time this timer ticks, a position_poll_requested signal
-    // is triggered to avoid overloading the QML engine
-    QTimer polling_position_timer;
-    static constexpr quint16 polling_position_timer_interval = 250; // tick every...
 };

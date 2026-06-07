@@ -5,6 +5,7 @@
 #include <QString>
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <QMediaPlayer>
+#include <atomic>
 
 #include "playbackcontroller.hpp"
 
@@ -16,7 +17,7 @@ class QJSEngine;
     @class PlaybackPresentation
     @brief Declarative and reactive representation of the playback state for the user interface.
 
-    This class acts as the view model (ViewModel) within the application architecture,
+    This class acts as the view model within the application architecture,
     serving as the single source of truth for visual components (QML) regarding the current 
     state of the audio engine. Its fundamental purpose is to structure and expose playback data 
     efficiently, completely decoupling business logic and audio processing from the interface.
@@ -49,6 +50,10 @@ class PlaybackPresentation : public QObject
     Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY durationChanged)
     Q_PROPERTY(quint64 position_ms READ position_ms WRITE setPosition_ms    NOTIFY positionChanged)
     Q_PROPERTY(quint8  volume      READ volume      WRITE setVolume         NOTIFY volumeChanged)
+
+    // governed from the QML side
+    Q_PROPERTY(bool duration_slider_pressed READ duration_slider_pressed WRITE setDurationSliderPressed)
+
     Q_PROPERTY(QMediaPlayer::PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
 
 public:
@@ -68,11 +73,13 @@ public:
     quint64 duration_ms() const;
     quint64 position_ms() const;
     quint8 volume() const;
+    bool duration_slider_pressed() const;
     QMediaPlayer::PlaybackState playbackState() const;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position);
     void setVolume (quint8 volume);
+    void setDurationSliderPressed (bool pressed);
 
     // Playback controls
     Q_INVOKABLE void play() const;
@@ -90,6 +97,9 @@ signals:
     void volumeChanged();
     void playbackStateChanged();
 
+    // Reverse signals; NOTIFY but from QML to C++
+    void r_durationSliderPressedChanged(bool pressed);
+
 public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
@@ -100,4 +110,6 @@ private:
     explicit PlaybackPresentation(QObject *parent = nullptr);
 
     playback_controller &playing = playback_controller::instance();
+
+    std::atomic_bool m_duration_slider_pressed = false; // is the duration slider pressed or dragged?
 };

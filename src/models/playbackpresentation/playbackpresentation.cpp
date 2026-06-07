@@ -42,10 +42,15 @@ PlaybackPresentation::PlaybackPresentation(QObject *parent)
     connect(&playing, &playback_controller::playback_state_changed,
             this, &PlaybackPresentation::playbackStateChanged);
 
-    connect(&playing, &playback_controller::position_poll_requested,
+    connect(&playing, &playback_controller::position_changed,
             this, &PlaybackPresentation::positionChanged);
+
+    // Send the reverse signal to the controller when the slider is pressed or not
+    connect(this, &PlaybackPresentation::r_durationSliderPressedChanged,
+            &playing, &playback_controller::r_duration_slider_pressed_changed);
 }
 
+// Getters block
 QString PlaybackPresentation::title()       const { return playing.current_track().title;    }
 QString PlaybackPresentation::artist()      const { return playing.current_track().artist;   }
 QString PlaybackPresentation::album()       const { return playing.current_track().album;    }
@@ -53,29 +58,31 @@ QUrl    PlaybackPresentation::cover()       const { return playing.current_track
 quint64 PlaybackPresentation::duration_ms() const { return playing.current_track().duration; }
 quint64 PlaybackPresentation::position_ms() const { return playing.current_position_ms();    }
 quint8  PlaybackPresentation::volume()      const { return playing.current_volume();         }
-QMediaPlayer::PlaybackState
-PlaybackPresentation::playbackState() const
-{
-    return playing.playback_state();
-}
+
+bool    PlaybackPresentation::duration_slider_pressed() const { return m_duration_slider_pressed.load(); }
+
+QMediaPlayer::PlaybackState PlaybackPresentation::playbackState() const { return playing.playback_state(); }
+
 
 void
 PlaybackPresentation::setPosition_ms(quint64 position)
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
-    if (playing.current_position_ms() != position) {     
-        // backend moves the playhead synchronously
-        playing.set_position(position);
-        
-        // trigger the signal to notify the GUI that the local value has changed due to manual drag
-        emit positionChanged();
-    }
+    playing.set_position(position);
 }
 
 void
 PlaybackPresentation::setVolume(quint8 volume)
 {
     playing.set_volume(volume);
+}
+
+void
+PlaybackPresentation::setDurationSliderPressed(bool pressed)
+{
+    m_duration_slider_pressed.store(pressed);
+
+    emit r_durationSliderPressedChanged(pressed);
 }
 
 // --- Playback controls ---

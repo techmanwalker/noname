@@ -47,7 +47,7 @@ main (int argc, char ** argv)
 
     // Now that the manual setTitle function has vanished, now we need to formally play a song.
 
-    playback_controller::instance().load(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/wastinglove.flac"));
+    playback_controller::instance().load(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/genesis.flac"));
 
     // create base engine
     QQmlApplicationEngine engine;
