@@ -53,7 +53,6 @@ file(GLOB QML_MODELS_SEQUENCES_SOURCES
 qt_add_qml_module(mediasequences
     STATIC
     URI Player.MediaSequences
-    VERSION 1.0
     RESOURCE_PREFIX /player/sequences
     SOURCES
         ${QML_MODELS_SEQUENCES_SOURCES}
@@ -79,7 +78,6 @@ target_include_directories(mediasequences
 qt_add_qml_module(playbackpresentation
     STATIC
     URI Player.PlaybackPresentation
-    VERSION 1.0
     RESOURCE_PREFIX /player/playbackpresentation
     SOURCES
         src/models/playbackpresentation/playbackpresentation.hpp
@@ -111,7 +109,6 @@ target_include_directories(playbackpresentation
 qt_add_qml_module(lyricsmanifest
     STATIC
     URI Player.LyricsManifest
-    VERSION 1.0
     RESOURCE_PREFIX /player/lyricsmanifest
     SOURCES
         src/models/lyrics/lyricsmanifest.hpp
@@ -140,7 +137,6 @@ target_include_directories(lyricsmanifest
 qt_add_qml_module(primitives
     STATIC
     URI Player.Primitives
-    VERSION 1.0
     RESOURCE_PREFIX /primitives
     QML_FILES
         ${PRIMITIVES_QMLS}
@@ -153,7 +149,6 @@ qt_add_qml_module(primitives
 qt_add_qml_module(playereffects
     STATIC
     URI Player.Effects
-    VERSION 1.0
     RESOURCE_PREFIX /player/effects
     QML_FILES
         ${EFFECTS_QMLS}
@@ -177,7 +172,6 @@ qt_add_shaders(playereffects "_shaders"
 qt_add_qml_module(player
     STATIC
     URI Player
-    VERSION 1.0
     RESOURCE_PREFIX /player
     QML_FILES
         ${PLAYER_QMLS}
@@ -204,7 +198,6 @@ target_link_libraries(player
 qt_add_qml_module(startpage
     STATIC
     URI StartPage
-    VERSION 1.0
     RESOURCE_PREFIX /startpage
     QML_FILES
         ${STARTPAGE_QMLS}
