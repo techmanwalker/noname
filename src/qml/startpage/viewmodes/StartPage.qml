@@ -45,6 +45,10 @@ Item {
 
         Shortcuts {     
             model: ShortcutsList
+
+            // avoid content overflow
+            anchors.left: parent.left
+            anchors.right: parent.right
         }
     }
 }
