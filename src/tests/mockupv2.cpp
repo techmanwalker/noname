@@ -8,6 +8,7 @@
 #include "sequences/playqueue.hpp"
 #include "playbackpresentation/playbackpresentation.hpp"
 #include "playbackcontroller.hpp"
+#include "songfactory.hpp"
 
 int
 main (int argc, char ** argv)
@@ -30,24 +31,25 @@ main (int argc, char ** argv)
     auto& nextQueue = PlayQueue::instance();
 
     // Populate it (example)
-    nextQueue.append(Types::Song{ "A Potion For Love",  "AURORA",          "The Gods We Can Touch",                216000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/apotionforlove.jpg")                 });
-    nextQueue.append(Types::Song{ "All The Things She Said", "t.A.T.u",    "200 km/h in the Wrong Lane",           214000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/200_kmh.jpg")                        });
-    nextQueue.append(Types::Song{ "Bitter Sweet Symphony", "The Verve",    "Urban Hymns",                          357000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/urbanhymns.jpg")                     });
-    nextQueue.append(Types::Song{ "Eric",                  "Mitski",       "Lush",                                 197000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/lush.jpg")                           });
-    nextQueue.append(Types::Song{ "Life in Mono",          "Mono",         "Formica Blues",                        223000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/formicablues.jpg")                   });
-    nextQueue.append(Types::Song{ "Lilith",                "Saint Avangeline", "Gardener of Eden",                 255000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/gardenerofeden.jpg")                 });
-    nextQueue.append(Types::Song{ "Only Time",             "Enya",         "A Day Without Rain",                   218000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/adaywithoutrain.jpg")                });
-    nextQueue.append(Types::Song{ "Show Me How",           "Men I Trust",  "Show Me How",                          215000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/showmehow.jpg")                      });
-    nextQueue.append(Types::Song{ "Runaway",               "AURORA",       "All My Demons Greeting Me As A Friend",248000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/allmydemonsgreetingmeasafriend.jpg") });
-    nextQueue.append(Types::Song{ "Telephones",            "Vacations",    "Changes",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/changes.jpg")                        });
-    nextQueue.append(Types::Song{ "YKWIM?",                "Yot Club",     "Bipolar",                              212000, QUrl(), QUrl::fromLocalFile("/home/notangel/Imágenes/Covers/bipolar.jpg")                        });
+    // Now with real file loading; for now, the append order is completely random because metadata extraction is async
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/eric.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lifeinmono.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/showmehov.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/telephones.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
 
     // Dummy player test
     auto& PlaybackPresentation = PlaybackPresentation::instance();
 
     // Now that the manual setTitle function has vanished, now we need to formally play a song.
 
-    playback_controller::instance().load(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/genesis.flac"));
+    playback_controller::instance().load(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac"));
 
     // create base engine
     QQmlApplicationEngine engine;
