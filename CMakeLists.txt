@@ -100,7 +100,6 @@ target_link_libraries(playbackpresentation
 target_include_directories(playbackpresentation
     PUBLIC
         src/models
-        src/playbackcontroller
     PRIVATE
         src/models/playbackpresentation
 )
@@ -235,6 +234,8 @@ target_link_libraries(playbackcontroller
 )
 
 target_include_directories(playbackcontroller
+    PUBLIC
+        src/playbackcontroller # enable including its own headers a la Qt6:: libraries
     PRIVATE
         src/models
 )
