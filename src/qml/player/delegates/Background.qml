@@ -45,18 +45,11 @@ Item {
         }
     }
 
-    DualKawaseBlur {
-        id: bgBlur
+    BackgroundOverlay {
+        id: bgOverlay
         anchors.fill: parent
         source: img
-        passes: 4
-        offset: 1.5
         visible: false
-    }
-
-    BackgroundOverlay {
-        anchors.fill: parent
-        source: bgBlur.outputSource
 
         pointA: Qt.vector3d(
             0.00,
@@ -90,5 +83,13 @@ Item {
             root.outer_player_l,
             root.outer_player_c,
         )
+    }
+
+    DualKawaseBlur {
+        anchors.fill: parent
+        source: bgOverlay.outputSource
+        passes: 4
+        offset: 1.5
+        visible: true
     }
 }

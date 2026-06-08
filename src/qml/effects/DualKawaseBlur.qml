@@ -3,16 +3,16 @@ import QtQuick
 Item {
     id: root
 
-    // ── Public API ────────────────────────────────────────────────────────
-    property Item  source: null   // input item
+    // ── Bidirectional interface ────────────────────────────────────────────────
+    property var   source: null   // input item: Item, ShaderEffectSource or variants
     property int   passes: 3      // N downsamples + N upsamples
     property real  offset: 1.0    // offset by pass (in texels)
     property bool  frozen: false  // true → freeze the last frame (no recalculation)
 
+    property alias outputSource: _outputSource
+
     // ── Internal state ─────────────────────────────────────────────────────
     property var _chain: []
-
-    property alias outputSource: _outputSource
 
     // Hidden container for all intermediate passes
     Item {
