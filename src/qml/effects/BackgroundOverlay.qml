@@ -7,7 +7,8 @@ Item {
     property var   source: null  // accepts Item, ShaderEffectSource or variants
     property alias outputSource: _outputSource
 
-    // ── Control points: vec3(x_normalized, L_mult, C_mult) ───────────
+    // Control points: vec3(x_normalized, L_mult, C_mult)
+    
     // x: 0.0 = left border, 1.0 = right border (bindable to UI items)
     // L_mult: 0.0 = black, 1.0 = no brightness change
     // C_mult: 0.0 = gray, 1.0 = no saturation change

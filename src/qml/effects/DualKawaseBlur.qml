@@ -3,7 +3,7 @@ import QtQuick
 Item {
     id: root
 
-    // ── Bidirectional interface ────────────────────────────────────────────────
+    // Bidirectional public interface for free chaining and reorder
     property var   source: null   // input item: Item, ShaderEffectSource or variants
     property int   passes: 3      // N downsamples + N upsamples
     property real  offset: 1.0    // offset by pass (in texels)
@@ -11,7 +11,7 @@ Item {
 
     property alias outputSource: _outputSource
 
-    // ── Internal state ─────────────────────────────────────────────────────
+    // internal state
     property var _chain: []
 
     // Hidden container for all intermediate passes
@@ -32,7 +32,7 @@ Item {
         hideSource: true
     }
 
-    // ── Templates ─────────────────────────────────────────────────────────
+    // Templates
 
     Component {
         id: _srcTemplate
@@ -59,8 +59,7 @@ Item {
         }
     }
 
-    // ── Chain builder ──────────────────────────────────────────────
-
+    // Chain builder
     function _rebuild() {
         // Destroy last chain
         for (var i = 0; i < _chain.length; i++)
@@ -76,7 +75,7 @@ Item {
         var w = root.width
         var h = root.height
 
-        // ── N downsample passes ────────────────────────────────────────
+        // N downsample passes
         for (var d = 0; d < root.passes; d++) {
             w = Math.max(1, Math.floor(w / 2))
             h = Math.max(1, Math.floor(h / 2))
@@ -100,7 +99,7 @@ Item {
             prevItem = effect
         }
 
-        // ── N upsample passes ──────────────────────────────────────────
+        // N upsample passes
         for (var u = 0; u < root.passes; u++) {
             var srcW = w
             var srcH = h
@@ -130,7 +129,7 @@ Item {
         _chain = items
     }
 
-    // ── Triggers ───────────────────────────────────────────────────────────
+    // Triggers
     Component.onCompleted: _rebuild()
     onSourceChanged:       _rebuild()
     onPassesChanged:       _rebuild()
