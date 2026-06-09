@@ -1,4 +1,5 @@
 #include <QGuiApplication>
+#include <QLoggingCategory>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -16,6 +17,12 @@ main (int argc, char ** argv)
     // Currently, just a GUI test app
     // create base application
     QGuiApplication app(argc, argv);
+
+    QLoggingCategory::setFilterRules(R"(
+        qt.multimedia*=false
+        qt.multimedia*.warning=true
+        qt.multimedia*.critical=true
+    )");
 
     // Create model
     auto& testLyrics = LyricsManifest::instance();
