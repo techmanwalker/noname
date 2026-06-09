@@ -8,7 +8,6 @@
 #include "sequences/playqueue.hpp"
 #include "playbackpresentation/playbackpresentation.hpp"
 #include "playbackcontroller.hpp"
-#include "songfactory.hpp"
 
 int
 main (int argc, char ** argv)
@@ -31,18 +30,21 @@ main (int argc, char ** argv)
     auto& nextQueue = PlayQueue::instance();
 
     // Populate it (example)
-    // Now with real file loading; for now, the addition will be performed synchonously before properly queuing async loading
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/eric.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lifeinmono.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/showmehow.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/telephones.flac")).result());
-    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac")).result());
+    // Now with concurrent batch loading: it will extract metadata in parallel 
+    // and safely perform a single massive insertion on the model once ready.
+    nextQueue.batch_append(QList<QUrl>{
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/eric.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lifeinmono.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/showmehow.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/telephones.flac"),
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac")
+    });
 
     // Dummy player test
     auto& PlaybackPresentation = PlaybackPresentation::instance();

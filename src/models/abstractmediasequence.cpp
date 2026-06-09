@@ -69,10 +69,8 @@ AbstractMediaSequence::append(
     const Types::Any &item
 )
 {
-    int row = static_cast<int>(m_items.size());
-    beginInsertRows({}, row, row);
-    m_items.push_back(item);
-    endInsertRows();
+    // delegate
+    batch_append(QList<Types::Any> {item});
 }
 
 void

@@ -61,8 +61,11 @@ qt_add_qml_module(mediasequences
 )
 
 target_link_libraries(mediasequences
+    PUBLIC
+        Qt6::Multimedia
     PRIVATE
         Qt6::Core
+        Qt6::Quick
         Qt6::Qml
         Qt6::QmlIntegration
 )
