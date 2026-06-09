@@ -178,7 +178,7 @@ playback_controller::handle_duration_changed()
 void
 playback_controller::handle_media_status_changed()
 {
-    song_factory::extract(m_media_player.source(), [this](Types::Song loaded_track) {
+    song_factory::extract(m_media_player.source()).then([this](Types::Song loaded_track) {
         m_current_track = loaded_track;
         m_status = metadata_load_status::ready;
         emit track_changed();

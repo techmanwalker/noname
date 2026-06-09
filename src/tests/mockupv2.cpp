@@ -31,18 +31,18 @@ main (int argc, char ** argv)
     auto& nextQueue = PlayQueue::instance();
 
     // Populate it (example)
-    // Now with real file loading; for now, the append order is completely random because metadata extraction is async
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/eric.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lifeinmono.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/showmehov.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/telephones.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
-    song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac"), [&nextQueue](Types::Song song){nextQueue.append(song);});
+    // Now with real file loading; for now, the addition will be performed synchonously before properly queuing async loading
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/eric.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lifeinmono.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/showmehow.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/telephones.flac")).result());
+    nextQueue.append(song_factory::extract(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac")).result());
 
     // Dummy player test
     auto& PlaybackPresentation = PlaybackPresentation::instance();
