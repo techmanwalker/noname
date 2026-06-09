@@ -6,6 +6,7 @@
 //#include <QDirIterator>
 
 #include "lyrics/lyricsmanifest.hpp"
+#include "sequences/playlistsequence.hpp"
 #include "sequences/playqueue.hpp"
 #include "playbackpresentation/playbackpresentation.hpp"
 #include "playbackcontroller.hpp"
@@ -39,7 +40,7 @@ main (int argc, char ** argv)
     // Populate it (example)
     // Now with concurrent batch loading: it will extract metadata in parallel 
     // and safely perform a single massive insertion on the model once ready.
-    nextQueue.batch_append(QList<QUrl>{
+    nextQueue.switch_queue(QList<QUrl> {
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac"),

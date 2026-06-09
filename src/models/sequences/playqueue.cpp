@@ -1,5 +1,12 @@
 #include "playqueue.hpp"
+#include "playlistsequence.hpp"
 #include <QQmlEngine>
+#include <qlist.h>
+
+PlayQueue::PlayQueue(QObject *parent)
+    : PlaylistSequence(parent)
+{
+}
 
 // Meyers singleton implementation
 PlayQueue &
@@ -24,7 +31,10 @@ PlayQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
     return inst;
 }
 
-PlayQueue::PlayQueue(QObject *parent)
-    : PlaylistSequence(parent)
+void
+PlayQueue::switch_queue(QList<QUrl> new_queue)
 {
+    clear();
+
+    batch_append(new_queue);
 }

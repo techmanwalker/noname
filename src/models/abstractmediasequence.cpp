@@ -99,3 +99,9 @@ Types::Any &AbstractMediaSequence::itemAt(
 {
     return m_items.at(index);
 }
+
+QList<Types::Any>
+AbstractMediaSequence::items() const
+{
+    return m_items;
+}

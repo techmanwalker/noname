@@ -5,10 +5,17 @@
 
 #include <QFuture>
 #include <QList>
+#include <qlist.h>
 
 PlaylistSequence::PlaylistSequence(QObject *parent)
     : AbstractMediaSequence(parent, container_roles)
 {}
+
+PlaylistSequence::PlaylistSequence(QList<QUrl> sources_to_build_from, QObject *parent)
+    : AbstractMediaSequence(parent, container_roles)
+{
+    batch_append(sources_to_build_from);
+}
 
 void PlaylistSequence::append(const Types::Song &song) { AbstractMediaSequence::append(song); }
 void PlaylistSequence::remove(int index)               { AbstractMediaSequence::remove(index); }
@@ -36,7 +43,7 @@ PlaylistSequence::batch_append(const QList<QUrl> &sources)
     // The parameter 'extracted_songs_ready_to_append' will contain the identical
     // list we built as input, ready to get the results from.
     QtFuture::whenAll<QList<QFuture<Types::Song>>>(requests.begin(), requests.end())
-        .then([this](const QList<QFuture<Types::Song>> &fetched_metadata_of_songs) {
+        .then(this, [this](const QList<QFuture<Types::Song>> &fetched_metadata_of_songs) {
             // Create final list for batch append
             QList<Types::Song> extracted_songs_ready_to_append;
             extracted_songs_ready_to_append.reserve(fetched_metadata_of_songs.size());

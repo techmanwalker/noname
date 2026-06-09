@@ -23,6 +23,9 @@ public:
     static PlayQueue &instance();
     static PlayQueue *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
+    // clear and repopulate the play queue in one step
+    void switch_queue (QList<QUrl> new_queue);
+
 private:
     // private constructor to disallow external creations
     explicit PlayQueue(QObject *parent = nullptr);
