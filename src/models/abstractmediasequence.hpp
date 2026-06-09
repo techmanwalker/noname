@@ -5,6 +5,7 @@
 #include <QUrl>
 #include <QString>
 #include <QList>
+#include <qlist.h>
 #include <variant>
 #include <vector>
 
@@ -93,6 +94,26 @@ public:
     int                    rowCount(const QModelIndex &parent = QModelIndex())        const override;
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames()                                                const override;
+
+    QList<Types::Any> items() const;
+
+    // items that can be converted to certain type
+    template <typename media_type>
+    QList<media_type> items() const 
+    {
+        QList<media_type> filtered_list;
+        
+        filtered_list.reserve(m_items.size());
+
+        for (const Types::Any &item : m_items) {
+            // verify if the variant holds the type
+            if (std::holds_alternative<media_type>(item)) {
+                filtered_list.append(std::get<media_type>(item));
+            }
+        }
+
+        return filtered_list;
+    }
 
 protected:
     // Inherited models call these to manipulate the container
