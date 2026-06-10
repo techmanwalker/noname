@@ -25,6 +25,7 @@ public:
 
     // clear and repopulate the play queue in one step
     void switch_queue (QList<QUrl> new_queue);
+    void switch_queue (PlaylistSequence &new_queue);
 
 private:
     // private constructor to disallow external creations

@@ -5,32 +5,44 @@
 
 #include <QFuture>
 #include <QList>
+#include <qfuture.h>
 #include <qlist.h>
 
 PlaylistSequence::PlaylistSequence(QObject *parent)
     : AbstractMediaSequence(parent, container_roles)
 {}
 
-PlaylistSequence::PlaylistSequence(QList<QUrl> sources_to_build_from, QObject *parent)
+PlaylistSequence::PlaylistSequence(
+    QList<QUrl> sources_to_build_from,
+    QFuture<void> *loading_finished_future,
+    QObject *parent)
     : AbstractMediaSequence(parent, container_roles)
 {
-    batch_append(sources_to_build_from);
+    // When loading is fully done, this QFuture will solve.
+    QFuture<void> waiting_for_loaded = batch_append(sources_to_build_from);
+
+    if (loading_finished_future != nullptr) *loading_finished_future = waiting_for_loaded;
 }
 
 void PlaylistSequence::append(const Types::Song &song) { AbstractMediaSequence::append(song); }
 void PlaylistSequence::remove(int index)               { AbstractMediaSequence::remove(index); }
 void PlaylistSequence::clear()                         { AbstractMediaSequence::clear(); }
+void PlaylistSequence::items()                         { AbstractMediaSequence::items(); }
 
 void
 PlaylistSequence::batch_append(const QList<Types::Song> &songs) { AbstractMediaSequence::batch_append(songs);}
 
 /// Append songs in batch with async loading
-void
+QFuture<void>
 PlaylistSequence::batch_append(const QList<QUrl> &sources)
 {
     // Build a list of the metadata extraction requests for each source
     QList<QFuture<Types::Song>> requests;
     requests.reserve(sources.size());
+
+    // so we can know where it finishes
+    auto promise = std::make_shared<QPromise<void>>();
+    QFuture<void> future = promise->future();
 
     for (const QUrl &source : sources) {
         requests.append(
@@ -54,5 +66,10 @@ PlaylistSequence::batch_append(const QList<QUrl> &sources)
 
             // Massive and safe insertion on the sequence model (main thread)
             batch_append(extracted_songs_ready_to_append);
+        })
+        .then(this, [promise]() {
+            promise->finish();
         });
+
+    return future;
 }
