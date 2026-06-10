@@ -40,7 +40,8 @@ main (int argc, char ** argv)
     // Populate it (example)
     // Now with concurrent batch loading: it will extract metadata in parallel 
     // and safely perform a single massive insertion on the model once ready.
-    nextQueue.switch_queue(QList<QUrl> {
+    QFuture<void> loading_finished; // will wait for the Playlist to load
+    PlaylistSequence new_queue (QList<QUrl> {
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac"),
@@ -52,7 +53,15 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/telephones.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac")
-    });
+    }, &loading_finished);
+    
+    loading_finished.then(
+        [&nextQueue, &new_queue]() 
+        {
+            // when the playlist finishes loading, replace the current PlayQueue songs with these ones
+            nextQueue.switch_queue(new_queue);
+        });
+    
 
     // Dummy player test
     auto& PlaybackPresentation = PlaybackPresentation::instance();

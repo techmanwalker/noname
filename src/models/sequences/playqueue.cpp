@@ -38,3 +38,11 @@ PlayQueue::switch_queue(QList<QUrl> new_queue)
 
     batch_append(new_queue);
 }
+
+void
+PlayQueue::switch_queue(PlaylistSequence &new_queue)
+{
+    clear();
+
+    batch_append(new_queue.items<Types::Song>());
+}

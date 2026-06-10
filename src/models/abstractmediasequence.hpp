@@ -118,11 +118,13 @@ public:
 protected:
     // Inherited models call these to manipulate the container
     void append(const Types::Any &item);
+
     template <typename Container>
-    requires std::ranges::forward_range<Container> // Any type of list
-        // ... that can be contained by m_items
-          && std::convertible_to<typename Container::value_type, typename decltype(m_items)::value_type>
-    void batch_append(const Container &items)
+    requires
+        std::ranges::forward_range<Container> // Any type of list
+    &&  std::convertible_to<typename Container::value_type, typename decltype(m_items)::value_type> // that can be contained by m_items
+    void
+    batch_append(const Container &items)
     {
         if (items.empty()) return;
 
