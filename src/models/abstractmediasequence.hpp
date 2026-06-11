@@ -5,6 +5,7 @@
 #include <QUrl>
 #include <QString>
 #include <QList>
+#include <qabstractitemmodel.h>
 #include <qlist.h>
 #include <variant>
 #include <vector>
@@ -21,6 +22,10 @@ namespace Types {
         quint64 duration; // ms
         QUrl    source; // to the audio path
         QUrl    cover;
+
+        // why would I even need to specify this? this is outright insane
+        // but .find won't even compile without it
+        bool operator==(const Song&) const = default;
     };
 
     struct Album {
@@ -36,11 +41,13 @@ namespace Types {
                 total += s.duration;
             return total;
         }
+
+        bool operator==(const Album&) const = default;
     };
 
     using Playlist = Album;
 
-    using Any = std::variant<Song, Album>;
+    using Any = std::variant<Types::Song, Types::Album>;
 }
 
 /// Role definition. Enables automatic QML role generation.
@@ -97,6 +104,10 @@ public:
 
     QList<Types::Any> items() const;
 
+    // Access to the raw item for inherited classes that need extra roles
+    const Types::Any &itemAt(int index) const;
+    int itemCount() const;
+
     // items that can be converted to certain type
     template <typename media_type>
     QList<media_type> items() const 
@@ -114,6 +125,8 @@ public:
 
         return filtered_list;
     }
+
+    QPersistentModelIndex find (const Types::Any &needle) const;
 
 protected:
     // Inherited models call these to manipulate the container
@@ -144,8 +157,4 @@ protected:
     
     void remove(int index);
     void clear();
-
-    // Access to the raw item for inherited classes that need extra roles
-    const Types::Any &itemAt(int index) const;
-    int itemCount() const;
 };

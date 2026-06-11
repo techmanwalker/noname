@@ -8,16 +8,12 @@
 #include <QMediaPlayer>
 #include <QTimer>
 #include <memory>
+#include <qfuture.h>
 #include <qmediaplayer.h>
 
 #include "abstractmediasequence.hpp" // for Types:: namespace
 #include "coverprovider.hpp"
-
-enum class metadata_load_status {
-    idle,
-    loading_metadata,
-    ready
-};
+#include "playqueue.hpp"
 
 /**
     @brief Playback controller proxy for whatever audio framework hides behind the scenes.
@@ -45,7 +41,8 @@ public:
     void set_volume(quint8 volume_percent);
 
     // Load process is synchronous on its call, but asynchronous on its resolution
-    void load(const QUrl &source);
+    QFuture<void> load(const QUrl &source);
+    QFuture<void> load(const Types::Song &song);
 
     // Safe getters for current data status
     Types::Song current_track()       const;
@@ -53,8 +50,6 @@ public:
     quint8      current_volume()      const; // volume from 0 to 100
     QMediaPlayer::PlaybackState playback_state() const;
     QMediaPlayer::MediaStatus media_status()     const;
-    metadata_load_status metadata_status()       const;
-    bool is_loading() const;
 
     // Provides cached-in-memory covers to actually be able to load them
     std::shared_ptr<cover_provider> m_cover_provider = std::make_shared<cover_provider>();
@@ -67,15 +62,15 @@ signals:
     // Single atomic signal to send the whole block of data at once
     void track_changed();
     void playback_state_changed();
-    void metadata_status_changed();
 
     // Reverse signal from QML down to the controller
     void r_duration_slider_pressed_changed(bool pressed);
 
 private slots:
     void handle_duration_changed();
-    void handle_media_status_changed();
     void handle_duration_slider_pressed_changed(bool pressed);
+    void handle_media_status_changed();
+    void handle_playhead_changed(); // triggered by a switch_to or click in QML
 
 private:
     // Private constructor for the singleton pattern
@@ -87,10 +82,11 @@ private:
 
     // Protected internal status
     Types::Song m_current_track;
-    metadata_load_status m_status = metadata_load_status::idle;
 
     QMediaPlayer::PlaybackState playback_state_when_last_slider_drag_started;
     
     // The core of synchronization: control of load versions
     uint64_t m_current_transaction_id = 0;
+
+    PlayQueue &queue = PlayQueue::instance();
 };

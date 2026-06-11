@@ -1,4 +1,5 @@
 #include "abstractmediasequence.hpp"
+#include <qabstractitemmodel.h>
 
 // Default role definitions for any AbstractMediaSequence
 
@@ -104,4 +105,17 @@ QList<Types::Any>
 AbstractMediaSequence::items() const
 {
     return m_items;
+}
+
+QPersistentModelIndex
+AbstractMediaSequence::find (const Types::Any &needle) const
+{
+    for (size_t i = 0; i < m_items.size(); ++i) {
+        if (m_items.at(i) == needle) {
+            return index(static_cast<int>(i));
+        }
+    }
+
+    // invalid if not found
+    return QPersistentModelIndex();
 }

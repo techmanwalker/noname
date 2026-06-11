@@ -113,6 +113,23 @@ PlaybackPresentation::pause() const
     playing.pause();
 }
 
+void
+PlaybackPresentation::next() const
+{
+    queue.next();
+}
+
+void
+PlaybackPresentation::prev() const
+{
+    if (playing.current_position_ms() > 5000) {
+        playing.set_position(0); // start over
+        return;
+    }
+
+    queue.prev();
+}
+
 // --- Signal handlers
 
 void

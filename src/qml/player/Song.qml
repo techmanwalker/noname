@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 import Player.Primitives
+import Player.MediaSequences
 
 Item {
     id: root
@@ -10,6 +11,7 @@ Item {
     readonly property string noArtistText: "Unknown artist"
     readonly property string noAlbumText: "Unknown album"
     readonly property string noDurationText: "-:--"
+    property bool playing: false
 
     property string title: noTitleText
     property string artist: noArtistText
@@ -34,6 +36,12 @@ Item {
         var m = Math.floor(totalSeconds / 60)
         var s = totalSeconds % 60
         return m + ":" + (s < 10 ? "0" + s : s)
+    }
+
+    signal clicked()
+
+    TapHandler {
+        onTapped: root.clicked();
     }
 
     height: root.card ? cardMaxHeight : coverHeight * 1.4

@@ -4,9 +4,6 @@
 #include "src/playbackcontroller/songfactory.hpp"
 
 #include <QFuture>
-#include <QList>
-#include <qfuture.h>
-#include <qlist.h>
 
 PlaylistSequence::PlaylistSequence(QObject *parent)
     : AbstractMediaSequence(parent, container_roles)
@@ -15,7 +12,8 @@ PlaylistSequence::PlaylistSequence(QObject *parent)
 PlaylistSequence::PlaylistSequence(
     QList<QUrl> sources_to_build_from,
     QFuture<void> *loading_finished_future,
-    QObject *parent)
+    QObject *parent
+)
     : AbstractMediaSequence(parent, container_roles)
 {
     // When loading is fully done, this QFuture will solve.
@@ -23,6 +21,15 @@ PlaylistSequence::PlaylistSequence(
 
     if (loading_finished_future != nullptr) *loading_finished_future = waiting_for_loaded;
 }
+
+PlaylistSequence::PlaylistSequence(
+    QList<Types::Song> songs,
+    QObject *parent
+) 
+    : AbstractMediaSequence(parent, container_roles)
+{
+    batch_append(songs);
+};
 
 void PlaylistSequence::append(const Types::Song &song) { AbstractMediaSequence::append(song); }
 void PlaylistSequence::remove(int index)               { AbstractMediaSequence::remove(index); }

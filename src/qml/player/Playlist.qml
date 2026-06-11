@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 
 import Player.Primitives
+import Player.MediaSequences
 
 ListView {
     id: root
@@ -31,6 +32,9 @@ ListView {
         coverWidth: root.songCoverWidth
 
         maxSecondLineLines: 1
+
+        playing: PlayQueue.playhead === PlayQueue.index(model.index, 0)
+        onClicked: PlayQueue.playhead = PlayQueue.index(model.index, 0)
     }
 
     ScrollBar.vertical: AccessibleScrollBar {

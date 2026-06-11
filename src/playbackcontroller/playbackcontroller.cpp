@@ -1,5 +1,6 @@
 #include "playbackcontroller.hpp"
 #include "songfactory.hpp"
+#include <QFuture>
 #include <QMediaMetaData>
 #include <QMediaPlayer>
 #include <qmediaplayer.h>
@@ -25,16 +26,19 @@ playback_controller::playback_controller(QObject *parent)
     connect(&m_media_player, &QMediaPlayer::durationChanged,
             this, &playback_controller::handle_duration_changed);
 
-    connect(&m_media_player, &QMediaPlayer::mediaStatusChanged,
-            this, &playback_controller::handle_media_status_changed);
-
     connect(&m_media_player, &QMediaPlayer::playbackStateChanged,
             this, &playback_controller::playback_state_changed);
+
+    connect(&m_media_player, &QMediaPlayer::mediaStatusChanged,
+            this, &playback_controller::handle_media_status_changed);
 
     // Assuming that PlaybackPresentation converted this class in the
     // signal sender, let's do an autoconnect
     connect(this, &playback_controller::r_duration_slider_pressed_changed,
             this, &playback_controller::handle_duration_slider_pressed_changed);
+
+    connect(&queue, &PlayQueue::playheadChanged,
+            this, &playback_controller::handle_playhead_changed);
 }
 
 void
@@ -58,22 +62,64 @@ playback_controller::stop()
     m_media_player.stop();
 }
 
-void
-playback_controller::load(const QUrl &source)
+QFuture<void>
+playback_controller::load (const QUrl &source)
 {
-    if (m_current_track.source == source) {
-        return;
+    return song_factory::extract(source).then([this](const Types::Song &song) {
+        return load(song);
+    });
+}
+
+QFuture<void>
+playback_controller::load (const Types::Song &song) // song IS the metadata, no need to async wait
+{
+    if (song.source.isEmpty()) return QtFuture::makeReadyVoidFuture();
+
+    // allow starting over without reloading the song
+    if (m_media_player.source() == song.source) {
+        m_media_player.setPosition(0);
+        
+        // play
+        if (m_media_player.playbackState() != QMediaPlayer::PlayingState) {
+            m_media_player.play();
+        }
+        return QtFuture::makeReadyVoidFuture();
     }
 
-    // 1. Increase the transaction ID. Any previous operation becomes obsolete.
-    m_current_transaction_id++;
-    
-    // 2. Immediate status transition: system knows that the current data is not valid anymore.
-    m_status = metadata_load_status::loading_metadata;
-    emit metadata_status_changed();
+    auto solve_when_loaded = std::make_shared<QPromise<void>>();
+    auto future = solve_when_loaded->future();
 
-    // 3. Make the audio backend load the track.
-    m_media_player.setSource(source);
+    m_media_player.setSource(song.source);
+
+    auto do_after_loading = [this, song, solve_when_loaded](const QMediaPlayer::MediaStatus &status) {
+        switch (status) {
+            // track changed
+            case QMediaPlayer::LoadedMedia:
+                m_current_track = song;
+                queue.switch_to(song);
+                emit track_changed();
+                solve_when_loaded->finish();
+                break;
+            case QMediaPlayer::InvalidMedia:
+                solve_when_loaded->finish();
+                break;
+            default:
+                
+                break; // todo: yet to be defined
+        }
+
+        solve_when_loaded->finish();
+    };
+
+    connect(
+        &m_media_player, 
+        &QMediaPlayer::mediaStatusChanged, 
+        this, 
+        do_after_loading, 
+        Qt::SingleShotConnection
+    );
+
+    return future;
 }
 
 void
@@ -83,13 +129,9 @@ playback_controller::unload()
     stop();
     m_media_player.setSource(QUrl());
     
-    // Reset atómico de la estructura local a valores por defecto (no nulos)
-    // Atomic reset of the local struct to default values (not null)
     m_current_track = Types::Song{};
-    m_status = metadata_load_status::idle;
 
     emit track_changed();
-    emit metadata_status_changed();
     emit duration_changed();
 }
 
@@ -157,33 +199,10 @@ playback_controller::media_status() const
     return m_media_player.mediaStatus();
 }
 
-metadata_load_status
-playback_controller::metadata_status() const
-{
-    return m_status;
-}
-
-bool
-playback_controller::is_loading() const
-{
-    return m_status == metadata_load_status::loading_metadata;
-}
-
 void
 playback_controller::handle_duration_changed()
 {
     emit duration_changed();
-}
-
-void
-playback_controller::handle_media_status_changed()
-{
-    song_factory::extract(m_media_player.source()).then([this](Types::Song loaded_track) {
-        m_current_track = loaded_track;
-        m_status = metadata_load_status::ready;
-        emit track_changed();
-        emit metadata_status_changed();
-    });
 }
 
 void
@@ -210,5 +229,30 @@ playback_controller::handle_duration_slider_pressed_changed(bool pressed)
 
             // no default this time
         }
+    }
+}
+
+void
+playback_controller::handle_media_status_changed()
+{
+    if (m_media_player.mediaStatus() == QMediaPlayer::EndOfMedia) {
+        queue.next();
+    }
+}
+
+void
+playback_controller::handle_playhead_changed()
+{
+    QModelIndex current_index = queue.playhead();
+
+    if (!current_index.isValid()) return;
+
+    // get the Types::Any
+    const Types::Any &media_item = queue.itemAt(current_index.row());
+
+    // narrow down to Types::Song
+    if (std::holds_alternative<Types::Song>(media_item)) {
+        const Types::Song &song = std::get<Types::Song>(media_item);
+        load(song);
     }
 }
