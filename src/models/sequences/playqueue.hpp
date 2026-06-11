@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <QAbstractItemModel>
+#include <qabstractitemmodel.h>
+#include <qtmetamacros.h>
 #include "playlistsequence.hpp"
 
 // NOTE: use this as reference to implement singleton models inherited from non-singletons.
@@ -14,6 +17,8 @@ class PlayQueue : public PlaylistSequence {
     QML_ELEMENT
     QML_SINGLETON
 
+    Q_PROPERTY(QModelIndex playhead READ playhead WRITE switch_to NOTIFY playheadChanged)
+
 public:
     // disable copy and assignment for single instance
     PlayQueue(const PlayQueue&) = delete;
@@ -23,11 +28,31 @@ public:
     static PlayQueue &instance();
     static PlayQueue *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
-    // clear and repopulate the play queue in one step
-    void switch_queue (QList<QUrl> new_queue);
-    void switch_queue (PlaylistSequence &new_queue);
+    // getters
+    QModelIndex playhead() const { return m_playhead; }
+    int itemCount () const;
+
+    // controls
+    void switch_to (const Types::Song &song); // no matter if it is on the queue or not
+    void switch_to (const QPersistentModelIndex &song); // for lvalues
+    void switch_to (const QModelIndex index); // for QML and temporary indices
+
+    Q_INVOKABLE void next ();
+    Q_INVOKABLE void prev ();
+
+    // to find out if a song is in queue
+    QPersistentModelIndex find (const Types::Song &needle) const;
+
+    /// clear and repopulate the play queue in one step
+    void respawn_queue (QList<QUrl> new_queue);
+    void respawn_queue (PlaylistSequence &new_queue);
+
+signals:
+    void playheadChanged();
 
 private:
     // private constructor to disallow external creations
     explicit PlayQueue(QObject *parent = nullptr);
+
+    QPersistentModelIndex m_playhead;
 };

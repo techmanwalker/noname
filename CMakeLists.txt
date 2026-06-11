@@ -68,12 +68,12 @@ target_link_libraries(mediasequences
         Qt6::Quick
         Qt6::Qml
         Qt6::QmlIntegration
+        # must not depend on playbackcontroller nor playbackpresentation
 )
 
 target_include_directories(mediasequences
     PUBLIC
         src/models
-    PRIVATE
         src/models/sequences # to make qmltyperegistrar happy
 )
 
@@ -98,12 +98,12 @@ target_link_libraries(playbackpresentation
         Qt6::QmlIntegration
         Qt6::Quick
         playbackcontroller
+        mediasequences
 )
 
 target_include_directories(playbackpresentation
     PUBLIC
         src/models
-    PRIVATE
         src/models/playbackpresentation
 )
 
@@ -234,11 +234,12 @@ target_link_libraries(playbackcontroller
     PRIVATE
         Qt6::Core
         Qt6::Quick
+        mediasequences
 )
 
 target_include_directories(playbackcontroller
     PUBLIC
-        src/playbackcontroller # enable including its own headers a la Qt6:: libraries
+        src/playbackcontroller # enable including its own headers como Qt6:: libraries
     PRIVATE
         src/models
 )

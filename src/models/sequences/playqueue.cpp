@@ -1,11 +1,22 @@
 #include "playqueue.hpp"
+#include "abstractmediasequence.hpp"
 #include "playlistsequence.hpp"
 #include <QQmlEngine>
+#include <qabstractitemmodel.h>
 #include <qlist.h>
 
 PlayQueue::PlayQueue(QObject *parent)
     : PlaylistSequence(parent)
 {
+}
+
+int PlayQueue::itemCount () const { return AbstractMediaSequence::itemCount(); }
+
+QPersistentModelIndex
+PlayQueue::find (const Types::Song &needle) const
+{
+    // explicit rvalue
+    return AbstractMediaSequence::find(Types::Any{needle});
 }
 
 // Meyers singleton implementation
@@ -32,17 +43,106 @@ PlayQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 }
 
 void
-PlayQueue::switch_queue(QList<QUrl> new_queue)
+PlayQueue::respawn_queue(QList<QUrl> new_queue)
 {
     clear();
 
-    batch_append(new_queue);
+    // this version is async
+    batch_append(new_queue).then([this]() {
+            if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
+        }
+    );
 }
 
 void
-PlayQueue::switch_queue(PlaylistSequence &new_queue)
+PlayQueue::respawn_queue(PlaylistSequence &new_queue)
 {
     clear();
 
+    // this version is synchronous
     batch_append(new_queue.items<Types::Song>());
+
+    if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
+}
+
+void
+PlayQueue::switch_to(const Types::Song &song)
+{
+    const QPersistentModelIndex prolly_in_queue = find(song);
+
+    // not in queue
+    if (!prolly_in_queue.isValid()) {
+        // clear the whole queue and create a new one with only
+        // this song como youtube music
+        PlaylistSequence replacement (QList<Types::Song> {song});
+        respawn_queue(replacement);
+
+        m_playhead = index(0);
+
+        emit playheadChanged();
+        return;
+    }
+
+    m_playhead = prolly_in_queue;
+
+    emit playheadChanged();
+    return;
+}
+
+void
+PlayQueue::switch_to(const QPersistentModelIndex &song)
+{
+    if (
+        !song.isValid()
+    ||  m_playhead == song   // we are currently in that index
+    ||  song.model() != this // not from queue
+    ) return;
+
+    m_playhead = song;
+
+    emit playheadChanged();
+}
+
+void
+PlayQueue::switch_to (QModelIndex song)
+{
+    if (
+        !song.isValid()
+    ||  m_playhead == song   // we are currently in that index
+    ||  song.model() != this // not from queue
+    ) return;
+
+    // QPersistentModelIndex accepts QModelIndex in its = operator =)
+    m_playhead = song;
+
+    emit playheadChanged();
+}
+
+void
+PlayQueue::next ()
+{
+    if (itemCount() == 0) return;
+
+    // cycle
+    if (!m_playhead.isValid() || m_playhead.row() == itemCount() - 1) {
+        switch_to(index(0));
+        return;
+    }
+
+    switch_to(index(m_playhead.row() + 1));
+}
+
+void
+PlayQueue::prev ()
+{
+    int last_index = itemCount() - 1;
+    if (last_index < 0) return; // empty queue
+
+    // cycle
+    if (!m_playhead.isValid() || m_playhead.row() == 0) {
+        switch_to(index(last_index, 0));
+        return;
+    }
+
+    switch_to(index(m_playhead.row() - 1, 0));
 }

@@ -6,8 +6,10 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <QMediaPlayer>
 #include <atomic>
+#include <qtmetamacros.h>
 
 #include "playbackcontroller.hpp"
+#include "playqueue.hpp"
 
 // forward declarations
 class QQmlEngine;
@@ -82,10 +84,11 @@ public:
     void setDurationSliderPressed (bool pressed);
 
     // Playback controls
-    Q_INVOKABLE void play() const;
+    Q_INVOKABLE void play()  const;
     Q_INVOKABLE void pause() const;
+    Q_INVOKABLE void next()  const;
+    Q_INVOKABLE void prev()  const;
     
-
 signals:
     // Needed signals for QML to be reactive
     void titleChanged();
@@ -110,6 +113,7 @@ private:
     explicit PlaybackPresentation(QObject *parent = nullptr);
 
     playback_controller &playing = playback_controller::instance();
+    PlayQueue &queue = PlayQueue::instance();
 
     std::atomic_bool m_duration_slider_pressed = false; // is the duration slider pressed or dragged?
 };

@@ -8,8 +8,6 @@
 #include "lyrics/lyricsmanifest.hpp"
 #include "sequences/playlistsequence.hpp"
 #include "sequences/playqueue.hpp"
-#include "playbackpresentation/playbackpresentation.hpp"
-#include "playbackcontroller.hpp"
 
 int
 main (int argc, char ** argv)
@@ -42,12 +40,12 @@ main (int argc, char ** argv)
     // and safely perform a single massive insertion on the model once ready.
     QFuture<void> loading_finished; // will wait for the Playlist to load
     PlaylistSequence new_queue (QList<QUrl> {
+        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bittersweetsymphony.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/eric.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lifeinmono.flac"),
-        QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/showmehow.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac"),
@@ -59,16 +57,11 @@ main (int argc, char ** argv)
         [&nextQueue, &new_queue]() 
         {
             // when the playlist finishes loading, replace the current PlayQueue songs with these ones
-            nextQueue.switch_queue(new_queue);
+            nextQueue.respawn_queue(new_queue);
         });
     
 
-    // Dummy player test
-    auto& PlaybackPresentation = PlaybackPresentation::instance();
-
-    // Now that the manual setTitle function has vanished, now we need to formally play a song.
-
-    playback_controller::instance().load(QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/onlytime.flac"));
+    // After the queue respawn, the playback controller will switch to the first song :D
 
     // create base engine
     QQmlApplicationEngine engine;

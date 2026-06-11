@@ -21,9 +21,9 @@ public:
     static ShortcutsList *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // Accepts any type of item to be shown on shortcuts
-    Q_INVOKABLE void append(const Types::Any &item);
-    Q_INVOKABLE void remove(int index);
-    Q_INVOKABLE void clear();
+    void append(const Types::Any &item);
+    void remove(int index);
+    void clear();
 
 private:
     // hidden constructor
