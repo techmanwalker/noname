@@ -1,6 +1,7 @@
 import QtQuick
 
 import StartPage
+import Player
 import Player.Primitives
 import Player.MediaSequences
 
@@ -30,25 +31,40 @@ Item {
         anchors.bottomMargin: anchors.topMargin
     }
 
-    Column {
+    Item {
         anchors.left:   leftbar.right
         anchors.right:  root.right
         anchors.top:    topRow.bottom
         anchors.bottom: root.bottom
 
         // Align the contents to the beginning of the text of the search bar
-        leftPadding: searchBar.leftPadding       
+        anchors.leftMargin: searchBar.leftPadding       
 
         SectionHeading {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            
+            id: shortcutsHeading
             text: "Shortcuts"
         }
 
-        Shortcuts {     
-            model: ShortcutsList
+        /*
+        Rectangle {
+            anchors.fill: shortcutsList
+
+            color: "#00f"
+        }*/
+
+
+        Playlist {
+            id: shortcutsList
+            model: PlayQueue
 
             // avoid content overflow
-            anchors.left: parent.left
-            anchors.right: parent.right
+            anchors.top:    shortcutsHeading.bottom
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            anchors.bottom: parent.bottom
         }
     }
 }

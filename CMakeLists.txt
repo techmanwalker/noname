@@ -211,6 +211,8 @@ qt_add_qml_module(startpage
 target_link_libraries(startpage
     PRIVATE
         mediasequences
+        primitives
+        player
 )
 
 target_include_directories(startpage
