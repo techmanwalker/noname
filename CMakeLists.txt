@@ -18,12 +18,6 @@ file(GLOB_RECURSE PLAYER_QMLS
     "src/qml/player/*.qml"
 )
 
-file(GLOB_RECURSE STARTPAGE_QMLS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    CONFIGURE_DEPENDS
-    "src/qml/startpage/*.qml"
-)
-
 file(GLOB_RECURSE PRIMITIVES_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
@@ -196,30 +190,6 @@ target_link_libraries(player
         Qt6::ShaderTools
 )
 
-# The Start page module
-
-qt_add_qml_module(startpage
-    STATIC
-    URI StartPage
-    RESOURCE_PREFIX /startpage
-    QML_FILES
-        ${STARTPAGE_QMLS}
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/StartPage"
-)
-
-target_link_libraries(startpage
-    PRIVATE
-        mediasequences
-        primitives
-        player
-)
-
-target_include_directories(startpage
-    PRIVATE
-        src/models
-)
-
 
 ### C++ Modules
 
@@ -298,25 +268,9 @@ target_include_directories(mockupv2
         ${PLAYER_INCLUDE_DIRECTORIES}
 )
 
-qt_add_executable(startpagetest EXCLUDE_FROM_ALL
-    src/tests/startpagetest.cpp
-)
-
-target_link_libraries(startpagetest
-    PRIVATE
-        ${BASIC_LIBRARIES}
-        startpage
-        player
-)
-
-target_include_directories(startpagetest
-    PRIVATE
-        ${PLAYER_INCLUDE_DIRECTORIES}
-)
-
 # If BUILD_TESTS, add them to the default build target
 if(BUILD_TESTS)
-    set_target_properties(mockupv2 startpagetest
+    set_target_properties(mockupv2
         PROPERTIES EXCLUDE_FROM_ALL FALSE
     )
 endif()
