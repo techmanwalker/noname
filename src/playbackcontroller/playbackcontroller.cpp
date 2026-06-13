@@ -79,10 +79,6 @@ playback_controller::load (const Types::Song &song) // song IS the metadata, no 
     if (m_media_player.source() == song.source) {
         m_media_player.setPosition(0);
         
-        // play
-        if (m_media_player.playbackState() != QMediaPlayer::PlayingState) {
-            m_media_player.play();
-        }
         return QtFuture::makeReadyVoidFuture();
     }
 
