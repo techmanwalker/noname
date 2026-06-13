@@ -237,7 +237,7 @@ playback_controller::handle_media_status_changed()
 }
 
 void
-playback_controller::handle_playhead_changed()
+playback_controller::handle_playhead_changed(bool play_afterwards)
 {
     QModelIndex current_index = queue.playhead();
 
@@ -250,5 +250,6 @@ playback_controller::handle_playhead_changed()
     if (std::holds_alternative<Types::Song>(media_item)) {
         const Types::Song &song = std::get<Types::Song>(media_item);
         load(song);
+        if (play_afterwards) play();
     }
 }

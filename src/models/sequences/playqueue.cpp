@@ -68,7 +68,7 @@ PlayQueue::respawn_queue(PlaylistSequence &new_queue)
 }
 
 void
-PlayQueue::switch_to(const Types::Song &song)
+PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
 {
     const QPersistentModelIndex prolly_in_queue = find(song);
 
@@ -81,18 +81,18 @@ PlayQueue::switch_to(const Types::Song &song)
 
         m_playhead = index(0);
 
-        emit playheadChanged();
+        emit playheadChanged(play_afterwards);
         return;
     }
 
     m_playhead = prolly_in_queue;
 
-    emit playheadChanged();
+    emit playheadChanged(play_afterwards);
     return;
 }
 
 void
-PlayQueue::switch_to(const QPersistentModelIndex &song)
+PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 {
     if (
         !song.isValid()
@@ -102,11 +102,11 @@ PlayQueue::switch_to(const QPersistentModelIndex &song)
 
     m_playhead = song;
 
-    emit playheadChanged();
+    emit playheadChanged(play_afterwards);
 }
 
 void
-PlayQueue::switch_to (QModelIndex song)
+PlayQueue::switch_to (const QModelIndex &song, bool play_afterwards)
 {
     if (
         !song.isValid()
@@ -117,7 +117,14 @@ PlayQueue::switch_to (QModelIndex song)
     // QPersistentModelIndex accepts QModelIndex in its = operator =)
     m_playhead = song;
 
-    emit playheadChanged();
+    emit playheadChanged(play_afterwards);
+}
+
+void
+PlayQueue::qml_switch_to(const QModelIndex &song)
+{
+    // play after switching
+    switch_to(song, true);
 }
 
 void
@@ -131,7 +138,8 @@ PlayQueue::next ()
         return;
     }
 
-    switch_to(index(m_playhead.row() + 1));
+    // play right after switching
+    switch_to(index(m_playhead.row() + 1), true);
 }
 
 void
@@ -146,5 +154,6 @@ PlayQueue::prev ()
         return;
     }
 
-    switch_to(index(m_playhead.row() - 1, 0));
+    // play right after switching
+    switch_to(index(m_playhead.row() - 1, 0), true);
 }

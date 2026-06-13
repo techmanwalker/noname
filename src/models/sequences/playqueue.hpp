@@ -17,7 +17,7 @@ class PlayQueue : public PlaylistSequence {
     QML_ELEMENT
     QML_SINGLETON
 
-    Q_PROPERTY(QModelIndex playhead READ playhead WRITE switch_to NOTIFY playheadChanged)
+    Q_PROPERTY(QModelIndex playhead READ playhead WRITE qml_switch_to NOTIFY playheadChanged)
 
 public:
     // disable copy and assignment for single instance
@@ -36,9 +36,10 @@ public:
     int itemCount () const;
 
     // controls
-    void switch_to (const Types::Song &song); // no matter if it is on the queue or not
-    void switch_to (const QPersistentModelIndex &song); // for lvalues
-    void switch_to (const QModelIndex index); // for QML and temporary indices
+    void switch_to (const Types::Song &song, bool play_afterwards = false); // no matter if it is on the queue or not
+    void switch_to (const QPersistentModelIndex &song, bool play_afterwards = false); // for lvalues
+    void switch_to (const QModelIndex &index, bool play_afterwards = false); // base for QML and temporary indices
+    void qml_switch_to (const QModelIndex &index); // proxy for qml that auto plays the selection afterwards
 
     Q_INVOKABLE void next ();
     Q_INVOKABLE void prev ();
@@ -51,7 +52,7 @@ public:
     void respawn_queue (PlaylistSequence &new_queue);
 
 signals:
-    void playheadChanged();
+    void playheadChanged(bool play_afterwards = false);
 
 private:
     // private constructor to disallow external creations
