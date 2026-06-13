@@ -45,6 +45,13 @@ song_factory::execute_extraction()
     // local event loop of this thread will stop when the status changes
     connect(&mediaPlayer, &QMediaPlayer::mediaStatusChanged, &loop, [&loop, &mediaPlayer, &song, this](QMediaPlayer::MediaStatus status) {
         if (status == QMediaPlayer::LoadedMedia) {
+
+            // support audio and video, and reject everything that has no decodable audio
+            if (!mediaPlayer.hasAudio()) {
+                song = Types::Song(); // empty struct
+                loop.quit();
+                return;
+            }
             const QMediaMetaData meta = mediaPlayer.metaData();
             
             song.duration = static_cast<quint64>(mediaPlayer.duration());

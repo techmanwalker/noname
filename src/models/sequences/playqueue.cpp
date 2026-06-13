@@ -2,8 +2,9 @@
 #include "abstractmediasequence.hpp"
 #include "playlistsequence.hpp"
 #include <QQmlEngine>
-#include <qabstractitemmodel.h>
-#include <qlist.h>
+#include <QAbstractItemModel>
+#include <QFuture>
+#include <QList>
 
 PlayQueue::PlayQueue(QObject *parent)
     : PlaylistSequence(parent)
@@ -11,6 +12,7 @@ PlayQueue::PlayQueue(QObject *parent)
 }
 
 int PlayQueue::itemCount () const { return AbstractMediaSequence::itemCount(); }
+QFuture<void> PlayQueue::batch_append(const QList<QUrl> &sources) { return PlaylistSequence::batch_append(sources); }
 
 QPersistentModelIndex
 PlayQueue::find (const Types::Song &needle) const
@@ -60,7 +62,7 @@ PlayQueue::respawn_queue(PlaylistSequence &new_queue)
     clear();
 
     // this version is synchronous
-    batch_append(new_queue.items<Types::Song>());
+    PlaylistSequence::batch_append(new_queue.items<Types::Song>());
 
     if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
 }
