@@ -40,4 +40,18 @@ ListView {
     ScrollBar.vertical: AccessibleScrollBar {
         barWidth: root.scrollBarWidth
     }
+
+    DropArea {
+        anchors.fill: parent
+
+        keys: ["text/uri-list"]
+
+        onDropped: (drop) => {
+            if (drop.hasUrls) {
+                PlayQueue.batch_append(drop.urls)
+
+                drop.acceptProposedAction()
+            }
+        }
+    }
 }

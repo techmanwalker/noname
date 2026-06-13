@@ -149,6 +149,15 @@ protected:
         
         // Perform the insertion
         for (const Types::Any &item : items) {
+
+            // if such item is actually a Types::Song and its source is empty, continue;
+            if (
+                std::holds_alternative<Types::Song>(item)
+            &&  std::get<Types::Song>(item).source.isEmpty())
+            {
+                continue;
+            }
+
             m_items.push_back(item);
         }
 

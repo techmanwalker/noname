@@ -28,6 +28,9 @@ public:
     static PlayQueue &instance();
     static PlayQueue *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
+    // drag and drop files to the play queue
+    Q_INVOKABLE QFuture<void> batch_append(const QList<QUrl> &sources);
+
     // getters
     QModelIndex playhead() const { return m_playhead; }
     int itemCount () const;
