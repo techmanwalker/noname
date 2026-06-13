@@ -28,7 +28,7 @@ public:
     static constexpr std::basic_string_view<char16_t> schema = u"image://covers/";
 
     // Default cover image uri
-    static constexpr std::basic_string_view<char16_t> default_cover_uri = u":/assets/default_cover.png";
+    static constexpr char default_cover_uri[] = "";
 
 private:
     QHash<QString, QImage> m_cache;

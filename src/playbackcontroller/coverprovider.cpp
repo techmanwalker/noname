@@ -44,7 +44,7 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
     using namespace Qt::StringLiterals;
 
     // _s suffix creates a QString on compilation time cleanly without macros
-    QImage default_cover(u":/assets/default_cover.png"_s);
+    QImage default_cover(default_cover_uri);
 
     if (size) {
         *size = default_cover.size();
