@@ -70,7 +70,7 @@ private slots:
     void handle_duration_changed();
     void handle_duration_slider_pressed_changed(bool pressed);
     void handle_media_status_changed();
-    void handle_playhead_changed(); // triggered by a switch_to or click in QML
+    void handle_playhead_changed(bool play_afterwards = false); // triggered by a switch_to or click in QML
 
 private:
     // Private constructor for the singleton pattern
