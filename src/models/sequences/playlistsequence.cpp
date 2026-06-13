@@ -63,6 +63,7 @@ PlaylistSequence::batch_append(const QList<QUrl> &sources)
     // list we built as input, ready to get the results from.
     QtFuture::whenAll<QList<QFuture<Types::Song>>>(requests.begin(), requests.end())
         .then(this, [this](const QList<QFuture<Types::Song>> &fetched_metadata_of_songs) {
+            
             // Create final list for batch append
             QList<Types::Song> extracted_songs_ready_to_append;
             extracted_songs_ready_to_append.reserve(fetched_metadata_of_songs.size());
@@ -74,7 +75,8 @@ PlaylistSequence::batch_append(const QList<QUrl> &sources)
             // Massive and safe insertion on the sequence model (main thread)
             batch_append(extracted_songs_ready_to_append);
         })
-        .then(this, [promise]() {
+        .then(this, [promise](QFuture<void> previous_future) {
+            if (previous_future.isCanceled()) return;
             promise->finish();
         });
 

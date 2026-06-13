@@ -19,8 +19,8 @@ private:
     // private and linear constructor
     song_factory(const QUrl &source, std::shared_ptr<cover_provider> provider);
 
-    // Internally executes the extraction synchronously (to be called from worker threads)
-    Types::Song execute_extraction();
+    // Internally executes the extraction synchronously (to be called from worker threads, cancellable promise)
+    Types::Song execute_extraction(QPromise<Types::Song> &promise);
 
     QUrl m_source;
     std::shared_ptr<cover_provider> m_cover_provider;
