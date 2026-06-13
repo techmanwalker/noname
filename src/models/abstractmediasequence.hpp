@@ -141,13 +141,10 @@ protected:
     {
         if (items.empty()) return;
 
-        // Notify to QML views the entire block insertion at once
-        int first_row = rowCount();
-        int last_row = first_row + static_cast<int>(items.size()) - 1;
+        // Filter only valid items before appending
+        std::vector<Types::Any> valid_items;
+        valid_items.reserve(items.size());
 
-        beginInsertRows({}, first_row, last_row);
-        
-        // Perform the insertion
         for (const Types::Any &item : items) {
 
             // if such item is actually a Types::Song and its source is empty, continue;
@@ -158,7 +155,22 @@ protected:
                 continue;
             }
 
-            m_items.push_back(item);
+            valid_items.push_back(item);
+        }
+
+        if (valid_items.empty()) return;
+
+        // Notify to QML views the entire block insertion at once
+        int first_row = rowCount();
+        int last_row = first_row + static_cast<int>(valid_items.size()) - 1;
+
+        beginInsertRows({}, first_row, last_row);
+
+        // prepare the QList for the append
+        m_items.reserve(m_items.size() + valid_items.size());
+    
+        for (Types::Any &valid_item : valid_items) {
+            m_items.push_back(std::move(valid_item));
         }
 
         endInsertRows();
