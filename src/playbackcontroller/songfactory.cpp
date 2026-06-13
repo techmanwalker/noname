@@ -26,18 +26,33 @@ song_factory::extract(const QUrl &source)
     auto shared_provider = playback_controller::instance().m_cover_provider;
 
     // delegate instantiation and execution to Qt thread pool
-    return QtConcurrent::run([source, shared_provider]() {
+    return QtConcurrent::run([source, shared_provider](QPromise<Types::Song> &promise) {
         song_factory worker(source, shared_provider);
-        return worker.execute_extraction();
+        Types::Song result = worker.execute_extraction(promise);
+
+        if (!promise.isCanceled()) {
+            promise.addResult(result);
+        }
     });
 }
 
 Types::Song
-song_factory::execute_extraction()
+song_factory::execute_extraction(QPromise<Types::Song> &promise)
 {
     QMediaPlayer mediaPlayer;
     QEventLoop loop;
     Types::Song song;
+
+    if (promise.isCanceled()) {
+        return {};
+    }
+
+    // Stop if promise is canceled
+
+    QFutureWatcher<Types::Song> watcher;
+    watcher.setFuture(promise.future());
+
+    QObject::connect(&watcher, &QFutureWatcher<Types::Song>::canceled, &loop, &QEventLoop::quit);
 
     // local event loop of this thread will stop when the status changes
     connect(&mediaPlayer, &QMediaPlayer::mediaStatusChanged, &loop, [&loop, &mediaPlayer, &song, this](QMediaPlayer::MediaStatus status) {
@@ -83,7 +98,15 @@ song_factory::execute_extraction()
     // if metadata is not immediately ready, process the events of this worker thread
     if (mediaPlayer.mediaStatus() != QMediaPlayer::LoadedMedia && 
         mediaPlayer.mediaStatus() != QMediaPlayer::InvalidMedia) {
+        if (promise.isCanceled()) {
+            return {};
+        }
+
         loop.exec();
+    }
+
+    if (promise.isCanceled()) {
+        return {};
     }
 
     return song;
