@@ -33,6 +33,12 @@ ListView {
 
         maxSecondLineLines: 1
 
+        topPadding:    12
+        bottomPadding: 12
+        leftPadding:   8
+        rightPadding:  8
+        innerSpacing:  8
+
         playing: PlayQueue.playhead === PlayQueue.index(model.index, 0)
         onClicked: PlayQueue.playhead = PlayQueue.index(model.index, 0)
     }

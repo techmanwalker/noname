@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 
 import Player.Primitives
-import Player.MediaSequences
 
 Item {
     id: root
@@ -30,6 +29,13 @@ Item {
     property bool hideAlbum: false
     property bool hideDuration: false
 
+    // more geometry control
+    property real leftPadding:   0
+    property real rightPadding:  0
+    property real topPadding:    0
+    property real bottomPadding: 0
+    property real innerSpacing:  0
+
     // Helper function to format milliseconds as mm:ss
     function formatDuration(ms) {
         var totalSeconds = Math.floor(ms / 1000)
@@ -40,91 +46,119 @@ Item {
 
     signal clicked()
 
+    height: metadata.height + topPadding + bottomPadding
+
+    clip: true
+
+    Rectangle {
+        id: background
+
+        anchors.fill: parent
+
+        color: (
+            root.playing
+            ? Qt.rgba(160, 160, 160, .2)
+            : (
+                hover.hovered
+                ?   Qt.rgba(160, 160, 160, .1)
+                :   "transparent"
+            )
+        )
+    }
+
+    HoverHandler {
+        id: hover
+    }
+
     TapHandler {
         onTapped: root.clicked();
     }
 
-    height: root.card ? cardMaxHeight : coverHeight * 1.4
-
-    width: root.card ? coverWidth : undefined
-
-    clip: true
-
-    Cover {
-        id: coverItem
-
-        width: root.coverWidth
-        height: root.coverHeight
-        source: root.cover
-
-        anchors.verticalCenter: root.card ? undefined : parent.verticalCenter
-    }
-
-    Column {
+    Item {
         id: metadata
 
-        anchors.verticalCenter: root.card ? undefined : parent.verticalCenter
-        anchors.left: root.card ? undefined : coverItem.right
-        anchors.right: root.card ? undefined : durationContainer.left
-        anchors.top: root.card ? coverItem.bottom : undefined
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: root.leftPadding
+        anchors.rightMargin: root.rightPadding
         
-        anchors.leftMargin: root.card ? undefined : 10
-        anchors.topMargin: root.card ? 15 : undefined
+        height: Math.max(coverItem.height, metadataLines.height, durationLabel.height)
 
-        width: root.card ? root.width : undefined
-        height: firstLine.height + secondLine.height
+        y: root.topPadding
+        x: root.leftPadding
 
-        Label {
-            id: firstLine
+        Cover {
+            id: coverItem
 
-            text: root.title.length > 0 ? root.title : root.noTitleText
+            width: root.coverWidth
+            height: root.coverHeight
+            source: root.cover
 
-            // eliding
-            maximumLineCount: root.maxFirstLineLines
-            wrapMode: Text.WordWrap
-            elide: Text.ElideRight
-            width: parent.width
-
-            // font properties
-            font.pointSize: root.card ? 14 : -1
-            font.weight: root.card ? Font.DemiBold : Font.Normal
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
         }
 
-        Label {
-            id: secondLine
+        Item {
+            id: metadataLines
 
-            property string displayArtist: root.artist.length > 0 ? root.artist : root.noArtistText
-            property string displayAlbum:  root.album.length  > 0 ? root.album  : root.noAlbumText
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: coverItem.right
+            anchors.right: durationLabel.left
 
-            text: root.hideAlbum
-                ? displayArtist
-                : displayArtist + " · " + displayAlbum
+            anchors.leftMargin: root.innerSpacing
+            anchors.rightMargin: root.innerSpacing
 
-            // eliding
-            maximumLineCount: root.maxSecondLineLines
-            wrapMode: Text.WordWrap
-            elide: Text.ElideRight
-            width: parent.width
+            height: firstLine.height + secondLine.height
+
+            Label {
+                id: firstLine
+
+                text: root.title.length > 0 ? root.title : root.noTitleText
+
+                width: parent.width
+
+                // eliding
+                maximumLineCount: root.maxFirstLineLines
+                wrapMode: Text.WordWrap
+                elide: Text.ElideRight
+
+                // font properties
+                font.pointSize: -1
+                font.weight: Font.Normal
+            }
+
+            Label {
+                id: secondLine
+
+                anchors.top: firstLine.bottom
+
+                width: parent.width
+
+                property string displayArtist: root.artist.length > 0 ? root.artist : root.noArtistText
+                property string displayAlbum:  root.album.length  > 0 ? root.album  : root.noAlbumText
+
+                text: root.hideAlbum
+                    ? displayArtist
+                    : displayArtist + " · " + displayAlbum
+
+                // eliding
+                maximumLineCount: root.maxSecondLineLines
+                wrapMode: Text.WordWrap
+                elide: Text.ElideRight
+            }
         }
-    }
-
-    Column {
-        id: durationContainer
-        
-        anchors.top: root.card ? metadata.bottom : undefined
-        anchors.right: root.card ? undefined : parent.right
-        anchors.verticalCenter: root.card ? undefined : parent.verticalCenter
-
-        visible: root.duration > 0 && !root.hideDuration
 
         Label {
             id: durationLabel
+
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right: parent.right
+
+            visible: root.duration > 0 && !root.hideDuration
+
             text: root.duration > 0 ? root.formatDuration(root.duration) : root.noDurationText
         }
     }
-
-
-
 
     // theoretical max height calculators — invisible, never rendered
     Text {

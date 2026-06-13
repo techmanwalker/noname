@@ -114,7 +114,7 @@ Item {
         }
 
         // Right column: metadata + upcoming queue
-        ColumnLayout {
+        Item {
             id: rightColumn
             height: leftCol.height
 
@@ -123,20 +123,26 @@ Item {
             width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
             MetadataContainer {
+                id: metadataContainer
                 title:  PlaybackPresentation.title
                 artist: PlaybackPresentation.artist
                 album:  PlaybackPresentation.album
+
+                anchors.top:   parent.top
+                anchors.left:  parent.left
+                anchors.right: parent.right
             }
 
             Playlist {
                 id: nextQueue
                 model: PlayQueue
 
-                Layout.alignment: Qt.AlignTop
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
                 scrollBarWidth: rightColumn.scrollBarWidth
+
+                anchors.top:    metadataContainer.bottom
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.bottom: parent.bottom
             }
         }
     }
