@@ -86,10 +86,27 @@ Item {
     }
 
     DualKawaseBlur {
+        id: blur
         anchors.fill: parent
         source: bgOverlay.outputSource
         passes: 4
         offset: 1.5
+        visible: false
+    }
+
+    Noise {
+        source: blur.outputSource
+        anchors.fill: parent
+
+        // based on screen size
+        seedSize: (
+            Screen.height < 720 ? 48 : (
+                Screen.height >= 1440 ? 96 :
+                    64
+            )
+        )
+
         visible: true
+        intensity: 0.02
     }
 }

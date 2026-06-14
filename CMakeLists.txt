@@ -163,6 +163,8 @@ qt_add_shaders(playereffects "_shaders"
         src/shaders/background_overlay.frag
         src/shaders/kawase_down.frag
         src/shaders/kawase_up.frag
+        src/shaders/noise.frag
+        src/shaders/noise_seed.frag
 )
 
 # The Player module
