@@ -13,6 +13,8 @@ Column {
         font.weight: Font.DemiBold
         font.pointSize: 20
 
+        color: "white"
+
         visible: root.title.length > 0
     }
 
@@ -26,5 +28,7 @@ Column {
         text: root.album
 
         visible: root.album.length > 0
+
+        color: "#afafaf"
     }
 }

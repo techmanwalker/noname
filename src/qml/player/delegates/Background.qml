@@ -14,13 +14,13 @@ Item {
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
-    property real outer_player_l: 0.15
-    property real inner_player_l: 0.40
-    property real cover_back_l:   0.60
+    property real outer_player_l: 0.08
+    property real inner_player_l: 0.33
+    property real cover_back_l:   0.55
 
-    property real outer_player_c: 0.20
-    property real inner_player_c: 0.55
-    property real cover_back_c:   0.9
+    property real outer_player_c: 0.60
+    property real inner_player_c: 0.85
+    property real cover_back_c:   0.95
 
     function clamp (magnitude) {
         if (magnitude < 0) return 0;

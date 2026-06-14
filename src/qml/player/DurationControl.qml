@@ -21,6 +21,8 @@ RowLayout {
         id: currentTime
         text: root.formatTime(root.stateModel.position_ms)
 
+        font.weight: Font.Medium
+
         Layout.alignment: Qt.AlignVCenter
     }
 
@@ -40,6 +42,8 @@ RowLayout {
     Label {
         id: maximumTime
         text: root.formatTime(root.stateModel.duration_ms)
+
+        font.weight: Font.Medium
 
         Layout.alignment: Qt.AlignVCenter
     }
