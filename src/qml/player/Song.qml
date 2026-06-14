@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 import Player.Primitives
+import Player.Effects
 
 Item {
     id: root
@@ -60,13 +61,23 @@ Item {
 
         color: (
             root.playing
-            ? Qt.rgba(160, 160, 160, .2)
+            ? Qt.rgba(160, 160, 160, .1)
             : (
                 hover.hovered
-                ?   Qt.rgba(160, 160, 160, .1)
+                ?   Qt.rgba(160, 160, 160, .05)
                 :   "transparent"
             )
         )
+
+        visible: false
+    }
+
+    Noise {
+        source: background
+        anchors.fill: background
+
+        visible: true
+        intensity: root.playing ? .04 : 0
     }
 
     // Separator bottom border
