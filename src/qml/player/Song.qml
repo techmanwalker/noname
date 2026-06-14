@@ -29,6 +29,9 @@ Item {
     property bool hideAlbum: false
     property bool hideDuration: false
 
+    // visual separation
+    property bool showSeparator: false
+
     // more geometry control
     property real leftPadding:   0
     property real rightPadding:  0
@@ -66,6 +69,17 @@ Item {
         )
     }
 
+    // Separator bottom border
+    Rectangle {
+        visible: root.showSeparator && !root.playing
+        color: Qt.rgba(160, 160, 160, .1)
+
+        width: root.width
+        height: 1
+
+        anchors.bottom: parent.bottom
+    }
+
     HoverHandler {
         id: hover
     }
@@ -81,7 +95,7 @@ Item {
         anchors.right: parent.right
         anchors.leftMargin: root.leftPadding
         anchors.rightMargin: root.rightPadding
-        
+
         height: Math.max(coverItem.height, metadataLines.height, durationLabel.height)
 
         y: root.topPadding

@@ -41,6 +41,8 @@ ListView {
 
         playing: PlayQueue.playhead === PlayQueue.index(model.index, 0)
         onClicked: PlayQueue.playhead = PlayQueue.index(model.index, 0)
+
+        showSeparator: true
     }
 
     ScrollBar.vertical: AccessibleScrollBar {
