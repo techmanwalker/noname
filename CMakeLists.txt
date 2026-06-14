@@ -161,6 +161,7 @@ qt_add_shaders(playereffects "_shaders"
     BASE "src/shaders"
     FILES
         src/shaders/background_overlay.frag
+        src/shaders/edge_fade.frag
         src/shaders/kawase_down.frag
         src/shaders/kawase_up.frag
         src/shaders/noise.frag

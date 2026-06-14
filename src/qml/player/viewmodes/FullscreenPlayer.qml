@@ -23,7 +23,7 @@ Item {
         playerLeft:  0
         coverLeft:   root.coverGlobalX                                 / Math.max(1, root.width)
         coverRight:  (root.coverGlobalX + nowplaying_cover.width)      / Math.max(1, root.width)
-        playerRight: root.width
+        playerRight: 1
     }
 
     // ── Cover sizing ───────────────────────────────────────────────────────
