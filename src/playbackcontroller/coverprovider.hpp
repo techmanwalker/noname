@@ -31,5 +31,6 @@ public:
     static constexpr char default_cover_uri[] = "";
 
 private:
-    QHash<QString, QImage> m_cache;
+    std::vector<std::pair<QString, QImage>> m_linear_cache;
+    std::atomic_flag m_spin_lock = ATOMIC_FLAG_INIT; // multithreaded insertion
 };
