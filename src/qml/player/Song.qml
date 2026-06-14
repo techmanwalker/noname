@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 
+import Player
 import Player.Primitives
-import Player.Effects
 
 Item {
     id: root
@@ -39,6 +39,7 @@ Item {
     property real topPadding:    0
     property real bottomPadding: 0
     property real innerSpacing:  0
+    property real fadePadding:   0 // symmetric fading distance from the borders inwards
 
     // Helper function to format milliseconds as mm:ss
     function formatDuration(ms) {
@@ -54,35 +55,22 @@ Item {
 
     clip: true
 
-    Rectangle {
-        id: background
-
+    // factored out due to code extension
+    SongBackground {
         anchors.fill: parent
 
-        color: (
-            root.playing
-            ? Qt.rgba(160, 160, 160, .1)
-            : (
-                hover.hovered
-                ?   Qt.rgba(160, 160, 160, .05)
-                :   "transparent"
-            )
-        )
+        playing: root.playing
+        hovered: hover.hovered
 
-        visible: false
-    }
-
-    Noise {
-        source: background
-        anchors.fill: background
-
-        visible: true
-        intensity: root.playing ? .04 : 0
+        outer_leftstop:   0
+        inner_leftstop:   root.fadePadding               / Math.max(1, root.width)
+        inner_rightstop: (root.width - root.fadePadding) / Math.max(1, root.width)
+        outer_rightstop:  1
     }
 
     // Separator bottom border
     Rectangle {
-        visible: root.showSeparator && !root.playing
+        visible: root.showSeparator
         color: Qt.rgba(160, 160, 160, .1)
 
         width: root.width
