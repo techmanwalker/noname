@@ -19,10 +19,20 @@ cover_provider::store(const QVariant &cover_from_metadata)
         return QString();
     }
 
-    // Generamos un identificador único seguro (UUID limpio sin llaves)
+    // generate uuid for this cover
     QString uid = QUuid::createUuid().toString(QUuid::Id128);
+
+    // acquire tomic lock (fast loop on cpu, no syscalls)
+    while (m_spin_lock.test_and_set(std::memory_order_acquire)) {
+        // very short active wait
+    }
     
-    m_cache.insert(uid, img);
+    // guarantee contiguous memory
+    m_linear_cache.push_back({uid, std::move(img)});
+
+    // free lock
+    m_spin_lock.clear(std::memory_order_release);
+
     return uid;
 }
 
@@ -32,12 +42,15 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
     Q_UNUSED(requestedSize);
 
     // 'id' contains the fragment that goes after "image://covers/"
-    if (m_cache.contains(id)) {
-        QImage img = m_cache.value(id);
-        if (size) {
-            *size = img.size();
+    // as previous covers are immutable and are not reallocated, concurrently reading is safe
+    for (const auto &pair : m_linear_cache) {
+        if (pair.first == id) {
+            QImage img = pair.second;
+            if (size) {
+                *size = img.size();
+            }
+            return img;
         }
-        return img;
     }
 
     // To be able to actually retrieve the default cover
