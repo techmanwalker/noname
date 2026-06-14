@@ -10,8 +10,8 @@ ApplicationWindow {
     title: "Noname -"
     color: "#000"
 
-    width: 800
-    height: 600
+    width: 950
+    height: 650
 
     FullscreenPlayer {
         id: contents

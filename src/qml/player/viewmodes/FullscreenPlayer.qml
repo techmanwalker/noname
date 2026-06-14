@@ -29,7 +29,7 @@ Item {
     // ── Cover sizing ───────────────────────────────────────────────────────
 
     // Ideal cover size — large enough to look great on 4K
-    readonly property real coverIdealSize: 600
+    readonly property real coverIdealSize: 700
 
     // Vertical space consumed by controls and margins
     // Reactive: recalculates if controls change height
@@ -45,7 +45,7 @@ Item {
     // ── Layout ─────────────────────────────────────────────────────────────
     Row {
         id: mainRow
-        spacing: 20
+        spacing: nextQueue.songCoverWidth - nextQueue.songLeftPadding
 
         anchors.centerIn: parent
         anchors.margins: 20
@@ -53,7 +53,7 @@ Item {
         // Left column: cover + controls
         ColumnLayout {
             id: leftCol
-            spacing: basicControls.height / 2
+            spacing: basicControls.height * 2/3
 
             anchors.verticalCenter: parent.verticalCenter
 
@@ -131,6 +131,8 @@ Item {
                 anchors.top:   parent.top
                 anchors.left:  parent.left
                 anchors.right: parent.right
+
+                anchors.leftMargin: nextQueue.songLeftPadding
             }
 
             Playlist {
@@ -143,6 +145,8 @@ Item {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 anchors.bottom: parent.bottom
+
+                anchors.topMargin: nextQueue.songCoverHeight * .4
             }
         }
     }

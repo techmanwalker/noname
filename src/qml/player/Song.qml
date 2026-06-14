@@ -137,7 +137,8 @@ Item {
 
                 // font properties
                 font.pointSize: -1
-                font.weight: Font.Normal
+                font.weight: Font.Medium
+                color: "white"
             }
 
             Label {
@@ -158,6 +159,8 @@ Item {
                 maximumLineCount: root.maxSecondLineLines
                 wrapMode: Text.WordWrap
                 elide: Text.ElideRight
+
+                color: "#afafaf"
             }
         }
 
@@ -170,6 +173,8 @@ Item {
             visible: root.duration > 0 && !root.hideDuration
 
             text: root.duration > 0 ? root.formatDuration(root.duration) : root.noDurationText
+
+            color: "#afafaf"
         }
     }
 
