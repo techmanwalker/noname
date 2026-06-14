@@ -271,9 +271,25 @@ target_include_directories(mockupv2
         ${PLAYER_INCLUDE_DIRECTORIES}
 )
 
+qt_add_executable(backgroundgradinghelper EXCLUDE_FROM_ALL
+    src/tests/backgroundgradinghelper.cpp
+)
+
+target_link_libraries(backgroundgradinghelper
+    PUBLIC
+        ${BASIC_LIBRARIES}
+        player
+)
+
+target_include_directories(mockupv2
+    PRIVATE
+        ${PLAYER_INCLUDE_DIRECTORIES}
+)
+
+
 # If BUILD_TESTS, add them to the default build target
 if(BUILD_TESTS)
-    set_target_properties(mockupv2
+    set_target_properties(mockupv2 backgroundgradinghelper
         PROPERTIES EXCLUDE_FROM_ALL FALSE
     )
 endif()

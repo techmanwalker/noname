@@ -7,20 +7,24 @@ Item {
     property url  source
 
     // x coordinates from 0 to 1
-    property real playerLeft: .3
-    property real playerRight: .7
-    property real coverLeft:   .4
-    property real coverRight:  .5
+    property real playerLeft: .15
+    property real coverLeft:   .25
+    property real coverRight:  .75
+    property real playerRight: .85
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
-    property real outer_player_l: 0.08
-    property real inner_player_l: 0.33
-    property real cover_back_l:   0.55
+    property real outer_player_l: 0.28
+    property real inner_player_l: 0.48
+    property real cover_back_l:   0.65
 
-    property real outer_player_c: 0.60
-    property real inner_player_c: 0.85
-    property real cover_back_c:   0.95
+    property real outer_player_c: 0.28
+    property real inner_player_c: 0.48
+    property real cover_back_c:   0.65
+
+    // allow disabling the darkener for testing
+    property bool darken: true
+    property bool blur: true
 
     function clamp (magnitude) {
         if (magnitude < 0) return 0;
@@ -88,14 +92,17 @@ Item {
     DualKawaseBlur {
         id: blur
         anchors.fill: parent
-        source: bgOverlay.outputSource
+        source: root.darken ? bgOverlay.outputSource : img
         passes: 4
         offset: 1.5
         visible: false
     }
 
     Noise {
-        source: blur.outputSource
+        source: root.blur ? blur.outputSource : (
+            root.darken ? bgOverlay.outputSource : img
+        )
+
         anchors.fill: parent
 
         // based on screen size
