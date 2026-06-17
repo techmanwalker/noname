@@ -11,8 +11,8 @@
 
 #include "coverprovider.hpp"
 #include "coverproviderproxy.hpp"
-#include "lyrics/lyricsmanifest.hpp"
-#include "sequences/playqueue.hpp"
+#include "lyricsmanifest.hpp"
+#include "playqueue.hpp"
 #include "songfactory.hpp"
 #include "serialize.hpp"
 
@@ -68,8 +68,10 @@ main (int argc, char ** argv)
     };
     
     song_factory::batch_extract(new_queue, covers).then(&app, [&nextQueue](const QList<Types::Song> loaded_songs) {
+        /*
         QList<Types::Any> any_songs(loaded_songs.begin(), loaded_songs.end());
         qDebug().noquote() << QJsonDocument(debug::serialize(any_songs)).toJson(QJsonDocument::Indented);
+        */
 
         // when the playlist finishes loading, replace the current PlayQueue songs with these ones
         nextQueue.respawn_queue(loaded_songs);

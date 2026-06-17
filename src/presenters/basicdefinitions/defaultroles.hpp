@@ -1,7 +1,37 @@
 #pragma once
 
-#include "abstractmediasequence.hpp"
+#include "mediatypes.hpp"
 #include <QVariant>
+
+/// Role definition. Enables automatic QML role generation.
+struct CompiledRole {
+    int number;
+    QByteArray name;
+    std::function<QVariant(const Types::Any &)> extractor;
+};
+
+/**
+    @brief Unidirectional, read-only callback that extracts a specific property from a media metadata container.
+    
+    @details This functional wrapper processes a read-only reference to a dynamic item (`const Types::Any&`),
+    which can hold distinct underlying data types like Types::Song, Types::Album, or Types::Playlist.
+    It inspects the variant's active type at runtime—typically using std::visit—and projects the requested 
+    field into a QVariant returned by value.
+
+    @note This extractor is strictly read-only. It provides a copy of the data, meaning it does not support 
+    writing back to the source or bidirectional QML assignments through itself.
+*/
+using RoleExtractor = std::function<QVariant(const Types::Any &)>;
+using RoleExtractor   = std::function<QVariant(const Types::Any &)>; 
+
+/**
+    @brief Gives the developer simplified controls to define roles.
+    A good example on how to do it is defaultroles.hpp.
+*/
+using RoleDefinition  = std::pair<QByteArray, RoleExtractor>;
+using RoleDefinitions = std::vector<RoleDefinition>;
+
+
 
 // Helper to encapsulate the repetitive pattern of std::visit on the variant
 static auto make_visitor = [](auto&& projector) {

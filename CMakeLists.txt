@@ -30,14 +30,12 @@ file(GLOB_RECURSE EFFECTS_QMLS
     "src/qml/effects/*.qml"
 )
 
-file(GLOB QML_MODELS_SEQUENCES_SOURCES
+file(GLOB QML_MEDIASEQUENCES_SOURCES
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
-    "src/models/sequences/*.hpp"
-    "src/models/sequences/*.cpp"
-    "src/models/abstractmediasequence.hpp"
-    "src/models/abstractmediasequence.cpp"
-    "src/models/defaultroles.hpp"
+    "src/presenters/sequences/*.hpp"
+    "src/presenters/sequences/*.cpp"
+    "src/presenters/basicdefinitions/defaultroles.hpp"
 )
 
 
@@ -50,7 +48,7 @@ qt_add_qml_module(mediasequences
     URI Player.MediaSequences
     RESOURCE_PREFIX /player/sequences
     SOURCES
-        ${QML_MODELS_SEQUENCES_SOURCES}
+        ${QML_MEDIASEQUENCES_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
 )
 
@@ -63,43 +61,48 @@ target_link_libraries(mediasequences
         Qt6::Qml
         Qt6::QmlIntegration
         songfactory
-        # must not depend on playbackcontroller nor playbackpresentation
+        # must not depend on audioengine nor playerpresenter
 )
 
 target_include_directories(mediasequences
     PUBLIC
-        src/models
-        src/models/sequences # to make qmltyperegistrar happy
+        src/presenters/sequences # to make qmltyperegistrar happy
+
+    PRIVATE
+        src/presenters/basicdefinitions
 )
 
 # Playback presentation - everything that the C++ side exposes for your control and view
 
-qt_add_qml_module(playbackpresentation
+qt_add_qml_module(playerpresenter
     STATIC
-    URI Player.PlaybackPresentation
-    RESOURCE_PREFIX /player/playbackpresentation
+    URI Player.PlayerPresenter
+    RESOURCE_PREFIX /player/playerpresenter
     SOURCES
-        src/models/playbackpresentation/playbackpresentation.hpp
-        src/models/playbackpresentation/playbackpresentation.cpp
+        src/presenters/context/playerpresenter/playerpresenter.hpp
+        src/presenters/context/playerpresenter/playerpresenter.cpp
     DEPENDENCIES
         QtMultimedia
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlaybackPresentation"
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
 )
 
-target_link_libraries(playbackpresentation
+target_link_libraries(playerpresenter
     PRIVATE
         Qt6::Core
         Qt6::Qml
         Qt6::QmlIntegration
         Qt6::Quick
-        playbackcontroller
+        audioengine
         mediasequences
 )
 
-target_include_directories(playbackpresentation
+target_include_directories(playerpresenter
     PUBLIC
-        src/models
-        src/models/playbackpresentation
+        src/presenters/context/playerpresenter
+
+    PRIVATE
+        src/presenters/sequences
+        src/presenters/basicdefinitions
 )
 
 # Lyrics manifest - access the lyrics from your playing song anywhere
@@ -109,8 +112,8 @@ qt_add_qml_module(lyricsmanifest
     URI Player.LyricsManifest
     RESOURCE_PREFIX /player/lyricsmanifest
     SOURCES
-        src/models/lyrics/lyricsmanifest.hpp
-        src/models/lyrics/lyricsmanifest.cpp
+        src/presenters/context/lyrics/lyricsmanifest.hpp
+        src/presenters/context/lyrics/lyricsmanifest.cpp
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
 
@@ -123,9 +126,7 @@ target_link_libraries(lyricsmanifest
 
 target_include_directories(lyricsmanifest
     PUBLIC
-        src/models
-    PRIVATE
-        src/models/lyrics
+        src/presenters/context/lyrics
 )
 
 ### QML Modules
@@ -183,7 +184,7 @@ qt_add_qml_module(player
 target_link_libraries(player
     PUBLIC
         mediasequences
-        playbackpresentation
+        playerpresenter
         lyricsmanifest
 
     PRIVATE
@@ -199,13 +200,13 @@ target_link_libraries(player
 ### C++ Modules
 
 # The Playback controller
-add_library(playbackcontroller STATIC
-    src/playbackcontroller/playbackcontroller.cpp
+add_library(audioengine STATIC
+    src/audioengine/audioengine.cpp
 )
 
-target_link_libraries(playbackcontroller
+target_link_libraries(audioengine
     PUBLIC
-        Qt6::Multimedia # every module linked to playbackcontroller ends up needing this
+        Qt6::Multimedia # every module linked to audioengine ends up needing this
         songfactory
 
     PRIVATE
@@ -214,12 +215,13 @@ target_link_libraries(playbackcontroller
         mediasequences
 )
 
-target_include_directories(playbackcontroller
+target_include_directories(audioengine
     PUBLIC
-        src/playbackcontroller # enable including its own headers como Qt6:: libraries
+        src/audioengine # enable including its own headers como Qt6:: libraries
 
     PRIVATE
-        src/models
+        src/presenters/sequences
+        src/presenters/basicdefinitions
 
 )
 
@@ -241,7 +243,7 @@ target_include_directories(songfactory
     PUBLIC
         src/songfactory
     PRIVATE
-        src/models
+        src/presenters/basicdefinitions
 )
 
 # The debugging tools
@@ -260,7 +262,7 @@ target_include_directories(debugtools
         src/debug
 
     PRIVATE
-        src/models
+        src/presenters/basicdefinitions
 )
 
 
@@ -276,7 +278,7 @@ set(BASIC_LIBRARIES
 )
 
 set(PLAYER_INCLUDE_DIRECTORIES
-    src/models
+    src/presenters
 )
 
 
@@ -307,13 +309,16 @@ target_link_libraries(mockupv2
         player
         playereffects
         primitives
-        playbackcontroller
+        audioengine
         debugtools
+        lyricsmanifest
+        mediasequences
 )
 
 target_include_directories(mockupv2
     PRIVATE
         ${PLAYER_INCLUDE_DIRECTORIES}
+        src/presenters/basicdefinitions
 )
 
 qt_add_executable(backgroundgradinghelper EXCLUDE_FROM_ALL
@@ -349,6 +354,7 @@ target_link_libraries(startpagetest
 target_include_directories(startpagetest
     PRIVATE
         ${PLAYER_INCLUDE_DIRECTORIES}
+        src/presenters/basicdefinitions
 )
 
 # If BUILD_TESTS, add them to the default build target

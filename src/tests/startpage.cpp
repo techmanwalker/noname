@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QUrl>
+#include <QLoggingCategory>
 #include <qjsondocument.h>
 
 #include "shortcutslist.hpp"
@@ -13,6 +14,12 @@ main (int argc, char ** argv)
 {
     // Test how the start page would look like with real user data.
     QGuiApplication app(argc, argv);
+
+    QLoggingCategory::setFilterRules(R"(
+        qt.multimedia*=false
+        qt.multimedia*.warning=true
+        qt.multimedia*.critical=true
+    )");
 
     // get access to the shortcuts list that will be displayed
 
