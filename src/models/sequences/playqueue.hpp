@@ -3,6 +3,7 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <QAbstractItemModel>
 #include <qabstractitemmodel.h>
+#include <qlist.h>
 #include <qtmetamacros.h>
 #include "playlistsequence.hpp"
 
@@ -28,12 +29,11 @@ public:
     static PlayQueue &instance();
     static PlayQueue *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
-    // drag and drop files to the play queue
-    Q_INVOKABLE QFuture<void> batch_append(const QList<QUrl> &sources);
-
     // getters
     QModelIndex playhead() const { return m_playhead; }
     int itemCount () const;
+
+    QList<Types::Song> items() const;
 
     // controls
     void switch_to (const Types::Song &song, bool play_afterwards = false); // no matter if it is on the queue or not
@@ -47,9 +47,15 @@ public:
     // to find out if a song is in queue
     QPersistentModelIndex find (const Types::Song &needle) const;
 
+    // to drag and drop lists of songs on the qml gui
+    Q_INVOKABLE QFuture<void> batch_append (const QList<QUrl> &sources);
+
     /// clear and repopulate the play queue in one step
-    void respawn_queue (QList<QUrl> new_queue);
-    void respawn_queue (PlaylistSequence &new_queue);
+    void respawn_queue (const QList<Types::Song> &new_queue);
+    void respawn_queue (const PlaylistSequence &new_queue);
+
+    // where are the covers for drag and drop appends saved?
+    std::shared_ptr<cover_provider> chosen_cover_provider;
 
 signals:
     void playheadChanged(bool play_afterwards = false);
@@ -59,4 +65,5 @@ private:
     explicit PlayQueue(QObject *parent = nullptr);
 
     QPersistentModelIndex m_playhead;
+
 };

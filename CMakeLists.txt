@@ -62,6 +62,7 @@ target_link_libraries(mediasequences
         Qt6::Quick
         Qt6::Qml
         Qt6::QmlIntegration
+        songfactory
         # must not depend on playbackcontroller nor playbackpresentation
 )
 
@@ -184,6 +185,7 @@ target_link_libraries(player
         mediasequences
         playbackpresentation
         lyricsmanifest
+
     PRIVATE
         Qt6::Core
         Qt6::Gui
@@ -199,13 +201,13 @@ target_link_libraries(player
 # The Playback controller
 add_library(playbackcontroller STATIC
     src/playbackcontroller/playbackcontroller.cpp
-    src/playbackcontroller/coverprovider.cpp
-    src/playbackcontroller/songfactory.cpp
 )
 
 target_link_libraries(playbackcontroller
     PUBLIC
         Qt6::Multimedia # every module linked to playbackcontroller ends up needing this
+        songfactory
+
     PRIVATE
         Qt6::Core
         Qt6::Quick
@@ -215,6 +217,48 @@ target_link_libraries(playbackcontroller
 target_include_directories(playbackcontroller
     PUBLIC
         src/playbackcontroller # enable including its own headers como Qt6:: libraries
+
+    PRIVATE
+        src/models
+
+)
+
+# The Song factory - enables extracting metadata, media and covers from songs themselves
+add_library(songfactory STATIC
+    src/songfactory/coverprovider.cpp
+    src/songfactory/coverproviderproxy.cpp
+    src/songfactory/songfactory.cpp
+)
+
+target_link_libraries(songfactory
+    PRIVATE
+        Qt6::Core
+        Qt6::Quick
+        Qt6::Multimedia
+)
+
+target_include_directories(songfactory
+    PUBLIC
+        src/songfactory
+    PRIVATE
+        src/models
+)
+
+# The debugging tools
+add_library(debugtools STATIC
+    src/debug/serialize.cpp
+)
+
+target_link_libraries(debugtools
+    PRIVATE
+        Qt6::Core
+        mediasequences
+)
+
+target_include_directories(debugtools
+    PUBLIC
+        src/debug
+
     PRIVATE
         src/models
 )
@@ -264,6 +308,7 @@ target_link_libraries(mockupv2
         playereffects
         primitives
         playbackcontroller
+        debugtools
 )
 
 target_include_directories(mockupv2
@@ -286,10 +331,29 @@ target_include_directories(mockupv2
         ${PLAYER_INCLUDE_DIRECTORIES}
 )
 
+qt_add_executable(startpagetest EXCLUDE_FROM_ALL
+    src/tests/startpage.cpp
+)
+
+target_link_libraries(startpagetest
+    PUBLIC
+        ${BASIC_LIBRARIES}
+        player
+        mediasequences
+        debugtools
+        playereffects
+        songfactory
+        mediasequences
+)
+
+target_include_directories(startpagetest
+    PRIVATE
+        ${PLAYER_INCLUDE_DIRECTORIES}
+)
 
 # If BUILD_TESTS, add them to the default build target
 if(BUILD_TESTS)
-    set_target_properties(mockupv2 backgroundgradinghelper
+    set_target_properties(mockupv2 backgroundgradinghelper startpagetest
         PROPERTIES EXCLUDE_FROM_ALL FALSE
     )
 endif()

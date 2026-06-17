@@ -1,5 +1,7 @@
 #include "abstractmediasequence.hpp"
-#include <qabstractitemmodel.h>
+
+#include "songfactory.hpp"
+#include <qfuture.h>
 
 // Default role definitions for any AbstractMediaSequence
 
@@ -118,4 +120,12 @@ AbstractMediaSequence::find (const Types::Any &needle) const
 
     // invalid if not found
     return QPersistentModelIndex();
+}
+
+QFuture<void>
+AbstractMediaSequence::batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider)
+{
+    return song_factory::batch_extract(sources, provider).then(this, [this, provider] (QList<Types::Song> result) {
+        batch_append(result);
+    });
 }

@@ -12,7 +12,13 @@ PlayQueue::PlayQueue(QObject *parent)
 }
 
 int PlayQueue::itemCount () const { return AbstractMediaSequence::itemCount(); }
-QFuture<void> PlayQueue::batch_append(const QList<QUrl> &sources) { return PlaylistSequence::batch_append(sources); }
+QList<Types::Song> PlayQueue::items () const { return AbstractMediaSequence::items<Types::Song>() ; }
+
+QFuture<void> 
+PlayQueue::batch_append (const QList<QUrl> &sources)
+{ 
+    return AbstractMediaSequence::batch_append(sources, chosen_cover_provider);
+}
 
 QPersistentModelIndex
 PlayQueue::find (const Types::Song &needle) const
@@ -45,24 +51,18 @@ PlayQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 }
 
 void
-PlayQueue::respawn_queue(QList<QUrl> new_queue)
+PlayQueue::respawn_queue(const QList<Types::Song> &new_queue)
 {
-    clear();
+    PlaylistSequence::respawn_list(new_queue);
 
-    // this version is async
-    batch_append(new_queue).then([this]() {
-            if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
-        }
-    );
+    if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
 }
 
 void
-PlayQueue::respawn_queue(PlaylistSequence &new_queue)
+PlayQueue::respawn_queue(const PlaylistSequence &new_queue)
 {
-    clear();
-
     // this version is synchronous
-    PlaylistSequence::batch_append(new_queue.items<Types::Song>());
+    PlaylistSequence::respawn_list(new_queue.items<Types::Song>());
 
     if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
 }

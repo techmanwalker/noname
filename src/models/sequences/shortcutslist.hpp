@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <QFuture>
 #include "abstractmediasequence.hpp"
 
 // forward declarations
@@ -22,8 +23,11 @@ public:
 
     // Accepts any type of item to be shown on shortcuts
     void append(const Types::Any &item);
+    void batch_append (const QList<Types::Any> &item);
     void remove(int index);
     void clear();
+
+    // Shortcuts can not only be songs, so this has no respawn functions
 
 private:
     // hidden constructor

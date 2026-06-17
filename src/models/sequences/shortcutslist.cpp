@@ -1,4 +1,4 @@
-#include "shortcutsmodel.hpp"
+#include "shortcutslist.hpp"
 #include "abstractmediasequence.hpp"
 #include "defaultroles.hpp"
 
@@ -31,6 +31,7 @@ ShortcutsList::ShortcutsList(QObject *parent)
 {}
 
 // a shortcut could be actually anything
-void ShortcutsList::append(const Types::Any &shortcut) { AbstractMediaSequence::append(shortcut); }
-void ShortcutsList::remove(int index)                  { AbstractMediaSequence::remove(index); }
-void ShortcutsList::clear()                            { AbstractMediaSequence::clear(); }
+void ShortcutsList::append(const Types::Any &shortcut)                { AbstractMediaSequence::append(shortcut); }
+void ShortcutsList::batch_append (const QList<Types::Any> &shortcuts) { AbstractMediaSequence::batch_append(shortcuts); }
+void ShortcutsList::remove(int index)                                 { AbstractMediaSequence::remove(index); }
+void ShortcutsList::clear()                                           { AbstractMediaSequence::clear(); }

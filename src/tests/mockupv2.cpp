@@ -3,11 +3,21 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QtConcurrent/qtconcurrentrun.h>
+#include <memory>
+#include <qdebug.h>
+#include <qlist.h>
 //#include <QDirIterator>
 
+#include "coverprovider.hpp"
+#include "coverproviderproxy.hpp"
 #include "lyrics/lyricsmanifest.hpp"
-#include "sequences/playlistsequence.hpp"
 #include "sequences/playqueue.hpp"
+#include "songfactory.hpp"
+#include "serialize.hpp"
+
+
+using namespace std::chrono_literals; // for _s suffix
 
 int
 main (int argc, char ** argv)
@@ -28,18 +38,22 @@ main (int argc, char ** argv)
     
     // Populate it (example - load from file or hardcode for testing)
     testLyrics.appendLyric(0, "You shut your mouth");
-    testLyrics.appendLyric(5000, "How can you say I go about things the wrong way?");
+    testLyrics.appendLyric(5000, "How can you say mockupvI go about things the wrong way?");
     testLyrics.appendLyric(10000, "I am human and I need to be loved");
     testLyrics.appendLyric(15000, "Just like everybody else does");
 
+    // Cover cache
+    std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();
+
     // Playlist model
     auto& nextQueue = PlayQueue::instance();
+    nextQueue.chosen_cover_provider = covers;
 
     // Populate it (example)
     // Now with concurrent batch loading: it will extract metadata in parallel 
     // and safely perform a single massive insertion on the model once ready.
-    QFuture<void> loading_finished; // will wait for the Playlist to load
-    PlaylistSequence new_queue (QList<QUrl> {
+
+    QList<QUrl> new_queue {
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/lilith.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/apotionforlove.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/allthethingsshesaid.flac"),
@@ -51,20 +65,36 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/runaway.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/telephones.flac"),
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac")
-    }, &loading_finished);
+    };
     
-    loading_finished.then(
-        [&nextQueue, &new_queue]() 
-        {
-            // when the playlist finishes loading, replace the current PlayQueue songs with these ones
-            nextQueue.respawn_queue(new_queue);
-        });
-    
+    song_factory::batch_extract(new_queue, covers).then(&app, [&nextQueue](const QList<Types::Song> loaded_songs) {
+        QList<Types::Any> any_songs(loaded_songs.begin(), loaded_songs.end());
+        qDebug().noquote() << QJsonDocument(debug::serialize(any_songs)).toJson(QJsonDocument::Indented);
+
+        // when the playlist finishes loading, replace the current PlayQueue songs with these ones
+        nextQueue.respawn_queue(loaded_songs);
+    });
+
 
     // After the queue respawn, the playback controller will switch to the first song :D
 
     // create base engine
     QQmlApplicationEngine engine;
+
+    // protect the cover cache from the qml gc gremlin
+
+    /*  Explanation of the proxy mechanism:
+
+        QQmlEngine will take ownership of this proxy, and upon program teardown,
+        will invoke 'delete' on it.
+        As m_real is a std::shared_ptr, when the proxy is destroyed it will
+        decrement the reference counter safely without prematurely freeing the
+        displaced memory block where the qml engine thinks the cover_provider is.
+    */
+    auto *cpproxy = new __cover_provider_PROXY(covers);
+    engine.addImageProvider("covers", cpproxy);
+
+
 
     /*
     QDirIterator it(":", QDirIterator::Subdirectories);
@@ -83,6 +113,21 @@ main (int argc, char ** argv)
     if (engine.rootObjects().isEmpty()) {
         return -1;
     }
+
+    // wait 5 seconds and print nextQueue contents
+
+    /*
+
+    (void) QtConcurrent::run([&nextQueue]() {
+        QThread::msleep(5000);
+
+        QList<Types::Song> nt_items(nextQueue.items());
+        QList<Types::Any> nt_any (nt_items.begin(), nt_items.end());
+
+        // print
+        qDebug().noquote() << QJsonDocument(debug::serialize(nt_any)).toJson();
+    });
+    */
 
     return app.exec();
 }
