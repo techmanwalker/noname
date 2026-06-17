@@ -1,9 +1,8 @@
 #include "audioengine.hpp"
+
 #include <QFuture>
 #include <QMediaMetaData>
 #include <QMediaPlayer>
-#include <memory>
-#include <qmediaplayer.h>
 
 // Meyers singleton implementation
 audio_engine &

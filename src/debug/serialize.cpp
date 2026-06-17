@@ -1,7 +1,4 @@
 #include "serialize.hpp"
-#include <qjsonarray.h>
-#include <qurl.h>
-#include <variant>
 
 QJsonObject
 debug::serialize (const Types::Song &song)

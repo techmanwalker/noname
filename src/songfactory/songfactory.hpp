@@ -1,12 +1,10 @@
 #pragma once
-#include <QObject>
-#include <QUrl>
-#include <QFuture>
-#include <QMediaPlayer>
-#include <memory>
 
-#include "mediatypes.hpp"
 #include "coverprovider.hpp"
+#include "mediatypes.hpp"
+
+#include <QFuture>
+#include <QObject>
 
 class song_factory : public QObject {
     Q_OBJECT

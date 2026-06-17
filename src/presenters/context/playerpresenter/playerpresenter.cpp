@@ -1,8 +1,7 @@
 
 #include "playerpresenter.hpp"
-#include "audioengine.hpp"
+
 #include <QQmlEngine>
-#include <qjsengine.h>
 
 // meyers singleton
 PlayerPresenter &PlayerPresenter::instance() {

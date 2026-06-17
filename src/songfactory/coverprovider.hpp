@@ -1,15 +1,7 @@
 #pragma once
 
 #include <QQuickImageProvider>
-#include <QImage>
-#include <QHash>
 #include <QObject>
-#include <QString>
-#include <QVariant>
-#include <QUuid>
-#include <qimage.h>
-#include <qtmetamacros.h>
-#include <string_view>
 
 // Enables loading embedded thumbnails to memory.
 class cover_provider : public QQuickImageProvider

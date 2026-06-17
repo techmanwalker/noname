@@ -1,10 +1,6 @@
-#include "playqueue.hpp"
 #include "abstractmediasequence.hpp"
 #include "playlistsequence.hpp"
-#include <QQmlEngine>
-#include <QAbstractItemModel>
-#include <QFuture>
-#include <QList>
+#include "playqueue.hpp"
 
 PlayQueue::PlayQueue(QObject *parent)
     : PlaylistSequence(parent)

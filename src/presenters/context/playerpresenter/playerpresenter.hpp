@@ -1,15 +1,14 @@
 #pragma once
 
-#include <QObject>
-#include <QUrl>
-#include <QString>
-#include <QtQmlIntegration/qqmlintegration.h>
-#include <QMediaPlayer>
-#include <atomic>
-#include <qtmetamacros.h>
-
 #include "audioengine.hpp"
 #include "playqueue.hpp"
+
+#include <QMediaPlayer>
+#include <QObject>
+
+#include <QtQmlIntegration/qqmlintegration.h>
+
+#include <atomic>
 
 // forward declarations
 class QQmlEngine;

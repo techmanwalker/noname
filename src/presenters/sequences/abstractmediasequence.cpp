@@ -1,7 +1,5 @@
 #include "abstractmediasequence.hpp"
-
 #include "songfactory.hpp"
-#include <qfuture.h>
 
 // Default role definitions for any AbstractMediaSequence
 
