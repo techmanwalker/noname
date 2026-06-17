@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Controls
 
-import Player.PlaybackPresentation
+import Player.PlayerPresenter
 
 ToolButton {
     icon.name: "media-skip-backward"
 
-    onClicked: PlaybackPresentation.prev()
+    onClicked: PlayerPresenter.prev()
 }

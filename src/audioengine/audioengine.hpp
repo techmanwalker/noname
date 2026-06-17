@@ -7,12 +7,10 @@
 #include <QString>
 #include <QMediaPlayer>
 #include <QTimer>
-#include <memory>
 #include <qfuture.h>
 #include <qmediaplayer.h>
 
 #include "mediatypes.hpp" // for Types:: namespace
-#include "coverprovider.hpp"
 #include "playqueue.hpp"
 
 /**
@@ -22,16 +20,16 @@
     stays mostly intact.
 
 */
-class playback_controller : public QObject
+class audio_engine : public QObject
 {
     Q_OBJECT
 public:
     // Disable copy and reassignment to guarantee single instance
-    playback_controller(const playback_controller&) = delete;
-    playback_controller &operator=(const playback_controller&) = delete;
+    audio_engine(const audio_engine&) = delete;
+    audio_engine &operator=(const audio_engine&) = delete;
 
     // Meyers singleton instance for global access within C++
-    static playback_controller &instance();
+    static audio_engine &instance();
 
     void play();
     void pause();
@@ -70,8 +68,8 @@ private slots:
 
 private:
     // Private constructor for the singleton pattern
-    explicit playback_controller(QObject *parent = nullptr);
-    ~playback_controller() override = default;
+    explicit audio_engine(QObject *parent = nullptr);
+    ~audio_engine() override = default;
 
     QMediaPlayer m_media_player;
     QAudioOutput m_audio_output;

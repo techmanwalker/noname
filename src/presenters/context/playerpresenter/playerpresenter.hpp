@@ -8,7 +8,7 @@
 #include <atomic>
 #include <qtmetamacros.h>
 
-#include "playbackcontroller.hpp"
+#include "audioengine.hpp"
 #include "playqueue.hpp"
 
 // forward declarations
@@ -16,7 +16,7 @@ class QQmlEngine;
 class QJSEngine;
 
 /**
-    @class PlaybackPresentation
+    @class PlayerPresenter
     @brief Declarative and reactive representation of the playback state for the user interface.
 
     This class acts as the view model within the application architecture,
@@ -38,7 +38,7 @@ class QJSEngine;
     read-only properties for static metadata, ensuring that the interface cannot corrupt 
     the current media state directly.
 */
-class PlaybackPresentation : public QObject
+class PlayerPresenter : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -60,12 +60,12 @@ class PlaybackPresentation : public QObject
 
 public:
     // disable copy and reassignment
-    PlaybackPresentation(const PlaybackPresentation&) = delete;
-    PlaybackPresentation &operator=(const PlaybackPresentation&) = delete;
+    PlayerPresenter(const PlayerPresenter&) = delete;
+    PlayerPresenter &operator=(const PlayerPresenter&) = delete;
     
     // singleton instantiation
-    static PlaybackPresentation &instance();
-    static PlaybackPresentation *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+    static PlayerPresenter &instance();
+    static PlayerPresenter *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // Getters
     QString title() const;
@@ -110,9 +110,9 @@ public slots:
 
 private:
     // Private constructor
-    explicit PlaybackPresentation(QObject *parent = nullptr);
+    explicit PlayerPresenter(QObject *parent = nullptr);
 
-    playback_controller &playing = playback_controller::instance();
+    audio_engine &playing = audio_engine::instance();
     PlayQueue &queue = PlayQueue::instance();
 
     std::atomic_bool m_duration_slider_pressed = false; // is the duration slider pressed or dragged?

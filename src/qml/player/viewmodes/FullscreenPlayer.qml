@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player
-import Player.PlaybackPresentation
+import Player.PlayerPresenter
 import Player.MediaSequences
 import Player.Primitives
 
@@ -15,7 +15,7 @@ Item {
     property real coverGlobalX: mainRow.x + leftCol.x + nowplaying_cover.x
 
     Background {
-        source: PlaybackPresentation.cover
+        source: PlayerPresenter.cover
         anchors.fill: parent
 
         // Math.max(1, root.width) prevents zero-division errors during
@@ -59,7 +59,7 @@ Item {
 
             Cover {
                 id: nowplaying_cover
-                source: PlaybackPresentation.cover
+                source: PlayerPresenter.cover
 
                 Layout.preferredWidth:  root.coverSize
                 Layout.preferredHeight: root.coverSize
@@ -76,7 +76,7 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.fillWidth: true
 
-                    stateModel: PlaybackPresentation
+                    stateModel: PlayerPresenter
                 }
 
                 // Bottom bar: volume | playback | shuffle+repeat
@@ -88,7 +88,7 @@ Item {
                         anchors.left: parent.left
                         width: 100
 
-                        stateModel: PlaybackPresentation
+                        stateModel: PlayerPresenter
                     }
 
                     BasicControls {
@@ -124,9 +124,9 @@ Item {
 
             MetadataContainer {
                 id: metadataContainer
-                title:  PlaybackPresentation.title
-                artist: PlaybackPresentation.artist
-                album:  PlaybackPresentation.album
+                title:  PlayerPresenter.title
+                artist: PlayerPresenter.artist
+                album:  PlayerPresenter.album
 
                 anchors.top:   parent.top
                 anchors.left:  parent.left

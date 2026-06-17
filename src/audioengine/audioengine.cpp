@@ -1,6 +1,4 @@
-#include "playbackcontroller.hpp"
-#include "coverprovider.hpp"
-#include "songfactory.hpp"
+#include "audioengine.hpp"
 #include <QFuture>
 #include <QMediaMetaData>
 #include <QMediaPlayer>
@@ -8,43 +6,43 @@
 #include <qmediaplayer.h>
 
 // Meyers singleton implementation
-playback_controller &
-playback_controller::instance()
+audio_engine &
+audio_engine::instance()
 {
-    static playback_controller s_instance;
+    static audio_engine s_instance;
     return s_instance;
 }
 
 // Private constructor
-playback_controller::playback_controller(QObject *parent)
+audio_engine::audio_engine(QObject *parent)
     : QObject(parent)
 {
     m_media_player.setAudioOutput(&m_audio_output);
 
     // raw high frequency signal, unused
     connect(&m_media_player, &QMediaPlayer::positionChanged,
-            this, &playback_controller::position_changed);
+            this, &audio_engine::position_changed);
 
     connect(&m_media_player, &QMediaPlayer::durationChanged,
-            this, &playback_controller::handle_duration_changed);
+            this, &audio_engine::handle_duration_changed);
 
     connect(&m_media_player, &QMediaPlayer::playbackStateChanged,
-            this, &playback_controller::playback_state_changed);
+            this, &audio_engine::playback_state_changed);
 
     connect(&m_media_player, &QMediaPlayer::mediaStatusChanged,
-            this, &playback_controller::handle_media_status_changed);
+            this, &audio_engine::handle_media_status_changed);
 
-    // Assuming that PlaybackPresentation converted this class in the
+    // Assuming that PlayerPresenter converted this class in the
     // signal sender, let's do an autoconnect
-    connect(this, &playback_controller::r_duration_slider_pressed_changed,
-            this, &playback_controller::handle_duration_slider_pressed_changed);
+    connect(this, &audio_engine::r_duration_slider_pressed_changed,
+            this, &audio_engine::handle_duration_slider_pressed_changed);
 
     connect(&queue, &PlayQueue::playheadChanged,
-            this, &playback_controller::handle_playhead_changed);
+            this, &audio_engine::handle_playhead_changed);
 }
 
 void
-playback_controller::play()
+audio_engine::play()
 {
     m_media_player.play();
 
@@ -53,19 +51,19 @@ playback_controller::play()
 }
 
 void
-playback_controller::pause()
+audio_engine::pause()
 {
     m_media_player.pause();
 }
 
 void
-playback_controller::stop()
+audio_engine::stop()
 {
     m_media_player.stop();
 }
 
 QFuture<void>
-playback_controller::load (const Types::Song &song) // song IS the metadata, no need to async wait
+audio_engine::load (const Types::Song &song) // song IS the metadata, no need to async wait
 {
     if (song.source.isEmpty()) return QtFuture::makeReadyVoidFuture();
 
@@ -113,7 +111,7 @@ playback_controller::load (const Types::Song &song) // song IS the metadata, no 
 }
 
 void
-playback_controller::unload()
+audio_engine::unload()
 {
     m_current_transaction_id++; // invalidate pending loads
     stop();
@@ -126,13 +124,13 @@ playback_controller::unload()
 }
 
 void
-playback_controller::set_position(const quint64 position_ms)
+audio_engine::set_position(const quint64 position_ms)
 {
     m_media_player.setPosition(static_cast<qint64>(position_ms));
 }
 
 void
-playback_controller::set_volume(quint8 volume_percent)
+audio_engine::set_volume(quint8 volume_percent)
 {
     // Force upper limit
     if (volume_percent > 100) {
@@ -148,13 +146,13 @@ playback_controller::set_volume(quint8 volume_percent)
 }
 
 Types::Song
-playback_controller::current_track() const
+audio_engine::current_track() const
 {
     return m_current_track;
 }
 
 quint8
-playback_controller::current_volume() const
+audio_engine::current_volume() const
 {
     // Fetch 0-1 volume value
     float volume_float = m_audio_output.volume();
@@ -164,7 +162,7 @@ playback_controller::current_volume() const
 }
 
 quint64
-playback_controller::current_position_ms() const
+audio_engine::current_position_ms() const
 {
     qint64 position = m_media_player.position();
     
@@ -177,26 +175,26 @@ playback_controller::current_position_ms() const
 }
 
 QMediaPlayer::PlaybackState
-playback_controller::playback_state() const
+audio_engine::playback_state() const
 {
     return m_media_player.playbackState();
 }
 
 
 QMediaPlayer::MediaStatus
-playback_controller::media_status() const
+audio_engine::media_status() const
 {
     return m_media_player.mediaStatus();
 }
 
 void
-playback_controller::handle_duration_changed()
+audio_engine::handle_duration_changed()
 {
     emit duration_changed();
 }
 
 void
-playback_controller::handle_duration_slider_pressed_changed(bool pressed)
+audio_engine::handle_duration_slider_pressed_changed(bool pressed)
 {
     // Yet another reactive binding
 
@@ -223,7 +221,7 @@ playback_controller::handle_duration_slider_pressed_changed(bool pressed)
 }
 
 void
-playback_controller::handle_media_status_changed()
+audio_engine::handle_media_status_changed()
 {
     if (m_media_player.mediaStatus() == QMediaPlayer::EndOfMedia) {
         queue.next();
@@ -231,7 +229,7 @@ playback_controller::handle_media_status_changed()
 }
 
 void
-playback_controller::handle_playhead_changed(bool play_afterwards)
+audio_engine::handle_playhead_changed(bool play_afterwards)
 {
     QModelIndex current_index = queue.playhead();
 

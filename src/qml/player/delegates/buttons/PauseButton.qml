@@ -2,14 +2,14 @@ import QtQuick
 import QtQuick.Controls
 
 import QtMultimedia
-import Player.PlaybackPresentation
+import Player.PlayerPresenter
 
 ToolButton {
     id: root
 
     // Strictly real to the real playback state
     icon.name: {
-        switch (PlaybackPresentation.playbackState) {
+        switch (PlayerPresenter.playbackState) {
             case MediaPlayer.PlayingState:
                 return "media-playback-pause"
             case MediaPlayer.PausedState:
@@ -20,10 +20,10 @@ ToolButton {
     }
 
     onClicked: {
-        if (PlaybackPresentation.playbackState === MediaPlayer.PlayingState) {
-            PlaybackPresentation.pause()
+        if (PlayerPresenter.playbackState === MediaPlayer.PlayingState) {
+            PlayerPresenter.pause()
         } else {
-            PlaybackPresentation.play()
+            PlayerPresenter.play()
         }
     }
 }
