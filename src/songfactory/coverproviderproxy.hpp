@@ -1,4 +1,3 @@
-#include <QQuickImageProvider>
 #include "coverprovider.hpp"
 
 // --- Cheats so the QQmlEngine doesn't hard kill the player every time it's closed

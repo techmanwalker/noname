@@ -1,10 +1,9 @@
 #include "songfactory.hpp"
 
-#include <QFutureWatcher>
 #include <QMediaMetaData>
 #include <QMediaPlayer>
+
 #include <QtConcurrent/QtConcurrent>
-#include <qmediaplayer.h>
 
 // clean constructor for both qfuture and callback variants
 song_factory::song_factory(const QUrl &source, std::shared_ptr<cover_provider> provider)

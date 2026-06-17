@@ -1,20 +1,13 @@
-#include <QGuiApplication>
-#include <QLoggingCategory>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include <QQuickWindow>
-#include <QtConcurrent/qtconcurrentrun.h>
-#include <memory>
-#include <qdebug.h>
-#include <qlist.h>
-//#include <QDirIterator>
-
-#include "coverprovider.hpp"
 #include "coverproviderproxy.hpp"
 #include "lyricsmanifest.hpp"
 #include "playqueue.hpp"
 #include "songfactory.hpp"
-#include "serialize.hpp"
+// #include "serialize.hpp"
+
+#include <QLoggingCategory>
+#include <QQmlApplicationEngine>
+#include <QQuickWindow>
+//#include <QDirIterator>
 
 
 using namespace std::chrono_literals; // for _s suffix

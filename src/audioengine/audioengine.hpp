@@ -1,17 +1,11 @@
 #pragma once
 
-#include <QObject>
-#include <QMediaPlayer>
-#include <QAudioOutput>
-#include <QUrl>
-#include <QString>
-#include <QMediaPlayer>
-#include <QTimer>
-#include <qfuture.h>
-#include <qmediaplayer.h>
-
-#include "mediatypes.hpp" // for Types:: namespace
+#include "mediatypes.hpp"
 #include "playqueue.hpp"
+
+#include <QAudioOutput>
+#include <QMediaPlayer>
+#include <QObject>
 
 /**
     @brief Playback controller proxy for whatever audio framework hides behind the scenes.

@@ -1,8 +1,6 @@
-#include "playlistsequence.hpp"
 #include "abstractmediasequence.hpp"
 #include "defaultroles.hpp"
-
-#include <QFuture>
+#include "playlistsequence.hpp"
 
 PlaylistSequence::PlaylistSequence(QObject *parent)
     : AbstractMediaSequence(parent, container_roles)

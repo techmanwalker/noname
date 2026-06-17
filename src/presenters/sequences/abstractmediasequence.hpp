@@ -1,17 +1,13 @@
 #pragma once
 
-#include <QAbstractListModel>
-#include <QtQmlIntegration/qqmlintegration.h>
-#include <QList>
-#include <QAbstractItemModel>
-#include <QList>
-#include <QFuture>
-#include <variant>
-#include <vector>
-
 #include "coverprovider.hpp"
 #include "defaultroles.hpp"
 #include "mediatypes.hpp"
+
+#include <QAbstractItemModel>
+#include <QFuture>
+
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /**
     @brief List of any form of playable media, enumerated in the Types:: namespace. 

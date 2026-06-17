@@ -1,4 +1,5 @@
 #include "lyricsmanifest.hpp"
+
 #include <QQmlEngine>
 
 // Meyers singleton implementation

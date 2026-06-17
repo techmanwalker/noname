@@ -1,6 +1,6 @@
-#include "shortcutslist.hpp"
 #include "abstractmediasequence.hpp"
 #include "defaultroles.hpp"
+#include "shortcutslist.hpp"
 
 #include <QQmlEngine> // include here, where it's actually used
 

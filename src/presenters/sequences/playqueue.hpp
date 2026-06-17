@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtQmlIntegration/qqmlintegration.h>
-#include <QAbstractItemModel>
-#include <qabstractitemmodel.h>
-#include <qlist.h>
-#include <qtmetamacros.h>
 #include "playlistsequence.hpp"
+
+#include <QtQmlIntegration/qqmlintegration.h>
 
 // NOTE: use this as reference to implement singleton models inherited from non-singletons.
 

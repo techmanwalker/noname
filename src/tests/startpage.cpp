@@ -1,13 +1,11 @@
+#include "coverproviderproxy.hpp"
+// #include "serialize.hpp"
+#include "shortcutslist.hpp"
+#include "songfactory.hpp"
+
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <QUrl>
 #include <QLoggingCategory>
-#include <qjsondocument.h>
-
-#include "shortcutslist.hpp"
-#include "serialize.hpp"
-#include "songfactory.hpp"
-#include "coverproviderproxy.hpp"
 
 int
 main (int argc, char ** argv)

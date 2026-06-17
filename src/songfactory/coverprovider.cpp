@@ -1,6 +1,6 @@
 #include "coverprovider.hpp"
-#include <QImage>
-#include <QString>
+
+#include <QUuid>
 
 cover_provider::cover_provider ()
     : QQuickImageProvider(QQuickImageProvider::Image)

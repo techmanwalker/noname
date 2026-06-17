@@ -1,8 +1,10 @@
 #pragma once
 
-#include <QObject>
 #include <QAbstractListModel>
+#include <QObject>
+
 #include <QtQmlIntegration/qqmlintegration.h>
+
 #include <vector>
 
 // NOTE: use this as reference to implement new singleton models.

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QtQmlIntegration/qqmlintegration.h>
-#include <QFuture>
 #include "abstractmediasequence.hpp"
+
+#include <QtQmlIntegration/qqmlintegration.h>
 
 // forward declarations
 class QQmlEngine;

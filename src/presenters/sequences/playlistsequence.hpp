@@ -1,7 +1,7 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
-#include <QFuture>
+
 #include <QObject>
 
 class PlaylistSequence : public AbstractMediaSequence {

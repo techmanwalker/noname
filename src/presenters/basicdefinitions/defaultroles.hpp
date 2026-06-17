@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mediatypes.hpp"
+
 #include <QVariant>
 
 /// Role definition. Enables automatic QML role generation.
