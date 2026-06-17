@@ -114,8 +114,11 @@ Item {
         }
 
         // Right column: metadata + upcoming queue
-        Item {
-            id: rightColumn
+
+        // enables pushing the metadata container to the vertical
+        // center when the play queue is not visible
+        ColumnLayout {
+            id: rightCol
             height: leftCol.height
 
             // + scrollbar padding
@@ -128,25 +131,25 @@ Item {
                 artist: PlayerPresenter.artist
                 album:  PlayerPresenter.album
 
-                anchors.top:   parent.top
-                anchors.left:  parent.left
-                anchors.right: parent.right
+                Layout.fillWidth: true
 
-                anchors.leftMargin: nextQueue.songLeftPadding
+                Layout.leftMargin: nextQueue.songLeftPadding
+
+                onClicked: nextQueue.visible = !nextQueue.visible
             }
 
             Playlist {
                 id: nextQueue
                 model: PlayQueue
 
-                scrollBarWidth: rightColumn.scrollBarWidth
+                scrollBarWidth: rightCol.scrollBarWidth
 
-                anchors.top:    metadataContainer.bottom
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                anchors.bottom: parent.bottom
+                Layout.fillHeight: true
+                Layout.preferredWidth: (leftCol.width * .6) + (scrollBarWidth * 6)
 
-                anchors.topMargin: nextQueue.songCoverHeight * .4
+                Layout.alignment: Qt.AlignVCenter
+
+                Layout.topMargin: nextQueue.songCoverHeight * .4
             }
         }
     }

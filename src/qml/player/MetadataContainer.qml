@@ -8,6 +8,12 @@ Column {
     property string artist
     property string album
 
+    signal clicked()
+
+    TapHandler {
+        onTapped: root.clicked()
+    }
+
     Label {
         text: root.title
         font.weight: Font.DemiBold
