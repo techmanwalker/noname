@@ -1,8 +1,10 @@
 #include "playbackcontroller.hpp"
+#include "coverprovider.hpp"
 #include "songfactory.hpp"
 #include <QFuture>
 #include <QMediaMetaData>
 #include <QMediaPlayer>
+#include <memory>
 #include <qmediaplayer.h>
 
 // Meyers singleton implementation
@@ -60,14 +62,6 @@ void
 playback_controller::stop()
 {
     m_media_player.stop();
-}
-
-QFuture<void>
-playback_controller::load (const QUrl &source)
-{
-    return song_factory::extract(source).then([this](const Types::Song &song) {
-        return load(song);
-    });
 }
 
 QFuture<void>

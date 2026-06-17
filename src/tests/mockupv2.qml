@@ -7,7 +7,7 @@ ApplicationWindow {
     id: root
 
     visible: true
-    title: "Noname -"
+    title: "Noname - Playing Now"
     color: "#000"
 
     width: 950

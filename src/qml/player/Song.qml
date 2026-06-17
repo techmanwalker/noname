@@ -92,13 +92,12 @@ Item {
 
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.top: parent.top
         anchors.leftMargin: root.leftPadding
         anchors.rightMargin: root.rightPadding
+        anchors.topMargin: root.topPadding
 
         height: Math.max(coverItem.height, metadataLines.height, durationLabel.height)
-
-        y: root.topPadding
-        x: root.leftPadding
 
         Cover {
             id: coverItem

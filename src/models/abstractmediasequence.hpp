@@ -2,53 +2,17 @@
 
 #include <QAbstractListModel>
 #include <QtQmlIntegration/qqmlintegration.h>
-#include <QUrl>
-#include <QString>
 #include <QList>
-#include <qabstractitemmodel.h>
-#include <qlist.h>
+#include <QAbstractItemModel>
+#include <QList>
+#include <QFuture>
 #include <variant>
 #include <vector>
 
 #include <functional>
 
-/// All the forms of identifiable structures of audio that this player supports.
-namespace Types {
-
-    struct Song {
-        QString title;
-        QString artist;
-        QString album;
-        quint64 duration; // ms
-        QUrl    source; // to the audio path
-        QUrl    cover;
-
-        // why would I even need to specify this? this is outright insane
-        // but .find won't even compile without it
-        bool operator==(const Song&) const = default;
-    };
-
-    struct Album {
-        QString      title;
-        QString      artist;
-        QList<Song>  songs;
-        QUrl         cover;
-
-        // sum of all the children
-        quint64 duration() const {
-            quint64 total = 0;
-            for (const Song &s : songs)
-                total += s.duration;
-            return total;
-        }
-
-        bool operator==(const Album&) const = default;
-    };
-
-    using Playlist = Album;
-
-    using Any = std::variant<Types::Song, Types::Album>;
-}
+#include "coverprovider.hpp"
+#include "mediatypes.hpp"
 
 /// Role definition. Enables automatic QML role generation.
 struct CompiledRole {
@@ -175,6 +139,9 @@ protected:
 
         endInsertRows();
     }
+
+    // only extract songs metadata
+    QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider);
     
     void remove(int index);
     void clear();

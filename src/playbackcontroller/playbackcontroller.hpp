@@ -11,7 +11,7 @@
 #include <qfuture.h>
 #include <qmediaplayer.h>
 
-#include "abstractmediasequence.hpp" // for Types:: namespace
+#include "mediatypes.hpp" // for Types:: namespace
 #include "coverprovider.hpp"
 #include "playqueue.hpp"
 
@@ -41,7 +41,6 @@ public:
     void set_volume(quint8 volume_percent);
 
     // Load process is synchronous on its call, but asynchronous on its resolution
-    QFuture<void> load(const QUrl &source);
     QFuture<void> load(const Types::Song &song);
 
     // Safe getters for current data status
@@ -50,9 +49,6 @@ public:
     quint8      current_volume()      const; // volume from 0 to 100
     QMediaPlayer::PlaybackState playback_state() const;
     QMediaPlayer::MediaStatus media_status()     const;
-
-    // Provides cached-in-memory covers to actually be able to load them
-    std::shared_ptr<cover_provider> m_cover_provider = std::make_shared<cover_provider>();
 
 signals:
     void position_changed();

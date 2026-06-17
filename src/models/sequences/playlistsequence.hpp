@@ -10,13 +10,6 @@ class PlaylistSequence : public AbstractMediaSequence {
 public:
     explicit PlaylistSequence(QObject *parent = nullptr);
 
-    // copy overload
-    explicit PlaylistSequence(
-        QList<QUrl>    sources_to_build_from,
-        QFuture<void> *loading_finished_future = nullptr,
-        QObject       *parent = nullptr
-    );
-
     explicit PlaylistSequence(
         QList<Types::Song>  songs,
         QObject            *parent = nullptr
@@ -25,7 +18,6 @@ public:
     // only accepts songs
     void append(const Types::Song &song);
     void batch_append(const QList<Types::Song> &songs); // helper for the other batch_append
-    QFuture<void> batch_append(const QList<QUrl> &sources); // only performs song metadata extraction
     void items();
     template <typename media_type>
         QList<media_type> items() const {
@@ -33,6 +25,9 @@ public:
         }
     void remove(int index);
     void clear();
+
+    /// clear and repopulate this playlist in one step
+    void          respawn_list (const QList<Types::Song> &new_list);
 
 private:
 };
