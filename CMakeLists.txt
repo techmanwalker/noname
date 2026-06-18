@@ -18,6 +18,17 @@ file(GLOB_RECURSE PLAYER_QMLS
     "src/qml/player/*.qml"
 )
 
+file(GLOB_RECURSE STARTPAGE_QMLS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    CONFIGURE_DEPENDS
+    "src/qml/startpage/*.qml"
+)
+
+# in Primitives
+set_source_files_properties("src/qml/primitives/MediaTypes.qml"
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
+)
+
 file(GLOB_RECURSE PRIMITIVES_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
@@ -139,6 +150,7 @@ qt_add_qml_module(primitives
     RESOURCE_PREFIX /primitives
     QML_FILES
         ${PRIMITIVES_QMLS}
+        src/qml/primitives/Formatters.mjs
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
 )
@@ -194,6 +206,30 @@ target_link_libraries(player
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::ShaderTools
+)
+
+# The Start Page - your entry to the experience
+qt_add_qml_module(startpage
+    STATIC
+    URI Player.StartPage
+    RESOURCE_PREFIX /player/startpage
+    QML_FILES
+        ${STARTPAGE_QMLS}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/StartPage"
+)
+
+target_link_libraries(startpage
+    PUBLIC
+        mediasequences
+        primitives
+
+    PRIVATE
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
 )
 
 
@@ -349,6 +385,7 @@ target_link_libraries(startpagetest
         playereffects
         songfactory
         mediasequences
+        startpage
 )
 
 target_include_directories(startpagetest
