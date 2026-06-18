@@ -22,8 +22,6 @@ ListView {
     property real songInnerSpacing: 8
     property real songFadePadding: 20
 
-    clip: true
-
     // Right padding reserves space for the scrollbar so it appears
     // to float outside the list content without overlapping it
     rightMargin: scrollbar.logicalWidth
