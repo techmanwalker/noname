@@ -144,6 +144,8 @@ Item {
 
                 scrollBarWidth: rightCol.scrollBarWidth
 
+                clip: true
+
                 Layout.fillHeight: true
                 Layout.preferredWidth: (leftCol.width * .6) + (scrollBarWidth * 6)
 
