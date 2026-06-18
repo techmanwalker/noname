@@ -77,9 +77,9 @@ static const RoleDefinitions container_roles = {
 
     { "type", make_visitor([](const auto &x) {
         using T = std::decay_t<decltype(x)>;
-        if constexpr (std::is_same_v<T, Types::Song>)     return "song";
-        if constexpr (std::is_same_v<T, Types::Album>)    return "album";
-        if constexpr (std::is_same_v<T, Types::Playlist>) return "playlist";
+        if constexpr (std::is_same_v<T, Types::Song>)     return "Song";
+        if constexpr (std::is_same_v<T, Types::Album>)    return "Album";
+        if constexpr (std::is_same_v<T, Types::Playlist>) return "Playlist";
         return "unknown";
     })}
 };

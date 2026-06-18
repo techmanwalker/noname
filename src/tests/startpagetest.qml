@@ -1,8 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 
-import Player
-import Player.MediaSequences
+import Player.StartPage
 
 ApplicationWindow {
     id: root
@@ -14,12 +13,7 @@ ApplicationWindow {
     width: 950
     height: 650
 
-    Item {
+    StartPage {
         anchors.fill: parent
-        
-        Playlist {
-            anchors.fill: parent
-            model: ShortcutsList
-        }
     }
 }

@@ -18,8 +18,8 @@ Item {
     property string album: noAlbumText
     property url cover
     property int duration: 0  // Duration in milliseconds
-    property int coverWidth: 48
-    property int coverHeight: coverWidth
+    property real coverWidth: 48
+    property real coverHeight: coverWidth
 
     // card form: suitable for the start page
     property bool card: false
@@ -40,14 +40,6 @@ Item {
     property real bottomPadding: 0
     property real innerSpacing:  0
     property real fadePadding:   0 // symmetric fading distance from the borders inwards
-
-    // Helper function to format milliseconds as mm:ss
-    function formatDuration(ms) {
-        var totalSeconds = Math.floor(ms / 1000)
-        var m = Math.floor(totalSeconds / 60)
-        var s = totalSeconds % 60
-        return m + ":" + (s < 10 ? "0" + s : s)
-    }
 
     signal clicked()
 
@@ -171,7 +163,7 @@ Item {
 
             visible: root.duration > 0 && !root.hideDuration
 
-            text: root.duration > 0 ? root.formatDuration(root.duration) : root.noDurationText
+            text: root.duration > 0 ? Formatters.formatDuration(root.duration) : root.noDurationText
 
             color: "#afafaf"
         }
