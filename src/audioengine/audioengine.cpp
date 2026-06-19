@@ -40,6 +40,12 @@ audio_engine::audio_engine(QObject *parent)
             this, &audio_engine::handle_playhead_changed);
 }
 
+audio_engine::~audio_engine()
+{
+    m_media_player.stop();
+    m_media_player.setAudioOutput(nullptr);
+}
+
 void
 audio_engine::play()
 {

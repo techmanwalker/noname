@@ -63,10 +63,10 @@ private slots:
 private:
     // Private constructor for the singleton pattern
     explicit audio_engine(QObject *parent = nullptr);
-    ~audio_engine() override = default;
+    ~audio_engine() override;
 
-    QMediaPlayer m_media_player;
     QAudioOutput m_audio_output;
+    QMediaPlayer m_media_player;
 
     // Protected internal status
     Types::Song m_current_track;
