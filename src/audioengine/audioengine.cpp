@@ -214,10 +214,8 @@ audio_engine::handle_duration_slider_pressed_changed(bool pressed)
                 play(); // if it was playing, start playing again
                 break;
             case QMediaPlayer::PausedState:
-                pause();
-                break;
             case QMediaPlayer::StoppedState:
-                stop();
+                pause(); // keep paused and maintain the position
                 break;
 
             // no default this time
