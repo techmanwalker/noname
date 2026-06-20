@@ -18,9 +18,9 @@ Item {
     property real inner_player_l: 0.48
     property real cover_back_l:   0.65
 
-    property real outer_player_c: 0.28
-    property real inner_player_c: 0.48
-    property real cover_back_c:   0.65
+    property real outer_player_c: 0.39
+    property real inner_player_c: 0.64
+    property real cover_back_c:   0.73
 
     // allow disabling the darkener for testing
     property bool darken: true
