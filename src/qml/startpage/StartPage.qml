@@ -15,6 +15,19 @@ Item {
         anchors.top:    parent.top
         anchors.left:   parent.left
         anchors.bottom: parent.bottom
+
+        ArrangementList {
+            anchors.top: parent.top
+            anchors.left: parent.left
+
+            anchors.topMargin: searchBar.y + searchBar.height // align with the search bar
+            anchors.leftMargin: shortcutsList.spacing
+
+            vtabLeftPadding: shortcutsList.spacing * 2
+            vtabRightPadding: vtabLeftPadding
+            vtabTopPadding: Window.height / shortcutsList.spacing / 8 // link to window height, items are closer when window is shorter
+            vtabBottomPadding: vtabTopPadding
+        }
     }
 
     Item {
