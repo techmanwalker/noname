@@ -23,7 +23,6 @@ ListView {
         title: model.title
         artist: model.artist
         album: model.album ? model.album : ""
-        duration: model.duration
 
         mediaType: MediaTypes.stringMediaTypeToEnum(model.type)
 
