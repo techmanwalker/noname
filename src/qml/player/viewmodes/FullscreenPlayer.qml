@@ -29,7 +29,7 @@ Item {
     // ── Cover sizing ───────────────────────────────────────────────────────
 
     // Ideal cover size — large enough to look great on 4K
-    readonly property real coverIdealSize: 700
+    readonly property real coverIdealSize: 600
 
     // Vertical space consumed by controls and margins
     // Reactive: recalculates if controls change height
@@ -48,12 +48,12 @@ Item {
         spacing: nextQueue.songCoverWidth - nextQueue.songLeftPadding
 
         anchors.centerIn: parent
-        anchors.margins: 20
+        anchors.margins: 40
 
         // Left column: cover + controls
         ColumnLayout {
             id: leftCol
-            spacing: basicControls.height * 2/3
+            spacing: basicControls.height
 
             anchors.verticalCenter: parent.verticalCenter
 
