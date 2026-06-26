@@ -1,3 +1,4 @@
+#include "configuration.hpp"
 #include "coverproviderproxy.hpp"
 // #include "serialize.hpp"
 #include "shortcutslist.hpp"
@@ -6,6 +7,9 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QLoggingCategory>
+#include <qloggingcategory.h>
+
+Q_LOGGING_CATEGORY(startpagetest, "noname.startpagetest")
 
 int
 main (int argc, char ** argv)
@@ -18,6 +22,19 @@ main (int argc, char ** argv)
         qt.multimedia*.warning=true
         qt.multimedia*.critical=true
     )");
+
+    QCoreApplication::setApplicationName(QStringLiteral("noname"));
+
+    auto &conf = configuration::manager::instance();
+
+    // Load configuration for the first time, the file must not be auto created if no write_lines was called
+    QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);
+
+    qCInfo(startpagetest) << "Known music directories paths are:";
+    for (const QString &line : known_music_directories_lines) {
+        qCInfo(startpagetest) << line;
+    }
+    qCInfo(startpagetest) << "That's all known music directories.";
 
     // get access to the shortcuts list that will be displayed
 

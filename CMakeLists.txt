@@ -301,6 +301,20 @@ target_include_directories(debugtools
         src/presenters/basicdefinitions
 )
 
+# The configuration
+add_library(configuration STATIC
+    src/configuration/configuration.cpp
+)
+
+target_link_libraries(configuration
+    PRIVATE
+        Qt6::Core
+)
+
+target_include_directories(configuration
+    PUBLIC
+        src/configuration
+)
 
 ### General excecutable linking definitions
 
@@ -349,6 +363,7 @@ target_link_libraries(mockupv2
         debugtools
         lyricsmanifest
         mediasequences
+        configuration
 )
 
 target_include_directories(mockupv2
@@ -386,6 +401,7 @@ target_link_libraries(startpagetest
         songfactory
         mediasequences
         startpage
+        configuration
 )
 
 target_include_directories(startpagetest
