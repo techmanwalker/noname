@@ -9,6 +9,8 @@ RowLayout {
 
     required property var stateModel
 
+    property bool hideTimestamps: false
+
     // Helper function to format seconds as mm:ss
     function formatTime(ms) {
         let totalSeconds = Math.floor(ms / 1000)
@@ -24,6 +26,8 @@ RowLayout {
         font.weight: Font.Medium
 
         Layout.alignment: Qt.AlignVCenter
+
+        visible: !root.hideTimestamps
     }
 
     AccessibleSlider {
@@ -46,5 +50,7 @@ RowLayout {
         font.weight: Font.Medium
 
         Layout.alignment: Qt.AlignVCenter
+
+        visible: !root.hideTimestamps
     }
 }

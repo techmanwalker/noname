@@ -7,6 +7,8 @@ Item {
     property url source: ""  // URI string or QUrl
     property int fillMode: Image.PreserveAspectCrop  // or PreserveAspectFit, Stretch, etc.
 
+    height: width
+
     Rectangle {
         color: root.fill
     

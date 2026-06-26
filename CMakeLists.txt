@@ -402,6 +402,7 @@ target_link_libraries(startpagetest
         mediasequences
         startpage
         configuration
+        audioengine
 )
 
 target_include_directories(startpagetest
