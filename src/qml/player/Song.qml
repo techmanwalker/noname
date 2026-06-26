@@ -139,8 +139,8 @@ Item {
 
                 width: parent.width
 
-                property string displayArtist: root.artist.length > 0 ? root.artist : root.noArtistText
-                property string displayAlbum:  root.album.length  > 0 ? root.album  : root.noAlbumText
+                readonly property string displayArtist: root.artist.length > 0 ? root.artist : root.noArtistText
+                readonly property string displayAlbum:  root.album.length  > 0 ? root.album  : root.noAlbumText
 
                 text: root.hideAlbum
                     ? displayArtist

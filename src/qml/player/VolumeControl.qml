@@ -4,10 +4,12 @@ import QtQuick.Controls
 
 import Player.Primitives
 
-RowLayout {
+Item {
     id: root
 
     required property var stateModel
+
+    height: Math.max(muteButton.height, volumeSlider.height)
 
     ToolButton {
         id: muteButton
@@ -15,7 +17,7 @@ RowLayout {
         flat: true
         padding: 0
 
-        Layout.alignment: Qt.AlignVCenter
+        anchors.verticalCenter: parent.verticalCenter
         
         onClicked: {
             // The slider is bound to this value so both backend and GUI
@@ -36,8 +38,10 @@ RowLayout {
         to: 100
         value: root.stateModel.volume
 
-        Layout.fillWidth: true
-        Layout.alignment: Qt.AlignVCenter
+        anchors.left: muteButton.right
+        anchors.right: parent.right
+
+        anchors.verticalCenter: parent.verticalCenter
 
         onMoved: root.stateModel.volume = value
 

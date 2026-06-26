@@ -1,5 +1,6 @@
 import QtQuick
 
+import Player
 import Player.MediaSequences
 import Player.Primitives
 import Player.StartPage
@@ -17,6 +18,8 @@ Item {
         anchors.bottom: parent.bottom
 
         ArrangementList {
+            id: vtabs
+
             anchors.top: parent.top
             anchors.left: parent.left
 
@@ -35,7 +38,7 @@ Item {
 
         anchors.top: parent.top
         anchors.left: leftCol.right
-        anchors.bottom: parent.bottom
+        anchors.bottom: nowplayingbar.top
         anchors.right: parent.right
 
         SearchBar {
@@ -74,6 +77,32 @@ Item {
             shortcutCoverWidth: 144
 
             clip: true // prevent sudden disappearing on the edges
+        }
+    }
+
+    Item {
+        id: nowplayingbar
+
+        anchors.left: leftCol.right
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+
+        height: minibarplayer.height
+
+        MinibarPlayer {
+            id: minibarplayer
+
+            anchors.fill: parent
+
+            topPadding: 20
+            bottomPadding: topPadding
+
+            leftPadding: vtabs.vtabLeftPadding
+            rightPadding: leftPadding
+
+            spacing: 24
+
+            coverToMetadataSpacing: 8
         }
     }
 }

@@ -1,13 +1,15 @@
+#include "audioengine.hpp"
 #include "configuration.hpp"
 #include "coverproviderproxy.hpp"
 // #include "serialize.hpp"
+#include "mediatypes.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QLoggingCategory>
-#include <qloggingcategory.h>
+#include <variant>
 
 Q_LOGGING_CATEGORY(startpagetest, "noname.startpagetest")
 
@@ -62,6 +64,15 @@ main (int argc, char ** argv)
         std::copy(loaded_shortcuts.begin(), loaded_shortcuts.end(), std::back_inserter(any_shortcuts));
 
         shortcuts_list.batch_append(any_shortcuts);
+
+        // load a song to pop up the miniplayer
+        auto &audioengine = audio_engine::instance();
+
+        Types::Any testsong = shortcuts_list.items().at(1);
+
+        if (std::holds_alternative<Types::Song>(testsong)) {
+            audioengine.load(std::get<Types::Song>(testsong));
+        }
     });
 
     // create base engine
