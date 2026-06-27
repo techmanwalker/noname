@@ -15,6 +15,7 @@ TextField {
     width: font.pointSize * 32
 
     leftPadding: height / 2 // match the radius
+    rightPadding: leftPadding
 
     placeholderText: "Search on your library…"
     placeholderTextColor: "#afafaf"
