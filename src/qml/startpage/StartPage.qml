@@ -1,8 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 
 import Player
-import Player.MediaSequences
-import Player.Primitives
 import Player.StartPage
 
 Item {
@@ -23,60 +22,40 @@ Item {
             anchors.top: parent.top
             anchors.left: parent.left
 
-            anchors.topMargin: searchBar.y + searchBar.height // align with the search bar
-            anchors.leftMargin: shortcutsList.spacing
+            anchors.topMargin: searchBar.y + searchBar.height // todo: align with the search bar
 
-            vtabLeftPadding: shortcutsList.spacing * 2
+            vtabLeftPadding: 20
             vtabRightPadding: vtabLeftPadding
-            vtabTopPadding: Window.height / shortcutsList.spacing / 8 // link to window height, items are closer when window is shorter
+            vtabTopPadding: 12 // link to window height, items are closer when window is shorter
             vtabBottomPadding: vtabTopPadding
         }
     }
 
-    Item {
+    ColumnLayout {
         id: rightCol
 
         anchors.top: parent.top
         anchors.left: leftCol.right
-        anchors.bottom: nowplayingbar.top
         anchors.right: parent.right
+        anchors.bottom: nowplayingbar.top
 
         SearchBar {
             id: searchBar
 
-            anchors.top: parent.top
-            anchors.left: parent.left
+            // compensate the "Shortcuts" top padding
+            Layout.topMargin: activeView.shortcutCoverHeight / 6
 
-            anchors.topMargin: shortcutsList.shortcutCoverHeight / 6 // compensate the "Shortcuts" top padding
+            Layout.preferredWidth: width
+            Layout.preferredHeight: height
         }
 
-        SectionHeading {
-            id: shortcutsHeading
+        Home {
+            id: activeView
 
-            text: "Shortcuts"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-            anchors.top: searchBar.bottom
-            anchors.left: parent.left
-
-            anchors.topMargin: shortcutsList.shortcutCoverHeight / 8
-            anchors.leftMargin: searchBar.leftPadding
-        }
-
-        Shortcuts {
-            id: shortcutsList
-            model: ShortcutsList
-
-            anchors.top: shortcutsHeading.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-
-            anchors.topMargin: shortcutsList.shortcutCoverHeight / 16
-            anchors.leftMargin: searchBar.leftPadding
-
-            shortcutCoverWidth: 144
-
-            clip: true // prevent sudden disappearing on the edges
+            lateralAlignmentPadding: searchBar.leftPadding
         }
     }
 
@@ -97,7 +76,7 @@ Item {
             topPadding: 20
             bottomPadding: topPadding
 
-            leftPadding: vtabs.vtabLeftPadding
+            leftPadding: searchBar.leftPadding
             rightPadding: leftPadding
 
             spacing: 24
