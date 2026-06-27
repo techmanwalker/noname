@@ -57,13 +57,15 @@ main (int argc, char ** argv)
     };
 
     song_factory::batch_extract(shortcuts, covers).then([&shortcuts_list](const QList<Types::Song> loaded_shortcuts) {
+        /*
         QList<Types::Any> any_shortcuts;
         any_shortcuts.reserve(loaded_shortcuts.size());
 
         // convert Types::Song to Types::Any
         std::copy(loaded_shortcuts.begin(), loaded_shortcuts.end(), std::back_inserter(any_shortcuts));
+        */
 
-        shortcuts_list.batch_append(any_shortcuts);
+        shortcuts_list.batch_append(loaded_shortcuts);
 
         // load a song to pop up the miniplayer
         auto &audioengine = audio_engine::instance();

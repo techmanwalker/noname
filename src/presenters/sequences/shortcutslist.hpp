@@ -21,9 +21,11 @@ public:
     static ShortcutsList &instance();
     static ShortcutsList *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
-    // Accepts any type of item to be shown on shortcuts
-    void append(const Types::Any &item);
-    void batch_append (const QList<Types::Any> &item);
+    // Intended to any type of item to be shown on shortcuts
+    // but noname currently only supports raw songs, will be undone later when
+    // actual album support is added
+    void append(const Types::Song &item);
+    void batch_append (const QList<Types::Song> &item);
     void remove(int index);
     void clear();
 
