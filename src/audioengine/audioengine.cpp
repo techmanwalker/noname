@@ -3,6 +3,16 @@
 #include <QFuture>
 #include <QMediaMetaData>
 #include <QMediaPlayer>
+#include <cstdint>
+#include <qloggingcategory.h>
+#include <qnamespace.h>
+#include <qobjectdefs.h>
+#include <qtypes.h>
+#include <soundio/soundio.h>
+
+// Logs are fundamental for this program not to blindly fall apart
+
+Q_LOGGING_CATEGORY(l_audioengine, "noname.audioengine");
 
 // Meyers singleton implementation
 audio_engine &
@@ -16,20 +26,65 @@ audio_engine::instance()
 audio_engine::audio_engine(QObject *parent)
     : QObject(parent)
 {
-    m_media_player.setAudioOutput(&m_audio_output);
+    // initialize libsoundio
+    m_soundio = soundio_create();
+    soundio_connect(m_soundio);
+    soundio_flush_events(m_soundio);
 
-    // raw high frequency signal, unused
-    connect(&m_media_player, &QMediaPlayer::positionChanged,
+    // get default sound card
+    int default_out_device_index = soundio_default_output_device_index(m_soundio);
+    m_device = soundio_get_output_device(m_soundio, default_out_device_index);
+
+    // create output stream
+    m_outstream = soundio_outstream_create(m_device);
+
+    // use our format
+    // TODO: unhardcode the sample rate and format for bit-perfect playback
+    m_outstream->format = SoundIoFormatFloat32NE; 
+    m_outstream->sample_rate = m_decoder_worker->get_ring_buffer()->get_sample_rate();
+
+    // connect hardware with our ring buffer
+    m_outstream->userdata = m_decoder_worker->get_ring_buffer();
+    m_outstream->write_callback = write_callback;
+
+    // open stream an boot, starting paused
+    // additionally log error codes to catch bugs
+    execute_soundio(soundio_outstream_open, m_outstream);
+    execute_soundio(soundio_outstream_start, m_outstream);
+    m_decoder_worker->get_ring_buffer()->is_paused.store(true);
+
+    // fire up ffmpeg decoding thread
+    m_decoder_worker->moveToThread(m_audio_decoding_thread);
+
+    connect(m_audio_decoding_thread, &QThread::started, 
+            m_decoder_worker, &audio_decode_worker::start_decoding);
+
+    connect(m_decoder_worker, &audio_decode_worker::seeked,
             this, &audio_engine::position_changed);
 
-    connect(&m_media_player, &QMediaPlayer::durationChanged,
-            this, &audio_engine::handle_duration_changed);
+    // Smoothly advances the UI while actually playing.
+    m_position_poll_timer = new QTimer(this);
+    m_position_poll_timer->setInterval(100); // 10 Hz
 
-    connect(&m_media_player, &QMediaPlayer::playbackStateChanged,
-            this, &audio_engine::playback_state_changed);
+    // poll for time tracking and eof
+    connect(m_position_poll_timer, &QTimer::timeout, this, [this]() {
+        if (m_decoder_worker->get_ring_buffer()->eof_played.exchange(false)) {
+            // Force the engine to acknowledge the paused state
+            set_transport_paused(true); 
+            emit song_finished();
+        } else {
+            emit position_changed();
+        }
+    });
 
-    connect(&m_media_player, &QMediaPlayer::mediaStatusChanged,
-            this, &audio_engine::handle_media_status_changed);
+    // on eof do
+    connect(this, &audio_engine::song_finished,
+            this, &audio_engine::handle_song_finished);
+
+            
+    m_audio_decoding_thread->start();
+
+
 
     // Assuming that PlayerPresenter converted this class in the
     // signal sender, let's do an autoconnect
@@ -38,100 +93,117 @@ audio_engine::audio_engine(QObject *parent)
 
     connect(&queue, &PlayQueue::playheadChanged,
             this, &audio_engine::handle_playhead_changed);
+
+    connect(this, &audio_engine::track_changed,
+            this, &audio_engine::handle_track_changed);
 }
 
 audio_engine::~audio_engine()
 {
-    m_media_player.stop();
-    m_media_player.setAudioOutput(nullptr);
+    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
+
+    m_audio_decoding_thread->quit();
+    m_audio_decoding_thread->wait();
+    
+    // clean
+    if (m_outstream) soundio_outstream_destroy(m_outstream);
+    if (m_device) soundio_device_unref(m_device);
+    if (m_soundio) soundio_destroy(m_soundio);
+
+    // safely done in main thread
+    delete m_audio_decoding_thread;
 }
+
+void
+audio_engine::set_transport_paused(bool paused)
+{
+    m_decoder_worker->get_ring_buffer()->is_paused.store(paused);
+
+    if (paused) {
+        m_position_poll_timer->stop();
+    } else {
+        m_position_poll_timer->start();
+    }
+
+    emit playback_state_changed();
+}
+
+
 
 void
 audio_engine::play()
 {
-    m_media_player.play();
-
-    // Playback change signal is automatically sent by QMediaPlayer
-    // and connected on the constructor
+    set_transport_paused(false); // play means "unpause"
 }
 
 void
 audio_engine::pause()
 {
-    m_media_player.pause();
+    set_transport_paused(true);
 }
 
 void
 audio_engine::stop()
 {
-    m_media_player.stop();
+    m_decoder_worker->get_ring_buffer()->is_paused.store(true);
+
+    // Unblock before cleaning
+    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
+    
+    // clean ring buffer
+    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::clean, Qt::BlockingQueuedConnection);
+    
+    m_decoder_worker->get_ring_buffer()->reset_cancel();
 }
 
-QFuture<void>
+void
 audio_engine::load (const Types::Song &song) // song IS the metadata, no need to async wait
 {
-    if (song.source.isEmpty()) return QtFuture::makeReadyVoidFuture();
+    if (song.source.isEmpty()) return;
 
-    // allow starting over without reloading the song
-    if (m_media_player.source() == song.source) {
-        m_media_player.setPosition(0);
-        
-        return QtFuture::makeReadyVoidFuture();
-    }
+    m_current_transaction_id++;
 
-    auto solve_when_loaded = std::make_shared<QPromise<void>>();
-    auto future = solve_when_loaded->future();
+    // Unblock the decoder thread so it can return to its event loop
 
-    m_media_player.setSource(song.source);
+    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
 
-    auto do_after_loading = [this, song, solve_when_loaded](const QMediaPlayer::MediaStatus &status) {
-        switch (status) {
-            // track changed
-            case QMediaPlayer::LoadedMedia:
-                m_current_track = song;
-                queue.switch_to(song);
-                emit track_changed();
-                solve_when_loaded->finish();
-                break;
-            case QMediaPlayer::InvalidMedia:
-                solve_when_loaded->finish();
-                break;
-            default:
-                
-                break; // todo: yet to be defined
-        }
+    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::load, Qt::BlockingQueuedConnection, song.source.toLocalFile());
 
-        solve_when_loaded->finish();
-    };
+    // Re-arm for normal operation
+    m_decoder_worker->get_ring_buffer()->reset_cancel();
 
-    connect(
-        &m_media_player, 
-        &QMediaPlayer::mediaStatusChanged, 
-        this, 
-        do_after_loading, 
-        Qt::SingleShotConnection
-    );
+    // after loading
 
-    return future;
+    m_current_track = song;
+
+    emit track_changed();
 }
 
 void
 audio_engine::unload()
 {
     m_current_transaction_id++; // invalidate pending loads
+
     stop();
-    m_media_player.setSource(QUrl());
     
     m_current_track = Types::Song{};
 
     emit track_changed();
-    emit duration_changed();
 }
 
 void
 audio_engine::set_position(const quint64 position_ms)
 {
-    m_media_player.setPosition(static_cast<qint64>(position_ms));
+    // tell the decoder worker to seek
+    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::seek, Qt::QueuedConnection, static_cast<uint64_t>(position_ms));
+
+    /* Do NOT emit position_changed() here. At this point the seek hasn't
+       run yet (it's queued to the decoder thread), so current_position_ms()
+       still reads the pre-seek pts; emitting now just broadcasts a stale
+       value and causes a visible snap-back right before the real update.
+       The decoder thread is the single source of truth for position, since it
+       reports the confirmed value itself via pts_changed() once
+       av_seek_frame() succeeds.*/
 }
 
 void
@@ -144,7 +216,8 @@ audio_engine::set_volume(quint8 volume_percent)
 
     // Convert the 0..100 scale to 0.0f..1.0f for QAudioOutput
     float volume_float = static_cast<float>(volume_percent) / 100.0f;
-    m_audio_output.setVolume(volume_float);
+
+    // todo: set it on libsndio
 
     // Emit signal
     emit volume_changed();
@@ -160,42 +233,49 @@ quint8
 audio_engine::current_volume() const
 {
     // Fetch 0-1 volume value
-    float volume_float = m_audio_output.volume();
+    // todo: implement with sndio
 
     // Scale up to 0-100
-    return static_cast<quint8>(qRound(volume_float * 100.0f));
+    // return static_cast<quint8>(qRound(volume_float * 100.0f));
+    return 100;
 }
 
 quint64
 audio_engine::current_position_ms() const
 {
-    qint64 position = m_media_player.position();
-    
-    // If Qt reports an invalid or negative transition state, return 0 safely
-    if (position < 0) {
-        return 0;
+    if (!m_decoder_worker->is_song_loaded()) return 0;
+
+    // who better than the decoder itself
+    return static_cast<quint64>(m_decoder_worker->get_ring_buffer()->playback_position_ms());
+}
+
+audio_engine::playback_state
+audio_engine::get_playback_state() const
+{
+    using ps = audio_engine::playback_state;
+
+    if (!m_decoder_worker->is_song_loaded()) return ps::stopped;
+
+    if (!m_decoder_worker->get_ring_buffer()->is_paused.load()) {
+        return ps::playing;
+    } else {
+        return ps::stopped;
     }
-    
-    return static_cast<quint64>(position);
 }
 
-QMediaPlayer::PlaybackState
-audio_engine::playback_state() const
+/*
+audio_engine::media_status
+audio_engine::get_media_status() const
 {
-    return m_media_player.playbackState();
-}
-
-
-QMediaPlayer::MediaStatus
-audio_engine::media_status() const
-{
-    return m_media_player.mediaStatus();
-}
+    // todo: sync with sndio... or probably not
+}*/
 
 void
-audio_engine::handle_duration_changed()
+audio_engine::handle_track_changed ()
 {
     emit duration_changed();
+    emit position_changed();
+    emit playback_state_changed();
 }
 
 void
@@ -205,16 +285,17 @@ audio_engine::handle_duration_slider_pressed_changed(bool pressed)
 
     // if a drag started
     if (pressed) {
-        playback_state_when_last_slider_drag_started = playback_state();
+        playback_state_when_last_slider_drag_started = get_playback_state();
         pause(); // you don't want it to sound while it is being dragged
     } else {
         // restore the playback to where it was
+        using playback_state = audio_engine::playback_state;
         switch (playback_state_when_last_slider_drag_started) {
-            case QMediaPlayer::PlayingState:
+            case playback_state::playing:
                 play(); // if it was playing, start playing again
                 break;
-            case QMediaPlayer::PausedState:
-            case QMediaPlayer::StoppedState:
+            case playback_state::paused:
+            case playback_state::stopped:
                 pause(); // keep paused and maintain the position
                 break;
 
@@ -224,15 +305,13 @@ audio_engine::handle_duration_slider_pressed_changed(bool pressed)
 }
 
 void
-audio_engine::handle_media_status_changed()
+audio_engine::handle_song_finished ()
 {
-    if (m_media_player.mediaStatus() == QMediaPlayer::EndOfMedia) {
-        queue.next();
-    }
+    queue.next();
 }
 
 void
-audio_engine::handle_playhead_changed(bool play_afterwards)
+audio_engine::handle_playhead_changed (bool play_afterwards)
 {
     QModelIndex current_index = queue.playhead();
 

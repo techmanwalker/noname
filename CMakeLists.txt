@@ -6,7 +6,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration Multimedia)
+
+find_package(SoundIo REQUIRED)
+
+find_package(FFmpeg REQUIRED)
 
 qt_policy(SET QTP0004 NEW)
 
@@ -237,7 +243,9 @@ target_link_libraries(startpage
 
 # The Playback controller
 add_library(audioengine STATIC
+    src/audioengine/audiodecode.cpp
     src/audioengine/audioengine.cpp
+    src/audioengine/loggingcategory.cpp
 )
 
 target_link_libraries(audioengine
@@ -249,6 +257,8 @@ target_link_libraries(audioengine
         Qt6::Core
         Qt6::Quick
         mediasequences
+        SoundIo::SoundIo
+        FFmpeg::FFmpeg
 )
 
 target_include_directories(audioengine

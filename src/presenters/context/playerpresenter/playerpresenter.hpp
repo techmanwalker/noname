@@ -55,7 +55,7 @@ class PlayerPresenter : public QObject
     // governed from the QML side
     Q_PROPERTY(bool duration_slider_pressed READ duration_slider_pressed WRITE setDurationSliderPressed)
 
-    Q_PROPERTY(QMediaPlayer::PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
+    Q_PROPERTY(audio_engine::playback_state playbackState READ playbackState NOTIFY playbackStateChanged)
 
 public:
     // disable copy and reassignment
@@ -75,7 +75,7 @@ public:
     quint64 position_ms() const;
     quint8 volume() const;
     bool duration_slider_pressed() const;
-    QMediaPlayer::PlaybackState playbackState() const;
+    audio_engine::playback_state playbackState() const;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position);
