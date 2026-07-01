@@ -57,7 +57,7 @@ quint8  PlayerPresenter::volume()      const { return playing.current_volume(); 
 
 bool    PlayerPresenter::duration_slider_pressed() const { return m_duration_slider_pressed.load(); }
 
-QMediaPlayer::PlaybackState PlayerPresenter::playbackState() const { return playing.playback_state(); }
+audio_engine::playback_state PlayerPresenter::playbackState() const { return playing.get_playback_state(); }
 
 
 void

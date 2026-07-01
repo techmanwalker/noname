@@ -12,7 +12,7 @@
 
 namespace configuration {
 
-Q_LOGGING_CATEGORY(configuration, "noname.configuration");
+Q_LOGGING_CATEGORY(l_configuration, "noname.configuration");
 
 QString
 dir ()
@@ -125,7 +125,7 @@ manager::__cache_lines_unlocked (conf_file_type type)
     // insert or overwrite, does not matter
     m_last_content_acknowledged_for_file.insert(type, lines);
 
-    qCInfo(configuration) << "File " << local_path << "was reloaded. Manually refresh or restart the program for changes to take effect.";
+    qCInfo(l_configuration) << "File " << local_path << "was reloaded. Manually refresh or restart the program for changes to take effect.";
 }
 
 QFuture<bool>
@@ -169,14 +169,14 @@ manager::__write_lines_to_disk_unlocked (conf_file_type type, const QStringList 
 
         // try to acquire lock
         if (!lock_file.tryLock(10000)) {
-            qCWarning(configuration::configuration) << "Failed to write to " << local_path << " because the file was locked for writing for more than 10 seconds.";
+            qCWarning(configuration::l_configuration) << "Failed to write to " << local_path << " because the file was locked for writing for more than 10 seconds.";
             return false;
         }
 
         QFile file_object (local_path);
 
         if (!file_object.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-            qCWarning(configuration::configuration) << "Failed to open " << local_path << " for writing. Aborting.";
+            qCWarning(configuration::l_configuration) << "Failed to open " << local_path << " for writing. Aborting.";
             lock_file.unlock();
             return false;
         }
