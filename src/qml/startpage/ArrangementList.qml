@@ -73,8 +73,8 @@ Column {
     }
 
     VTab {
-        iconName: "folder-symbolic"
-        text: "Folders"
+        iconName: "directory-symbolic"
+        text: "Directories"
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding

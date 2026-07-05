@@ -37,7 +37,7 @@ Item {
         anchors.top: parent.top
         anchors.left: leftCol.right
         anchors.right: parent.right
-        anchors.bottom: nowplayingbar.top
+        anchors.bottom: parent.bottom // later nowplayingbar.top
 
         SearchBar {
             id: searchBar
@@ -53,9 +53,21 @@ Item {
             id: activeView
 
             Layout.fillWidth: true
-            Layout.fillHeight: true
 
             lateralAlignmentPadding: searchBar.leftPadding
+        }
+
+        AllTracks {
+            id: allTracksView
+
+            Layout.fillWidth: true
+
+            lateralAlignmentPadding: searchBar.leftPadding
+        }
+        
+        // absorb spacer
+        Item {
+            Layout.fillHeight: true 
         }
     }
 
@@ -67,6 +79,8 @@ Item {
         anchors.bottom: parent.bottom
 
         height: minibarplayer.height
+
+        visible: false
 
         MinibarPlayer {
             id: minibarplayer
