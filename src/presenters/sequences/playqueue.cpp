@@ -2,33 +2,17 @@
 #include "playlistsequence.hpp"
 #include "playqueue.hpp"
 
-PlayQueue::PlayQueue(QObject *parent)
-    : PlaylistSequence(parent)
-{
-}
-
-int PlayQueue::itemCount () const { return AbstractMediaSequence::itemCount(); }
-QList<Types::Song> PlayQueue::items () const { return AbstractMediaSequence::items<Types::Song>() ; }
-
-QFuture<void> 
-PlayQueue::batch_append (const QList<QUrl> &sources)
-{ 
-    return AbstractMediaSequence::batch_append(sources, chosen_cover_provider);
-}
-
-QPersistentModelIndex
-PlayQueue::find (const Types::Song &needle) const
-{
-    // explicit rvalue
-    return AbstractMediaSequence::find(Types::Any{needle});
-}
-
 // Meyers singleton implementation
 PlayQueue &
 PlayQueue::instance()
 {
     static PlayQueue s_instance;
     return s_instance;
+}
+
+PlayQueue::PlayQueue(QObject *parent)
+    : PlaylistSequence(parent)
+{
 }
 
 // factory for the qml engine
@@ -44,6 +28,26 @@ PlayQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
 
     return inst;
+}
+
+
+
+// --- The Play queue ---
+
+int PlayQueue::itemCount () const { return AbstractMediaSequence::itemCount(); }
+QList<Types::Song> PlayQueue::items () const { return AbstractMediaSequence::items<Types::Song>() ; }
+
+QFuture<void> 
+PlayQueue::batch_append (const QList<QUrl> &sources)
+{ 
+    return AbstractMediaSequence::batch_append(sources, chosen_cover_provider);
+}
+
+QPersistentModelIndex
+PlayQueue::find (const Types::Song &needle) const
+{
+    // explicit rvalue
+    return AbstractMediaSequence::find(Types::Any{needle});
 }
 
 void
@@ -63,6 +67,12 @@ PlayQueue::respawn_queue(const PlaylistSequence &new_queue)
     if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
 }
 
+QModelIndex
+PlayQueue::playhead () const
+{
+    return m_playhead;
+}
+
 void
 PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
 {
@@ -70,8 +80,8 @@ PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
 
     // not in queue
     if (!prolly_in_queue.isValid()) {
-        // clear the whole queue and create a new one with only
-        // this song como youtube music
+        /* clear the whole queue and create a new one with only
+           this song como youtube music */
         PlaylistSequence replacement (QList<Types::Song> {song});
         respawn_queue(replacement);
 

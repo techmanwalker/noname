@@ -27,9 +27,10 @@ public:
     static PlayQueue *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // getters
-    QModelIndex playhead() const { return m_playhead; }
+    QModelIndex playhead() const;
     int itemCount () const;
 
+    // all items
     QList<Types::Song> items() const;
 
     // controls
