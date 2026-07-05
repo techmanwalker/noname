@@ -28,7 +28,6 @@ ColumnLayout {
         model: ShortcutsList
 
         Layout.fillWidth: true
-        Layout.fillHeight: true
 
         Layout.topMargin: shortcutsList.shortcutCoverHeight / 16
         Layout.leftMargin: root.lateralAlignmentPadding

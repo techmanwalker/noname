@@ -15,6 +15,8 @@ ListView {
 
     spacing: shortcutCoverWidth / 12
 
+    implicitHeight: contentItem.childrenRect.height
+
     delegate: Card {
         id: shortcut
 

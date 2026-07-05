@@ -27,6 +27,8 @@ main (int argc, char ** argv)
 
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
+    /*
+
     auto &conf = configuration::manager::instance();
 
     // Load configuration for the first time, the file must not be auto created if no write_lines was called
@@ -37,6 +39,8 @@ main (int argc, char ** argv)
         qCInfo(startpagetest) << line;
     }
     qCInfo(startpagetest) << "That's all known music directories.";
+
+    */
 
     // get access to the shortcuts list that will be displayed
 
