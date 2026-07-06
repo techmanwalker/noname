@@ -33,5 +33,5 @@ ShortcutsList::ShortcutsList(QObject *parent)
 // a shortcut could be actually anything
 void ShortcutsList::append(const Types::Song &shortcut)                { AbstractMediaSequence::append(shortcut); }
 void ShortcutsList::batch_append (const QList<Types::Song> &shortcuts) { AbstractMediaSequence::batch_append(shortcuts); }
-void ShortcutsList::remove(int index)                                 { AbstractMediaSequence::remove(index); }
+void ShortcutsList::remove(size_t index)                                 { AbstractMediaSequence::remove(index); }
 void ShortcutsList::clear()                                           { AbstractMediaSequence::clear(); }

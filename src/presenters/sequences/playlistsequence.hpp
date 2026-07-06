@@ -23,7 +23,7 @@ public:
         QList<media_type> items() const {
             return AbstractMediaSequence::items<media_type>();
         }
-    void remove(int index);
+    void remove(size_t index);
     void clear();
 
     /// clear and repopulate this playlist in one step

@@ -26,7 +26,7 @@ public:
     // actual album support is added
     void append(const Types::Song &item);
     void batch_append (const QList<Types::Song> &item);
-    void remove(int index);
+    void remove(size_t index);
     void clear();
 
     // Shortcuts can not only be songs, so this has no respawn functions
