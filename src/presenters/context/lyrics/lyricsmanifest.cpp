@@ -77,7 +77,7 @@ LyricsManifest::appendLyric(unsigned long timestampInMs, const QString &text)
 }
 
 void
-LyricsManifest::removeLyric(int index)
+LyricsManifest::removeLyric(size_t index)
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
         return;
@@ -99,7 +99,7 @@ LyricsManifest::clear()
 }
 
 QString
-LyricsManifest::textAt(int index) const
+LyricsManifest::textAt(size_t index) const
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
         return QString();
@@ -107,7 +107,7 @@ LyricsManifest::textAt(int index) const
 }
 
 unsigned
-long LyricsManifest::timestampAt(int index)
+long LyricsManifest::timestampAt(size_t index)
     const
 {
     if (index < 0 || index >= static_cast<int>(m_lyrics.size()))

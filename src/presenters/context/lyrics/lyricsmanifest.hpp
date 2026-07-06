@@ -48,12 +48,12 @@ public:
 
     // Q_INVOKABLE makes them callable from QML
     Q_INVOKABLE void appendLyric(unsigned long timestampInMs, const QString &text);
-    Q_INVOKABLE void removeLyric(int index);
+    Q_INVOKABLE void removeLyric(size_t index);
     Q_INVOKABLE void clear();
 
     // Get a specific lyric (useful for current time tracking)
-    Q_INVOKABLE QString textAt(int index) const;
-    Q_INVOKABLE unsigned long timestampAt(int index) const;
+    Q_INVOKABLE QString textAt(size_t index) const;
+    Q_INVOKABLE unsigned long timestampAt(size_t index) const;
 
 private:
     // private constructor

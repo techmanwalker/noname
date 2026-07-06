@@ -16,7 +16,7 @@ PlaylistSequence::PlaylistSequence(
 };
 
 void PlaylistSequence::append(const Types::Song &song) { AbstractMediaSequence::append(song); }
-void PlaylistSequence::remove(int index)               { AbstractMediaSequence::remove(index); }
+void PlaylistSequence::remove(size_t index)               { AbstractMediaSequence::remove(index); }
 void PlaylistSequence::clear()                         { AbstractMediaSequence::clear(); }
 void PlaylistSequence::items()                         { AbstractMediaSequence::items(); }
 

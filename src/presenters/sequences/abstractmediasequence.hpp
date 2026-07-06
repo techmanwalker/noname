@@ -32,10 +32,10 @@ public:
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames()                                                const override;
 
-    QList<Types::Any> items() const;
+    decltype(m_items) items() const;
 
     // Access to the raw item for inherited classes that need extra roles
-    const Types::Any &itemAt(int index) const;
+    const Types::Any &itemAt(size_t index) const;
     int itemCount() const;
 
     // items that can be converted to certain type
@@ -57,6 +57,28 @@ public:
     }
 
     QPersistentModelIndex find (const Types::Any &needle) const;
+
+    #include <variant>
+
+    // Find an item whose pointed member matches the needle
+    template <typename MediaType, typename FieldType>
+    QPersistentModelIndex find(FieldType MediaType::* member, const FieldType &needle) const
+    {
+        for (size_t i = 0; i < m_items.size(); ++i) {
+            
+            // Pass the address of the variant to std::get_if to safely check its active type
+            if (const MediaType *actual_media = std::get_if<MediaType>(&m_items.at(i))) {
+                
+                // Apply the pointer-to-member operator (->*) to evaluate the target field
+                if (actual_media->*member == needle) {
+                    return index(static_cast<int>(i));
+                }
+            }
+        }
+
+        // invalid if not found
+        return QPersistentModelIndex();
+    }
 
 protected:
     // Inherited models call these to manipulate the container
@@ -109,6 +131,6 @@ protected:
     // only extract songs metadata
     QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider);
     
-    void remove(int index);
+    void remove(size_t index);
     void clear();
 };

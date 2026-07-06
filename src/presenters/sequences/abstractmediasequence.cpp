@@ -1,5 +1,6 @@
 #include "abstractmediasequence.hpp"
 #include "songfactory.hpp"
+#include <qabstractitemmodel.h>
 
 // Default role definitions for any AbstractMediaSequence
 
@@ -76,7 +77,7 @@ AbstractMediaSequence::append(
 
 void
 AbstractMediaSequence::remove(
-    int index
+    size_t index
 )
 {
     if (index < 0 || index >= static_cast<int>(m_items.size())) return;
@@ -95,13 +96,13 @@ AbstractMediaSequence::clear()
 
 const
 Types::Any &AbstractMediaSequence::itemAt(
-    int index
+    size_t index
 ) const
 {
     return m_items.at(index);
 }
 
-QList<Types::Any>
+decltype(AbstractMediaSequence::m_items)
 AbstractMediaSequence::items() const
 {
     return m_items;
