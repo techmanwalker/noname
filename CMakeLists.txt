@@ -77,6 +77,8 @@ target_link_libraries(mediasequences
         Qt6::Quick
         Qt6::Qml
         Qt6::QmlIntegration
+        configuration
+        diskio
         songfactory
         # must not depend on audioengine nor playerpresenter
 )
@@ -324,6 +326,22 @@ target_link_libraries(configuration
 target_include_directories(configuration
     PUBLIC
         src/configuration
+)
+
+# Basic misc disk operations
+add_library(diskio STATIC
+    src/diskio/basicdiskio.cpp
+    src/diskio/loggingcategory.cpp
+)
+
+target_link_libraries(diskio
+    PRIVATE
+        Qt6::Core
+)
+
+target_include_directories(diskio
+    PUBLIC
+        src/diskio
 )
 
 ### General excecutable linking definitions

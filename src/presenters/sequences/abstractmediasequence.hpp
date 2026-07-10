@@ -6,8 +6,10 @@
 
 #include <QAbstractItemModel>
 #include <QFuture>
+#include <QReadWriteLock>
 
 #include <QtQmlIntegration/qqmlintegration.h>
+
 
 /**
     @brief List of any form of playable media, enumerated in the Types:: namespace. 
@@ -34,8 +36,15 @@ public:
 
     decltype(m_items) items() const;
 
+    // proxy for both sources
+    static QStringList sources (const QList<Types::Any> &items);
+    std::optional<std::reference_wrapper<Types::Any>> pointed_to(const QPersistentModelIndex &idx);
+    std::optional<size_t> row_pointed_to(const QPersistentModelIndex &idx) const;
+
+    QStringList sources () const; // return the source or path component of all items
+
     // Access to the raw item for inherited classes that need extra roles
-    const Types::Any &itemAt(size_t index) const;
+    std::optional<std::reference_wrapper<Types::Any>> item_at(size_t index);
     int itemCount() const;
 
     // items that can be converted to certain type
@@ -43,6 +52,8 @@ public:
     QList<media_type> items() const 
     {
         QList<media_type> filtered_list;
+
+        QReadLocker locker (&m_lock);
         
         filtered_list.reserve(m_items.size());
 
@@ -56,14 +67,33 @@ public:
         return filtered_list;
     }
 
-    QPersistentModelIndex find (const Types::Any &needle) const;
+    // sources of convertibles to this type
+    template <typename media_type>
+    QStringList sources() const
+    {
+        QReadLocker locker(&m_lock);
+        QStringList uri_sources;
 
-    #include <variant>
+        for (const Types::Any &item : m_items) {
+            // Check if the variant holds the requested type
+            if (const auto *resolved = std::get_if<media_type>(&item)) {
+                
+                // Extract the field depending on what type was requested
+                if constexpr (std::is_same_v<media_type, Types::Song>) {
+                    uri_sources.append(resolved->source.toLocalFile());
+                }
+            }
+        }
 
-    // Find an item whose pointed member matches the needle
+        return uri_sources;
+    }
+
+    // Find an item whose pointed member matches the needle, returns invalid if not found
     template <typename MediaType, typename FieldType>
     QPersistentModelIndex find(FieldType MediaType::* member, const FieldType &needle) const
     {
+        QReadLocker locker (&m_lock);
+
         for (size_t i = 0; i < m_items.size(); ++i) {
             
             // Pass the address of the variant to std::get_if to safely check its active type
@@ -82,16 +112,21 @@ public:
 
 protected:
     // Inherited models call these to manipulate the container
-    void append(const Types::Any &item);
+    QPersistentModelIndex append(const Types::Any &item);
 
     template <typename Container>
     requires
         std::ranges::forward_range<Container> // Any type of list
     &&  std::convertible_to<typename Container::value_type, typename decltype(m_items)::value_type> // that can be contained by m_items
-    void
+    QList<QPersistentModelIndex>
     batch_append(const Container &items)
     {
-        if (items.empty()) return;
+        // ready to use indices for right after manipulation
+        QList<QPersistentModelIndex> indices; 
+        
+        if (items.empty()) return indices;
+
+        QWriteLocker locker (&m_lock);
 
         // Filter only valid items before appending
         std::vector<Types::Any> valid_items;
@@ -110,7 +145,7 @@ protected:
             valid_items.push_back(item);
         }
 
-        if (valid_items.empty()) return;
+        if (valid_items.empty()) return indices;
 
         // Notify to QML views the entire block insertion at once
         int first_row = rowCount();
@@ -121,16 +156,37 @@ protected:
         // prepare the QList for the append
         m_items.reserve(m_items.size() + valid_items.size());
     
+        // count how many rows we've appended
+        size_t current_row = first_row;
+
         for (Types::Any &valid_item : valid_items) {
+            // how do I know the index the push_back ended up on?
             m_items.push_back(std::move(valid_item));
+
+            // generate the persistent model index for the row we just filled 
+            indices.append(index(current_row));
+
+            current_row++;
         }
 
         endInsertRows();
+
+        return indices;
     }
 
     // only extract songs metadata
     QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider);
+
+    // remove items in batch using their persistent indices
+    void batch_remove (const QList<QPersistentModelIndex> &items);
+
+    std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
+
+    mutable QReadWriteLock m_lock;
     
     void remove(size_t index);
     void clear();
+
+    // logging
+    static const QLoggingCategory &l_mediasequences();
 };

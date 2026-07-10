@@ -57,8 +57,8 @@ Item {
             lateralAlignmentPadding: searchBar.leftPadding
         }
 
-        AllTracks {
-            id: allTracksView
+        FolderCollectionsVTab {
+            id: folders
 
             Layout.fillWidth: true
 

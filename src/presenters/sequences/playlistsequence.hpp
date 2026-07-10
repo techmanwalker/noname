@@ -27,7 +27,7 @@ public:
     void clear();
 
     /// clear and repopulate this playlist in one step
-    void          respawn_list (const QList<Types::Song> &new_list);
+    void respawn_list (const QList<Types::Song> &new_list);
 
 private:
 };

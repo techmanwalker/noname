@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player.Primitives
+import Player.MediaSequences
 
 ColumnLayout {
     id: root
@@ -13,8 +14,12 @@ ColumnLayout {
     SectionHeading {
         id: shortcutsHeading
 
-        text: "All tracks"
+        text: "Folders"
 
         Layout.leftMargin: root.lateralAlignmentPadding
+    }
+
+    ListView {
+        model: FolderCollections
     }
 }

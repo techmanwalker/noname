@@ -125,7 +125,7 @@ manager::__cache_lines_unlocked (conf_file_type type)
     // insert or overwrite, does not matter
     m_last_content_acknowledged_for_file.insert(type, lines);
 
-    qCInfo(l_configuration) << "File " << local_path << "was reloaded. Manually refresh or restart the program for changes to take effect.";
+    // qCInfo(l_configuration) << "File " << local_path << "was reloaded. Manually refresh or restart the program for changes to take effect.";
 }
 
 QFuture<bool>
