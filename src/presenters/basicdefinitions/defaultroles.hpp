@@ -51,9 +51,18 @@ static auto make_visitor = [](auto&& projector) {
 */
 static const RoleDefinitions container_roles = {
     // Direct roles (thanks to the duck-typing of generic lambdas)
-    { "title",  make_visitor([](const auto &x) { return x.title; }) },
-    { "artist", make_visitor([](const auto &x) { return x.artist; }) },
-    { "cover",  make_visitor([](const auto &x) { return x.cover; }) },
+    { "title",  make_visitor([](const auto &x) {
+        
+        return x.title;
+    })},
+    { "artist",  make_visitor([](const auto &x) {
+        
+        return x.artist;
+    })},
+    { "cover",  make_visitor([](const auto &x) {
+        
+        return x.cover;
+    })},
 
     // Conditional roles with specific logic
     { "album", make_visitor([](const auto &x) -> QVariant {
@@ -77,10 +86,24 @@ static const RoleDefinitions container_roles = {
 
     { "type", make_visitor([](const auto &x) {
         using T = std::decay_t<decltype(x)>;
-        if constexpr (std::is_same_v<T, Types::Song>)     return "Song";
-        if constexpr (std::is_same_v<T, Types::Album>)    return "Album";
-        if constexpr (std::is_same_v<T, Types::Playlist>) return "Playlist";
-        return "unknown";
+        if constexpr (std::is_same_v<T, Types::Song>)      return "Song";
+        if constexpr (std::is_same_v<T, Types::Album>)     return "Album";
+        if constexpr (std::is_same_v<T, Types::Playlist>)  return "Playlist";
+        return "Unknown";
+    })},
+
+    {"songs", make_visitor([](const auto &x) {
+        using T = std::decay_t<decltype(x)>;
+
+        // A helper lambda that evaluates true if T matches any of the types passed to it
+        auto is_any_of = []<typename... Args>() { return (... || std::is_same_v<T, Args>); };
+
+        if constexpr (is_any_of.template operator()<Types::Album, Types::Playlist>()) {
+            // Explicitly package the custom collection into the variant
+            return QVariant::fromValue(x.songs);
+        } else {
+            return QVariant{};
+        }
     })}
 };
 

@@ -43,13 +43,6 @@ PlayQueue::batch_append (const QList<QUrl> &sources)
     return AbstractMediaSequence::batch_append(sources, chosen_cover_provider);
 }
 
-QPersistentModelIndex
-PlayQueue::find (const Types::Song &needle) const
-{
-    // explicit rvalue
-    return AbstractMediaSequence::find(Types::Any{needle});
-}
-
 void
 PlayQueue::respawn_queue(const QList<Types::Song> &new_queue)
 {
@@ -76,7 +69,7 @@ PlayQueue::playhead () const
 void
 PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
 {
-    const QPersistentModelIndex prolly_in_queue = find(song);
+    const QPersistentModelIndex prolly_in_queue = AbstractMediaSequence::find(&Types::Song::source, song.source);
 
     // not in queue
     if (!prolly_in_queue.isValid()) {

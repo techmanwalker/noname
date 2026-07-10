@@ -1,4 +1,7 @@
 #include "serialize.hpp"
+#include "mediatypes.hpp"
+#include <qjsonobject.h>
+#include <variant>
 
 QJsonObject
 debug::serialize (const Types::Song &song)

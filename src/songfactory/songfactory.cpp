@@ -4,6 +4,9 @@
 #include <QMediaPlayer>
 
 #include <QtConcurrent/QtConcurrent>
+#include <qloggingcategory.h>
+
+Q_LOGGING_CATEGORY(song_factory::l_songfactory, "noname.songfactory");
 
 // clean constructor for both qfuture and callback variants
 song_factory::song_factory(const QUrl &source, std::shared_ptr<cover_provider> provider)
@@ -21,7 +24,6 @@ song_factory::song_factory(const QUrl &source, std::shared_ptr<cover_provider> p
 QFuture<Types::Song>
 song_factory::extract(const QUrl &source, std::shared_ptr<cover_provider> provider)
 {
-
     // delegate instantiation and execution to Qt thread pool
     return QtConcurrent::run([source, provider](QPromise<Types::Song> &promise) {
         song_factory worker(source, provider);
@@ -81,6 +83,8 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise)
             
             if (m_cover_provider != nullptr) {
                 cover_uid = m_cover_provider->store(meta.value(QMediaMetaData::ThumbnailImage));
+            } else {
+                qCWarning(l_songfactory) << "Cover provider was not set. No covers will be appended.";
             }
 
             if (!cover_uid.isEmpty()) {
@@ -118,32 +122,23 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise)
 QFuture<QList<Types::Song>>
 song_factory::batch_extract(const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider)
 {
-    // Build a list of the metadata extraction requests for each source
     QList<QFuture<Types::Song>> requests;
     requests.reserve(sources.size());
 
     for (const QUrl &source : sources) {
-        requests.append(
-            song_factory::extract(source, provider)
-        );
+        requests.append(song_factory::extract(source, provider));
     }
 
-    // Monitor the entire batch without blocking the main thread
-    // Pass the iterators and explicit type to whenAll.
-    // Only pass the lambda expression as single argument to .then().
-    // The parameter 'extracted_songs_ready_to_append' will contain the identical
-    // list we built as input, ready to get the results from.
-    return QtConcurrent::run([requests = std::move(requests)]() mutable {
-        QList<Types::Song> extracted_songs_ready_to_append;
-        extracted_songs_ready_to_append.reserve(requests.size());
+    if (requests.isEmpty()) {
+        return QtFuture::makeReadyValueFuture(QList<Types::Song>{});
+    }
 
-        // .waitForFinished() en cada futuro detiene el hilo del pool de forma segura 
-        // hasta que el MediaStatusChanged y el bucle de eventos de CADA canción hayan muerto limpiamente.
-        for (auto &future : requests) {
-            future.waitForFinished(); 
-            extracted_songs_ready_to_append.append(future.result());
-        }
-
-        return extracted_songs_ready_to_append;
-    });
+    return QtFuture::whenAll(requests.begin(), requests.end())
+        .then([](const QList<QFuture<Types::Song>> &finished) {
+            QList<Types::Song> extracted_songs_ready_to_append;
+            extracted_songs_ready_to_append.reserve(finished.size());
+            for (const auto &f : finished)
+                extracted_songs_ready_to_append.append(f.result());
+            return extracted_songs_ready_to_append;
+        });
 }

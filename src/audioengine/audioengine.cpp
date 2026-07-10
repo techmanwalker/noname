@@ -318,7 +318,11 @@ audio_engine::handle_playhead_changed (bool play_afterwards)
     if (!current_index.isValid()) return;
 
     // get the Types::Any
-    const Types::Any &media_item = queue.itemAt(current_index.row());
+    const std::optional<std::reference_wrapper<Types::Any>> item = queue.item_at(current_index.row());
+
+    if (!item.has_value()) return;
+
+    const Types::Any &media_item = item.value().get();
 
     // narrow down to Types::Song
     if (std::holds_alternative<Types::Song>(media_item)) {

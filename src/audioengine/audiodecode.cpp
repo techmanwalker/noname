@@ -191,7 +191,7 @@ audio_decode_worker::load(const QString &file_path) {
             av_strerror(ret, err_buf, AV_ERROR_MAX_STRING_SIZE);
             
             // log the error
-            qCWarning(l_ffmpeg) << "Critical error in SwrContext: " << err_buf;
+            qCFatal(l_ffmpeg) << "Critical error in SwrContext: " << err_buf;
 
             // 2. total state clean
             clean();

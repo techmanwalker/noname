@@ -1,7 +1,10 @@
 #pragma once
 
+#include <QFileInfo>
 #include <QString>
 #include <QUrl>
+
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /// All the forms of identifiable structures of audio that this player supports.
 namespace Types {
@@ -40,3 +43,14 @@ namespace Types {
 
     using Any = std::variant<Types::Song, Types::Album>;
 }
+
+// Expose the structures and their sequences at compile-time
+Q_DECLARE_METATYPE(Types::Song)
+Q_DECLARE_METATYPE(QList<Types::Song>)
+
+class QmlSongRegistration 
+{
+    Q_GADGET
+    QML_FOREIGN(Types::Song)
+    QML_NAMED_ELEMENT(Song)
+};

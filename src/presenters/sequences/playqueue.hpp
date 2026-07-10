@@ -42,9 +42,6 @@ public:
     Q_INVOKABLE void next ();
     Q_INVOKABLE void prev ();
 
-    // to find out if a song is in queue
-    QPersistentModelIndex find (const Types::Song &needle) const;
-
     // to drag and drop lists of songs on the qml gui
     Q_INVOKABLE QFuture<void> batch_append (const QList<QUrl> &sources);
 

@@ -83,8 +83,6 @@ Column {
         bottomPadding: root.vtabBottomPadding
 
         spacing: root.vtabSpacing
-
-        visible: false // still unsupported
     }
 
     VTab {
@@ -98,5 +96,7 @@ Column {
         bottomPadding: root.vtabBottomPadding
 
         spacing: root.vtabSpacing
+
+        visible: false // still unsupported
     }
 }

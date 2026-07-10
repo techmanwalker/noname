@@ -27,4 +27,7 @@ private:
     QUrl m_source;
 
     std::shared_ptr<cover_provider> m_cover_provider = nullptr;
+
+    // logging
+    static const QLoggingCategory &l_songfactory();
 };
