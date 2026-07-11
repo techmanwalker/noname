@@ -1,6 +1,8 @@
 #include "serialize.hpp"
 #include "mediatypes.hpp"
-#include <qjsonobject.h>
+
+#include <QLoggingCategory>
+
 #include <variant>
 
 QJsonObject
@@ -76,4 +78,10 @@ debug::serialize (const QList<Types::Any> &media)
     }
 
     return out;
+}
+
+void
+debug::print (const QLoggingCategory &category, const QJsonValue &val)
+{
+    qCDebug (category).noquote() << val.toJson(QJsonDocument::Indented).constData();;
 }
