@@ -24,6 +24,9 @@ private:
     // Internally executes the extraction synchronously (to be called from worker threads, cancellable promise)
     Types::Song execute_extraction(QPromise<Types::Song> &promise);
 
+    // Dedicated thread pool to load hundreds of songs
+    static QThreadPool* extraction_pool();
+
     QUrl m_source;
 
     std::shared_ptr<cover_provider> m_cover_provider = nullptr;

@@ -8,11 +8,27 @@
 
 Q_LOGGING_CATEGORY(song_factory::l_songfactory, "noname.songfactory");
 
+// No need for std::optional at the moment. A Song without source is already invalid.
+
 // clean constructor for both qfuture and callback variants
 song_factory::song_factory(const QUrl &source, std::shared_ptr<cover_provider> provider)
     : m_source(source),
       m_cover_provider(provider)
 {}
+
+QThreadPool*
+song_factory::extraction_pool()
+{
+    // C++11/20 guarantees thread-safe initialization of static local variables.
+    static QThreadPool pool;
+    
+    /*  Optional: YThrottle the maximum thread count here to prevent 
+        extreme disk I/O thrashing on mechanical drives. 
+        If left untouched, it defaults to QThread::idealThreadCount().
+        pool.setMaxThreadCount(4);  */
+    
+    return &pool;
+}
 
 /**
     @brief Extract song metadata asynchronously and expose the
@@ -25,7 +41,7 @@ QFuture<Types::Song>
 song_factory::extract(const QUrl &source, std::shared_ptr<cover_provider> provider)
 {
     // delegate instantiation and execution to Qt thread pool
-    return QtConcurrent::run([source, provider](QPromise<Types::Song> &promise) {
+    return QtConcurrent::run(extraction_pool(), [source, provider](QPromise<Types::Song> &promise) {
         song_factory worker(source, provider);
         Types::Song result = worker.execute_extraction(promise);
 
