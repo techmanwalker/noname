@@ -1,5 +1,4 @@
 #include "audioengine.hpp"
-#include "configuration.hpp"
 #include "coverproviderproxy.hpp"
 // #include "serialize.hpp"
 #include "mediatypes.hpp"
@@ -34,11 +33,11 @@ main (int argc, char ** argv)
     // Load configuration for the first time, the file must not be auto created if no write_lines was called
     QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);
 
-    qCInfo(startpagetest) << "Known music directories paths are:";
+    qCDebug (startpagetest) << "Known music directories paths are:";
     for (const QString &line : known_music_directories_lines) {
-        qCInfo(startpagetest) << line;
+        qCDebug (startpagetest) << line;
     }
-    qCInfo(startpagetest) << "That's all known music directories.";
+    qCDebug (startpagetest) << "That's all known music directories.";
 
     */
 

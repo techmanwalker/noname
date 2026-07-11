@@ -76,7 +76,7 @@ manager::read_lines (conf_file_type type, bool unconditionally_refresh)
         // this locker is destroyed here, hence why scoped in braces
     }
 
-    // if it was not present, verify again with the trigger condition
+    // if file was not present in cache, verify again with the trigger condition
     // and safely trigger caching if not met
     return prolly_cache_lines (type, !m_last_content_acknowledged_for_file.contains(type));
 }
