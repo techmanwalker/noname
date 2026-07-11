@@ -439,9 +439,29 @@ target_include_directories(startpagetest
         src/presenters/basicdefinitions
 )
 
+qt_add_executable (refreshlisttest EXCLUDE_FROM_ALL
+    src/tests/refreshlist.cpp
+)
+
+target_link_libraries(refreshlisttest
+    PUBLIC
+        ${BASIC_LIBRARIES}
+        configuration
+        debugtools
+        diskio
+        mediasequences
+        songfactory
+)
+
+target_include_directories(refreshlisttest
+    PRIVATE
+        ${PLAYER_INCLUDE_DIRECTORIES}
+        src/presenters/basicdefinitions
+)
+
 # If BUILD_TESTS, add them to the default build target
 if(BUILD_TESTS)
-    set_target_properties(mockupv2 backgroundgradinghelper startpagetest
+    set_target_properties(mockupv2 backgroundgradinghelper startpagetest refreshlisttest
         PROPERTIES EXCLUDE_FROM_ALL FALSE
     )
 endif()
