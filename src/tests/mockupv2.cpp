@@ -12,7 +12,7 @@
 #include <qloggingcategory.h>
 //#include <QDirIterator>
 
-Q_LOGGING_CATEGORY(mockupv2, "noname.mockupv2")
+Q_LOGGING_CATEGORY(mockupv2, "noname.tests.mockupv2")
 
 using namespace std::chrono_literals; // for _s suffix
 
@@ -37,25 +37,25 @@ main (int argc, char ** argv)
     // Load configuration for the first time, the file must not be auto created if no write_lines was called
     /* WORKS FINE
 
-    qCInfo(mockupv2) << "Known music directories paths are:";
+    qCDebug (mockupv2) << "Known music directories paths are:";
     for (const QString &line : conf.read_lines(configuration::conf_file_type::known_music_directories)) {
-        qCInfo(mockupv2) << line;
+        qCDebug (mockupv2) << line;
     }
-    qCInfo(mockupv2) << "That's all known music directories.";
+    qCDebug (mockupv2) << "That's all known music directories.";
 
-    qCInfo(mockupv2) << "Write a single line test...";
+    qCDebug (mockupv2) << "Write a single line test...";
     auto write_future = conf.write_lines(configuration::conf_file_type::known_music_directories, QStringList {
         "/home/notangel/Música"
     });
     write_future.then([&conf](bool did_write_finish_successfully) {
         Q_UNUSED(did_write_finish_successfully)
 
-        qCInfo(mockupv2) << "Known music directories paths after writing are:";
+        qCDebug (mockupv2) << "Known music directories paths after writing are:";
 
         for (const QString &line : conf.read_lines(configuration::conf_file_type::known_music_directories)) {
-            qCInfo(mockupv2) << line;
+            qCDebug (mockupv2) << line;
         }
-        qCInfo(mockupv2) << "That's all known music directories.";
+        qCDebug (mockupv2) << "That's all known music directories.";
     });
     */
 
