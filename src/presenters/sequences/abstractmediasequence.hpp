@@ -6,9 +6,13 @@
 
 #include <QAbstractItemModel>
 #include <QFuture>
+#include <QLoggingCategory>
 #include <QReadWriteLock>
 
 #include <QtQmlIntegration/qqmlintegration.h>
+
+
+Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
 
 /**
@@ -186,7 +190,4 @@ protected:
     
     void remove(size_t index);
     void clear();
-
-    // logging
-    static const QLoggingCategory &l_mediasequences();
 };
