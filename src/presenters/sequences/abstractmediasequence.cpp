@@ -9,7 +9,7 @@
 #include <qreadwritelock.h>
 #include <variant>
 
-Q_LOGGING_CATEGORY(AbstractMediaSequence::l_mediasequences, "noname.mediasequences")
+Q_LOGGING_CATEGORY(l_mediasequences, "noname.mediasequences")
 
 // Default role definitions for any AbstractMediaSequence
 
