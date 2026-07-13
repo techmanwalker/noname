@@ -41,7 +41,16 @@ namespace Types {
 
     using Playlist = Album;
 
-    using Any = std::variant<Types::Song, Types::Album>;
+    struct Directory {
+        QString path;
+        QString name () const {
+            return QFileInfo(path).fileName();
+        }
+
+        QList<Song> songs;
+    };
+
+    using Any = std::variant<Types::Song, Types::Album, Types::Directory>;
 }
 
 // Expose the structures and their sequences at compile-time

@@ -3,6 +3,7 @@
 #include "mediatypes.hpp"
 
 #include <QVariant>
+#include <qvariant.h>
 
 /// Role definition. Enables automatic QML role generation.
 struct CompiledRole {
@@ -23,7 +24,6 @@ struct CompiledRole {
     writing back to the source or bidirectional QML assignments through itself.
 */
 using RoleExtractor = std::function<QVariant(const Types::Any &)>;
-using RoleExtractor   = std::function<QVariant(const Types::Any &)>; 
 
 /**
     @brief Gives the developer simplified controls to define roles.
@@ -52,16 +52,29 @@ static auto make_visitor = [](auto&& projector) {
 static const RoleDefinitions container_roles = {
     // Direct roles (thanks to the duck-typing of generic lambdas)
     { "title",  make_visitor([](const auto &x) {
-        
-        return x.title;
+        using T = std::decay_t<decltype(x)>;
+        if constexpr (std::is_same_v<T, Types::Directory>) {
+            return x.name();
+        } else {
+            return x.title;
+        }
     })},
     { "artist",  make_visitor([](const auto &x) {
-        
-        return x.artist;
+        using T = std::decay_t<decltype(x)>;
+        if constexpr (std::is_same_v<T, Types::Directory>) {
+            return QVariant{};
+        } else {
+            return x.artist;
+        }
     })},
     { "cover",  make_visitor([](const auto &x) {
         
-        return x.cover;
+        using T = std::decay_t<decltype(x)>;
+        if constexpr (std::is_same_v<T, Types::Directory>) {
+            return QVariant{};
+        } else {
+            return x.cover;
+        }
     })},
 
     // Conditional roles with specific logic
@@ -89,6 +102,7 @@ static const RoleDefinitions container_roles = {
         if constexpr (std::is_same_v<T, Types::Song>)      return "Song";
         if constexpr (std::is_same_v<T, Types::Album>)     return "Album";
         if constexpr (std::is_same_v<T, Types::Playlist>)  return "Playlist";
+        if constexpr (std::is_same_v<T, Types::Directory>) return "Directory";
         return "Unknown";
     })},
 
@@ -98,12 +112,24 @@ static const RoleDefinitions container_roles = {
         // A helper lambda that evaluates true if T matches any of the types passed to it
         auto is_any_of = []<typename... Args>() { return (... || std::is_same_v<T, Args>); };
 
-        if constexpr (is_any_of.template operator()<Types::Album, Types::Playlist>()) {
+        if constexpr (is_any_of.template operator()<Types::Album, Types::Playlist, Types::Directory>()) {
             // Explicitly package the custom collection into the variant
             return QVariant::fromValue(x.songs);
-        } else {
-            return QVariant{};
         }
+        
+        return QVariant{};
+    })},
+
+    {"source", make_visitor([](const auto &x) -> QVariant {
+        using T = std::decay_t<decltype(x)>;
+
+        if constexpr (std::is_same_v<T, Types::Song>) {
+            return x.source; // QUrl
+        } else if constexpr (std::is_same_v<T, Types::Directory>) {
+            return QUrl::fromLocalFile(x.path); // also QUrl
+        }
+
+        return QVariant{}; // here
     })}
 };
 

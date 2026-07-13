@@ -13,6 +13,7 @@ namespace debug {
 
     QJsonObject serialize(const Types::Song &song);
     QJsonObject serialize(const Types::Album &album);
+    QJsonObject serialize(const Types::Directory &dir);
     QJsonObject serialize(const Types::Any &unit);
 
     template <typename MediaType>

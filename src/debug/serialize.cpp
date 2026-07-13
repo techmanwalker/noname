@@ -3,6 +3,8 @@
 
 #include <QLoggingCategory>
 
+#include <qjsonarray.h>
+#include <qjsonobject.h>
 #include <variant>
 
 QJsonObject
@@ -42,6 +44,25 @@ debug::serialize (const Types::Album &album)
 }
 
 QJsonObject
+debug::serialize (const Types::Directory &dir)
+{
+    QJsonObject out;
+
+    out["path"] = dir.path;
+    out["name"] = dir.name();
+
+    QJsonArray songs;
+
+    for (const auto &song : dir.songs) {
+        songs.append(serialize(song));
+    }
+
+    out["songs"] = songs;
+
+    return out;
+}
+
+QJsonObject
 debug::serialize (const Types::Any &unit)
 {
     QJsonObject out;
@@ -51,6 +72,10 @@ debug::serialize (const Types::Any &unit)
     }
     if (std::holds_alternative<Types::Album>(unit)) {
         out = serialize(std::get<Types::Album>(unit));
+    }
+
+    if (std::holds_alternative<Types::Directory>(unit)) {
+        out = serialize(std::get<Types::Directory>(unit));
     }
 
     return out;

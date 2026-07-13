@@ -4,6 +4,7 @@
 #include <QMediaPlayer>
 
 #include <QtConcurrent/QtConcurrent>
+#include <qcontainerfwd.h>
 #include <qloggingcategory.h>
 
 Q_LOGGING_CATEGORY(song_factory::l_songfactory, "noname.songfactory");
@@ -157,4 +158,16 @@ song_factory::batch_extract(const QList<QUrl> &sources, std::shared_ptr<cover_pr
                 extracted_songs_ready_to_append.append(f.result());
             return extracted_songs_ready_to_append;
         });
+}
+
+QFuture<QList<Types::Song>>
+song_factory::batch_extract(const QStringList &sources, std::shared_ptr<cover_provider> provider)
+{
+    QList<QUrl> uris;
+
+    for (const QString &source : sources) {
+        uris.append(QUrl::fromLocalFile(source));
+    }
+
+    return batch_extract(uris, provider);
 }
