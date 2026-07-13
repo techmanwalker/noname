@@ -34,7 +34,6 @@ PlayQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 
 // --- The Play queue ---
 
-int PlayQueue::itemCount () const { return AbstractMediaSequence::itemCount(); }
 QList<Types::Song> PlayQueue::items () const { return AbstractMediaSequence::items<Types::Song>() ; }
 
 QFuture<void> 

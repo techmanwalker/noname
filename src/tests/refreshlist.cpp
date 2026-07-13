@@ -1,14 +1,12 @@
 #include "configuration.hpp"
 #include "coverprovider.hpp"
-#include "serialize.hpp"
-#include "directory.hpp"
+#include "locallibrary.hpp"
 #include "mediatypes.hpp"
+#include "serialize.hpp"
 
 #include <QCoreApplication>
 #include <QLoggingCategory>
-#include <QTimer>
-#include <QtConcurrent/QtConcurrent>
-#include <memory>
+#include <qloggingcategory.h>
 
 Q_LOGGING_CATEGORY(refreshlisttest, "noname.tests.refreshlist")
 
@@ -21,7 +19,6 @@ int main (int argc, char ** argv)
     auto &conf = configuration::manager::instance();
 
     QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);
-    QList<Types::Directory> known_dirs;
 
     qCDebug (refreshlisttest) << "Known music directories paths are:";
     for (const QString &line : std::as_const(known_music_directories_lines)) {
@@ -29,33 +26,29 @@ int main (int argc, char ** argv)
     }
     qCDebug (refreshlisttest) << "That's all known music directories.";
 
-    qCDebug (refreshlisttest) << "Creating directories logical indices.";
+    qCDebug (refreshlisttest) << "Creating logical directory snapshots.";
 
-    for (const QString &line : std::as_const(known_music_directories_lines)) {
-        known_dirs.emplace_back(line, covers);
-    }
+    // use the dedicated singleton
 
-    qCDebug (refreshlisttest) << "Indices created.";
+    auto &ll = LocalLibrary::instance();
 
-    if (known_dirs.isEmpty()) qFatal() << "At least one known directory needed to run this test."
-        << "To add a directory to your music collection, append its absolute path to "
-        << configuration::file(configuration::conf_file_type::known_music_directories);
+    /* automatically reads the config file with the list of directories
+       this singleton list will load
+    */
+    ll.snapshot_known_directories().then([&ll]() {
+        qCDebug (refreshlisttest) << "Indices created. Will print all loaded songs right next.";
+
+        QList<Types::Directory> snapshots = ll.items();
+
+        for (const Types::Directory &dir : snapshots) {
+            qCDebug (refreshlisttest) << debug::serialize(dir);
+        }
+    });
+
     
-    for (Types::Directory &dir : known_dirs) {
-        qCDebug (refreshlisttest) << "Refreshing cache for: " << dir.path();
-        dir.refresh_cache();
 
-        qCDebug (refreshlisttest) << "Song paths in " << dir.path() << ": " << dir.children_paths();
 
-        dir.songs().then([](QList<Types::Song> songs) {
-            qCDebug (refreshlisttest) << "Songs loaded: ";
-
-            for (const Types::Song &song : songs) {
-                qCDebug (refreshlisttest) << debug::serialize(song);
-            }
-        });
-
-    }
+    
 
     /*
 

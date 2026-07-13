@@ -5,6 +5,7 @@
 
 #include <QFuture>
 #include <QObject>
+#include <qobject.h>
 
 class song_factory : public QObject {
     Q_OBJECT
@@ -16,6 +17,7 @@ public:
 
     // Enable to concurrently get metadata of songs in batches
     static QFuture<QList<Types::Song>> batch_extract(const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider); // batch
+    static QFuture<QList<Types::Song>> batch_extract(const QStringList &sources, std::shared_ptr<cover_provider> provider); // batch, overload for local files only
 
 private:
     // private and linear constructor

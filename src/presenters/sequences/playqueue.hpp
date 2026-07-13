@@ -28,7 +28,6 @@ public:
 
     // getters
     QModelIndex playhead() const;
-    int itemCount () const;
 
     // all items
     QList<Types::Song> items() const;
