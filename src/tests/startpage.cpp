@@ -1,7 +1,9 @@
 #include "audioengine.hpp"
 #include "coverproviderproxy.hpp"
-// #include "serialize.hpp"
+#include "dump.hpp"
+#include "locallibrary.hpp"
 #include "mediatypes.hpp"
+//#include "serialize.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp"
 
@@ -80,6 +82,38 @@ main (int argc, char ** argv)
         }
     });
 
+
+    /*  load the songs from the known music directories and display as
+        a folder-separated view of all available songs */
+    auto &ll = LocalLibrary::instance();
+    ll.chosen_cover_provider = covers;
+
+    // trigger first refresh
+    ll.snapshot_known_directories().then([&ll]() {
+        /*
+        qCDebug (startpagetest) << "Indices created. Will print all loaded songs right next.";
+
+        QList<Types::Directory> snapshots = ll.items();
+
+        for (const Types::Directory &dir : snapshots) {
+            qCDebug (startpagetest) << debug::serialize(dir);
+        }
+
+        */
+
+        // read from the roles here instead...
+
+        
+        
+        
+        debug::dump_list_model(
+            startpagetest(), 
+            ll,
+            "LocalLibrary"
+        );
+
+    });
+    
     // create base engine
     QQmlApplicationEngine engine;
 

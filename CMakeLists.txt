@@ -52,7 +52,6 @@ file(GLOB QML_MEDIASEQUENCES_SOURCES
     CONFIGURE_DEPENDS
     "src/presenters/sequences/*.hpp"
     "src/presenters/sequences/*.cpp"
-    "src/presenters/basicdefinitions/defaultroles.hpp"
 )
 
 
@@ -79,6 +78,7 @@ target_link_libraries(mediasequences
         Qt6::QmlIntegration
         configuration
         diskio
+        primitives
         songfactory
         # must not depend on audioengine nor playerpresenter
 )
@@ -86,9 +86,6 @@ target_link_libraries(mediasequences
 target_include_directories(mediasequences
     PUBLIC
         src/presenters/sequences # to make qmltyperegistrar happy
-
-    PRIVATE
-        src/presenters/basicdefinitions
 )
 
 # Playback presentation - everything that the C++ side exposes for your control and view
@@ -113,6 +110,7 @@ target_link_libraries(playerpresenter
         Qt6::Quick
         audioengine
         mediasequences
+        primitives
 )
 
 target_include_directories(playerpresenter
@@ -121,7 +119,6 @@ target_include_directories(playerpresenter
 
     PRIVATE
         src/presenters/sequences
-        src/presenters/basicdefinitions
 )
 
 # Lyrics manifest - access the lyrics from your playing song anywhere
@@ -159,8 +156,15 @@ qt_add_qml_module(primitives
     QML_FILES
         ${PRIMITIVES_QMLS}
         src/qml/primitives/Formatters.mjs
+    SOURCES
+        src/presenters/basicdefinitions/mediatypes.cpp
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
+)
+
+target_include_directories(primitives
+    PUBLIC
+        src/presenters/basicdefinitions
 )
 
 # Effects - any module depends on these to look nice
@@ -259,6 +263,7 @@ target_link_libraries(audioengine
         Qt6::Core
         Qt6::Quick
         mediasequences
+        primitives
         SoundIo::SoundIo
         FFmpeg::FFmpeg
 )
@@ -269,7 +274,6 @@ target_include_directories(audioengine
 
     PRIVATE
         src/presenters/sequences
-        src/presenters/basicdefinitions
 
 )
 
@@ -285,17 +289,17 @@ target_link_libraries(songfactory
         Qt6::Core
         Qt6::Quick
         Qt6::Multimedia
+        primitives
 )
 
 target_include_directories(songfactory
     PUBLIC
         src/songfactory
-    PRIVATE
-        src/presenters/basicdefinitions
 )
 
 # The debugging tools
 add_library(debugtools STATIC
+    src/debug/dump.cpp
     src/debug/serialize.cpp
 )
 
@@ -303,14 +307,12 @@ target_link_libraries(debugtools
     PRIVATE
         Qt6::Core
         mediasequences
+        primitives
 )
 
 target_include_directories(debugtools
     PUBLIC
         src/debug
-
-    PRIVATE
-        src/presenters/basicdefinitions
 )
 
 # The configuration
@@ -392,12 +394,12 @@ target_link_libraries(mockupv2
         lyricsmanifest
         mediasequences
         configuration
+        primitives
 )
 
 target_include_directories(mockupv2
     PRIVATE
         ${PLAYER_INCLUDE_DIRECTORIES}
-        src/presenters/basicdefinitions
 )
 
 qt_add_executable(backgroundgradinghelper EXCLUDE_FROM_ALL
@@ -422,21 +424,20 @@ qt_add_executable(startpagetest EXCLUDE_FROM_ALL
 target_link_libraries(startpagetest
     PUBLIC
         ${BASIC_LIBRARIES}
-        player
-        mediasequences
-        debugtools
-        playereffects
-        songfactory
-        mediasequences
-        startpage
-        configuration
         audioengine
+        configuration
+        debugtools
+        mediasequences
+        player
+        playereffects
+        primitives
+        songfactory
+        startpage
 )
 
 target_include_directories(startpagetest
     PRIVATE
         ${PLAYER_INCLUDE_DIRECTORIES}
-        src/presenters/basicdefinitions
 )
 
 qt_add_executable (refreshlisttest EXCLUDE_FROM_ALL
@@ -450,13 +451,13 @@ target_link_libraries(refreshlisttest
         debugtools
         diskio
         mediasequences
+        primitives
         songfactory
 )
 
 target_include_directories(refreshlisttest
     PRIVATE
         ${PLAYER_INCLUDE_DIRECTORIES}
-        src/presenters/basicdefinitions
 )
 
 # If BUILD_TESTS, add them to the default build target

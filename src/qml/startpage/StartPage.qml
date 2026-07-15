@@ -57,7 +57,7 @@ Item {
             lateralAlignmentPadding: searchBar.leftPadding
         }
 
-        FolderCollectionsVTab {
+        FoldersVTab {
             id: folders
 
             Layout.fillWidth: true

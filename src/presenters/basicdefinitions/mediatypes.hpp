@@ -10,6 +10,16 @@
 namespace Types {
 
     struct Song {
+        Q_GADGET
+        Q_PROPERTY(QString title MEMBER title)
+        Q_PROPERTY(QString artist MEMBER artist)
+        Q_PROPERTY(QString album MEMBER album)
+        Q_PROPERTY(quint64 duration MEMBER duration)
+        Q_PROPERTY(QUrl source MEMBER source)
+        Q_PROPERTY(QUrl cover MEMBER cover)
+    
+    public:
+
         QString title;
         QString artist;
         QString album;
@@ -56,10 +66,3 @@ namespace Types {
 // Expose the structures and their sequences at compile-time
 Q_DECLARE_METATYPE(Types::Song)
 Q_DECLARE_METATYPE(QList<Types::Song>)
-
-class QmlSongRegistration 
-{
-    Q_GADGET
-    QML_FOREIGN(Types::Song)
-    QML_NAMED_ELEMENT(Song)
-};
