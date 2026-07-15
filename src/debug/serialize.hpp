@@ -9,7 +9,7 @@
 #include <type_traits>
 
 namespace debug {
-    void print (const QLoggingCategory &category, const QJsonValue &val);
+    void print (const QLoggingCategory &cat, const QJsonValue &val);
 
     QJsonObject serialize(const Types::Song &song);
     QJsonObject serialize(const Types::Album &album);

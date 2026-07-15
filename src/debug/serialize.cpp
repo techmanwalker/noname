@@ -106,7 +106,7 @@ debug::serialize (const QList<Types::Any> &media)
 }
 
 void
-debug::print (const QLoggingCategory &category, const QJsonValue &val)
+debug::print (const QLoggingCategory &cat, const QJsonValue &val)
 {
-    qCDebug (category).noquote() << val.toJson(QJsonDocument::Indented).constData();;
+    qCDebug (cat).noquote() << val.toJson(QJsonDocument::Indented).constData();;
 }

@@ -145,6 +145,7 @@ Item {
                 scrollBarWidth: rightCol.scrollBarWidth
 
                 clip: true
+                reuseItems: true // tons of songs moving
 
                 Layout.fillHeight: true
                 Layout.preferredWidth: (leftCol.width * .6) + (scrollBarWidth * 6)
