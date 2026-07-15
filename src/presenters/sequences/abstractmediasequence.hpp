@@ -38,7 +38,7 @@ public:
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames()                                                const override;
 
-    decltype(m_items) items() const;
+    const decltype(m_items) & items() const;
 
     // proxy for both sources
     static QStringList sources (const QList<Types::Any> &items);

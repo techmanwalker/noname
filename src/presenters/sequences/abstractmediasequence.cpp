@@ -178,7 +178,7 @@ AbstractMediaSequence::item_at(
     return std::ref(m_items[index]);
 }
 
-decltype(AbstractMediaSequence::m_items)
+const decltype(AbstractMediaSequence::m_items) &
 AbstractMediaSequence::items() const
 {
     QReadLocker locker (&m_lock);
