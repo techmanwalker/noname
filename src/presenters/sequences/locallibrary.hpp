@@ -36,7 +36,7 @@ public:
     QFuture<void> retake_all_snapshots ();
     QFuture<void> snapshot_known_directories ();
     std::optional<std::reference_wrapper<Types::Any>> find (const QString &path);
-    Q_INVOKABLE QList<Types::Directory> items ();
+    QList<Types::Directory> items ();
     QStringList paths ();
 
     // where are loaded covers extracted to?
