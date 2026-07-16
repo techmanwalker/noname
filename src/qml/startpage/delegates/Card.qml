@@ -44,6 +44,7 @@ Column {
 
             width: parent.width
 
+
             maximumLineCount: 2
             elide: Text.ElideRight
             wrapMode: Text.WordWrap

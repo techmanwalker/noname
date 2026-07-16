@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 
-import Player
 import Player.Primitives
 import Player.MediaSequences
 import Player.StartPage
@@ -39,13 +38,13 @@ ColumnLayout {
         clip: true
     }
 
-    Playlist {
+    SongGrid {
         model: root.activeDirectoryModel
-
-        reuseItems: true // tons of songs moving
 
         Layout.fillWidth: true
         Layout.fillHeight: true
+
+        songCoverWidth: 144
 
         clip: true
     }
