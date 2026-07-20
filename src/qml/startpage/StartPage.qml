@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
@@ -28,6 +29,10 @@ Item {
             vtabRightPadding: vtabLeftPadding
             vtabTopPadding: 12 // link to window height, items are closer when window is shorter
             vtabBottomPadding: vtabTopPadding
+
+            loader: activeView
+            homeComponent: home
+            foldersComponent: folders
         }
     }
 
@@ -39,35 +44,45 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom // later nowplayingbar.top
 
+        Layout.topMargin: 18 //  shortcutsList.shortcutCoverHeight / 8
+
         SearchBar {
             id: searchBar
 
-            // compensate the "Shortcuts" top padding
-            Layout.topMargin: activeView.shortcutCoverHeight / 6
+            Layout.topMargin: 24 // songCoverWidth / 6
 
             Layout.preferredWidth: width
             Layout.preferredHeight: height
         }
 
-        Home {
+        Loader {
             id: activeView
 
             Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            sourceComponent: home
+        }
+    }
+
+    Component {
+        id: home
+
+        Home {
+            id: homeitem
 
             lateralAlignmentPadding: searchBar.leftPadding
         }
+    }
 
-        FoldersVTab {
-            id: folders
+    Component {
+        id: folders
 
-            Layout.fillWidth: true
+        Folders {
+
+            id: foldersitem
 
             lateralAlignmentPadding: searchBar.leftPadding
-        }
-        
-        // absorb spacer
-        Item {
-            Layout.fillHeight: true 
         }
     }
 

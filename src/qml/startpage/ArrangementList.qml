@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 import Player.StartPage
@@ -5,6 +6,8 @@ import Player.StartPage
 Column {
     id: root
 
+    property Loader loader
+    
     // needs to be injected from parent
     property real vtabPadding: 24
     property real vtabLeftPadding: vtabPadding
@@ -13,6 +16,9 @@ Column {
     property real vtabBottomPadding: vtabBottomPadding
 
     property real vtabSpacing: vtabPadding / 2
+
+    required property Component homeComponent
+    required property Component foldersComponent
 
     VTab {
         iconName: "user-home-symbolic"
@@ -25,6 +31,8 @@ Column {
         bottomPadding: root.vtabBottomPadding
 
         spacing: root.vtabSpacing
+
+        onClicked: if (root.loader) root.loader.sourceComponent = root.homeComponent
     }
 
     VTab {
@@ -73,8 +81,8 @@ Column {
     }
 
     VTab {
-        iconName: "directory-symbolic"
-        text: "Directories"
+        iconName: "folder-symbolic"
+        text: "Folders"
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding
@@ -83,6 +91,8 @@ Column {
         bottomPadding: root.vtabBottomPadding
 
         spacing: root.vtabSpacing
+
+        onClicked: if (root.loader) root.loader.sourceComponent = root.foldersComponent
     }
 
     VTab {

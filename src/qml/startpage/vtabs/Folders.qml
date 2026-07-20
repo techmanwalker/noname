@@ -24,10 +24,15 @@ ColumnLayout {
     }
 
     FolderList {
+        Layout.leftMargin: root.lateralAlignmentPadding - dummyfolder.leftPadding
+        Layout.bottomMargin: 18 // songCoverHeight / 8
+
         model: LocalLibrary
 
         Layout.fillWidth: true
-        Layout.preferredHeight: 20
+        Layout.preferredHeight: dummyfolder.height
+
+        orientation: ListView.Horizontal
 
         onDirectorySwitched: (songs) => {
             if (songs.length != 0) {
@@ -47,5 +52,13 @@ ColumnLayout {
         songCoverWidth: 144
 
         clip: true
+    }
+
+    Folder {
+        id: dummyfolder
+
+        text: "L"
+
+        visible: false
     }
 }
