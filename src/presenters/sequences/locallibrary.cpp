@@ -82,6 +82,7 @@ LocalLibrary::take_snapshot (const QString &dir_path)
     /*  Capture 'this' to avoid reevaluating 'find()' safely on the continuation thread, and inject
         the directory path by value to isolate memory context */
     return song_factory::batch_extract (not_yet_loaded, chosen_cover_provider).then (
+            this,
         [this, dir_path](QList<Types::Song> songs) {
             
             // find again to ensure still exists
