@@ -16,6 +16,12 @@ Row {
     bottomPadding: 8
     spacing: 12
 
+    signal clicked()
+
+    TapHandler {
+        onTapped: root.clicked()
+    }
+
     IconLabel {
         icon.name: root.iconName
         

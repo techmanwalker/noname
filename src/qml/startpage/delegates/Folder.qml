@@ -1,15 +1,31 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 
-import Player
-
-ColumnLayout {
+Label {
     id: root
 
     property string name: "Unnamed folder"
 
-    Label {
-        text: root.name
+    text: name
+
+    font.weight: Font.DemiBold
+
+    padding: 8
+
+    HoverHandler {
+        id: hover
+    }
+
+    background: Rectangle {
+        color: "#1f1f1f"
+
+        width: root.width
+        height: root.height
+
+        radius: height / 2
+
+        anchors.centerIn: parent
+
+        opacity: hover.hovered ? 1 : 0
     }
 }

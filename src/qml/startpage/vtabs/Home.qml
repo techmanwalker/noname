@@ -19,7 +19,6 @@ ColumnLayout {
 
         text: "Shortcuts"
 
-        Layout.topMargin: shortcutsList.shortcutCoverHeight / 8
         Layout.leftMargin: root.lateralAlignmentPadding
     }
 
@@ -36,5 +35,10 @@ ColumnLayout {
         shortcutCoverHeight: root.shortcutCoverHeight
 
         clip: true // prevent sudden disappearing on the edges
+    }
+
+    // absorb spacer
+    Item {
+        Layout.fillHeight: true 
     }
 }
