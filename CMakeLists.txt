@@ -14,6 +14,8 @@ find_package(SoundIo REQUIRED)
 
 find_package(FFmpeg REQUIRED)
 
+find_package(TagLib REQUIRED)
+
 qt_policy(SET QTP0004 NEW)
 
 ### Base build file listing
@@ -297,6 +299,7 @@ target_link_libraries(songfactory
         FFmpeg::avformat
         FFmpeg::avutil
         FFmpeg::swscale
+        TagLib::tag
 )
 
 target_include_directories(songfactory
