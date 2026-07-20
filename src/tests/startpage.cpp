@@ -61,26 +61,29 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bangbangbangbang.flac")
     };
 
-    song_factory::batch_extract(shortcuts, covers).then([&shortcuts_list](const QList<Types::Song> loaded_shortcuts) {
-        /*
-        QList<Types::Any> any_shortcuts;
-        any_shortcuts.reserve(loaded_shortcuts.size());
+    song_factory::batch_extract(shortcuts, covers).then(
+        &app,
+        [&shortcuts_list](const QList<Types::Song> loaded_shortcuts) {
+            /*
+            QList<Types::Any> any_shortcuts;
+            any_shortcuts.reserve(loaded_shortcuts.size());
 
-        // convert Types::Song to Types::Any
-        std::copy(loaded_shortcuts.begin(), loaded_shortcuts.end(), std::back_inserter(any_shortcuts));
-        */
+            // convert Types::Song to Types::Any
+            std::copy(loaded_shortcuts.begin(), loaded_shortcuts.end(), std::back_inserter(any_shortcuts));
+            */
 
-        shortcuts_list.batch_append(loaded_shortcuts);
+            shortcuts_list.batch_append(loaded_shortcuts);
 
-        // load a song to pop up the miniplayer
-        auto &audioengine = audio_engine::instance();
+            // load a song to pop up the miniplayer
+            auto &audioengine = audio_engine::instance();
 
-        Types::Any testsong = shortcuts_list.items().at(1);
+            Types::Any testsong = shortcuts_list.items().at(1);
 
-        if (std::holds_alternative<Types::Song>(testsong)) {
-            audioengine.load(std::get<Types::Song>(testsong));
+            if (std::holds_alternative<Types::Song>(testsong)) {
+                audioengine.load(std::get<Types::Song>(testsong));
+            }
         }
-    });
+    );
 
 
     /*  load the songs from the known music directories and display as
@@ -89,7 +92,7 @@ main (int argc, char ** argv)
     ll.chosen_cover_provider = covers;
 
     // trigger first refresh
-    ll.snapshot_known_directories().then([&ll]() {
+    ll.snapshot_known_directories().then(&app, [&ll]() {
         /*
         qCDebug (startpagetest) << "Indices created. Will print all loaded songs right next.";
 
