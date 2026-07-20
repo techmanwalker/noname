@@ -265,7 +265,10 @@ target_link_libraries(audioengine
         mediasequences
         primitives
         SoundIo::SoundIo
-        FFmpeg::FFmpeg
+        FFmpeg::avcodec
+        FFmpeg::avformat
+        FFmpeg::avutil
+        FFmpeg::swresample
 )
 
 target_include_directories(audioengine
@@ -290,6 +293,10 @@ target_link_libraries(songfactory
         Qt6::Quick
         Qt6::Multimedia
         primitives
+        FFmpeg::avcodec
+        FFmpeg::avformat
+        FFmpeg::avutil
+        FFmpeg::swscale
 )
 
 target_include_directories(songfactory
