@@ -6,7 +6,6 @@
 
 #include <QCoreApplication>
 #include <QLoggingCategory>
-#include <qloggingcategory.h>
 
 Q_LOGGING_CATEGORY(refreshlisttest, "noname.tests.refreshlist")
 

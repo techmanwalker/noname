@@ -263,6 +263,11 @@ audio_engine::get_playback_state() const
     }
 }
 
+bool
+audio_engine::is_a_song_loaded() const {
+    return !m_current_track.source.isEmpty();
+}
+
 /*
 audio_engine::media_status
 audio_engine::get_media_status() const

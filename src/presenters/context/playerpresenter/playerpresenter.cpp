@@ -47,13 +47,14 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 }
 
 // Getters block
-QString PlayerPresenter::title()       const { return playing.current_track().title;    }
-QString PlayerPresenter::artist()      const { return playing.current_track().artist;   }
-QString PlayerPresenter::album()       const { return playing.current_track().album;    }
-QUrl    PlayerPresenter::cover()       const { return playing.current_track().cover;    }
-quint64 PlayerPresenter::duration_ms() const { return playing.current_track().duration; }
-quint64 PlayerPresenter::position_ms() const { return playing.current_position_ms();    }
-quint8  PlayerPresenter::volume()      const { return playing.current_volume();         }
+QString PlayerPresenter::title()         const { return playing.current_track().title;    }
+QString PlayerPresenter::artist()        const { return playing.current_track().artist;   }
+QString PlayerPresenter::album()         const { return playing.current_track().album;    }
+QUrl    PlayerPresenter::cover()         const { return playing.current_track().cover;    }
+quint64 PlayerPresenter::duration_ms()   const { return playing.current_track().duration; }
+quint64 PlayerPresenter::position_ms()   const { return playing.current_position_ms();    }
+quint8  PlayerPresenter::volume()        const { return playing.current_volume();         }
+bool    PlayerPresenter::isMediaLoaded() const { return playing.is_a_song_loaded();       }
 
 bool    PlayerPresenter::duration_slider_pressed() const { return m_duration_slider_pressed.load(); }
 
@@ -125,6 +126,7 @@ PlayerPresenter::handleTrackChanged()
     emit coverChanged();
     emit durationChanged();
     emit positionChanged();
+    emit mediaLoadedChanged();
 }
 
 void

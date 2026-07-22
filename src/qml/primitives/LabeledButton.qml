@@ -7,7 +7,7 @@ Row {
 
     property string text
 
-    property string iconName: ""
+    property string iconName
     property real iconSize: 24
 
     leftPadding: 24
@@ -19,7 +19,7 @@ Row {
     signal clicked()
 
     TapHandler {
-        onTapped: root.clicked()
+        onTapped: root.clicked();
     }
 
     IconLabel {
@@ -33,7 +33,7 @@ Row {
 
     Label {
         text: root.text
-        visible: root.text.length > 0
+        visible: text.length > 0
 
         font.pointSize: 13
         font.weight: Font.Light // Yagami

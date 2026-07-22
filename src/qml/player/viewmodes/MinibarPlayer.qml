@@ -6,10 +6,8 @@ import Player.PlayerPresenter
 import Player.Primitives
 
 // Inline view, 
-Item {
+ColumnLayout {
     id: root
-
-    height: duration.height + playerview.height
 
     property var stateModel: PlayerPresenter
 
@@ -24,7 +22,6 @@ Item {
     property real leftPadding: padding
     property real rightPadding: padding
 
-    property real spacing: 0
     property real coverToMetadataSpacing: 0
 
     property bool insetDurationBarInPadding: false
@@ -33,11 +30,9 @@ Item {
         id: duration
         hideTimestamps: true
         
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: playerview.top
+        Layout.fillWidth: true
 
-        anchors.bottomMargin: root.topPadding - (root.insetDurationBarInPadding ? height : 0)
+        Layout.bottomMargin: root.topPadding - (root.insetDurationBarInPadding ? height : 0)
 
         stateModel: root.stateModel
     }
@@ -45,13 +40,9 @@ Item {
     Row {
         id: playerview
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-
-        anchors.leftMargin: root.leftPadding
-        anchors.rightMargin: root.rightPadding
-        anchors.bottomMargin: root.bottomPadding
+        Layout.leftMargin: root.leftPadding
+        Layout.rightMargin: root.rightPadding
+        Layout.bottomMargin: root.bottomPadding
 
         spacing: root.spacing
 
