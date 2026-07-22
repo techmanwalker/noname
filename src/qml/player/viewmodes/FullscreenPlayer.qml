@@ -9,6 +9,9 @@ import Player.Primitives
 Item {
     id: root
 
+
+    signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
+
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
 
@@ -41,6 +44,22 @@ Item {
         coverIdealSize,
         root.height - controlsHeight - verticalPadding
     )
+
+    // ── Navigation ─────────────────────────────────────────────────────────
+
+    LabeledButton {
+        id: fullscreenToggle
+        iconName: "window-minimize"
+
+        text: "Back"
+
+        visible: nextQueue.visible // immersion
+
+        anchors.right: parent.right
+        anchors.top: parent.top
+
+        onClicked: root.switchView()
+    }
 
     // ── Layout ─────────────────────────────────────────────────────────────
     Row {

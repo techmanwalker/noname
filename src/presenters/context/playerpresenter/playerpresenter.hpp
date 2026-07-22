@@ -9,6 +9,7 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 
 #include <atomic>
+#include <qtmetamacros.h>
 
 // forward declarations
 class QQmlEngine;
@@ -52,6 +53,8 @@ class PlayerPresenter : public QObject
     Q_PROPERTY(quint64 position_ms READ position_ms WRITE setPosition_ms    NOTIFY positionChanged)
     Q_PROPERTY(quint8  volume      READ volume      WRITE setVolume         NOTIFY volumeChanged)
 
+    Q_PROPERTY(bool isMediaLoaded READ isMediaLoaded NOTIFY mediaLoadedChanged)
+
     // governed from the QML side
     Q_PROPERTY(bool duration_slider_pressed READ duration_slider_pressed WRITE setDurationSliderPressed)
 
@@ -76,6 +79,7 @@ public:
     quint8 volume() const;
     bool duration_slider_pressed() const;
     audio_engine::playback_state playbackState() const;
+    bool isMediaLoaded() const;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position);
@@ -98,6 +102,7 @@ signals:
     void positionChanged();
     void volumeChanged();
     void playbackStateChanged();
+    void mediaLoadedChanged();
 
     // Reverse signals; NOTIFY but from QML to C++
     void r_durationSliderPressedChanged(bool pressed);

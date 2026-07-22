@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
+import Player.Primitives
 import Player.StartPage
 
 Column {
@@ -20,7 +21,7 @@ Column {
     required property Component homeComponent
     required property Component foldersComponent
 
-    VTab {
+    LabeledButton {
         iconName: "user-home-symbolic"
         text: "Home"
 
@@ -35,7 +36,7 @@ Column {
         onClicked: if (root.loader) root.loader.sourceComponent = root.homeComponent
     }
 
-    VTab {
+    LabeledButton {
         iconName: "media-album-cover"
         text: "Albums"
 
@@ -50,7 +51,7 @@ Column {
         visible: false // still unsupported
     }
 
-    VTab {
+    LabeledButton {
         iconName: "view-media-artist"
         text: "Artists"
 
@@ -65,7 +66,7 @@ Column {
         visible: false // still unsupported
     }
 
-    VTab {
+    LabeledButton {
         iconName: "view-media-playlist"
         text: "Playlists"
 
@@ -80,7 +81,7 @@ Column {
         visible: false // still unsupported
     }
 
-    VTab {
+    LabeledButton {
         iconName: "folder-symbolic"
         text: "Folders"
 
@@ -95,7 +96,7 @@ Column {
         onClicked: if (root.loader) root.loader.sourceComponent = root.foldersComponent
     }
 
-    VTab {
+    LabeledButton {
         iconName: "view-media-track"
         text: "All tracks"
 

@@ -232,6 +232,7 @@ public:
     quint64     current_position_ms() const;
     quint8      current_volume()      const; // volume from 0 to 100
     playback_state get_playback_state() const;
+    bool is_a_song_loaded() const;
     // media_status get_media_status()     const;
 
 signals:

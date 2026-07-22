@@ -1,16 +1,91 @@
+#include "audioengine.hpp"
+#include "coverproviderproxy.hpp"
+#include "locallibrary.hpp"
+#include "mediatypes.hpp"
+//#include "serialize.hpp"
+#include "playqueue.hpp"
+#include "shortcutslist.hpp"
+#include "songfactory.hpp"
+
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QLoggingCategory>
+#include <variant>
 
-int 
-main(int argc, char *argv[])
+Q_LOGGING_CATEGORY(startpagetest, "noname.startpagetest")
+
+int
+main (int argc, char ** argv)
 {
+    // Test how the start page would look like with real user data.
     QGuiApplication app(argc, argv);
+
+    QLoggingCategory::setFilterRules(R"(
+        qt.multimedia*=false
+        qt.multimedia*.warning=true
+        qt.multimedia*.critical=true
+    )");
+
+    QCoreApplication::setApplicationName(QStringLiteral("noname"));
+
+    /*
+
+    auto &conf = configuration::manager::instance();
+
+    // Load configuration for the first time, the file must not be auto created if no write_lines was called
+    QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);
+
+    qCDebug (startpagetest) << "Known music directories paths are:";
+    for (const QString &line : known_music_directories_lines) {
+        qCDebug (startpagetest) << line;
+    }
+    qCDebug (startpagetest) << "That's all known music directories.";
+
+    */
+
+        // cover cache to hold the shortcuts covers across the entire session
+    std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();
+
+    // get access to the shortcuts list that will be displayed
+
+    auto &shortcuts_list = ShortcutsList::instance();
+
+
+    /*  load the songs from the known music directories and display as
+        a folder-separated view of all available songs */
+    auto &ll = LocalLibrary::instance();
+    auto &pq = PlayQueue::instance();
+
+    // load the cover provider in all relevant places
+    ll.chosen_cover_provider = covers;
+    pq.chosen_cover_provider = covers;
+
+    // trigger first refresh
+    ll.snapshot_known_directories();
+    
+    // create base engine
     QQmlApplicationEngine engine;
 
-    // Here we will load the main module when it's ready.
-    // E.g:
-    // const QUrl url(u"qrc:/startpage/src/qml/startpage/StartPage.qml"_qs);
-    // engine.load(url);
+    // protect the cover cache from the qml gc gremlin
+
+    /*  Explanation of the proxy mechanism:
+
+        QQmlEngine will take ownership of this proxy, and upon program teardown,
+        will invoke 'delete' on it.
+        As m_real is a std::shared_ptr, when the proxy is destroyed it will
+        decrement the reference counter safely without prematurely freeing the
+        displaced memory block where the qml engine thinks the cover_provider is.
+    */
+    auto *cpproxy = new __cover_provider_PROXY(covers);
+    engine.addImageProvider("covers", cpproxy);
+
+
+    // load qml
+    const QUrl url = QUrl::fromLocalFile("src/qml/noname.qml");
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
+                     &app, []() { QCoreApplication::exit(-1); },
+                     Qt::QueuedConnection);
+    engine.load(url);
 
     if (engine.rootObjects().isEmpty()) {
         return -1;

@@ -3,10 +3,13 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player
+import Player.Primitives
 import Player.StartPage
 
 Item {
     id: root
+
+    signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
 
     Item {
         id: leftCol
@@ -42,9 +45,9 @@ Item {
         anchors.top: parent.top
         anchors.left: leftCol.right
         anchors.right: parent.right
-        anchors.bottom: parent.bottom // later nowplayingbar.top
+        anchors.bottom: nowplayingbar.stateModel.isMediaLoaded ? nowplayingbar.top : parent.bottom
 
-        Layout.topMargin: 18 //  shortcutsList.shortcutCoverHeight / 8
+        anchors.topMargin: 18 //  shortcutsList.shortcutCoverHeight / 8
 
         SearchBar {
             id: searchBar
@@ -86,31 +89,34 @@ Item {
         }
     }
 
-    Item {
+    MinibarPlayer {
         id: nowplayingbar
 
         anchors.left: leftCol.right
-        anchors.right: parent.right
+        anchors.right: fullscreenToggle.left
         anchors.bottom: parent.bottom
 
-        height: minibarplayer.height
+        topPadding: 20
+        bottomPadding: topPadding
 
-        visible: false
+        visible: stateModel.isMediaLoaded
 
-        MinibarPlayer {
-            id: minibarplayer
+        leftPadding: searchBar.leftPadding
+        rightPadding: leftPadding
 
-            anchors.fill: parent
+        coverToMetadataSpacing: 8
+    }
 
-            topPadding: 20
-            bottomPadding: topPadding
+    LabeledButton {
+        id: fullscreenToggle
+        iconName: "window-maximize"
 
-            leftPadding: searchBar.leftPadding
-            rightPadding: leftPadding
+        text: "Fullscreen"
 
-            spacing: 24
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.verticalCenter: nowplayingbar.verticalCenter
 
-            coverToMetadataSpacing: 8
-        }
+        onClicked: root.switchView()
     }
 }
