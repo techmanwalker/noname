@@ -10,10 +10,6 @@ Row {
     property string iconName
     property real iconSize: 24
 
-    leftPadding: 24
-    rightPadding: 16
-    topPadding: 8
-    bottomPadding: 8
     spacing: 12
 
     signal clicked()

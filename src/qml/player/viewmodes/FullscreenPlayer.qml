@@ -61,6 +61,8 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
 
+        padding: 20
+
         onClicked: root.switchView()
     }
 
