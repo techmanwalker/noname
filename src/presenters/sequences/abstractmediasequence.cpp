@@ -78,6 +78,29 @@ AbstractMediaSequence::roleNames() const
     return hash;
 }
 
+/// Reverse of roleNames(): resolves a role's string name back to its compiled int, if registered.
+std::optional<int>
+AbstractMediaSequence::roleNumber(const QByteArray &role) const
+{
+    for (const CompiledRole &r : m_compiledroles)
+        if (r.name == role)
+            return r.number;
+
+    return std::nullopt;
+}
+
+/// Reads a single role for a given row, for callers outside a delegate context.
+QVariant
+AbstractMediaSequence::readRole(qsizetype row, const QByteArray &role) const
+{
+    if (row < 0 || row >= rowCount()) return {};
+
+    const std::optional<int> role_n = roleNumber(role);
+    if (!role_n.has_value()) return {};
+
+    return data(index(static_cast<int>(row)), role_n.value());
+}
+
 QPersistentModelIndex
 AbstractMediaSequence::append(
     const Types::Any &item
