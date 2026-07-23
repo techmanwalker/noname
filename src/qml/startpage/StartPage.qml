@@ -116,6 +116,8 @@ Item {
         opacity: (activeView.sourceComponent == home || nowplayingbar.visible || hovered) ? 1 : 0
         hoverEnabled: true
 
+        padding: 20
+
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.verticalCenter: nowplayingbar.verticalCenter
