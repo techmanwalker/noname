@@ -113,7 +113,7 @@ Item {
 
         text: "Fullscreen"
 
-        visible: activeView.sourceComponent == home
+        visible: activeView.sourceComponent == home || nowplayingbar.visible
 
         anchors.right: parent.right
         anchors.bottom: parent.bottom

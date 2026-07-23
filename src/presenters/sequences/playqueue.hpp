@@ -38,6 +38,8 @@ public:
     void switch_to (const QModelIndex &index, bool play_afterwards = false); // base for QML and temporary indices
     void qml_switch_to (const QModelIndex &index); // proxy for qml that auto plays the selection afterwards
 
+    Q_INVOKABLE void switch_to (const QUrl &source);
+
     Q_INVOKABLE void next ();
     Q_INVOKABLE void prev ();
 

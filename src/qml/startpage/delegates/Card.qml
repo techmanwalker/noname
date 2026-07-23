@@ -26,6 +26,12 @@ Column {
 
     spacing: coverWidth / 8
 
+    signal clicked();
+
+    TapHandler {
+        onTapped: root.clicked();
+    }
+
     Cover {
         source: root.cover
 
