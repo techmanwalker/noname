@@ -40,6 +40,8 @@ public:
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames()                                                const override;
 
+    std::optional<int>     roleNumber(const QByteArray &role) const;
+
     const decltype(m_items) & items() const;
 
     // proxy for both sources
@@ -52,6 +54,9 @@ public:
     // Access to the raw item for inherited classes that need extra roles
     std::optional<std::reference_wrapper<Types::Any>> item_at(size_t index);
     int itemCount() const;
+
+    // read a role directly
+    Q_INVOKABLE QVariant readRole(qsizetype row, const QByteArray &role) const;
 
     // items that can be converted to certain type
     template <typename media_type>
