@@ -93,15 +93,18 @@ AbstractMediaSequence::remove(
 )
 {
     // won't map to batch remove to avoid overhead
-    if (index < 0 || index >= static_cast<int>(m_items.size())) return;
+    if (index >= static_cast<int>(m_items.size())) return;
     beginRemoveRows({}, index, index);
-    QWriteLocker locker (&m_lock);
-    m_items.erase(m_items.begin() + index);
-    endRemoveRows();
-}
 
-#include <algorithm>
-#include <functional>
+    {
+        QWriteLocker locker (&m_lock);
+        m_items.erase(m_items.begin() + index);
+    }
+
+    endRemoveRows();
+
+    emit countChanged();
+}
 
 void
 AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
@@ -124,8 +127,6 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
     std::ranges::sort(indices, std::greater<size_t>());
 
     // 2. Linear scan to group and process contiguous intervals
-
-    QWriteLocker locker (&m_lock);
     
     size_t i = 0;
     while (i < indices.size()) {
@@ -141,12 +142,15 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
 
         // 3. Notify Qt about this specific contiguous sub-range
         beginRemoveRows(QModelIndex(), static_cast<int>(first_idx), static_cast<int>(last_idx));
-
-        /*  4. Erase the items from the underlying container for this chunk
-            Since indices[i] through indices[j-1] are sorted descending, 
-            erasing them in this order keeps the remaining indices valid. */
-        for (size_t k = i; k < j; ++k) {
-            m_items.removeAt(static_cast<int>(indices[k]));
+        
+        {
+            QWriteLocker locker (&m_lock);
+            /*  4. Erase the items from the underlying container for this chunk
+                Since indices[i] through indices[j-1] are sorted descending, 
+                erasing them in this order keeps the remaining indices valid. */
+            for (size_t k = i; k < j; ++k) {
+                m_items.removeAt(static_cast<int>(indices[k]));
+            }
         }
 
         endRemoveRows();
@@ -154,15 +158,23 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
         // Advance to the next non-contiguous chunk
         i = j;
     }
+
+    emit countChanged();
 }
 
 void
 AbstractMediaSequence::clear()
 {
     beginResetModel();
-    QReadLocker locker (&m_lock);
-    m_items.clear();
+
+    {
+        QWriteLocker locker (&m_lock);
+        m_items.clear();
+    }
+
     endResetModel();
+
+    emit countChanged();
 }
 
 std::optional<std::reference_wrapper<Types::Any>>
