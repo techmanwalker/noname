@@ -18,6 +18,14 @@ Row {
 
     signal clicked()
 
+    property bool hovered
+    property bool hoverEnabled: false
+    
+    HoverHandler {
+        onHoveredChanged: root.hovered = hovered
+        enabled: root.hoverEnabled
+    }
+
     TapHandler {
         onTapped: root.clicked();
     }
