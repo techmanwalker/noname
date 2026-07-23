@@ -86,6 +86,10 @@ Item {
 
             anchors.verticalCenter: parent.verticalCenter
 
+            HoverHandler {
+                id: leftCol_hover
+            }
+
             Cover {
                 id: nowplaying_cover
                 source: PlayerPresenter.cover
@@ -98,7 +102,7 @@ Item {
             ColumnLayout {
                 id: controls
 
-                visible: !root.immersive
+                visible: !root.immersive || leftCol_hover.hovered
 
                 Layout.maximumWidth: nowplaying_cover.width * .75
                 Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
