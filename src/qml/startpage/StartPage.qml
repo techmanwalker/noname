@@ -113,7 +113,8 @@ Item {
 
         text: "Fullscreen"
 
-        visible: activeView.sourceComponent == home || nowplayingbar.visible
+        opacity: (activeView.sourceComponent == home || nowplayingbar.visible || hovered) ? 1 : 0
+        hoverEnabled: true
 
         anchors.right: parent.right
         anchors.bottom: parent.bottom

@@ -55,7 +55,8 @@ Item {
 
         text: "Back"
 
-        visible: !root.immersive // immersion
+        opacity: (!root.immersive || hovered) ? 1 : 0 // immersion
+        hoverEnabled: true
 
         anchors.right: parent.right
         anchors.top: parent.top
