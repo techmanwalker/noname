@@ -84,6 +84,8 @@ Item {
             id: leftCol
             spacing: basicControls.height
 
+            height: nowplaying_cover.height + controls.height + spacing
+
             anchors.verticalCenter: parent.verticalCenter
 
             HoverHandler {
