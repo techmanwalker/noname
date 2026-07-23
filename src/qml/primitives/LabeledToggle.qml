@@ -42,13 +42,8 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
     }
 
-    Label {
+    MediumLabel {
         text: root.isTicked ? root.messageWhenTicked : root.messageWhenUnticked
         visible: text.length > 0
-
-        font.pointSize: 13
-        font.weight: Font.Light // Yagami
-
-        anchors.verticalCenter: parent.verticalCenter
     }
 }
