@@ -8,6 +8,8 @@ import Player.MediaSequences
 
 ListView {
     id: root
+    
+    signal songClicked(var song)
 
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
@@ -49,7 +51,7 @@ ListView {
         fadePadding:   root.songFadePadding
 
         playing: PlayQueue.playhead === PlayQueue.index(model.index, 0)
-        onClicked: PlayQueue.playhead = PlayQueue.index(model.index, 0)
+        onClicked: root.songClicked(model)
 
         showSeparator: true
     }

@@ -234,6 +234,10 @@ Item {
 
                     clip: true
                     reuseItems: true // tons of songs moving
+
+                    onSongClicked: (song) => {
+                        PlayQueue.playhead = PlayQueue.index(song.index, 0)
+                    }
                 }
             }
         }

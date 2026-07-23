@@ -1,5 +1,6 @@
 #include "abstractmediasequence.hpp"
 #include "playlistsequence.hpp"
+#include "songfactory.hpp"
 #include "playqueue.hpp"
 
 // Meyers singleton implementation
@@ -116,6 +117,19 @@ PlayQueue::switch_to (const QModelIndex &song, bool play_afterwards)
     m_playhead = song;
 
     emit playheadChanged(play_afterwards);
+}
+
+void
+PlayQueue::switch_to (const QUrl &source)
+{
+    song_factory::extract(source, chosen_cover_provider).then(
+        this,
+        [this](Types::Song song) {
+            if (!song.source.isEmpty()) {
+                switch_to(song, true);
+            }
+        }
+    );
 }
 
 void

@@ -11,6 +11,8 @@ GridView {
     cellWidth: dummycard.width + (songCoverWidth / 12)
     cellHeight: dummycard.height + (songCoverWidth / 12)
 
+    signal songClicked(var song);
+
     delegate: Card {
         required property var model
 
@@ -22,6 +24,8 @@ GridView {
 
         coverWidth: root.songCoverWidth
         coverHeight: root.songCoverHeight
+
+        onClicked: root.songClicked(model)
     }
 
     LargestDummyCard {

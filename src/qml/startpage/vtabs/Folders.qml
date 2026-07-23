@@ -59,6 +59,12 @@ ColumnLayout {
         songCoverWidth: 144
 
         clip: true
+
+        reuseItems: true
+
+        onSongClicked: (song) => {
+            PlayQueue.switch_to(song.source)
+        }
     }
 
     Folder {
