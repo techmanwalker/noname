@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
@@ -9,6 +10,7 @@ import Player.Primitives
 Item {
     id: root
 
+    property bool immersive: false // hide all controls and buttons, leave you only with the music
 
     signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
 
@@ -53,7 +55,7 @@ Item {
 
         text: "Back"
 
-        visible: nextQueue.visible // immersion
+        visible: !root.immersive // immersion
 
         anchors.right: parent.right
         anchors.top: parent.top
@@ -62,9 +64,17 @@ Item {
     }
 
     // ── Layout ─────────────────────────────────────────────────────────────
+
+    property real songCoverWidth: 48
+    property real songCoverHeight: songCoverWidth
+    property real songLateralPadding: 24
+    property real songVerticalPadding: 12
+    property real songInnerSpacing: 8
+    property real songFadePadding: 20
+
     Row {
         id: mainRow
-        spacing: nextQueue.songCoverWidth - nextQueue.songLeftPadding
+        spacing: root.songCoverWidth - root.songLateralPadding
 
         anchors.centerIn: parent
         anchors.margins: 40
@@ -87,6 +97,8 @@ Item {
 
             ColumnLayout {
                 id: controls
+
+                visible: !root.immersive
 
                 Layout.maximumWidth: nowplaying_cover.width * .75
                 Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
@@ -152,26 +164,77 @@ Item {
 
                 Layout.fillWidth: true
 
-                Layout.leftMargin: nextQueue.songLeftPadding
+                Layout.leftMargin: root.songLateralPadding
 
-                onClicked: nextQueue.visible = !nextQueue.visible
+                onClicked: root.immersive = !root.immersive
             }
 
-            Playlist {
-                id: nextQueue
-                model: PlayQueue
+            // _l = "the loader"
+            // _c = "the content"
+            // _p = "the placeholder"
 
-                scrollBarWidth: rightCol.scrollBarWidth
+            Loader {
+                id: nextQueue_l
 
-                clip: true
-                reuseItems: true // tons of songs moving
+                // set whatever source component is correct right at boot
+                sourceComponent: PlayQueue.count === 0 ? nextQueue_p : nextQueue_c
+
+                visible: !root.immersive
 
                 Layout.fillHeight: true
-                Layout.preferredWidth: (leftCol.width * .6) + (scrollBarWidth * 6)
+                Layout.preferredWidth: (leftCol.width * .6) + (parent.scrollBarWidth * 6)
 
                 Layout.alignment: Qt.AlignVCenter
 
-                Layout.topMargin: nextQueue.songCoverHeight * .4
+                Layout.topMargin: root.songCoverHeight * .4
+
+                DropArea {
+                    anchors.fill: parent
+
+                    keys: ["text/uri-list"]
+
+                    onDropped: (drop) => {
+                        if (drop.hasUrls) {
+                            PlayQueue.batch_append(drop.urls)
+
+                            drop.acceptProposedAction()
+                        }
+                    }
+                }
+            }
+
+            Component {
+                id: nextQueue_p
+
+                MediumLabel {
+                    text: "No media playing right now. Pick a song or drag an audio file here to start playing."
+
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            Component {
+                id: nextQueue_c
+
+                Playlist {
+                    id: nextQueue
+                    model: PlayQueue
+
+                    scrollBarWidth: rightCol.scrollBarWidth
+
+                    songCoverWidth: root.songCoverWidth
+                    songLeftPadding: root.songLateralPadding
+                    songRightPadding: root.songLateralPadding
+                    songTopPadding: root.songVerticalPadding
+                    songBottomPadding: root.songVerticalPadding
+                    songInnerSpacing: root.songInnerSpacing
+
+                    clip: true
+                    reuseItems: true // tons of songs moving
+                }
             }
         }
     }
