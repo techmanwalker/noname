@@ -106,17 +106,21 @@ static const RoleDefinitions container_roles = {
         return "Unknown";
     })},
 
-    {"songs", make_visitor([](const auto &x) {
+    {"songs", make_visitor([](const auto &x) -> QVariant {
         using T = std::decay_t<decltype(x)>;
 
-        // A helper lambda that evaluates true if T matches any of the types passed to it
-        auto is_any_of = []<typename... Args>() { return (... || std::is_same_v<T, Args>); };
-
-        if constexpr (is_any_of.template operator()<Types::Album, Types::Playlist, Types::Directory>()) {
-            // Explicitly package the custom collection into the variant
+        if constexpr (std::is_same_v<T, Types::Directory>) {
+            // scan order is arbitrary — expose it sorted by title instead
+            QList<Types::Song> sorted = x.songs;
+            std::ranges::sort(sorted, [](const Types::Song &a, const Types::Song &b) {
+                return a.title.localeAwareCompare(b.title) < 0;
+            });
+            return QVariant::fromValue(sorted);
+        } else if constexpr (std::is_same_v<T, Types::Album>) { // Types::Playlist is the same type
+            // track order / user-arranged order is meaningful here — leave it alone
             return QVariant::fromValue(x.songs);
         }
-        
+
         return QVariant{};
     })},
 
