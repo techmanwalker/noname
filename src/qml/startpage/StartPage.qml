@@ -48,6 +48,7 @@ Item {
         anchors.bottom: nowplayingbar.stateModel.isMediaLoaded ? nowplayingbar.top : parent.bottom
 
         anchors.topMargin: 18 //  shortcutsList.shortcutCoverHeight / 8
+        anchors.bottomMargin: nowplayingbar.stateModel.isMediaLoaded ? 18 : 0
 
         SearchBar {
             id: searchBar
@@ -64,7 +65,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            sourceComponent: home
+            sourceComponent: folders
         }
     }
 
@@ -118,10 +119,12 @@ Item {
 
         padding: 20
 
+
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.verticalCenter: nowplayingbar.verticalCenter
 
         onClicked: root.switchView()
     }
+
 }
