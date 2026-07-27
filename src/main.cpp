@@ -1,16 +1,11 @@
-#include "audioengine.hpp"
 #include "coverproviderproxy.hpp"
 #include "locallibrary.hpp"
-#include "mediatypes.hpp"
-//#include "serialize.hpp"
 #include "playqueue.hpp"
 #include "shortcutslist.hpp"
-#include "songfactory.hpp"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QLoggingCategory>
-#include <variant>
 
 Q_LOGGING_CATEGORY(startpagetest, "noname.startpagetest")
 
