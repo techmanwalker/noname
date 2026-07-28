@@ -117,7 +117,7 @@ LocalLibrary::take_snapshot (const QString &dir_path)
             }
 
             qCDebug(l_mediasequences) << "List synchronized. Total songs in" 
-                                      << target_dir.name() << ":" << target_dir.songs.size();
+                                      << target_dir.title << ":" << target_dir.songs.size();
 
             qCDebug(l_mediasequences) << "Directory cache successfully synchronized for path:" << dir_path;
         }

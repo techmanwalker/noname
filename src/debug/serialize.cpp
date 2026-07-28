@@ -49,7 +49,7 @@ debug::serialize (const Types::Directory &dir)
     QJsonObject out;
 
     out["path"] = dir.path;
-    out["name"] = dir.name();
+    out["name"] = dir.title;
 
     QJsonArray songs;
 
