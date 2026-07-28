@@ -1,6 +1,6 @@
-pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import Player
 import Player.StartPage
@@ -15,26 +15,18 @@ ApplicationWindow {
     width: 950
     height: 650
 
-    Loader {
+    StackLayout {
         id: activeView
-
         anchors.fill: parent
-        sourceComponent: start
-    }
-
-    Component {
-        id: start
 
         StartPage {
-            onSwitchView: activeView.sourceComponent = player
+            id: startPage
+            onSwitchView: activeView.currentIndex = 1
         }
-    }
-
-    Component {
-        id: player
 
         FullscreenPlayer {
-            onSwitchView: activeView.sourceComponent = start
+            id: fullscreenPlayer
+            onSwitchView: activeView.currentIndex = 0
         }
     }
 }
