@@ -33,10 +33,10 @@ Item {
             vtabTopPadding: 12 // link to window height, items are closer when window is shorter
             vtabBottomPadding: vtabTopPadding
 
-            loader: activeView
-            homeComponent: home
-            foldersComponent: folders
-            searchComponent: search
+            stack: activeView
+            homeIndex: 0
+            searchIndex: 1
+            foldersIndex: 2
         }
     }
 
@@ -60,46 +60,31 @@ Item {
             Layout.preferredHeight: height
         }
 
-        Loader {
+        StackLayout {
             id: activeView
 
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            sourceComponent: folders
+            currentIndex: vtabs.foldersIndex // Folders — matches the old sourceComponent: folders default
+
+            Home {
+                id: homeitem
+                lateralAlignmentPadding: searchBar.leftPadding
+            }
+
+            Search {
+                id: searchitem
+                lateralAlignmentPadding: searchBar.leftPadding
+                searchBarItem: searchBar
+            }
+
+            Folders {
+                id: foldersitem
+                lateralAlignmentPadding: searchBar.leftPadding
+            }
         }
-    }
 
-    Component {
-        id: home
-
-        Home {
-            id: homeitem
-
-            lateralAlignmentPadding: searchBar.leftPadding
-        }
-    }
-
-    Component {
-        id: folders
-
-        Folders {
-
-            id: foldersitem
-
-            lateralAlignmentPadding: searchBar.leftPadding
-        }
-    }
-
-    Component {
-        id: search
-
-        Search {
-            id: searchitem
-
-            lateralAlignmentPadding: searchBar.leftPadding
-            searchBarItem: searchBar
-        }
     }
 
     MinibarPlayer {
@@ -126,7 +111,7 @@ Item {
 
         text: "Fullscreen"
 
-        opacity: (activeView.sourceComponent == home || nowplayingbar.visible || hovered) ? 1 : 0
+        opacity: (activeView.currentIndex === vtabs.homeIndex || nowplayingbar.visible || hovered) ? 1 : 0
         hoverEnabled: true
 
         padding: 20

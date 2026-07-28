@@ -1,13 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 
 import Player.Primitives
-import Player.StartPage
 
 Column {
     id: root
 
-    property Loader loader
+    property StackLayout stack
     
     // needs to be injected from parent
     property real vtabPadding: 24
@@ -18,9 +18,9 @@ Column {
 
     property real vtabSpacing: vtabPadding / 2
 
-    required property Component homeComponent
-    required property Component searchComponent
-    required property Component foldersComponent
+    required property int homeIndex
+    required property int searchIndex
+    required property int foldersIndex
 
     LabeledButton {
         iconName: "user-home-symbolic"
@@ -34,7 +34,7 @@ Column {
 
         spacing: root.vtabSpacing
 
-        onClicked: if (root.loader) root.loader.sourceComponent = root.homeComponent
+        onClicked: if (root.stack) root.stack.currentIndex = root.homeIndex
     }
 
     LabeledButton {
@@ -49,7 +49,7 @@ Column {
 
         spacing: root.vtabSpacing
 
-        onClicked: if (root.loader) root.loader.sourceComponent = root.searchComponent
+        onClicked: if (root.stack) root.stack.currentIndex = root.searchIndex
     }
 
     LabeledButton {
@@ -109,7 +109,7 @@ Column {
 
         spacing: root.vtabSpacing
 
-        onClicked: if (root.loader) root.loader.sourceComponent = root.foldersComponent
+        onClicked: if (root.stack) root.stack.currentIndex = root.foldersIndex
     }
 
     LabeledButton {
