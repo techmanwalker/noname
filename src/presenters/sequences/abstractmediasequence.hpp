@@ -11,6 +11,14 @@
 
 #include <QtQmlIntegration/qqmlintegration.h>
 
+#include <functional>
+#include <qabstractitemmodel.h>
+#include <qloggingcategory.h>
+#include <qreadwritelock.h>
+#include <qtmetamacros.h>
+#include <rapidfuzz/fuzz.hpp>
+#include <type_traits>
+
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
@@ -121,6 +129,73 @@ public:
         return QPersistentModelIndex();
     }
 
+    static std::string normalize_string_for_search (const QString &str);
+    
+    QList<QPersistentModelIndex>
+    search_by_title (
+        const QString &keywords, // search tokens, QString has wider locale support
+        double score_thresh = 50 // out of 100
+    )
+    {
+
+        // extracted from rapidfuzz README
+        QReadLocker locker (&m_lock);
+
+        // prepare to be ranked
+        using rankable_item = std::pair<
+                size_t, // list item index
+                double // rapidfuzz score
+            >;
+
+        // rank result from scorer
+        using rankable_list = std::vector<
+            rankable_item
+        >;
+        
+        rankable_list rankable;
+
+        const std::string clean_keywords = normalize_string_for_search(keywords);
+        rapidfuzz::fuzz::CachedPartialRatio<char> scorer (clean_keywords.c_str());
+
+        for (size_t i = 0; i < m_items.size(); ++i) {
+
+            // get the item title or name to compare
+            const std::string clean_title = std::visit([](const auto& item) -> std::string {
+                return normalize_string_for_search(item.title);
+            }, m_items.at(i));
+
+            // Apply the pointer-to-member operator (->*) to evaluate the target field
+            double score = scorer.similarity(clean_title.c_str(), score_thresh);
+
+            qCDebug(l_mediasequences) << "Searching for \"" << clean_keywords << "\", matching against " << clean_title
+                << " scores " << score;
+
+            if (score >= score_thresh) {
+                rankable.emplace_back( // here
+                    i,
+                    score
+                );
+            }
+        }
+
+        // rank by scores in descending order
+        std::ranges::sort (
+            rankable, std::greater<>(), &rankable_item::second
+        );
+
+        QList<QPersistentModelIndex> ranked;
+        ranked.reserve(rankable.size());
+
+        for (const rankable_item &already_ranked : rankable) {
+            // create persistent indices
+            ranked.emplace_back(
+                index(static_cast<int>(already_ranked.first))
+            );
+        }
+
+        return ranked;
+    };
+
 signals:
     void countChanged();
 
@@ -164,28 +239,20 @@ protected:
         int last_row = first_row + static_cast<int>(valid_items.size()) - 1;
 
         beginInsertRows({}, first_row, last_row);
-
         {
-            QWriteLocker locker (&m_lock);
-
-            // prepare the QList for the append
+            QWriteLocker locker(&m_lock);
             m_items.reserve(m_items.size() + valid_items.size());
-        
-            // count how many rows we've appended
-            size_t current_row = first_row;
 
             for (Types::Any &valid_item : valid_items) {
-                // how do I know the index the push_back ended up on?
                 m_items.push_back(std::move(valid_item));
-
-                // generate the persistent model index for the row we just filled 
-                indices.append(index(current_row));
-
-                current_row++;
             }
-        }   
-
+        }
         endInsertRows();
+
+        // Generate persistent model indices safely after layout update
+        for (int r = first_row; r <= last_row; ++r) {
+            indices.append(index(r));
+        }
 
         emit countChanged();
 

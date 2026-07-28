@@ -1,6 +1,7 @@
 #include "basicdiskio.hpp"
 #include "configuration.hpp"
 #include "locallibrary.hpp"
+#include "mediatypes.hpp"
 #include "songfactory.hpp"
 
 LocalLibrary &
@@ -22,6 +23,18 @@ LocalLibrary::create (QQmlEngine *qmlEngine, QJSEngine *jsEngine)
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
 
     return inst;
+}
+
+QList<Types::Song>
+LocalLibrary::flattened () const
+{
+    QList<Types::Song> flattened_directories_songs;
+
+    for (const Types::Directory &dir : items()) { // quick conversion to avoid more boilerplate
+        flattened_directories_songs.append(dir.songs);
+    }
+
+    return flattened_directories_songs;
 }
 
 QFuture<void>
@@ -181,7 +194,7 @@ LocalLibrary::find (const QString &path)
 }
 
 QList<Types::Directory>
-LocalLibrary::items ()
+LocalLibrary::items () const
 {
     return AbstractMediaSequence::items<Types::Directory>();
 }

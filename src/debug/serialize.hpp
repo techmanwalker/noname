@@ -6,6 +6,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <qjsonarray.h>
 #include <type_traits>
 
 namespace debug {
@@ -35,6 +36,19 @@ namespace debug {
 
     QJsonArray serialize(const QList<QUrl> &uris);
     QJsonArray serialize(const QList<Types::Any> &media);
+
+    template <typename MediaType>
+    requires std::is_convertible_v<MediaType, Types::Any>
+    QJsonArray serialize(const QList<MediaType> &media)
+    {
+        QList<Types::Any> any_list;
+
+        for (const Types::Any &i : media) {
+            any_list.append(i);
+        }
+
+        return serialize(any_list);
+    }
 
     template <typename MediaType>
     requires std::is_convertible_v<MediaType, Types::Any>

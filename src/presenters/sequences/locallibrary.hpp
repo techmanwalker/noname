@@ -9,6 +9,7 @@
 #include <QLoggingCategory>
 #include <QQmlEngine>
 #include <QUrl>
+#include <qabstractitemmodel.h>
 #include <qtmetamacros.h>
 
 // Snapshots of directories built from the songs of all known directories and other music sources, if ever supported
@@ -36,8 +37,9 @@ public:
     QFuture<void> retake_all_snapshots ();
     QFuture<void> snapshot_known_directories ();
     std::optional<std::reference_wrapper<Types::Any>> find (const QString &path);
-    QList<Types::Directory> items ();
+    QList<Types::Directory> items () const;
     QStringList paths ();
+    Q_INVOKABLE QList<Types::Song> flattened () const; // equivalent to "All Tracks" 
 
     // where are loaded covers extracted to?
     std::shared_ptr<cover_provider> chosen_cover_provider;
