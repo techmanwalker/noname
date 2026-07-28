@@ -19,6 +19,7 @@ Column {
     property real vtabSpacing: vtabPadding / 2
 
     required property Component homeComponent
+    required property Component searchComponent
     required property Component foldersComponent
 
     LabeledButton {
@@ -34,6 +35,21 @@ Column {
         spacing: root.vtabSpacing
 
         onClicked: if (root.loader) root.loader.sourceComponent = root.homeComponent
+    }
+
+    LabeledButton {
+        iconName: "search"
+        text: "Search"
+
+        padding: root.vtabPadding
+        leftPadding: root.vtabLeftPadding
+        rightPadding: root.vtabRightPadding
+        topPadding: root.vtabTopPadding
+        bottomPadding: root.vtabBottomPadding
+
+        spacing: root.vtabSpacing
+
+        onClicked: if (root.loader) root.loader.sourceComponent = root.searchComponent
     }
 
     LabeledButton {

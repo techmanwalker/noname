@@ -36,6 +36,7 @@ Item {
             loader: activeView
             homeComponent: home
             foldersComponent: folders
+            searchComponent: search
         }
     }
 
@@ -87,6 +88,17 @@ Item {
             id: foldersitem
 
             lateralAlignmentPadding: searchBar.leftPadding
+        }
+    }
+
+    Component {
+        id: search
+
+        Search {
+            id: searchitem
+
+            lateralAlignmentPadding: searchBar.leftPadding
+            searchBarItem: searchBar
         }
     }
 

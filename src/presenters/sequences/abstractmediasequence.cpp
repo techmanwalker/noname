@@ -3,10 +3,12 @@
 #include "songfactory.hpp"
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <qabstractitemmodel.h>
 #include <qcontainerfwd.h>
 #include <qloggingcategory.h>
 #include <qreadwritelock.h>
+#include <rapidfuzz/fuzz.hpp>
 #include <variant>
 
 Q_LOGGING_CATEGORY(l_mediasequences, "noname.mediasequences")
@@ -297,4 +299,18 @@ AbstractMediaSequence::batch_append (const QList<QUrl> &sources, std::shared_ptr
     return song_factory::batch_extract(sources, provider).then(this, [this, provider] (QList<Types::Song> result) {
         batch_append(result);
     });
+}
+
+std::string 
+AbstractMediaSequence::normalize_string_for_search (const QString &str) 
+{
+    // Decompose string into base characters and separate diacritic marks
+    QString normalized = str.normalized(QString::NormalizationForm_KD).toLower();
+    
+    // Efficiently strip out all non-spacing marks (the diacritics)
+    normalized.removeIf([](QChar c) {
+        return c.category() == QChar::Mark_NonSpacing;
+    });
+    
+    return normalized.toStdString();
 }

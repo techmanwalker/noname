@@ -16,6 +16,8 @@ find_package(FFmpeg REQUIRED)
 
 find_package(TagLib REQUIRED)
 
+find_package(rapidfuzz REQUIRED)
+
 qt_policy(SET QTP0004 NEW)
 
 ### Base build file listing
@@ -81,6 +83,7 @@ target_link_libraries(mediasequences
         configuration
         diskio
         primitives
+        rapidfuzz::rapidfuzz
         songfactory
         # must not depend on audioengine nor playerpresenter
 )

@@ -1,15 +1,17 @@
 #include "audioengine.hpp"
 #include "coverproviderproxy.hpp"
-#include "dump.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 //#include "serialize.hpp"
+#include "serialize.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QLoggingCategory>
+#include <qabstractitemmodel.h>
+#include <qloggingcategory.h>
 #include <variant>
 
 Q_LOGGING_CATEGORY(startpagetest, "noname.startpagetest")
@@ -108,13 +110,55 @@ main (int argc, char ** argv)
 
         
         
-        
+        /*
         debug::dump_list_model(
             startpagetest(), 
             ll,
             "LocalLibrary"
-        );
+        );*/
 
+        /* --- search test
+
+        // Safely retrieve the item
+        auto first_item_opt = ll.item_at(0);
+        if (!first_item_opt.has_value()) {
+            qCWarning(startpagetest) << "LocalLibrary is empty. Cannot perform search test.";
+            return;
+        }
+
+        // Safely evaluate the active variant type
+        Types::Any &first_known_directory_any = first_item_opt.value().get();
+        auto *first_known_directory = std::get_if<Types::Directory>(&first_known_directory_any);
+
+        if (!first_known_directory) {
+            qCWarning(startpagetest) << "First item is not a Directory.";
+            return;
+        }
+
+        // Build a test playlist to test search
+        PlaylistSequence songs (first_known_directory->songs);
+
+        qCDebug(startpagetest) << "Songs in first directory: " << songs.itemCount();
+
+        // Search 
+        QList<QPersistentModelIndex> search_results = songs.search_by_title("обезьянка");
+
+        qCDebug(startpagetest) << "Search results count: " << search_results.size();
+
+        // Print results by querying the correct sequence (songs, not ll)
+        for (const QPersistentModelIndex &i : search_results) {
+            auto resolved_song = songs.pointed_to(i);
+            if (resolved_song.has_value()) {
+                debug::print(l_mediasequences(), debug::serialize(resolved_song.value().get()));
+            }
+        }
+
+    
+
+         --- end search */
+
+        // print flattened ll
+        debug::print(startpagetest(), debug::serialize(ll.flattened()));
     });
     
     // create base engine
