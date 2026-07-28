@@ -52,10 +52,10 @@ namespace Types {
     using Playlist = Album;
 
     struct Directory {
+        explicit Directory (const QString &source_path);
+
         QString path;
-        QString name () const {
-            return QFileInfo(path).fileName();
-        }
+        QString title;
 
         QList<Song> songs;
     };

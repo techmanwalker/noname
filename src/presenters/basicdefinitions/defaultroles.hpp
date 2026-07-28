@@ -52,12 +52,7 @@ static auto make_visitor = [](auto&& projector) {
 static const RoleDefinitions container_roles = {
     // Direct roles (thanks to the duck-typing of generic lambdas)
     { "title",  make_visitor([](const auto &x) {
-        using T = std::decay_t<decltype(x)>;
-        if constexpr (std::is_same_v<T, Types::Directory>) {
-            return x.name();
-        } else {
-            return x.title;
-        }
+        return x.title;
     })},
     { "artist",  make_visitor([](const auto &x) {
         using T = std::decay_t<decltype(x)>;
