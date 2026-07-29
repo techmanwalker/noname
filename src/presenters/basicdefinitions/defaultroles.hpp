@@ -3,7 +3,8 @@
 #include "mediatypes.hpp"
 
 #include <QVariant>
-#include <qvariant.h>
+
+#include <optional>
 
 /// Role definition. Enables automatic QML role generation.
 struct CompiledRole {
@@ -31,6 +32,53 @@ using RoleExtractor = std::function<QVariant(const Types::Any &)>;
 */
 using RoleDefinition  = std::pair<QByteArray, RoleExtractor>;
 using RoleDefinitions = std::vector<RoleDefinition>;
+
+
+/**
+    @brief Compiles a RoleDefinitions list into sequential Qt roles once, and answers
+    the three questions every Types::Any-backed model needs: role → name, name → role,
+    role → extracted value. Shared by AbstractMediaSequence and any projection model
+    (e.g. SongLibraryModel) that exposes Types::Any-convertible items, so the compiling
+    step and role lookups exist in exactly one place.
+*/
+class CompiledRoleSet
+{
+public:
+    explicit CompiledRoleSet (const RoleDefinitions &role_defs)
+    {
+        int n = Qt::UserRole + 1;
+        for (const auto &[name, extractor] : role_defs)
+            m_compiledroles.push_back({ n++, name, extractor });
+    }
+
+    QHash<int, QByteArray> roleNames () const
+    {
+        QHash<int, QByteArray> hash;
+        for (const CompiledRole &r : m_compiledroles)
+            hash[r.number] = r.name;
+        return hash;
+    }
+
+    std::optional<int> roleNumber (const QByteArray &role) const
+    {
+        for (const CompiledRole &r : m_compiledroles)
+            if (r.name == role)
+                return r.number;
+        return std::nullopt;
+    }
+
+    QVariant extract (int role, const Types::Any &item) const
+    {
+        for (const CompiledRole &r : m_compiledroles)
+            if (r.number == role)
+                return r.extractor(item);
+        return {};
+    }
+
+private:
+    std::vector<CompiledRole> m_compiledroles;
+};
+
 
 
 
