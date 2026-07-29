@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mediatypes.hpp"
+#include "prettifiers.hpp"
 
 #include <QVariant>
 
@@ -154,11 +155,11 @@ static const RoleDefinitions container_roles = {
 
         if constexpr (std::is_same_v<T, Types::Directory>) {
             // scan order is arbitrary — expose it sorted by title instead
-            QList<Types::Song> sorted = x.songs;
-            std::ranges::sort(sorted, [](const Types::Song &a, const Types::Song &b) {
-                return a.title.localeAwareCompare(b.title) < 0;
-            });
-            return QVariant::fromValue(sorted);
+            return QVariant::fromValue(
+                Prettifiers::sortBy(
+                    &Types::Song::title,
+                    x.songs
+                ));
         } else if constexpr (std::is_same_v<T, Types::Album>) { // Types::Playlist is the same type
             // track order / user-arranged order is meaningful here — leave it alone
             return QVariant::fromValue(x.songs);

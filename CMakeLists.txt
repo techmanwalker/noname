@@ -90,6 +90,7 @@ target_link_libraries(mediasequences
 
 target_include_directories(mediasequences
     PUBLIC
+        src/presenters/formatters
         src/presenters/sequences # to make qmltyperegistrar happy
 )
 

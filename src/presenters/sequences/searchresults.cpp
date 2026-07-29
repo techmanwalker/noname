@@ -1,7 +1,8 @@
 #include "searchresults.hpp"
 #include "locallibrary.hpp"
-#include <qhashfunctions.h>
-#include <qlist.h>
+#include "prettifiers.hpp"
+
+#include <QList>
 
 // Meyers singleton implementation
 SearchResults &
@@ -69,7 +70,7 @@ SearchResults::performSearch (const QString &query, QList<Types::Song> &song_lis
     if (query.isEmpty()) {
         // Return all available songs instead
 
-        respawn_list(song_list);
+        respawn_list(Prettifiers::sortBy(&Types::Song::title, song_list));
         return;
     }
 
