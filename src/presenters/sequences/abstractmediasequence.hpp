@@ -96,6 +96,17 @@ protected:
     // only extract songs metadata
     QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider);
 
+    /*  Append items one at a time as each future resolves, instead of waiting for the whole
+    batch — for progressive/incremental loading (e.g. song_factory emitting results as
+    they're produced, rather than all at once). Arrival order doesn't matter: consumers
+    that care about order already re-sort on read (see container_roles' "songs" role).
+    A failed individual future is logged and skipped, not fatal to the rest of the batch.
+    Returns a future that resolves once every item has been attempted.
+    Types::Album/Playlist progressive semantics (merging into an existing entry rather
+    than treating each arrival as a new row) are deliberately NOT handled here — this
+    stays type-agnostic, same as the rest of AbstractMediaSequence. */
+    QFuture<void> progressive_batch_append (QList<QFuture<Types::Any>> futures);
+
     // remove items in batch using their persistent indices
     void batch_remove (const QList<QPersistentModelIndex> &items);
 

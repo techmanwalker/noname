@@ -15,9 +15,57 @@ public:
     // Invoked as song_factory::extract(url, cover_provider);
     static QFuture<Types::Song> extract(const QUrl &source, std::shared_ptr<cover_provider> provider);
 
-    // Enable to concurrently get metadata of songs in batches
-    static QFuture<QList<Types::Song>> batch_extract(const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider); // batch
-    static QFuture<QList<Types::Song>> batch_extract(const QStringList &sources, std::shared_ptr<cover_provider> provider); // batch, overload for local files only
+    template <typename Container>
+    requires
+    std::ranges::forward_range<Container> // Any type of list
+    &&  (
+            std::is_same_v<typename Container::value_type, QString> // any uri or path
+        ||  std::is_same_v<typename Container::value_type, QUrl>)
+    static
+    QList<QFuture<Types::Song>>
+    progressive_extract (const Container &sources, std::shared_ptr<cover_provider> provider)
+    {
+        // You can manually wait for each one to finish
+        QList<QFuture<Types::Song>> requests;
+        requests.reserve(sources.size());
+
+        for (const QUrl &source : sources) {
+            requests.append(song_factory::extract(source, provider));
+        }
+
+        return requests;
+    }
+
+    template <typename Container>
+    requires
+    std::ranges::forward_range<Container> // Any type of list
+    &&  (
+            std::is_same_v<typename Container::value_type, QString> // any uri or path
+        ||  std::is_same_v<typename Container::value_type, QUrl>)
+    static
+    QFuture<QList<Types::Song>>
+    batch_extract (const Container &sources, std::shared_ptr<cover_provider> provider)
+    {
+        auto requests = progressive_extract(sources, provider);
+
+        // Wait for all songs in the list to finish metadata extraction
+
+        return QtFuture::whenAll(
+            requests.begin(),
+            requests.end()
+        )
+        .then([](const QList<QFuture<Types::Song>> &finished) {
+            QList<Types::Song> extracted_songs_ready_to_append;
+
+            extracted_songs_ready_to_append.reserve(finished.size());
+
+            for (const auto &f : finished) {
+                extracted_songs_ready_to_append.append(f.result());
+            }
+
+            return extracted_songs_ready_to_append;
+        });
+    }
 
 private:
     // private and linear constructor

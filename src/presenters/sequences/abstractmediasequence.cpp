@@ -113,6 +113,28 @@ AbstractMediaSequence::remove(
     emit countChanged();
 }
 
+QFuture<void>
+AbstractMediaSequence::progressive_batch_append (QList<QFuture<Types::Any>> futures)
+{
+    QList<QFuture<void>> completion_signals;
+    completion_signals.reserve(futures.size());
+
+    for (QFuture<Types::Any> &pending : futures) {
+        completion_signals.append(
+            pending.then(this, [this](const Types::Any &result) {
+                    // append() -> batch_append(Container) already filters empty-source
+                    // Songs, so nothing extra needed here.
+                    append(result);
+                })
+                .onFailed(this, [this] {
+                    qCWarning(l_mediasequences) << "Progressive batch append: one item's future failed; skipping it.";
+                })
+        );
+    }
+
+    return QtFuture::whenAll(completion_signals.begin(), completion_signals.end());
+}
+
 void
 AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
 {
