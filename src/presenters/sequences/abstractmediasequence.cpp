@@ -21,13 +21,8 @@ AbstractMediaSequence::AbstractMediaSequence(
     RoleDefinitions role_defs
 )
     : QAbstractListModel(parent),
-      m_roledefs(std::move(role_defs))
+      m_roles(role_defs)
 {
-    // Build the Roles based on the role_defs provided
-
-    int n = Qt::UserRole + 1;
-    for (auto &[name, extractor] : m_roledefs)
-        m_compiledroles.push_back({ n++, name, std::move(extractor) });
 }
 
 // Count items (intended for QML)
@@ -61,34 +56,21 @@ AbstractMediaSequence::data(
         || index.row() >= static_cast<int>(m_items.size()))
         return {};
 
-    const Types::Any &item = m_items[index.row()];
-
-    for (const CompiledRole &r : m_compiledroles)
-        if (r.number == role)
-            return r.extractor(item);
-
-    return {};
+    return m_roles.extract(role, m_items[index.row()]);
 }
 
 /// Returns the role name map, allowing QML to resolve properties by their string names.
 QHash<int, QByteArray>
 AbstractMediaSequence::roleNames() const
 {
-    QHash<int, QByteArray> hash;
-    for (const CompiledRole &r : m_compiledroles)
-        hash[r.number] = r.name;
-    return hash;
+    return m_roles.roleNames();
 }
 
 /// Reverse of roleNames(): resolves a role's string name back to its compiled int, if registered.
 std::optional<int>
 AbstractMediaSequence::roleNumber(const QByteArray &role) const
 {
-    for (const CompiledRole &r : m_compiledroles)
-        if (r.name == role)
-            return r.number;
-
-    return std::nullopt;
+    return m_roles.roleNumber(role);
 }
 
 /// Reads a single role for a given row, for callers outside a delegate context.
