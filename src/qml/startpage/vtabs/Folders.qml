@@ -28,6 +28,7 @@ ColumnLayout {
         text: "Folders"
 
         Layout.leftMargin: root.lateralAlignmentPadding
+        Layout.bottomMargin: currentdirectory.songCoverHeight / 16
     }
 
     FolderList {
@@ -51,6 +52,7 @@ ColumnLayout {
     }
 
     SongGrid {
+        id: currentdirectory
         model: root.activeDirectoryModel
 
         Layout.fillWidth: true

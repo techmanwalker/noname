@@ -32,6 +32,7 @@ ColumnLayout {
         text: "Search in you library"
 
         Layout.leftMargin: root.lateralAlignmentPadding
+        Layout.bottomMargin: root.shortcutCoverHeight / 16
     }
 
     Connections {

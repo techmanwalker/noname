@@ -20,6 +20,7 @@ ColumnLayout {
         text: "Shortcuts"
 
         Layout.leftMargin: root.lateralAlignmentPadding
+        Layout.bottomMargin: root.shortcutCoverHeight / 16
     }
 
     Shortcuts {
@@ -28,7 +29,6 @@ ColumnLayout {
 
         Layout.fillWidth: true
 
-        Layout.topMargin: shortcutsList.shortcutCoverHeight / 16
         Layout.leftMargin: root.lateralAlignmentPadding
 
         shortcutCoverWidth: root.shortcutCoverWidth

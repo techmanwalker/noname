@@ -14,7 +14,7 @@ Item {
     Item {
         id: leftCol
 
-        width: parent.width / 4 - searchBar.leftPadding // create an alignment on the left limits of the elements
+        width: parent.width / 6 - searchBar.leftPadding // create an alignment on the left limits of the elements
         
         anchors.top:    parent.top
         anchors.left:   parent.left
@@ -53,8 +53,6 @@ Item {
 
         SearchBar {
             id: searchBar
-
-            Layout.topMargin: 24 // songCoverWidth / 6
 
             Layout.preferredWidth: width
             Layout.preferredHeight: height
