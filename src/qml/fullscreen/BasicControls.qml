@@ -1,6 +1,6 @@
 import QtQuick
 
-import Player
+import Player.Fullscreen
 
 Row {
     id: root

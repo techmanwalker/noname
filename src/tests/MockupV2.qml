@@ -1,6 +1,7 @@
 import QtQuick.Controls
 import QtQuick
-import Player
+
+import Player.Fullscreen
 
 
 ApplicationWindow {

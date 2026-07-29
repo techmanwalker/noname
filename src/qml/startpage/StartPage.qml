@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
-import Player
+import Player.Fullscreen
 import Player.Primitives
 import Player.StartPage
 
