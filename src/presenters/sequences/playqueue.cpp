@@ -55,7 +55,7 @@ void
 PlayQueue::respawn_queue(const PlaylistSequence &new_queue)
 {
     // this version is synchronous
-    PlaylistSequence::respawn_list(new_queue.items<Types::Song>());
+    PlaylistSequence::respawn_list(new_queue.items());
 
     if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
 }

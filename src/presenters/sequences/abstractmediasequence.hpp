@@ -10,14 +10,8 @@
 #include <QReadWriteLock>
 
 #include <QtQmlIntegration/qqmlintegration.h>
-
-#include <functional>
-#include <qabstractitemmodel.h>
-#include <qloggingcategory.h>
-#include <qreadwritelock.h>
-#include <qtmetamacros.h>
+ 
 #include <rapidfuzz/fuzz.hpp>
-#include <type_traits>
 
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
@@ -67,66 +61,15 @@ public:
 
     // items that can be converted to certain type
     template <typename media_type>
-    QList<media_type> items() const 
-    {
-        QList<media_type> filtered_list;
-
-        QReadLocker locker (&m_lock);
-        
-        filtered_list.reserve(m_items.size());
-
-        for (const Types::Any &item : m_items) {
-            // verify if the variant holds the type
-            if (std::holds_alternative<media_type>(item)) {
-                filtered_list.append(std::get<media_type>(item));
-            }
-        }
-
-        return filtered_list;
-    }
+    QList<media_type> items() const;
 
     // sources of convertibles to this type
     template <typename media_type>
-    QStringList sources() const
-    {
-        QReadLocker locker(&m_lock);
-        QStringList uri_sources;
-
-        for (const Types::Any &item : m_items) {
-            // Check if the variant holds the requested type
-            if (const auto *resolved = std::get_if<media_type>(&item)) {
-                
-                // Extract the field depending on what type was requested
-                if constexpr (std::is_same_v<media_type, Types::Song>) {
-                    uri_sources.append(resolved->source.toLocalFile());
-                }
-            }
-        }
-
-        return uri_sources;
-    }
+    QStringList sources() const;
 
     // Find an item whose pointed member matches the needle, returns invalid if not found
     template <typename MediaType, typename FieldType>
-    QPersistentModelIndex find(FieldType MediaType::* member, const FieldType &needle) const
-    {
-        QReadLocker locker (&m_lock);
-
-        for (size_t i = 0; i < m_items.size(); ++i) {
-            
-            // Pass the address of the variant to std::get_if to safely check its active type
-            if (const MediaType *actual_media = std::get_if<MediaType>(&m_items.at(i))) {
-                
-                // Apply the pointer-to-member operator (->*) to evaluate the target field
-                if (actual_media->*member == needle) {
-                    return index(static_cast<int>(i));
-                }
-            }
-        }
-
-        // invalid if not found
-        return QPersistentModelIndex();
-    }
+    QPersistentModelIndex find(FieldType MediaType::* member, const FieldType &needle) const;
 
     static std::string normalize_string_for_search (const QString &str);
     
@@ -134,66 +77,7 @@ public:
     search_by_title (
         const QString &keywords, // search tokens, QString has wider locale support
         double score_thresh = 50 // out of 100
-    )
-    {
-
-        // extracted from rapidfuzz README
-        QReadLocker locker (&m_lock);
-
-        // prepare to be ranked
-        using rankable_item = std::pair<
-                size_t, // list item index
-                double // rapidfuzz score
-            >;
-
-        // rank result from scorer
-        using rankable_list = std::vector<
-            rankable_item
-        >;
-        
-        rankable_list rankable;
-
-        const std::string clean_keywords = normalize_string_for_search(keywords);
-        rapidfuzz::fuzz::CachedPartialRatio<char> scorer (clean_keywords.c_str());
-
-        for (size_t i = 0; i < m_items.size(); ++i) {
-
-            // get the item title or name to compare
-            const std::string clean_title = std::visit([](const auto& item) -> std::string {
-                return normalize_string_for_search(item.title);
-            }, m_items.at(i));
-
-            // Apply the pointer-to-member operator (->*) to evaluate the target field
-            double score = scorer.similarity(clean_title.c_str(), score_thresh);
-
-            qCDebug(l_mediasequences) << "Searching for \"" << clean_keywords << "\", matching against " << clean_title
-                << " scores " << score;
-
-            if (score >= score_thresh) {
-                rankable.emplace_back( // here
-                    i,
-                    score
-                );
-            }
-        }
-
-        // rank by scores in descending order
-        std::ranges::sort (
-            rankable, std::greater<>(), &rankable_item::second
-        );
-
-        QList<QPersistentModelIndex> ranked;
-        ranked.reserve(rankable.size());
-
-        for (const rankable_item &already_ranked : rankable) {
-            // create persistent indices
-            ranked.emplace_back(
-                index(static_cast<int>(already_ranked.first))
-            );
-        }
-
-        return ranked;
-    };
+    );
 
 signals:
     void countChanged();
@@ -205,58 +89,9 @@ protected:
     template <typename Container>
     requires
         std::ranges::forward_range<Container> // Any type of list
-    &&  std::convertible_to<typename Container::value_type, typename decltype(m_items)::value_type> // that can be contained by m_items
+    &&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by m_items
     QList<QPersistentModelIndex>
-    batch_append(const Container &items)
-    {
-        // ready to use indices for right after manipulation
-        QList<QPersistentModelIndex> indices; 
-        
-        if (items.empty()) return indices;
-
-        // Filter only valid items before appending
-        std::vector<Types::Any> valid_items;
-        valid_items.reserve(items.size());
-
-        for (const Types::Any &item : items) {
-
-            // if such item is actually a Types::Song and its source is empty, continue;
-            if (
-                std::holds_alternative<Types::Song>(item)
-            &&  std::get<Types::Song>(item).source.isEmpty())
-            {
-                continue;
-            }
-
-            valid_items.push_back(item);
-        }
-
-        if (valid_items.empty()) return indices;
-
-        // Notify to QML views the entire block insertion at once
-        int first_row = rowCount();
-        int last_row = first_row + static_cast<int>(valid_items.size()) - 1;
-
-        beginInsertRows({}, first_row, last_row);
-        {
-            QWriteLocker locker(&m_lock);
-            m_items.reserve(m_items.size() + valid_items.size());
-
-            for (Types::Any &valid_item : valid_items) {
-                m_items.push_back(std::move(valid_item));
-            }
-        }
-        endInsertRows();
-
-        // Generate persistent model indices safely after layout update
-        for (int r = first_row; r <= last_row; ++r) {
-            indices.append(index(r));
-        }
-
-        emit countChanged();
-
-        return indices;
-    }
+    batch_append(const Container &items);
 
     // only extract songs metadata
     QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider);
@@ -271,3 +106,5 @@ protected:
     void remove(size_t index);
     void clear();
 };
+
+#include "abstractmediasequence.tpp"
