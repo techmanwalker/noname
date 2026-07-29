@@ -75,12 +75,11 @@ main (int argc, char ** argv)
     engine.addImageProvider("covers", cpproxy);
 
 
-    // load qml
-    const QUrl url = QUrl::fromLocalFile("src/qml/noname.qml");
+    // load qml module for noname
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &app, []() { QCoreApplication::exit(-1); },
                      Qt::QueuedConnection);
-    engine.load(url);
+    engine.loadFromModule("Player.App", "Main");
 
     if (engine.rootObjects().isEmpty()) {
         return -1;
