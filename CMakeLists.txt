@@ -439,11 +439,6 @@ if(BUILD_TESTS)
             testqmls
     )
 
-    target_include_directories(mockupv2
-        PRIVATE
-            ${PLAYER_INCLUDE_DIRECTORIES}
-    )
-
     qt_add_executable(startpagetest
         src/tests/startpage.cpp
     )
