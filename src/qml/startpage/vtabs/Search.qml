@@ -16,6 +16,16 @@ ColumnLayout {
 
     required property SearchBar searchBarItem
 
+    Connections {
+        target: LocalLibrary
+
+        function onRefreshFinished() {
+            SearchResults.performSearch("", LocalLibrary);
+            target = null; // one-shot: stop listening after the first refresh completes
+        }
+    }
+
+
     SectionHeading {
         id: shortcutsHeading
 

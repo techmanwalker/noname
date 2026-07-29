@@ -44,6 +44,9 @@ public:
     // where are loaded covers extracted to?
     std::shared_ptr<cover_provider> chosen_cover_provider;
 
+signals:
+    void refreshFinished ();
+
 private:
     // private constructor to disallow external creations
     explicit LocalLibrary(QObject *parent = nullptr);
