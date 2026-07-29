@@ -103,57 +103,45 @@ LocalLibrary::take_snapshot (const QString &dir_path)
 
     qCDebug(l_mediasequences) << "Reading directory: " << target_dir.path;
 
-    // Ask song_factory to extract the metadata of songs
-    QList<QFuture<Types::Song>> load_requests = song_factory::progressive_extract (not_yet_loaded, chosen_cover_provider);
+    // Ask song_factory to extract the metadata of songs, all at once
+    return song_factory::batch_extract (not_yet_loaded, chosen_cover_provider)
+        .then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
+            /*  Re-resolve through the persistent index rather than trusting target_dir from
+                above: m_items may have reallocated (another take_snapshot() appending a new
+                directory, for instance) during the time batch_extract spent running. */
+            auto current_refresh = pointed_to(dir_index_to_refresh);
+            if (!current_refresh.has_value()) {
+                qCDebug(l_mediasequences) << "Directory was unmapped while metadata extraction was in progress.";
+                return;
+            }
 
-    QList<QFuture<void>> load_requests_plus_additions; // pending with their respective .then, to wait for them all to finish
+            Types::Any &current_found = current_refresh.value().get();
+            if (!std::holds_alternative<Types::Directory>(current_found)) {
+                return;
+            }
 
-    for (QFuture<Types::Song> &pending : load_requests) {
+            Types::Directory &target_dir = std::get<Types::Directory>(current_found);
 
-        load_requests_plus_additions.append (
-                
-            /*  Capture dir_index_to_refresh by value, not target_dir by reference: target_dir
-                points into m_items, which can reallocate (another take_snapshot() appending a
-                new directory, for instance) before any individual future resolves. Re-resolving
-                through the persistent index on each arrival is what keeps this safe. Result
-                discarded on purpose — the continuation is attached to pending's shared future
-                state, which Qt keeps alive on its own; nothing here needs to await it. */
-            pending.then(this, [this, dir_index_to_refresh](Types::Song song) {
-                    auto current_refresh = pointed_to(dir_index_to_refresh);
-                    if (!current_refresh.has_value()) {
-                        qCDebug(l_mediasequences) << "Directory was unmapped while metadata extraction was in progress.";
-                        return;
-                    }
+            // Defensive merge-or-append: not_yet_loaded was deduped by source up front, but
+            // another in-flight take_snapshot() on this same directory could have loaded some
+            // of these same sources in the meantime.
+            for (Types::Song &song : songs) {
+                auto it = std::ranges::find_if(target_dir.songs, [&song](const Types::Song &existing_song) {
+                    return existing_song.source == song.source;
+                });
 
-                    Types::Any &current_found = current_refresh.value().get();
-                    if (!std::holds_alternative<Types::Directory>(current_found)) {
-                        return;
-                    }
+                if (it != target_dir.songs.end()) {
+                    *it = std::move(song);
+                } else {
+                    target_dir.songs.append(std::move(song));
+                }
+            }
 
-                    Types::Directory &target_dir = std::get<Types::Directory>(current_found);
-
-                    // Defensive merge-or-append: not_yet_loaded was deduped by source up front, but
-                    // another in-flight take_snapshot() on this same directory could have loaded this
-                    // same source in the meantime.
-                    auto it = std::ranges::find_if(target_dir.songs, [&song](const Types::Song &existing_song) {
-                        return existing_song.source == song.source;
-                    });
-
-                    if (it != target_dir.songs.end()) {
-                        *it = std::move(song);
-                    } else {
-                        target_dir.songs.append(std::move(song));
-                    }
-
-                    emit dataChanged(dir_index_to_refresh, dir_index_to_refresh);
-                })
-                .onFailed(this, [this] {
-                    qCWarning(l_mediasequences) << "Progressive song load: one song's metadata extraction failed; skipping it.";
-                })
-        );
-    }
-
-    return QtFuture::whenAll(load_requests_plus_additions.begin(), load_requests_plus_additions.end());
+            emit dataChanged(dir_index_to_refresh, dir_index_to_refresh);
+        })
+        .onFailed(this, [this] {
+            qCWarning(l_mediasequences) << "Batch song load failed for a directory; its songs list was left unchanged.";
+        });
 }
 
 QFuture<void>

@@ -19,9 +19,20 @@ ColumnLayout {
     Connections {
         target: LocalLibrary
 
+        function onRefreshFinished() {
+            SearchResults.performSearch("", LocalLibrary);
+            libraryChanges.enabled = true; // start reacting to dataChanged only from here on
+            target = null; // one-shot: stop listening after the first refresh completes
+        }
+    }
+
+    Connections {
+        id: libraryChanges
+        target: LocalLibrary
+        enabled: false // gated closed until the initial refresh finishes, above
+
         function onDataChanged() {
             if (root.searchBarItem.text == "") {
-                // keep the library updated, refresh is triggered from C++
                 SearchResults.performSearch("", LocalLibrary);
             }
         }
