@@ -378,10 +378,9 @@ set(PLAYER_INCLUDE_DIRECTORIES
 
 ### Executable building
 
-# Actual main executable - currently empty
+# Actual main executable - the Player
 
 qt_add_executable(${PROJECT_NAME}
-    # currently empty
     src/main.cpp
 )
 
@@ -393,93 +392,111 @@ target_link_libraries(${PROJECT_NAME}
         songfactory
 )
 
+qt_add_qml_module(${PROJECT_NAME}
+    URI Player.App
+    QML_FILES
+        src/qml/Main.qml
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/App"
+)
 
 # Executable tests per module - filled with dummy data for easy development
 
-qt_add_executable(mockupv2 EXCLUDE_FROM_ALL
-    src/tests/mockupv2.cpp
-)
-
-target_link_libraries(mockupv2
-    PUBLIC
-        ${BASIC_LIBRARIES}
-        player
-        playereffects
-        primitives
-        audioengine
-        debugtools
-        lyricsmanifest
-        mediasequences
-        configuration
-        primitives
-)
-
-target_include_directories(mockupv2
-    PRIVATE
-        ${PLAYER_INCLUDE_DIRECTORIES}
-)
-
-qt_add_executable(backgroundgradinghelper EXCLUDE_FROM_ALL
-    src/tests/backgroundgradinghelper.cpp
-)
-
-target_link_libraries(backgroundgradinghelper
-    PUBLIC
-        ${BASIC_LIBRARIES}
-        player
-)
-
-target_include_directories(mockupv2
-    PRIVATE
-        ${PLAYER_INCLUDE_DIRECTORIES}
-)
-
-qt_add_executable(startpagetest EXCLUDE_FROM_ALL
-    src/tests/startpage.cpp
-)
-
-target_link_libraries(startpagetest
-    PUBLIC
-        ${BASIC_LIBRARIES}
-        audioengine
-        configuration
-        debugtools
-        mediasequences
-        player
-        playereffects
-        primitives
-        songfactory
-        startpage
-)
-
-target_include_directories(startpagetest
-    PRIVATE
-        ${PLAYER_INCLUDE_DIRECTORIES}
-)
-
-qt_add_executable (refreshlisttest EXCLUDE_FROM_ALL
-    src/tests/refreshlist.cpp
-)
-
-target_link_libraries(refreshlisttest
-    PUBLIC
-        ${BASIC_LIBRARIES}
-        configuration
-        debugtools
-        diskio
-        mediasequences
-        primitives
-        songfactory
-)
-
-target_include_directories(refreshlisttest
-    PRIVATE
-        ${PLAYER_INCLUDE_DIRECTORIES}
-)
-
-# If BUILD_TESTS, add them to the default build target
 if(BUILD_TESTS)
-    set_target_properties(mockupv2 backgroundgradinghelper startpagetest refreshlisttest
-        PROPERTIES EXCLUDE_FROM_ALL FALSE
+
+    qt_add_executable(mockupv2
+        src/tests/mockupv2.cpp
     )
+
+    target_link_libraries(mockupv2
+        PUBLIC
+            ${BASIC_LIBRARIES}
+            player
+            playereffects
+            primitives
+            audioengine
+            debugtools
+            lyricsmanifest
+            mediasequences
+            configuration
+            primitives
+    )
+
+    target_include_directories(mockupv2
+        PRIVATE
+            ${PLAYER_INCLUDE_DIRECTORIES}
+    )
+
+    qt_add_executable(backgroundgradinghelper
+        src/tests/backgroundgradinghelper.cpp
+    )
+
+    target_link_libraries(backgroundgradinghelper
+        PUBLIC
+            ${BASIC_LIBRARIES}
+            player
+            testqmls
+    )
+
+    target_include_directories(mockupv2
+        PRIVATE
+            ${PLAYER_INCLUDE_DIRECTORIES}
+    )
+
+    qt_add_executable(startpagetest
+        src/tests/startpage.cpp
+    )
+
+    target_link_libraries(startpagetest
+        PUBLIC
+            ${BASIC_LIBRARIES}
+            audioengine
+            configuration
+            debugtools
+            mediasequences
+            player
+            playereffects
+            primitives
+            songfactory
+            startpage
+            testqmls
+    )
+
+    target_include_directories(startpagetest
+        PRIVATE
+            ${PLAYER_INCLUDE_DIRECTORIES}
+    )
+
+    qt_add_executable (refreshlisttest
+        src/tests/refreshlist.cpp
+    )
+
+    target_link_libraries(refreshlisttest
+        PUBLIC
+            ${BASIC_LIBRARIES}
+            configuration
+            debugtools
+            diskio
+            mediasequences
+            primitives
+            songfactory
+            testqmls
+    )
+
+    target_include_directories(refreshlisttest
+        PRIVATE
+            ${PLAYER_INCLUDE_DIRECTORIES}
+    )
+
+    qt_add_qml_module(testqmls
+        STATIC
+        URI Player.TestQmls
+        QML_FILES
+            src/tests/BackgroundGradingHelper.qml
+            src/tests/MockupV2.qml
+            src/tests/StartPageTest.qml
+        OUTPUT_DIRECTORY
+            "${CMAKE_CURRENT_BINARY_DIR}/Player/TestQmls"
+    )
+
 endif()

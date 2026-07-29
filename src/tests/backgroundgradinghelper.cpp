@@ -11,11 +11,10 @@ main (int argc, char ** argv)
     QQmlApplicationEngine engine;
 
     // load qml
-    const QUrl url = QUrl::fromLocalFile("src/tests/backgroundgradinghelper.qml");
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &app, []() { QCoreApplication::exit(-1); },
                      Qt::QueuedConnection);
-    engine.load(url);
+    engine.loadFromModule("Player.TestQmls", "BackgroundGradingHelper.qml");
 
     if (engine.rootObjects().isEmpty()) {
         return -1;
