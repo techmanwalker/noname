@@ -64,7 +64,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            currentIndex: vtabs.foldersIndex // Folders — matches the old sourceComponent: folders default
+            currentIndex: vtabs.searchIndex // Folders — matches the old sourceComponent: folders default
 
             Home {
                 id: homeitem
