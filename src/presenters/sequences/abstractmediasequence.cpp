@@ -296,3 +296,68 @@ AbstractMediaSequence::normalize_string_for_search (const QString &str)
     
     return normalized.toStdString();
 }
+
+QList<QPersistentModelIndex>
+AbstractMediaSequence::search_by_title (
+    const QString &keywords, // search tokens, QString has wider locale support
+    double score_thresh // out of 100
+)
+{
+
+    // extracted from rapidfuzz README
+    QReadLocker locker (&m_lock);
+
+    // prepare to be ranked
+    using rankable_item = std::pair<
+            size_t, // list item index
+            double // rapidfuzz score
+        >;
+
+    // rank result from scorer
+    using rankable_list = std::vector<
+        rankable_item
+    >;
+    
+    rankable_list rankable;
+
+    const std::string clean_keywords = normalize_string_for_search(keywords);
+    rapidfuzz::fuzz::CachedPartialRatio<char> scorer (clean_keywords.c_str());
+
+    for (size_t i = 0; i < m_items.size(); ++i) {
+
+        // get the item title or name to compare
+        const std::string clean_title = std::visit([](const auto& item) -> std::string {
+            return normalize_string_for_search(item.title);
+        }, m_items.at(i));
+
+        // Apply the pointer-to-member operator (->*) to evaluate the target field
+        double score = scorer.similarity(clean_title.c_str(), score_thresh);
+
+        qCDebug(l_mediasequences) << "Searching for \"" << clean_keywords << "\", matching against " << clean_title
+            << " scores " << score;
+
+        if (score >= score_thresh) {
+            rankable.emplace_back( // here
+                i,
+                score
+            );
+        }
+    }
+
+    // rank by scores in descending order
+    std::ranges::sort (
+        rankable, std::greater<>(), &rankable_item::second
+    );
+
+    QList<QPersistentModelIndex> ranked;
+    ranked.reserve(rankable.size());
+
+    for (const rankable_item &already_ranked : rankable) {
+        // create persistent indices
+        ranked.emplace_back(
+            index(static_cast<int>(already_ranked.first))
+        );
+    }
+
+    return ranked;
+};
