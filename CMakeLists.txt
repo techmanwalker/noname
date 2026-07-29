@@ -18,6 +18,7 @@ find_package(TagLib REQUIRED)
 
 find_package(rapidfuzz REQUIRED)
 
+qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
 
 ### Base build file listing
@@ -25,7 +26,7 @@ qt_policy(SET QTP0004 NEW)
 file(GLOB_RECURSE PLAYER_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
-    "src/qml/player/*.qml"
+    "src/qml/fullscreen/*.qml"
 )
 
 file(GLOB_RECURSE STARTPAGE_QMLS
@@ -201,17 +202,17 @@ qt_add_shaders(playereffects "_shaders"
 )
 
 # The Player module
-qt_add_qml_module(player
+qt_add_qml_module(fullscreenplayer
     STATIC
-    URI Player
-    RESOURCE_PREFIX /player
+    URI Player.Fullscreen
+    RESOURCE_PREFIX /player/fullscreen
     QML_FILES
         ${PLAYER_QMLS}
     OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player"
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Fullscreen"
 )
 
-target_link_libraries(player
+target_link_libraries(fullscreenplayer
     PUBLIC
         mediasequences
         playerpresenter
@@ -411,7 +412,7 @@ if(BUILD_TESTS)
     target_link_libraries(mockupv2
         PUBLIC
             ${BASIC_LIBRARIES}
-            player
+            fullscreenplayer
             playereffects
             primitives
             audioengine
@@ -434,7 +435,7 @@ if(BUILD_TESTS)
     target_link_libraries(backgroundgradinghelper
         PUBLIC
             ${BASIC_LIBRARIES}
-            player
+            fullscreenplayer
             testqmls
     )
 
@@ -454,7 +455,7 @@ if(BUILD_TESTS)
             configuration
             debugtools
             mediasequences
-            player
+            fullscreenplayer
             playereffects
             primitives
             songfactory
