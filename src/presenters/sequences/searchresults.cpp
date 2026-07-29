@@ -37,11 +37,6 @@ SearchResults::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 void
 SearchResults::performSearch(const QString &query, QObject *sourceModel)
 {
-    if (query.isEmpty()) {
-        clear();
-        return;
-    }
-
     QList<Types::Song> all_songs;
 
     // Check if the passed object is our LocalLibrary singleton
@@ -71,6 +66,12 @@ SearchResults::performSearch(const QString &query, QObject *sourceModel)
 void
 SearchResults::performSearch (const QString &query, QList<Types::Song> &song_list)
 {
+    if (query.isEmpty()) {
+        // Return all available songs instead
+
+        respawn_list(song_list);
+        return;
+    }
 
     // 2. Prepare the RapidFuzz algorithm
     using rankable_item = std::pair<size_t, double>;

@@ -159,12 +159,16 @@ QFuture<void>
 LocalLibrary::retake_all_snapshots ()
 {
     // that currently have a snapshot
-    return take_snapshots (paths());
+    return take_snapshots (paths()).then(this, [this]() {
+        emit refreshFinished();
+    });
 }
 
 QFuture<void>
 LocalLibrary::snapshot_known_directories ()
 {
+    // This is a full refresh.
+
     auto &manager = configuration::manager::instance();
     using ft = configuration::conf_file_type;
 
@@ -172,7 +176,9 @@ LocalLibrary::snapshot_known_directories ()
         manager.read_lines(
             ft::known_music_directories
         )
-    );
+    ).then(this, [this]() {
+        emit refreshFinished();
+    });
 }
 
 std::optional<std::reference_wrapper<Types::Any>>
