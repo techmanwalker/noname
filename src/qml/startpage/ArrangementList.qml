@@ -38,21 +38,6 @@ Column {
     }
 
     LabeledButton {
-        iconName: "search"
-        text: "Search"
-
-        padding: root.vtabPadding
-        leftPadding: root.vtabLeftPadding
-        rightPadding: root.vtabRightPadding
-        topPadding: root.vtabTopPadding
-        bottomPadding: root.vtabBottomPadding
-
-        spacing: root.vtabSpacing
-
-        onClicked: if (root.stack) root.stack.currentIndex = root.searchIndex
-    }
-
-    LabeledButton {
         iconName: "media-album-cover"
         text: "Albums"
 
@@ -113,8 +98,8 @@ Column {
     }
 
     LabeledButton {
-        iconName: "view-media-track"
-        text: "All tracks"
+        iconName: "library-music-symbolic"
+        text: "Tracks"
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding
@@ -124,6 +109,8 @@ Column {
 
         spacing: root.vtabSpacing
 
-        visible: false // still unsupported
+        onClicked: if (root.stack) root.stack.currentIndex = root.searchIndex
     }
+
+    // AllTracks was delegated to the Search page, an empty search query returns your entire library
 }

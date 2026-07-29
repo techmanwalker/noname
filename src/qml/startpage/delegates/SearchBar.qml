@@ -17,7 +17,7 @@ TextField {
     leftPadding: height / 2 // match the radius
     rightPadding: leftPadding
 
-    placeholderText: "Search on your library…"
+    placeholderText: "Search…"
     placeholderTextColor: "#afafaf"
 
     color: "white"

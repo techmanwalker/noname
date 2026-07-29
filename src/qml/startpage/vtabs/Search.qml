@@ -29,7 +29,7 @@ ColumnLayout {
     SectionHeading {
         id: shortcutsHeading
 
-        text: "Search in you library"
+        text: "Your library"
 
         Layout.leftMargin: root.lateralAlignmentPadding
         Layout.bottomMargin: root.shortcutCoverHeight / 16
