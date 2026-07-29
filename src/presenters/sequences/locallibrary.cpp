@@ -98,8 +98,10 @@ LocalLibrary::take_snapshot (const QString &dir_path)
             this,
         [this, dir_path](QList<Types::Song> songs) {
             
-            // find again to ensure still exists
-            auto current_refresh = find(dir_path);
+            // find again to ensure still exists — keep the index, we need it below too
+            QPersistentModelIndex dir_index = AbstractMediaSequence::find(&Types::Directory::path, dir_path);
+            auto current_refresh = pointed_to(dir_index);
+
             if (!current_refresh.has_value()) {
                 qCDebug(l_mediasequences) << "Directory was unmapped while metadata extraction was in progress.";
                 return;
@@ -133,6 +135,8 @@ LocalLibrary::take_snapshot (const QString &dir_path)
                                       << target_dir.title << ":" << target_dir.songs.size();
 
             qCDebug(l_mediasequences) << "Directory cache successfully synchronized for path:" << dir_path;
+
+            emit dataChanged(dir_index, dir_index);
         }
     );
 }
