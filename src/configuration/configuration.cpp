@@ -34,6 +34,9 @@ file (conf_file_type type)
         case conf_file_type::known_music_directories:
             conf_file_name = "music_directories";
             break;
+        case conf_file_type::shortcuts:
+            conf_file_name = "shortcuts";
+            break;
     }
 
     // should not happen unless someone leaves an unhandled enum value

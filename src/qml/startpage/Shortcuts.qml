@@ -17,6 +17,8 @@ ListView {
 
     implicitHeight: contentItem.childrenRect.height
 
+    signal songClicked (var song)
+
     delegate: Card {
         id: shortcut
 
@@ -32,5 +34,7 @@ ListView {
 
         coverWidth: root.shortcutCoverWidth
         coverHeight: root.shortcutCoverHeight
+
+        onClicked: root.songClicked(model)
     }
 }

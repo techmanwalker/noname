@@ -1,6 +1,7 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
+#include "coverprovider.hpp"
 
 #include <QtQmlIntegration/qqmlintegration.h>
 
@@ -29,7 +30,10 @@ public:
     void remove(size_t index);
     void clear();
 
-    // Shortcuts can not only be songs, so this has no respawn functions
+    // shorthand
+    QFuture<void> read_conf_and_load ();
+
+    std::shared_ptr<cover_provider> chosen_cover_provider;
 
 private:
     // hidden constructor

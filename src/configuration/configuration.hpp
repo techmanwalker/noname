@@ -12,7 +12,8 @@ namespace configuration {
 Q_DECLARE_LOGGING_CATEGORY(l_configuration)
 
 enum class conf_file_type {
-    known_music_directories
+    known_music_directories,
+    shortcuts
 };
 
 QString dir ();
