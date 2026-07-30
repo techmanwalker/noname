@@ -126,6 +126,11 @@ LocalLibrary::take_snapshot (const QString &dir_path)
             // another in-flight take_snapshot() on this same directory could have loaded some
             // of these same sources in the meantime.
             for (Types::Song &song : songs) {
+                // A song with empty source is considered invalid
+                if (song.source.isEmpty()) {
+                    continue;
+                }
+
                 auto it = std::ranges::find_if(target_dir.songs, [&song](const Types::Song &existing_song) {
                     return existing_song.source == song.source;
                 });
