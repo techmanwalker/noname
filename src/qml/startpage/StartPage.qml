@@ -89,7 +89,6 @@ Item {
         id: nowplayingbar
 
         anchors.left: leftCol.right
-        anchors.right: fullscreenToggle.left
         anchors.bottom: parent.bottom
 
         topPadding: 20
@@ -101,25 +100,8 @@ Item {
         rightPadding: leftPadding
 
         coverToMetadataSpacing: 8
-    }
 
-    LabeledButton {
-        id: fullscreenToggle
-        iconName: "window-maximize"
-
-        text: "Fullscreen"
-
-        opacity: (activeView.currentIndex === vtabs.homeIndex || nowplayingbar.visible || hovered) ? 1 : 0
-        hoverEnabled: true
-
-        padding: 20
-
-
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.verticalCenter: nowplayingbar.verticalCenter
-
-        onClicked: root.switchView()
+        onFullscreenRequested: root.switchView()
     }
 
 }
