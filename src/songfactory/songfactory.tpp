@@ -11,11 +11,23 @@ std::ranges::forward_range<Container> // Any type of list
 QList<QFuture<Types::Song>>
 song_factory::progressive_extract (const Container &sources, std::shared_ptr<cover_provider> provider)
 {
-    // You can manually wait for each one to finish
+    using value_type = typename Container::value_type;
+
+    // Read the metadata of the sources one by one in parallel, you can do something as soon as one extraction finishes
     QList<QFuture<Types::Song>> requests;
     requests.reserve(sources.size());
 
-    for (const QUrl &source : sources) {
+    for (const value_type &raw_source : sources) {
+        QUrl source;
+
+        if constexpr (std::is_same_v<value_type, QString>) {
+            
+            // QStringList are filesystem paths in this player
+            source = QUrl::fromLocalFile(raw_source);
+        } else {
+            source = raw_source;
+        }
+
         requests.append(song_factory::extract(source, provider));
     }
 
