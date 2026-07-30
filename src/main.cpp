@@ -50,13 +50,19 @@ main (int argc, char ** argv)
         a folder-separated view of all available songs */
     auto &ll = LocalLibrary::instance();
     auto &pq = PlayQueue::instance();
+    auto &sl = ShortcutsList::instance();
 
-    // load the cover provider in all relevant places
+    // load the same cover provider in all relevant places
     ll.chosen_cover_provider = covers;
     pq.chosen_cover_provider = covers;
+    sl.chosen_cover_provider = covers;
 
     // trigger first refresh
     ll.snapshot_known_directories();
+
+    // load shortcuts
+    sl.read_conf_and_load();
+
     
     // create base engine
     QQmlApplicationEngine engine;

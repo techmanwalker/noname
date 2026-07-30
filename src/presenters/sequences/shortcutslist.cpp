@@ -1,5 +1,7 @@
 #include "abstractmediasequence.hpp"
+#include "configuration.hpp"
 #include "defaultroles.hpp"
+#include "songfactory.hpp"
 #include "shortcutslist.hpp"
 
 #include <QQmlEngine> // include here, where it's actually used
@@ -30,7 +32,21 @@ ShortcutsList::ShortcutsList(QObject *parent)
     : AbstractMediaSequence(parent, container_roles)
 {}
 
-// a shortcut could be actually anything
+QFuture<void>
+ShortcutsList::read_conf_and_load ()
+{
+    auto &conf = configuration::manager::instance();
+    using configuration::conf_file_type::shortcuts;
+
+    auto shortcuts_song_paths = conf.read_lines(shortcuts);
+
+    return song_factory::batch_extract(shortcuts_song_paths, chosen_cover_provider)
+    .then(this, [this](QList<Types::Song> loaded_shortcuts) {
+        batch_append(std::move(loaded_shortcuts));
+    });
+}
+
+// a shortcut could be actually anything, just not now
 void ShortcutsList::append(const Types::Song &shortcut)                { AbstractMediaSequence::append(shortcut); }
 void ShortcutsList::batch_append (const QList<Types::Song> &shortcuts) { AbstractMediaSequence::batch_append(shortcuts); }
 void ShortcutsList::remove(size_t index)                                 { AbstractMediaSequence::remove(index); }
