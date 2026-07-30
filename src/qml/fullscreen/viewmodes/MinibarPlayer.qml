@@ -24,11 +24,10 @@ ColumnLayout {
 
     property real coverToMetadataSpacing: 0
 
-    property bool insetDurationBarInPadding: false
+    property bool insetDurationBarInPadding: true
 
     DurationControl {
         id: duration
-        hideTimestamps: true
         
         Layout.fillWidth: true
 
