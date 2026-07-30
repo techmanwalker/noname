@@ -26,6 +26,9 @@ ColumnLayout {
 
     property bool insetDurationBarInPadding: true
 
+    // you decide if ignore it or not
+    signal fullscreenRequested ()
+
     DurationControl {
         id: duration
         
@@ -88,6 +91,22 @@ ColumnLayout {
             stateModel: root.stateModel
 
             width: title.font.pointSize * 8
+        }
+
+        LabeledButton {
+            id: fullscreenToggle
+            iconName: "window-maximize"
+
+            text: "Fullscreen"
+
+            hoverEnabled: true
+
+            leftPadding: 10
+            rightPadding: leftPadding
+
+            anchors.verticalCenter: parent.verticalCenter
+
+            onClicked: root.fullscreenRequested()
         }
     }
 }
