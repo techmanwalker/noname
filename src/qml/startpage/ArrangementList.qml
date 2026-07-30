@@ -32,6 +32,8 @@ Column {
         topPadding: root.vtabTopPadding
         bottomPadding: root.vtabBottomPadding
 
+        magnify: true
+
         spacing: root.vtabSpacing
 
         onClicked: if (root.stack) root.stack.currentIndex = root.homeIndex
@@ -94,6 +96,8 @@ Column {
 
         spacing: root.vtabSpacing
 
+        magnify: true
+
         onClicked: if (root.stack) root.stack.currentIndex = root.foldersIndex
     }
 
@@ -108,6 +112,8 @@ Column {
         bottomPadding: root.vtabBottomPadding
 
         spacing: root.vtabSpacing
+
+        magnify: true
 
         onClicked: if (root.stack) root.stack.currentIndex = root.searchIndex
     }
