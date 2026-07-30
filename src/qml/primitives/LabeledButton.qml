@@ -8,14 +8,16 @@ Row {
     property string text
 
     property string iconName
-    property real iconSize: 24
+    property real iconSize: magnify ? 24 : 18
 
-    spacing: 12
+    spacing: magnify ? 12 : 8
 
     signal clicked()
 
     property bool hovered
     property bool hoverEnabled: false
+
+    property bool magnify
     
     HoverHandler {
         onHoveredChanged: root.hovered = hovered
@@ -40,5 +42,7 @@ Row {
         visible: text.length > 0
 
         anchors.verticalCenter: parent.verticalCenter
+
+        magnify: root.magnify
     }
 }

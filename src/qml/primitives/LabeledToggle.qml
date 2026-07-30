@@ -11,7 +11,9 @@ Row {
     property string untickedIconName
     property string tickedIconName
 
-    property real iconSize: 24
+    property bool magnify
+
+    property real iconSize: magnify ? 24 : 18
 
     property bool isTicked
 
@@ -19,7 +21,7 @@ Row {
     rightPadding: 16
     topPadding: 8
     bottomPadding: 8
-    spacing: 12
+    spacing: magnify ? 12 : 8
 
     signal clicked()
     signal ticked()
@@ -45,5 +47,7 @@ Row {
     MediumLabel {
         text: root.isTicked ? root.messageWhenTicked : root.messageWhenUnticked
         visible: text.length > 0
+
+        magnify: root.magnify
     }
 }

@@ -63,6 +63,8 @@ Item {
 
         padding: 20
 
+        magnify: true
+
         onClicked: root.switchView()
     }
 
