@@ -2,6 +2,7 @@
 
 #include <QtConcurrent/QtConcurrent>
 
+#include <qloggingcategory.h>
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
@@ -99,7 +100,12 @@ song_factory::extract(const QUrl &source, std::shared_ptr<cover_provider> provid
         Types::Song result = worker.execute_extraction(promise);
 
         if (!promise.isCanceled()) {
+            if (!result.is_valid()) {
+                qCDebug(l_songfactory) << "Extraction promise for source \"" << source << "\" returned an invalid song.";
+            }
             promise.addResult(result);
+        } else {
+            qCDebug(l_songfactory) << "Extraction promise was canceled for source \"" << source << "\".";
         }
     });
 }
@@ -130,6 +136,8 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise)
     // treat that the same way the old mediaPlayer.hasAudio() /
     // av_find_best_stream(AVMEDIA_TYPE_AUDIO, ...) checks did.
     if (!props || props->channels() <= 0 || props->sampleRate() <= 0) {
+        qCWarning(l_songfactory) << "File \"" << m_source << "\" does not seem to feature a valid audio track.";
+
         return {};
     }
 
