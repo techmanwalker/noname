@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
+import Player.Browser
 import Player.Fullscreen
-import Player.Primitives
-import Player.StartPage
+
 
 Item {
     id: root

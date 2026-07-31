@@ -1,9 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 
+import Player.Browser
 import Player.Primitives
 import Player.MediaSequences
-import Player.StartPage
 
 ColumnLayout {
     id: root

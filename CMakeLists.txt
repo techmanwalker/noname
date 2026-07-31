@@ -29,10 +29,10 @@ file(GLOB_RECURSE PLAYER_QMLS
     "src/qml/fullscreen/*.qml"
 )
 
-file(GLOB_RECURSE STARTPAGE_QMLS
+file(GLOB_RECURSE BROWSER_QMLS
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
-    "src/qml/startpage/*.qml"
+    "src/qml/browser/*.qml"
 )
 
 # in Primitives
@@ -228,17 +228,17 @@ target_link_libraries(fullscreenplayer
 )
 
 # The Start Page - your entry to the experience
-qt_add_qml_module(startpage
+qt_add_qml_module(browser
     STATIC
-    URI Player.StartPage
-    RESOURCE_PREFIX /player/startpage
+    URI Player.Browser
+    RESOURCE_PREFIX /player/browser
     QML_FILES
-        ${STARTPAGE_QMLS}
+        ${BROWSER_QMLS}
     OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/StartPage"
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Browser"
 )
 
-target_link_libraries(startpage
+target_link_libraries(browser
     PUBLIC
         mediasequences
         primitives
@@ -447,6 +447,7 @@ if(BUILD_TESTS)
         PUBLIC
             ${BASIC_LIBRARIES}
             audioengine
+            browser
             configuration
             debugtools
             mediasequences
@@ -454,7 +455,6 @@ if(BUILD_TESTS)
             playereffects
             primitives
             songfactory
-            startpage
             testqmls
     )
 

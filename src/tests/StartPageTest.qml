@@ -1,19 +1,19 @@
 import QtQuick
 import QtQuick.Controls
 
-import Player.StartPage
+import Player.Browser
 
 ApplicationWindow {
     id: root
 
     visible: true
-    title: "Noname - Startpage"
+    title: "Noname - Browser"
     color: "#000"
 
     width: 950
     height: 650
 
-    StartPage {
+    Browser {
         anchors.fill: parent
     }
 }

@@ -1,9 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
+import Player.Browser
 import Player.Primitives
-import Player.StartPage
-
 
 ListView {
     id: root

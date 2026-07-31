@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Player.Browser
 import Player.Fullscreen
-import Player.StartPage
 
 ApplicationWindow {
     id: root
@@ -19,8 +19,8 @@ ApplicationWindow {
         id: activeView
         anchors.fill: parent
 
-        StartPage {
-            id: startPage
+        Browser {
+            id: browser
             onSwitchView: activeView.currentIndex = 1
         }
 

@@ -1,4 +1,4 @@
-import Player.StartPage
+import Player.Browser
 
 Card {
     title: `two
