@@ -11,5 +11,5 @@ Label {
         when: root.magnify
     }
     
-    font.weight: magnify ? Font.Light : Font.Normal // Yagami
+    font.weight: magnify ? Font.Light : Font.Medium // Yagami
 }
