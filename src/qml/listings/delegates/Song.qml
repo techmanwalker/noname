@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 
-import Player.Fullscreen
 import Player.Primitives
 
 Item {

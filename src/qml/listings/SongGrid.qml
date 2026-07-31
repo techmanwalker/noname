@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
+import Player.Listings
+
 GridView {
     id: root
 

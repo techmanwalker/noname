@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
+import Player.Listings
 import Player.Primitives
 import Player.MediaSequences
 
