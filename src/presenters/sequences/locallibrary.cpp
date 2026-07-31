@@ -127,7 +127,7 @@ LocalLibrary::take_snapshot (const QString &dir_path)
             // of these same sources in the meantime.
             for (Types::Song &song : songs) {
                 // A song with empty source is considered invalid
-                if (song.source.isEmpty()) {
+                if (!song.is_valid()) {
                     continue;
                 }
 
