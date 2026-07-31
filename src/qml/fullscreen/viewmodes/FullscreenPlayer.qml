@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player.Fullscreen
+import Player.Listings
 import Player.MediaSequences
 import Player.PlayerPresenter
 import Player.Primitives

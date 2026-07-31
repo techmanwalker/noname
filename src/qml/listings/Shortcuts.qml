@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import Player.Browser
+import Player.Listings
 import Player.Primitives
 
 ListView {

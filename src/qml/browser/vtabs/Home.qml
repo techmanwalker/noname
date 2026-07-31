@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-import Player.Browser
+import Player.Listings
 import Player.MediaSequences
 import Player.Primitives
 

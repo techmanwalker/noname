@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player.Browser
-import Player.Primitives
+import Player.Listings
 import Player.MediaSequences
+import Player.Primitives
 
 ColumnLayout {
     id: root

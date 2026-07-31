@@ -52,6 +52,12 @@ file(GLOB_RECURSE EFFECTS_QMLS
     "src/qml/effects/*.qml"
 )
 
+file(GLOB_RECURSE LISTINGS_QMLS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    CONFIGURE_DEPENDS
+    "src/qml/listings/*.qml"
+)
+
 file(GLOB QML_MEDIASEQUENCES_SOURCES
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS
@@ -61,6 +67,23 @@ file(GLOB QML_MEDIASEQUENCES_SOURCES
 
 
 ### Inter-module communication
+
+# Listings - turning a song to logical pixels - basic tooling to display media metadata
+
+qt_add_qml_module(listings
+    STATIC
+    URI Player.Listings
+    RESOURCE_PREFIX /player/listings
+    QML_FILES
+        ${LISTINGS_QMLS}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/Listings"
+)
+
+target_link_libraries(listings
+    PUBLIC
+        playereffects
+        primitives
+)
 
 # Media sequences - playlists, queues and shorcuts representations
 
@@ -116,6 +139,7 @@ target_link_libraries(playerpresenter
         Qt6::QmlIntegration
         Qt6::Quick
         audioengine
+        listings
         mediasequences
         primitives
 )
@@ -214,6 +238,7 @@ qt_add_qml_module(fullscreenplayer
 
 target_link_libraries(fullscreenplayer
     PUBLIC
+        listings
         mediasequences
         playerpresenter
         lyricsmanifest
@@ -240,6 +265,7 @@ qt_add_qml_module(browser
 
 target_link_libraries(browser
     PUBLIC
+        listings
         mediasequences
         primitives
 
