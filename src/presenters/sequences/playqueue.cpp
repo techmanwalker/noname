@@ -125,7 +125,7 @@ PlayQueue::switch_to (const QUrl &source)
     song_factory::extract(source, chosen_cover_provider).then(
         this,
         [this](Types::Song song) {
-            if (!song.source.isEmpty()) {
+            if (song.is_valid()) {
                 switch_to(song, true);
             }
         }

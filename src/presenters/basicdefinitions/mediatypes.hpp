@@ -27,6 +27,8 @@ namespace Types {
         QUrl    source; // to the audio path
         QUrl    cover;
 
+        bool is_valid () const;
+
         // why would I even need to specify this? this is outright insane
         // but .find won't even compile without it
         bool operator==(const Song&) const = default;
@@ -46,6 +48,8 @@ namespace Types {
             return total;
         }
 
+        // An empty Playlist doesn't make it invalid
+
         bool operator==(const Album&) const = default;
     };
 
@@ -58,6 +62,8 @@ namespace Types {
         QString title;
 
         QList<Song> songs;
+
+        bool is_valid () const;
     };
 
     using Any = std::variant<Types::Song, Types::Album, Types::Directory>;

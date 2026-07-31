@@ -159,7 +159,7 @@ audio_engine::stop()
 void
 audio_engine::load (const Types::Song &song) // song IS the metadata, no need to async wait
 {
-    if (song.source.isEmpty()) return;
+    if (!song.is_valid()) return;
 
     m_current_transaction_id++;
 
@@ -265,7 +265,7 @@ audio_engine::get_playback_state() const
 
 bool
 audio_engine::is_a_song_loaded() const {
-    return !m_current_track.source.isEmpty();
+    return m_current_track.is_valid();
 }
 
 /*

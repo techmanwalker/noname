@@ -91,10 +91,10 @@ AbstractMediaSequence::batch_append(const Container &items)
 
     for (const Types::Any &item : items) {
 
-        // if such item is actually a Types::Song and its source is empty, continue;
+        // if such item is actually a Types::Song and it is not valid, continue;
         if (
             std::holds_alternative<Types::Song>(item)
-        &&  std::get<Types::Song>(item).source.isEmpty())
+        &&  !std::get<Types::Song>(item).is_valid())
         {
             continue;
         }
