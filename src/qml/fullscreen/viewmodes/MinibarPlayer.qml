@@ -97,7 +97,7 @@ ColumnLayout {
             id: fullscreenToggle
             iconName: "window-maximize"
 
-            text: "Fullscreen"
+            text: qsTr("Fullscreen")
 
             hoverEnabled: true
 

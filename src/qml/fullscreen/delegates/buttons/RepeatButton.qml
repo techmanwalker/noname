@@ -37,9 +37,9 @@ ToolButton {
     ToolTip.visible: hovered
     ToolTip.text: {
         switch (currentMode) {
-            case RepeatButton.RepeatMode.RepeatSingle:    return "Repeat one"
-            case RepeatButton.RepeatMode.RepeatAllTracks: return "Repeat all"
-            default:                                      return "Repeat disabled"
+            case RepeatButton.RepeatMode.RepeatSingle:    return qsTr("Repeat one")
+            case RepeatButton.RepeatMode.RepeatAllTracks: return qsTr("Repeat all")
+            default:                                      return qsTr("Repeat disabled")
         }
     }
 }

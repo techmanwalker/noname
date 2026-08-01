@@ -54,7 +54,7 @@ Item {
         id: fullscreenToggle
         iconName: "window-minimize"
 
-        text: "Back"
+        text: qsTr("Back")
 
         opacity: (!root.immersive || hovered) ? 1 : 0 // immersion
         hoverEnabled: true
@@ -215,7 +215,7 @@ Item {
                 id: nextQueue_p
 
                 MediumLabel {
-                    text: "No media playing right now. Pick a song or drag an audio file here to start playing."
+                    text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
 
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter

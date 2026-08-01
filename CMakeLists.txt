@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration Multimedia)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration Multimedia LinguistTools)
 
 find_package(SoundIo REQUIRED)
 
@@ -20,6 +20,12 @@ find_package(rapidfuzz REQUIRED)
 
 qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
+
+qt_standard_project_setup(
+    REQUIRES 6.10
+    I18N_SOURCE_LANGUAGE en
+    I18N_TRANSLATED_LANGUAGES es
+)
 
 ### Base build file listing
 
@@ -425,6 +431,11 @@ qt_add_qml_module(${PROJECT_NAME}
         src/qml/Main.qml
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/App"
+)
+
+qt_add_translations(noname
+    TS_FILE_BASE noname
+    TS_OUTPUT_DIRECTORY src/translations
 )
 
 # Executable tests per module - filled with dummy data for easy development
