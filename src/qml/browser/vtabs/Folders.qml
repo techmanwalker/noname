@@ -26,7 +26,7 @@ ColumnLayout {
     SectionHeading {
         id: shortcutsHeading
 
-        text: "Folders"
+        text: qsTr("Folders")
 
         Layout.leftMargin: root.lateralAlignmentPadding
         Layout.bottomMargin: currentdirectory.songCoverHeight / 16

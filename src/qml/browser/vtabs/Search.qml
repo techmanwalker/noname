@@ -43,7 +43,7 @@ ColumnLayout {
     SectionHeading {
         id: shortcutsHeading
 
-        text: "Your library"
+        text: qsTr("Your library")
 
         Layout.leftMargin: root.lateralAlignmentPadding
         Layout.bottomMargin: root.shortcutCoverHeight / 16

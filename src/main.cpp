@@ -4,8 +4,9 @@
 #include "shortcutslist.hpp"
 
 #include <QGuiApplication>
-#include <QQmlApplicationEngine>
 #include <QLoggingCategory>
+#include <QQmlApplicationEngine>
+#include <QTranslator>
 
 Q_LOGGING_CATEGORY(startpagetest, "noname.startpagetest")
 
@@ -62,6 +63,13 @@ main (int argc, char ** argv)
 
     // load shortcuts
     sl.read_conf_and_load();
+
+
+
+    QTranslator translator;
+    if (translator.load(QLocale::system(), "noname", "_", ":/i18n")) {
+        QCoreApplication::installTranslator(&translator);
+    }
 
     
     // create base engine

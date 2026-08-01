@@ -24,7 +24,7 @@ Column {
 
     LabeledButton {
         iconName: "user-home-symbolic"
-        text: "Home"
+        text: qsTr("Home")
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding
@@ -41,7 +41,7 @@ Column {
 
     LabeledButton {
         iconName: "media-album-cover"
-        text: "Albums"
+        text: qsTr("Albums")
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding
@@ -56,7 +56,7 @@ Column {
 
     LabeledButton {
         iconName: "view-media-artist"
-        text: "Artists"
+        text: qsTr("Artists")
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding
@@ -71,7 +71,7 @@ Column {
 
     LabeledButton {
         iconName: "view-media-playlist"
-        text: "Playlists"
+        text: qsTr("Playlists")
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding
@@ -86,7 +86,7 @@ Column {
 
     LabeledButton {
         iconName: "folder-symbolic"
-        text: "Folders"
+        text: qsTr("Folders")
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding
@@ -103,7 +103,7 @@ Column {
 
     LabeledButton {
         iconName: "library-music-symbolic"
-        text: "Tracks"
+        text: qsTr("Tracks")
 
         padding: root.vtabPadding
         leftPadding: root.vtabLeftPadding

@@ -34,9 +34,9 @@ ToolButton {
     ToolTip.visible: hovered
     ToolTip.text: {
         switch (currentMode) {
-            case ShuffleButton.ShuffleMode.ShuffleTracks:    return "Shuffle tracks"
-            case ShuffleButton.ShuffleMode.ShuffleAlbums:    return "Shuffle albums"
-            default:                                         return "No shuffle"
+            case ShuffleButton.ShuffleMode.ShuffleTracks:    return qsTr("Shuffle tracks")
+            case ShuffleButton.ShuffleMode.ShuffleAlbums:    return qsTr("Shuffle albums")
+            default:                                         return qsTr("No shuffle")
         }
     }
 }
