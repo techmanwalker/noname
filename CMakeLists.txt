@@ -467,7 +467,6 @@ if(BUILD_TESTS)
         PUBLIC
             ${BASIC_LIBRARIES}
             fullscreenplayer
-            testqmls
     )
 
     qt_add_executable(startpagetest
@@ -486,7 +485,6 @@ if(BUILD_TESTS)
             playereffects
             primitives
             songfactory
-            testqmls
     )
 
     target_include_directories(startpagetest
@@ -507,23 +505,11 @@ if(BUILD_TESTS)
             mediasequences
             primitives
             songfactory
-            testqmls
     )
 
     target_include_directories(refreshlisttest
         PRIVATE
             ${PLAYER_INCLUDE_DIRECTORIES}
-    )
-
-    qt_add_qml_module(testqmls
-        STATIC
-        URI Player.TestQmls
-        QML_FILES
-            src/tests/BackgroundGradingHelper.qml
-            src/tests/MockupV2.qml
-            src/tests/StartPageTest.qml
-        OUTPUT_DIRECTORY
-            "${CMAKE_CURRENT_BINARY_DIR}/Player/TestQmls"
     )
 
 endif()

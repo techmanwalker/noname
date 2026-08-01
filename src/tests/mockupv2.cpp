@@ -132,10 +132,11 @@ main (int argc, char ** argv)
     */
 
     // load qml
+    const QUrl url = QUrl::fromLocalFile("src/tests/MockupV2.qml");
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &app, []() { QCoreApplication::exit(-1); },
                      Qt::QueuedConnection);
-    engine.loadFromModule("Player.TestQmls", "MockupV2");
+    engine.load(url);
 
     if (engine.rootObjects().isEmpty()) {
         return -1;
