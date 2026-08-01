@@ -3,13 +3,11 @@
 #include "audioengine.hpp"
 #include "playqueue.hpp"
 
-#include <QMediaPlayer>
 #include <QObject>
 
 #include <QtQmlIntegration/qqmlintegration.h>
 
 #include <atomic>
-#include <qtmetamacros.h>
 
 // forward declarations
 class QQmlEngine;

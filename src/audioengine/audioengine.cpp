@@ -1,13 +1,7 @@
 #include "audioengine.hpp"
 
 #include <QFuture>
-#include <QMediaMetaData>
-#include <QMediaPlayer>
-#include <cstdint>
-#include <qloggingcategory.h>
-#include <qnamespace.h>
-#include <qobjectdefs.h>
-#include <qtypes.h>
+
 #include <soundio/soundio.h>
 
 // Logs are fundamental for this program not to blindly fall apart
