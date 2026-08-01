@@ -14,7 +14,6 @@ ColumnLayout {
 
     readonly property string noTitleText: "Untitled song"
     readonly property string noArtistText: "Unknown artist"
-    readonly property string noAlbumText: "Unknown album"
 
     property real padding: 0
     property real topPadding: padding
@@ -66,7 +65,6 @@ ColumnLayout {
                 anchors.verticalCenter: parent.verticalCenter
 
                 readonly property string displayArtist: root.stateModel.artist.length > 0 ? root.stateModel.artist : root.noArtistText
-                readonly property string displayAlbum:  root.stateModel.album.length  > 0 ? root.stateModel.album  : root.noAlbumText
 
                 Label {
                     id: title
@@ -79,7 +77,7 @@ ColumnLayout {
                 Label {
                     id: artistalbum
 
-                    text: parent.displayArtist + " · " + parent.displayAlbum
+                    text: parent.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
 
                     color: "#afafaf"
                 }
