@@ -10,7 +10,7 @@ Item {
 
     property string title: "Untitled song"
     property string artist: "Unknown artist"
-    property string album: "No album"
+    property string album
 
     property int duration: 0 // in milliseconds
 
@@ -100,7 +100,7 @@ Item {
             Label {
                 id: secondLine
 
-                text: root.artist + (root.hideAlbum ? "" : " · " + root.album)
+                text: root.artist + ((root.hideAlbum || root.album.length == 0) ? "" : " · " + root.album)
 
                 width: parent.width
 
