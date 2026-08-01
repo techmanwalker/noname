@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration Multimedia LinguistTools)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration LinguistTools)
 
 find_package(SoundIo REQUIRED)
 
@@ -103,8 +103,6 @@ qt_add_qml_module(mediasequences
 )
 
 target_link_libraries(mediasequences
-    PUBLIC
-        Qt6::Multimedia
     PRIVATE
         Qt6::Core
         Qt6::Quick
@@ -133,8 +131,6 @@ qt_add_qml_module(playerpresenter
     SOURCES
         src/presenters/context/playerpresenter/playerpresenter.hpp
         src/presenters/context/playerpresenter/playerpresenter.cpp
-    DEPENDENCIES
-        QtMultimedia
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
 )
 
@@ -295,7 +291,6 @@ add_library(audioengine STATIC
 
 target_link_libraries(audioengine
     PUBLIC
-        Qt6::Multimedia # every module linked to audioengine ends up needing this
         songfactory
 
     PRIVATE
@@ -330,7 +325,6 @@ target_link_libraries(songfactory
     PRIVATE
         Qt6::Core
         Qt6::Quick
-        Qt6::Multimedia
         primitives
         FFmpeg::avcodec
         FFmpeg::avformat
