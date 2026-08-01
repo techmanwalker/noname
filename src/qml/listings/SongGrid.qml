@@ -15,8 +15,10 @@ GridView {
 
     signal songClicked(var song);
 
-    delegate: Card {
+    delegate: Song {
         required property var model
+
+        card: true
 
         title: model.title
         album: model.album
@@ -30,7 +32,7 @@ GridView {
         onClicked: root.songClicked(model)
     }
 
-    LargestDummyCard {
+    TallestDummyCard {
         id: dummycard
         visible: false
 

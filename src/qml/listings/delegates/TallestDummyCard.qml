@@ -1,6 +1,8 @@
 import Player.Browser
 
-Card {
+Song {
+    card: true
+    
     title: `two
     line`
 

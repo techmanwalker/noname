@@ -73,14 +73,12 @@ Item {
 
     property real songCoverWidth: 48
     property real songCoverHeight: songCoverWidth
-    property real songLateralPadding: 24
-    property real songVerticalPadding: 12
     property real songInnerSpacing: 8
     property real songFadePadding: 20
 
     Row {
         id: mainRow
-        spacing: root.songCoverWidth - root.songLateralPadding
+        spacing: root.songCoverWidth
 
         anchors.centerIn: parent
         anchors.margins: 40
@@ -176,8 +174,6 @@ Item {
 
                 Layout.fillWidth: true
 
-                Layout.leftMargin: root.songLateralPadding
-
                 onClicked: root.immersive = !root.immersive
             }
 
@@ -238,10 +234,6 @@ Item {
                     scrollBarWidth: rightCol.scrollBarWidth
 
                     songCoverWidth: root.songCoverWidth
-                    songLeftPadding: root.songLateralPadding
-                    songRightPadding: root.songLateralPadding
-                    songTopPadding: root.songVerticalPadding
-                    songBottomPadding: root.songVerticalPadding
                     songInnerSpacing: root.songInnerSpacing
 
                     clip: true

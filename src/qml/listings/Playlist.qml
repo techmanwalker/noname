@@ -17,13 +17,8 @@ ListView {
     property int scrollBarWidth: 4
 
     // expose to FullscreenPlayer
-
-    property real songTopPadding: 12
-    property real songBottomPadding: 12
-    property real songLeftPadding: 24
-    property real songRightPadding: 24
     property real songInnerSpacing: 8
-    property real songFadePadding: 20
+    property real songFadePadding: 10
 
     // Right padding reserves space for the scrollbar so it appears
     // to float outside the list content without overlapping it
@@ -31,25 +26,24 @@ ListView {
 
     delegate: Song {
         id: song
+
         required property var model
         
         width: root.width - root.rightMargin
+
+        height: 80
 
         title:      model.title
         cover:      model.cover
         artist:     model.artist
         album:      model.album
         duration:   model.duration
+
         coverWidth: root.songCoverWidth
 
-        maxSecondLineLines: 1
-
-        topPadding:    root.songTopPadding
-        bottomPadding: root.songBottomPadding
-        leftPadding:   root.songLeftPadding
-        rightPadding:  root.songRightPadding
         innerSpacing:  root.songInnerSpacing
         fadePadding:   root.songFadePadding
+        lateralPadding: 15
 
         playing: PlayQueue.playhead === PlayQueue.index(model.index, 0)
         onClicked: root.songClicked(model)

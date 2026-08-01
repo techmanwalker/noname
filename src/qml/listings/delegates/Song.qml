@@ -1,52 +1,42 @@
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Layouts
 
 import Player.Primitives
 
 Item {
     id: root
 
-    readonly property string noTitleText: "Untitled song"
-    readonly property string noArtistText: "Unknown artist"
-    readonly property string noAlbumText: "Unknown album"
-    readonly property string noDurationText: "-:--"
-    property bool playing: false
-
-    property string title: noTitleText
-    property string artist: noArtistText
-    property string album: noAlbumText
-    property url cover
-    property int duration: 0  // Duration in milliseconds
-    property real coverWidth: 48
-    property real coverHeight: coverWidth
-
-    // card form: suitable for the start page
     property bool card: false
-    property int maxFirstLineLines: 3
-    property int maxSecondLineLines: 2
 
-    // for Playlists and such; give the programmer ability to hide data
-    property bool hideAlbum: false
-    property bool hideDuration: false
+    property string title: "Untitled song"
+    property string artist: "Unknown artist"
+    property string album: "No album"
 
-    // visual separation
-    property bool showSeparator: false
+    property int duration: 0 // in milliseconds
 
-    // more geometry control
-    property real leftPadding:   0
-    property real rightPadding:  0
-    property real topPadding:    0
-    property real bottomPadding: 0
-    property real innerSpacing:  0
-    property real fadePadding:   0 // symmetric fading distance from the borders inwards
+    property url cover: ""
 
-    signal clicked()
+    property int coverWidth: root.card ? 144 : 48
+    property int coverHeight: coverWidth
 
-    height: metadata.height + topPadding + bottomPadding
+    property int innerSpacing: coverWidth / 8
 
-    clip: true
+    property bool hideAlbum
+    property bool hideDuration
+    property bool showSeparator
 
-    // factored out due to code extension
+    property bool playing
+    property int lateralPadding
+    property int fadePadding
+
+    property int maxFirstLineLines: root.card ? 2 : 1
+    property int maxSecondLineLines: root.card ? 2 : 1
+
+    implicitWidth: content.implicitWidth
+    implicitHeight: content.implicitHeight
+
+    signal clicked ();
+
     SongBackground {
         anchors.fill: parent
 
@@ -59,17 +49,6 @@ Item {
         outer_rightstop:  1
     }
 
-    // Separator bottom border
-    Rectangle {
-        visible: root.showSeparator
-        color: Qt.rgba(160, 160, 160, .1)
-
-        width: root.width
-        height: 1
-
-        anchors.bottom: parent.bottom
-    }
-
     HoverHandler {
         id: hover
     }
@@ -78,129 +57,65 @@ Item {
         onTapped: root.clicked();
     }
 
-    Item {
-        id: metadata
+    FlexboxLayout {
+        id: content
+        anchors.fill: parent
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: root.leftPadding
-        anchors.rightMargin: root.rightPadding
-        anchors.topMargin: root.topPadding
+        anchors.leftMargin: root.lateralPadding
+        anchors.rightMargin: root.lateralPadding
 
-        height: Math.max(coverItem.height, metadataLines.height, durationLabel.height)
+        rowGap: root.innerSpacing
+        columnGap: root.innerSpacing
+
+        direction: root.card ? FlexboxLayout.Column : FlexboxLayout.Row
+
+        alignItems: root.card ? FlexboxLayout.AlignStart : FlexboxLayout.AlignCenter
 
         Cover {
-            id: coverItem
-
-            width: root.coverWidth
-            height: root.coverHeight
             source: root.cover
 
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
+            Layout.preferredWidth:  root.coverWidth
+            Layout.preferredHeight: root.coverHeight
         }
 
-        Item {
-            id: metadataLines
-
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: coverItem.right
-            anchors.right: durationLabel.left
-
-            anchors.leftMargin: root.innerSpacing
-            anchors.rightMargin: root.innerSpacing
-
-            height: firstLine.height + secondLine.height
+        Column {
+            Layout.fillWidth: true 
 
             Label {
                 id: firstLine
 
-                text: root.title.length > 0 ? root.title : root.noTitleText
+                text: root.title
 
                 width: parent.width
 
-                // eliding
                 maximumLineCount: root.maxFirstLineLines
-                wrapMode: Text.WordWrap
                 elide: Text.ElideRight
+                wrapMode: Text.WordWrap
 
-                // font properties
-                font.pointSize: -1
+                font.pointSize: root.card ? 14 : -1
                 font.weight: Font.Medium
-                color: "white"
+                color: "#dfdfdf"
             }
 
             Label {
                 id: secondLine
 
-                anchors.top: firstLine.bottom
+                text: root.artist + (root.hideAlbum ? "" : " · " + root.album)
 
                 width: parent.width
 
-                readonly property string displayArtist: root.artist.length > 0 ? root.artist : root.noArtistText
-                readonly property string displayAlbum:  root.album.length  > 0 ? root.album  : root.noAlbumText
-
-                text: root.hideAlbum
-                    ? displayArtist
-                    : displayArtist + " · " + displayAlbum
-
-                // eliding
                 maximumLineCount: root.maxSecondLineLines
-                wrapMode: Text.WordWrap
                 elide: Text.ElideRight
-
-                color: "#afafaf"
+                wrapMode: Text.WordWrap
             }
         }
 
         Label {
             id: durationLabel
 
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.right: parent.right
+            text: Formatters.formatDuration(root.duration)
 
-            visible: root.duration > 0 && !root.hideDuration
-
-            text: root.duration > 0 ? Formatters.formatDuration(root.duration) : root.noDurationText
-
-            color: "#afafaf"
+            visible: !root.hideDuration
         }
     }
-
-    // theoretical max height calculators — invisible, never rendered
-    Text {
-        id: firstLineMaxCalc
-        visible: false
-        width: root.coverWidth
-        text: Array(root.maxFirstLineLines + 1).join("W\n")
-        font: firstLine.font
-        wrapMode: Text.WordWrap
-        maximumLineCount: root.maxFirstLineLines
-    }
-
-    Text {
-        id: secondLineMaxCalc
-        visible: false
-        width: root.coverWidth
-        text: Array(root.maxSecondLineLines + 1).join("W\n")
-        font: secondLine.font
-        wrapMode: Text.WordWrap
-        maximumLineCount: root.maxSecondLineLines
-    }
-
-    Text {
-        id: durationLineMaxCalc
-        visible: false
-        width: root.coverWidth
-        text: "-:--"
-        font: durationLabel.font
-    }
-
-    readonly property real cardMaxHeight: root.coverHeight
-        + firstLineMaxCalc.contentHeight
-        + secondLineMaxCalc.contentHeight
-        + (
-            !root.hideDuration ? durationLineMaxCalc.contentHeight : 0
-        )
 }

@@ -18,16 +18,17 @@ ListView {
 
     signal songClicked (var song)
 
-    delegate: Card {
+    delegate: Song {
         id: shortcut
+
+        card: true
 
         required property var model
 
         title: model.title
         artist: model.artist
-        album: model.album ? model.album : ""
-
-        mediaType: MediaTypes.stringMediaTypeToEnum(model.type)
+        album: model.album
+        duration: model.duration
 
         cover: model.cover
 
