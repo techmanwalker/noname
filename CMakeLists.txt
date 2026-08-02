@@ -20,6 +20,7 @@ find_package(rapidfuzz REQUIRED)
 
 qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
+qt_policy(SET QTP0005 NEW)
 
 qt_standard_project_setup(
     REQUIRES 6.10
@@ -74,15 +75,63 @@ file(GLOB QML_MEDIASEQUENCES_SOURCES
 
 ### Inter-module communication
 
+# Effects - any module depends on these to look nice
+
+qt_add_qml_module(playereffects
+    STATIC
+    URI Player.Effects
+    QML_FILES
+        ${EFFECTS_QMLS}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Effects"
+)
+
+qt_add_shaders(playereffects "_shaders"
+    BATCHABLE
+    PRECOMPILE
+    OPTIMIZED
+    PREFIX "/shaders"
+    BASE "src/shaders"
+    FILES
+        src/shaders/background_overlay.frag
+        src/shaders/edge_fade.frag
+        src/shaders/kawase_down.frag
+        src/shaders/kawase_up.frag
+        src/shaders/noise.frag
+        src/shaders/noise_seed.frag
+)
+
+# Primitives - the base of all modules
+
+qt_add_qml_module(primitives
+    STATIC
+    URI Player.Primitives
+    QML_FILES
+        ${PRIMITIVES_QMLS}
+        src/qml/primitives/Formatters.mjs
+    SOURCES
+        src/presenters/basicdefinitions/mediatypes.cpp
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
+)
+
+target_include_directories(primitives
+    PUBLIC
+        src/presenters/basicdefinitions
+)
+
+
 # Listings - turning a song to logical pixels - basic tooling to display media metadata
 
 qt_add_qml_module(listings
     STATIC
     URI Player.Listings
-    RESOURCE_PREFIX /player/listings
     QML_FILES
         ${LISTINGS_QMLS}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/Listings"
+    DEPENDENCIES
+        TARGET playereffects
+        TARGET primitives
 )
 
 target_link_libraries(listings
@@ -96,10 +145,11 @@ target_link_libraries(listings
 qt_add_qml_module(mediasequences
     STATIC
     URI Player.MediaSequences
-    RESOURCE_PREFIX /player/sequences
     SOURCES
         ${QML_MEDIASEQUENCES_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
+    DEPENDENCIES
+        TARGET primitives
 )
 
 target_link_libraries(mediasequences
@@ -127,11 +177,14 @@ target_include_directories(mediasequences
 qt_add_qml_module(playerpresenter
     STATIC
     URI Player.PlayerPresenter
-    RESOURCE_PREFIX /player/playerpresenter
     SOURCES
         src/presenters/context/playerpresenter/playerpresenter.hpp
         src/presenters/context/playerpresenter/playerpresenter.cpp
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
+    DEPENDENCIES
+        TARGET listings
+        TARGET mediasequences
+        TARGET primitives
 )
 
 target_link_libraries(playerpresenter
@@ -159,7 +212,6 @@ target_include_directories(playerpresenter
 qt_add_qml_module(lyricsmanifest
     STATIC
     URI Player.LyricsManifest
-    RESOURCE_PREFIX /player/lyricsmanifest
     SOURCES
         src/presenters/context/lyrics/lyricsmanifest.hpp
         src/presenters/context/lyrics/lyricsmanifest.cpp
@@ -178,64 +230,20 @@ target_include_directories(lyricsmanifest
         src/presenters/context/lyrics
 )
 
-### QML Modules
-
-# Primitives - the base of all modules
-
-qt_add_qml_module(primitives
-    STATIC
-    URI Player.Primitives
-    RESOURCE_PREFIX /primitives
-    QML_FILES
-        ${PRIMITIVES_QMLS}
-        src/qml/primitives/Formatters.mjs
-    SOURCES
-        src/presenters/basicdefinitions/mediatypes.cpp
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
-)
-
-target_include_directories(primitives
-    PUBLIC
-        src/presenters/basicdefinitions
-)
-
-# Effects - any module depends on these to look nice
-
-qt_add_qml_module(playereffects
-    STATIC
-    URI Player.Effects
-    RESOURCE_PREFIX /player/effects
-    QML_FILES
-        ${EFFECTS_QMLS}
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/Effects"
-)
-
-qt_add_shaders(playereffects "_shaders"
-    BATCHABLE
-    PRECOMPILE
-    OPTIMIZED
-    PREFIX "/shaders"
-    BASE "src/shaders"
-    FILES
-        src/shaders/background_overlay.frag
-        src/shaders/edge_fade.frag
-        src/shaders/kawase_down.frag
-        src/shaders/kawase_up.frag
-        src/shaders/noise.frag
-        src/shaders/noise_seed.frag
-)
 
 # The Player module
 qt_add_qml_module(fullscreenplayer
     STATIC
     URI Player.Fullscreen
-    RESOURCE_PREFIX /player/fullscreen
     QML_FILES
         ${PLAYER_QMLS}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Fullscreen"
+    DEPENDENCIES
+        TARGET listings
+        TARGET mediasequences
+        TARGET playerpresenter
+        TARGET lyricsmanifest
 )
 
 target_link_libraries(fullscreenplayer
@@ -258,11 +266,14 @@ target_link_libraries(fullscreenplayer
 qt_add_qml_module(browser
     STATIC
     URI Player.Browser
-    RESOURCE_PREFIX /player/browser
     QML_FILES
         ${BROWSER_QMLS}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Browser"
+    DEPENDENCIES
+        TARGET listings
+        TARGET mediasequences
+        TARGET primitives
 )
 
 target_link_libraries(browser
@@ -415,6 +426,8 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${BASIC_LIBRARIES}
         audioengine
+        browser
+        fullscreenplayer
         mediasequences
         songfactory
 )
@@ -425,6 +438,15 @@ qt_add_qml_module(${PROJECT_NAME}
         src/qml/Main.qml
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/App"
+    DEPENDENCIES
+        TARGET browser
+        TARGET fullscreenplayer
+        TARGET mediasequences
+        TARGET listings
+        TARGET playereffects
+        TARGET playerpresenter
+        TARGET primitives
+        TARGET lyricsmanifest
 )
 
 qt_add_translations(noname
