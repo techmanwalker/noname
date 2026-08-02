@@ -181,3 +181,11 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise)
 
     return song;
 }
+
+void
+song_factory::shutdown()
+{
+    QThreadPool *pool = extraction_pool();
+    pool->clear();          // drop anything queued but not yet started
+    pool->waitForDone();    // let whatever's already running finish naturally
+}

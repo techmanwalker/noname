@@ -62,7 +62,6 @@ song_factory::batch_extract (const Container &sources, std::shared_ptr<cover_pro
                 successful results down with it, since QFuture::result() rethrows whatever
                 exception QtConcurrent::run captured on that future's worker thread. */
             if (f.isCanceled()) {
-                qCWarning(l_songfactory) << "Skipping one song in batch: its extraction was canceled.";
                 continue;
             }
 

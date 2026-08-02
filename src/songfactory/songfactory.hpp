@@ -15,6 +15,8 @@ public:
     // Invoked as song_factory::extract(url, cover_provider);
     static QFuture<Types::Song> extract(const QUrl &source, std::shared_ptr<cover_provider> provider);
 
+    static void shutdown ();
+
     template <typename Container>
     requires
     std::ranges::forward_range<Container> // Any type of list
