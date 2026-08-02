@@ -2,6 +2,7 @@
 #include "locallibrary.hpp"
 #include "playqueue.hpp"
 #include "shortcutslist.hpp"
+#include "songfactory.hpp" // direct call in case we need to cancel
 
 #include <QGuiApplication>
 #include <QLoggingCategory>
@@ -96,8 +97,11 @@ main (int argc, char ** argv)
     engine.loadFromModule("Player.App", "Main");
 
     if (engine.rootObjects().isEmpty()) {
+        song_factory::shutdown();
         return -1;
     }
 
-    return app.exec();
+    const int exitcode = app.exec();
+    song_factory::shutdown();
+    return exitcode;
 }
