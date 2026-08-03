@@ -26,12 +26,6 @@ main (int argc, char ** argv)
 
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
-    QLoggingCategory::setFilterRules(R"(
-        qt.multimedia*=false
-        qt.multimedia*.warning=true
-        qt.multimedia*.critical=true
-    )");
-
     auto &conf = configuration::manager::instance();
 
     // Load configuration for the first time, the file must not be auto created if no write_lines was called
