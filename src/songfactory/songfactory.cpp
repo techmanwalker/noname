@@ -68,7 +68,7 @@ lanczos_resize_square(const QImage &square, int target_size)
 }
 
 QImage
-extract_cover (TagLib::File *file, size_t crop_and_resize = 0)
+extract_cover (TagLib::File *file, song_factory::attributes a)
 {
     if (!file) {
         return QImage();
@@ -111,8 +111,8 @@ extract_cover (TagLib::File *file, size_t crop_and_resize = 0)
     const int side = std::min(cover.width(), cover.height());
     cover = cover.copy((cover.width() - side) / 2, (cover.height() - side) / 2, side, side);
 
-    if (crop_and_resize != 0 && static_cast<size_t>(side) != crop_and_resize) {
-        cover = lanczos_resize_square(cover, static_cast<int>(crop_and_resize));
+    if (a.crop_and_resize != 0 && static_cast<size_t>(side) != a.crop_and_resize) {
+        cover = lanczos_resize_square(cover, static_cast<int>(a.crop_and_resize));
     }
 
     return cover;
@@ -150,12 +150,12 @@ song_factory::extraction_pool()
           and QMediaPlayer lifecycle run entirely on a dedicated worker thread.
 */
 QFuture<Types::Song>
-song_factory::extract(const QUrl &source, std::shared_ptr<cover_provider> provider, size_t crop_and_resize)
+song_factory::extract(const QUrl &source, std::shared_ptr<cover_provider> provider, attributes a)
 {
     // delegate instantiation and execution to Qt thread pool
-    return QtConcurrent::run(extraction_pool(), [source, provider, crop_and_resize](QPromise<Types::Song> &promise) {
+    return QtConcurrent::run(extraction_pool(), [source, provider, a](QPromise<Types::Song> &promise) {
         song_factory worker(source, provider);
-        Types::Song result = worker.execute_extraction(promise, crop_and_resize);
+        Types::Song result = worker.execute_extraction(promise, a);
 
         if (!promise.isCanceled()) {
             if (!result.is_valid()) {
@@ -169,7 +169,7 @@ song_factory::extract(const QUrl &source, std::shared_ptr<cover_provider> provid
 }
 
 Types::Song
-song_factory::execute_extraction(QPromise<Types::Song> &promise, size_t crop_and_resize)
+song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
 {
     Types::Song song;
 
@@ -216,7 +216,7 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, size_t crop_and
         return {};
     }
 
-    QImage cover_image = extract_cover(file.file(), crop_and_resize);
+    QImage cover_image = extract_cover(file.file(), a);
 
     QString cover_uid = "";
 

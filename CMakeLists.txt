@@ -158,8 +158,8 @@ target_link_libraries(mediasequences
         Qt6::Quick
         Qt6::Qml
         Qt6::QmlIntegration
-        configuration
         diskio
+        memory
         primitives
         rapidfuzz::rapidfuzz
         songfactory
@@ -367,19 +367,19 @@ target_include_directories(debugtools
         src/debug
 )
 
-# The configuration
-add_library(configuration STATIC
-    src/configuration/configuration.cpp
+# Configuration, caching and all data the player needs to remember
+add_library(memory STATIC
+    src/memory/configuration.cpp
 )
 
-target_link_libraries(configuration
+target_link_libraries(memory
     PRIVATE
         Qt6::Core
 )
 
-target_include_directories(configuration
+target_include_directories(memory
     PUBLIC
-        src/configuration
+        src/memory
 )
 
 # Basic misc disk operations
@@ -472,7 +472,7 @@ if(BUILD_TESTS)
             debugtools
             lyricsmanifest
             mediasequences
-            configuration
+            memory
             primitives
     )
 
@@ -500,9 +500,9 @@ if(BUILD_TESTS)
             ${BASIC_LIBRARIES}
             audioengine
             browser
-            configuration
             debugtools
             mediasequences
+            memory
             fullscreenplayer
             playereffects
             primitives
@@ -521,10 +521,10 @@ if(BUILD_TESTS)
     target_link_libraries(refreshlisttest
         PUBLIC
             ${BASIC_LIBRARIES}
-            configuration
             debugtools
             diskio
             mediasequences
+            memory
             primitives
             songfactory
     )

@@ -122,7 +122,7 @@ PlayQueue::switch_to (const QModelIndex &song, bool play_afterwards)
 void
 PlayQueue::switch_to (const QUrl &source)
 {
-    song_factory::extract(source, chosen_cover_provider).then(
+    song_factory::extract(source, chosen_cover_provider, {}).then(
         this,
         [this](Types::Song song) {
             if (song.is_valid()) {

@@ -57,7 +57,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bangbangbangbang.flac")
     };
 
-    song_factory::batch_extract(shortcuts, covers).then(
+    song_factory::batch_extract(shortcuts, covers, {}).then(
         &app,
         [&shortcuts_list](const QList<Types::Song> loaded_shortcuts) {
             /*

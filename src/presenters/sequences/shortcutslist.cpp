@@ -40,7 +40,7 @@ ShortcutsList::read_conf_and_load ()
 
     auto shortcuts_song_paths = conf.read_lines(shortcuts);
 
-    return song_factory::batch_extract(shortcuts_song_paths, chosen_cover_provider, 256)
+    return song_factory::batch_extract(shortcuts_song_paths, chosen_cover_provider, {256})
     .then(this, [this](QList<Types::Song> loaded_shortcuts) {
         batch_append(std::move(loaded_shortcuts));
     });
