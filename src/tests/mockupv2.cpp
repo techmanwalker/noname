@@ -87,7 +87,7 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac")
     };
     
-    song_factory::batch_extract(new_queue, covers).then(&app, [&nextQueue](const QList<Types::Song> loaded_songs) {
+    song_factory::batch_extract(new_queue, covers, {}).then(&app, [&nextQueue](const QList<Types::Song> loaded_songs) {
         /*
         QList<Types::Any> any_songs(loaded_songs.begin(), loaded_songs.end());
         qDebug().noquote() << QJsonDocument(debug::serialize(any_songs)).toJson(QJsonDocument::Indented);

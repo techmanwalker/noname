@@ -300,7 +300,7 @@ AbstractMediaSequence::sources () const
 QFuture<void>
 AbstractMediaSequence::batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider)
 {
-    return song_factory::batch_extract(sources, provider).then(this, [this, provider] (QList<Types::Song> result) {
+    return song_factory::batch_extract(sources, provider, {}).then(this, [this, provider] (QList<Types::Song> result) {
         batch_append(result);
     });
 }

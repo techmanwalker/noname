@@ -12,7 +12,7 @@
 
 namespace configuration {
 
-Q_LOGGING_CATEGORY(l_configuration, "noname.configuration");
+Q_LOGGING_CATEGORY(l_configuration, "noname.memory.configuration");
 
 QString
 dir ()
@@ -44,7 +44,7 @@ file (conf_file_type type)
 
     QDir conf_dir (dir());
 
-    return QUrl::fromLocalFile(conf_dir.filePath(conf_file_name));
+    return QUrl::fromLocalFile(conf_dir.absoluteFilePath(conf_file_name));
 }
 
 // manager implementation
