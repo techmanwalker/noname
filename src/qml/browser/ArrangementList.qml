@@ -19,7 +19,7 @@ Column {
     property real vtabSpacing: vtabPadding / 2
 
     required property int homeIndex
-    required property int searchIndex
+    required property int tracksIndex
     required property int foldersIndex
 
     LabeledButton {
@@ -115,7 +115,7 @@ Column {
 
         magnify: true
 
-        onClicked: if (root.stack) root.stack.currentIndex = root.searchIndex
+        onClicked: if (root.stack) root.stack.currentIndex = root.tracksIndex
     }
 
     // AllTracks was delegated to the Search page, an empty search query returns your entire library

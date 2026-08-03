@@ -35,7 +35,7 @@ Item {
 
             stack: activeView
             homeIndex: 0
-            searchIndex: 1
+            tracksIndex: 1
             foldersIndex: 2
         }
     }
@@ -64,15 +64,15 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            currentIndex: vtabs.searchIndex // Folders — matches the old sourceComponent: folders default
+            currentIndex: vtabs.tracksIndex // Folders — matches the old sourceComponent: folders default
 
             Home {
                 id: homeitem
                 lateralAlignmentPadding: searchBar.leftPadding
             }
 
-            Search {
-                id: searchitem
+            Tracks {
+                id: tracksitem
                 lateralAlignmentPadding: searchBar.leftPadding
                 searchBarItem: searchBar
             }
