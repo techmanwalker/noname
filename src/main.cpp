@@ -19,28 +19,7 @@ main (int argc, char ** argv)
 
     QGuiApplication app(argc, argv);
 
-    QLoggingCategory::setFilterRules(R"(
-        qt.multimedia*=false
-        qt.multimedia*.warning=true
-        qt.multimedia*.critical=true
-    )");
-
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
-
-    /*
-
-    auto &conf = configuration::manager::instance();
-
-    // Load configuration for the first time, the file must not be auto created if no write_lines was called
-    QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);
-
-    qCDebug (l_noname) << "Known music directories paths are:";
-    for (const QString &line : known_music_directories_lines) {
-        qCDebug (l_noname) << line;
-    }
-    qCDebug (l_noname) << "That's all known music directories.";
-
-    */
 
         // cover cache to hold the shortcuts covers across the entire session
     std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();

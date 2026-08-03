@@ -21,13 +21,7 @@ main (int argc, char ** argv)
 {
     // Test how the start page would look like with real user data.
     QGuiApplication app(argc, argv);
-
-    QLoggingCategory::setFilterRules(R"(
-        qt.multimedia*=false
-        qt.multimedia*.warning=true
-        qt.multimedia*.critical=true
-    )");
-
+    
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
     /*
