@@ -104,7 +104,7 @@ LocalLibrary::take_snapshot (const QString &dir_path)
     qCDebug(l_mediasequences) << "Reading directory: " << target_dir.path;
 
     // Ask song_factory to extract the metadata of songs, all at once
-    return song_factory::batch_extract (not_yet_loaded, chosen_cover_provider)
+    return song_factory::batch_extract (not_yet_loaded, chosen_cover_provider, 256 /* enough for 1440p, can be tweaked any time later */)
         .then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
             /*  Re-resolve through the persistent index rather than trusting target_dir from
                 above: m_items may have reallocated (another take_snapshot() appending a new

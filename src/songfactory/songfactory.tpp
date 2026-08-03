@@ -9,7 +9,7 @@ std::ranges::forward_range<Container> // Any type of list
         std::is_same_v<typename Container::value_type, QString> // any uri or path
     ||  std::is_same_v<typename Container::value_type, QUrl>)
 QList<QFuture<Types::Song>>
-song_factory::progressive_extract (const Container &sources, std::shared_ptr<cover_provider> provider)
+song_factory::progressive_extract (const Container &sources, std::shared_ptr<cover_provider> provider, size_t crop_and_resize)
 {
     using value_type = typename Container::value_type;
 
@@ -28,7 +28,7 @@ song_factory::progressive_extract (const Container &sources, std::shared_ptr<cov
             source = raw_source;
         }
 
-        requests.append(song_factory::extract(source, provider));
+        requests.append(song_factory::extract(source, provider, crop_and_resize));
     }
 
     return requests;
@@ -41,9 +41,9 @@ std::ranges::forward_range<Container> // Any type of list
         std::is_same_v<typename Container::value_type, QString> // any uri or path
     ||  std::is_same_v<typename Container::value_type, QUrl>)
 QFuture<QList<Types::Song>>
-song_factory::batch_extract (const Container &sources, std::shared_ptr<cover_provider> provider)
+song_factory::batch_extract (const Container &sources, std::shared_ptr<cover_provider> provider, size_t crop_and_resize)
 {
-    auto requests = progressive_extract(sources, provider);
+    auto requests = progressive_extract(sources, provider, crop_and_resize);
 
     // Wait for all songs in the list to finish metadata extraction
 
