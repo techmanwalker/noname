@@ -9,12 +9,14 @@
 #include <QQmlApplicationEngine>
 #include <QTranslator>
 
-Q_LOGGING_CATEGORY(startpagetest, "noname.startpagetest")
+Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
 int
 main (int argc, char ** argv)
 {
-    // Test how the start page would look like with real user data.
+    // real entry point for this player app - main executable "noname"
+    // which must take the project name when I decide what it will be.
+
     QGuiApplication app(argc, argv);
 
     QLoggingCategory::setFilterRules(R"(
@@ -32,21 +34,16 @@ main (int argc, char ** argv)
     // Load configuration for the first time, the file must not be auto created if no write_lines was called
     QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);
 
-    qCDebug (startpagetest) << "Known music directories paths are:";
+    qCDebug (l_noname) << "Known music directories paths are:";
     for (const QString &line : known_music_directories_lines) {
-        qCDebug (startpagetest) << line;
+        qCDebug (l_noname) << line;
     }
-    qCDebug (startpagetest) << "That's all known music directories.";
+    qCDebug (l_noname) << "That's all known music directories.";
 
     */
 
         // cover cache to hold the shortcuts covers across the entire session
     std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();
-
-    // get access to the shortcuts list that will be displayed
-
-    auto &shortcuts_list = ShortcutsList::instance();
-
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
