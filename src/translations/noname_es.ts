@@ -70,7 +70,7 @@
 <context>
     <name>MinibarPlayer</name>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/MinibarPlayer.qml" line="100"/>
+        <location filename="../qml/fullscreen/viewmodes/MinibarPlayer.qml" line="98"/>
         <source>Fullscreen</source>
         <translation>Pantalla completa</translation>
     </message>
@@ -96,9 +96,8 @@
 <context>
     <name>Search</name>
     <message>
-        <location filename="../qml/browser/vtabs/Search.qml" line="46"/>
         <source>Your library</source>
-        <translation>Tu biblioteca</translation>
+        <translation type="vanished">Tu biblioteca</translation>
     </message>
 </context>
 <context>
@@ -125,6 +124,14 @@
         <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="39"/>
         <source>No shuffle</source>
         <translation>Sin mezclar</translation>
+    </message>
+</context>
+<context>
+    <name>Tracks</name>
+    <message>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="46"/>
+        <source>Your library</source>
+        <translation>Tu biblioteca</translation>
     </message>
 </context>
 </TS>
