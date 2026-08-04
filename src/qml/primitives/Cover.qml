@@ -21,6 +21,8 @@ Item {
         anchors.fill: root
         fillMode: root.fillMode
         source: root.source
+
+        asynchronous: true
         
         // Smooth scaling for better quality
         smooth: true

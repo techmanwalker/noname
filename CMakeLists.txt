@@ -315,6 +315,7 @@ target_include_directories(audioengine
 # Covers - where your vision lives
 add_library(covers STATIC
     src/covers/coverextract.cpp
+    src/covers/coverimageresponse.cpp
     src/covers/coverprovider.cpp
     src/covers/coverproviderproxy.cpp
     src/covers/thumbnails.cpp

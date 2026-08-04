@@ -1,18 +1,44 @@
+#include "coverextract.hpp"
 #include "coverprovider.hpp"
 #include "thumbnails.hpp"
 
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
+
 namespace covers {
 namespace live {
 
+
 cover_provider::cover_provider ()
-    : QQuickImageProvider(QQuickImageProvider::Image)
+    : QQuickAsyncImageProvider()
 {
     /*  Budget: 256 thumbnails' worth of a 256x256 RGBA8888 image (~64 MiB).
         or a little list when full res covers take up space for ~1 MiB each one. */
     static const qsizetype thumbnail_cost = QImage(256, 256, QImage::Format_RGBA8888).sizeInBytes();
     m_cache.setMaxCost(256 * thumbnail_cost);
+
+    // all response calls here
+    m_response_pool.setMaxThreadCount(std::max(2, QThread::idealThreadCount() / 2));
+}
+
+cover_provider::~cover_provider ()
+{
+    m_response_pool.waitForDone();
+}
+
+QQuickImageResponse *
+cover_provider::requestImageResponse(const QString &id, const QSize &requestedSize)
+{
+    auto *response = new cover_image_response(this, id, requestedSize);
+    m_response_pool.start(response);
+    return response;
+}
+
+void
+cover_provider::register_source(const QString &hash, const QUrl &source, size_t crop_and_resize)
+{
+    QWriteLocker locker(&m_sources_lock);
+    m_sources.insert(hash, { source, crop_and_resize });
 }
 
 bool
@@ -56,7 +82,7 @@ cover_provider::store(const QString &hash, const QVariant &cover_from_metadata, 
 }
 
 QImage
-cover_provider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
+cover_provider::resolve_blocking(const QString &id, const QSize &requestedSize)
 {
     Q_UNUSED(requestedSize);
 
@@ -77,10 +103,6 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
     m_spin_lock.clear(std::memory_order_release);
 
     if (!img.isNull()) {
-        if (size) {
-            *size = img.size();
-        }
-
         return img;
     }
 
@@ -94,12 +116,37 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
         // Store in memory cache
         store (id, img);
 
-        if (size) {
-            *size = img.size();
-        }
-
         return img;
     }
+
+    // Nothing cached anywhere — first time this cover has ever been
+    // asked for. Look up where to decode it from.
+    QUrl source;
+    size_t crop_and_resize = 0;
+    {
+        QReadLocker locker(&m_sources_lock);
+        auto it = m_sources.constFind(id);
+        if (it != m_sources.constEnd()) {
+            source = it->source;
+            crop_and_resize = it->crop_and_resize;
+        }
+    }
+
+    if (!source.isEmpty()) {
+        const QByteArray local_path = source.toLocalFile().toUtf8();
+        TagLib::FileRef file(local_path.constData());
+
+        if (!file.isNull()) {
+            img = extract_cover(file.file(), crop_and_resize);
+
+            if (!img.isNull()) {
+                qCDebug(l_coverprovider) << "Decoded cover on demand for " << id;
+                store(id, img);
+                return img;
+            }
+        }
+    }
+
 
     qCDebug (l_coverprovider) << "Could not fetch thumbnail from the requestImage standpoint.";
 
@@ -108,10 +155,6 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
 
     // _s suffix creates a QString on compilation time cleanly without macros
     QImage default_cover(default_cover_uri);
-
-    if (size) {
-        *size = default_cover.size();
-    }
 
     return default_cover;
 }
