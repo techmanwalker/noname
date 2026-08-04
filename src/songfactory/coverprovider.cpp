@@ -11,7 +11,7 @@ cover_provider::cover_provider ()
 }
 
 bool
-cover_provider::store(const QString &hash, const QVariant &cover_from_metadata)
+cover_provider::store(const QString &hash, const QVariant &cover_from_metadata, bool save_to_disk_cache)
 {
     if (!cover_from_metadata.canConvert<QImage>()) {
         return false;
@@ -29,7 +29,7 @@ cover_provider::store(const QString &hash, const QVariant &cover_from_metadata)
     
     m_cache.insert(hash, img);
 
-    if (!localdata::has_thumbnail(hash)) {
+    if (!localdata::has_thumbnail(hash) && save_to_disk_cache) {
 
         // async, won't block
         localdata::write_thumbnail(hash, img);

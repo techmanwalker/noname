@@ -4,11 +4,11 @@
 
 #include <QCryptographicHash>
 #include <QLoggingCategory>
+#include <QUuid>
 
 #include <QtConcurrent/QtConcurrent>
 
 #include <cstddef>
-#include <qloggingcategory.h>
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
@@ -72,7 +72,7 @@ lanczos_resize_square(const QImage &square, int target_size)
 }
 
 QImage
-extract_cover (TagLib::File *file, song_factory::attributes a)
+extract_cover (TagLib::File *file, size_t crop_and_resize)
 {
     if (!file) {
         return QImage();
@@ -115,8 +115,8 @@ extract_cover (TagLib::File *file, song_factory::attributes a)
     const int side = std::min(cover.width(), cover.height());
     cover = cover.copy((cover.width() - side) / 2, (cover.height() - side) / 2, side, side);
 
-    if (a.crop_and_resize != 0 && static_cast<size_t>(side) != a.crop_and_resize) {
-        cover = lanczos_resize_square(cover, static_cast<int>(a.crop_and_resize));
+    if (crop_and_resize != 0 && static_cast<size_t>(side) != crop_and_resize) {
+        cover = lanczos_resize_square(cover, static_cast<int>(crop_and_resize));
     }
 
     return cover;
@@ -230,17 +230,46 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
         return song;
     }
 
-    const QString thumb_hash = thumbnail_hash_for(m_source, a.crop_and_resize);
+    if (a.use_thumbnail_cache) {
 
-    // if the thumbnail is cached, cover_provider will handle it, but if not, manual store is triggered
-    if (!localdata::has_thumbnail(thumb_hash)) {
-        if (!m_cover_provider->store(thumb_hash, extract_cover(file.file(), a))) {
+        const QString thumb_hash = thumbnail_hash_for(m_source, a.crop_and_resize);
+
+        // if the thumbnail is cached, cover_provider will handle it, but if not, manual store is triggered
+        if (!localdata::has_thumbnail(thumb_hash)) {
+            bool success = m_cover_provider->store(
+                thumb_hash, 
+                extract_cover(file.file(), a.crop_and_resize)
+            );
+
+            if (!success) {
+                qCWarning (l_songfactory) << "Cover was retrieved from audio file, but was unable to store in memory cache.";
+            };
+        }
+
+        // the cover provider will handle the rest with the path hash
+        song.cover = cover_provider::schema + thumb_hash;
+    } else {
+
+        // generate a unique uuid to not ever touch a real thumbnail
+
+        QString cover_uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+
+        qCDebug (l_songfactory) << "no cache thumbnail uuid: " << cover_uuid;
+
+        bool success = m_cover_provider->store(
+            cover_uuid, 
+            extract_cover(file.file(), a.crop_and_resize), // always extract from audio file
+            false // do not save to disk cache, must be fetched by in memory cache
+        );
+
+        if (!success) {
             qCWarning (l_songfactory) << "Cover was retrieved from audio file, but was unable to store in memory cache.";
-        };
-    }
+        }
 
-    // the cover provider will handle the rest
-    song.cover = cover_provider::schema + thumb_hash;
+        // the cover provider never really cared about the hash if it is from memory
+        song.cover = cover_provider::schema + cover_uuid;
+
+    }
 
     if (promise.isCanceled()) {
         return {};

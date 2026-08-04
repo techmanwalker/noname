@@ -15,7 +15,7 @@ public:
     cover_provider();
 
     // Save picture and return a generated UUID
-    bool store(const QString &hash, const QVariant &cover_from_metadata);
+    bool store(const QString &hash, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
     // Method called by QtQuick to retrieve te associated image
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
