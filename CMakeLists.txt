@@ -131,9 +131,6 @@ qt_add_qml_module(listings
     QML_FILES
         ${LISTINGS_QMLS}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/Listings"
-    DEPENDENCIES
-        TARGET playereffects
-        TARGET primitives
 )
 
 target_link_libraries(listings
@@ -150,8 +147,6 @@ qt_add_qml_module(mediasequences
     SOURCES
         ${QML_MEDIASEQUENCES_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
-    DEPENDENCIES
-        TARGET primitives
 )
 
 target_link_libraries(mediasequences
@@ -186,10 +181,6 @@ qt_add_qml_module(playerpresenter
         src/presenters/context/playerpresenter/playerpresenter.hpp
         src/presenters/context/playerpresenter/playerpresenter.cpp
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
-    DEPENDENCIES
-        TARGET listings
-        TARGET mediasequences
-        TARGET primitives
 )
 
 target_link_libraries(playerpresenter
@@ -244,11 +235,6 @@ qt_add_qml_module(fullscreenplayer
         ${PLAYER_QMLS}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Fullscreen"
-    DEPENDENCIES
-        TARGET listings
-        TARGET mediasequences
-        TARGET playerpresenter
-        TARGET lyricsmanifest
 )
 
 target_link_libraries(fullscreenplayer
@@ -275,10 +261,6 @@ qt_add_qml_module(browser
         ${BROWSER_QMLS}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Browser"
-    DEPENDENCIES
-        TARGET listings
-        TARGET mediasequences
-        TARGET primitives
 )
 
 target_link_libraries(browser
@@ -469,15 +451,6 @@ qt_add_qml_module(${PROJECT_NAME}
         src/qml/Main.qml
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/App"
-    DEPENDENCIES
-        TARGET browser
-        TARGET fullscreenplayer
-        TARGET mediasequences
-        TARGET listings
-        TARGET playereffects
-        TARGET playerpresenter
-        TARGET primitives
-        TARGET lyricsmanifest
 )
 
 qt_add_translations(noname
