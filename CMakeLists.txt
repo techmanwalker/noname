@@ -152,6 +152,7 @@ qt_add_qml_module(mediasequences
 target_link_libraries(mediasequences
     PUBLIC
         covers
+        songfactory
         
     PRIVATE
         Qt6::Core
@@ -162,7 +163,6 @@ target_link_libraries(mediasequences
         memory
         primitives
         rapidfuzz::rapidfuzz
-        songfactory
         # must not depend on audioengine nor playerpresenter
 )
 
@@ -438,11 +438,9 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${BASIC_LIBRARIES}
         audioengine
-        covers
         browser
         fullscreenplayer
         mediasequences
-        songfactory
 )
 
 qt_add_qml_module(${PROJECT_NAME}
@@ -469,16 +467,9 @@ if(BUILD_TESTS)
     target_link_libraries(mockupv2
         PUBLIC
             ${BASIC_LIBRARIES}
-            covers
-            fullscreenplayer
-            playereffects
-            primitives
             audioengine
-            debugtools
-            lyricsmanifest
+            fullscreenplayer
             mediasequences
-            memory
-            primitives
     )
 
     target_include_directories(mockupv2
@@ -505,14 +496,9 @@ if(BUILD_TESTS)
             ${BASIC_LIBRARIES}
             audioengine
             browser
-            covers
             debugtools
-            mediasequences
-            memory
             fullscreenplayer
-            playereffects
-            primitives
-            songfactory
+            mediasequences
     )
 
     target_include_directories(startpagetest
