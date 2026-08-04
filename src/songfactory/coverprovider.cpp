@@ -23,7 +23,7 @@ cover_provider::store(const QVariant &cover_from_metadata, const QString &id)
     }
     
     // guarantee contiguous memory
-    m_linear_cache.push_back({id, std::move(img)});
+    m_cache.insert(id, std::move(img));
 
     // free lock
     m_spin_lock.clear(std::memory_order_release);
@@ -38,15 +38,18 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
 
     // 'id' contains the fragment that goes after "image://covers/"
     // as previous covers are immutable and are not reallocated, concurrently reading is safe
-    for (const auto &pair : m_linear_cache) {
-        if (pair.first == id) {
-            QImage img = pair.second;
-            if (size) {
-                *size = img.size();
-            }
-            return img;
+    auto it = m_cache.find(id);
+
+    if (it != m_cache.end()) {
+        QImage img = it.value();
+
+        if (size) {
+            *size = img.size();
         }
+
+        return img;
     }
+
 
     // To be able to actually retrieve the default cover
     using namespace Qt::StringLiterals;
