@@ -18,6 +18,8 @@ find_package(TagLib REQUIRED)
 
 find_package(rapidfuzz REQUIRED)
 
+find_package(Ktx REQUIRED)
+
 qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
 qt_policy(SET QTP0005 NEW)
@@ -342,6 +344,7 @@ target_link_libraries(songfactory
         FFmpeg::avutil
         FFmpeg::swscale
         TagLib::tag
+        memory
 )
 
 target_include_directories(songfactory
@@ -370,11 +373,15 @@ target_include_directories(debugtools
 # Configuration, caching and all data the player needs to remember
 add_library(memory STATIC
     src/memory/configuration.cpp
+    src/memory/localdata.cpp
+    src/memory/thumbnails.cpp
 )
 
 target_link_libraries(memory
     PRIVATE
         Qt6::Core
+        Qt6::Gui
+        KTX::ktx
 )
 
 target_include_directories(memory

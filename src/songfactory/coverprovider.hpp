@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QCache>
 #include <QQuickImageProvider>
 #include <QObject>
 
@@ -11,7 +12,7 @@ public:
     cover_provider();
 
     // Save picture and return a generated UUID
-    QString store(const QVariant &cover_from_metadata);
+    bool store(const QVariant &cover_from_metadata, const QString &id);
 
     // Method called by QtQuick to retrieve te associated image
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;

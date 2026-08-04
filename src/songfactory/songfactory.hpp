@@ -15,6 +15,7 @@ public:
 
     struct attributes {
         size_t crop_and_resize = 0; // if non-zero, song_factory will crop the center of the artwork and rescale it to NxN to save memory
+        bool   use_thumbnail_cache = true; // if true, check localdata's on-disk thumbnail cache before decoding cover art from the audio file
     };
 
     // Never touches each other's instances' signals nor members
@@ -45,6 +46,10 @@ public:
     static
     QFuture<QList<Types::Song>>
     batch_extract (const Container &sources, std::shared_ptr<cover_provider> provider, attributes a);
+
+    static
+    QString
+    thumbnail_hash_for (const QUrl &source, size_t crop_and_resize);
 
 private:
     // private and linear constructor

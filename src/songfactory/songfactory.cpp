@@ -1,5 +1,7 @@
 #include "songfactory.hpp"
+#include "thumbnails.hpp"
 
+#include <QCryptographicHash>
 #include <QLoggingCategory>
 
 #include <QtConcurrent/QtConcurrent>
@@ -216,20 +218,40 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
         return {};
     }
 
-    QImage cover_image = extract_cover(file.file(), a);
+    const QString thumb_hash = thumbnail_hash_for(m_source, a.crop_and_resize);
+    QImage cover_image;
 
-    QString cover_uid = "";
+    if (a.use_thumbnail_cache) {
+        cover_image = localdata::fetch_thumbnail(thumb_hash);
+
+        if (cover_image.isNull()) {
+            cover_image = extract_cover(file.file(), a);
+
+            if (!cover_image.isNull()) {
+                // qCDebug (l_songfactory) << "Generated a thumbnail for " << m_source;
+                localdata::write_thumbnail(thumb_hash, cover_image);
+            }
+        } else {
+            // qCDebug (l_songfactory) << "Thumbnail successfully retrieved from disk for " << m_source;
+        }
+    } else {
+        cover_image = extract_cover(file.file(), a);
+
+        if (!cover_image.isNull() && !localdata::has_thumbnail(thumb_hash)) {
+            localdata::write_thumbnail(thumb_hash, cover_image);
+        }
+    }
 
     if (m_cover_provider == nullptr) {
         qCWarning(l_songfactory) << "Cover provider was not set. No covers will be appended.";
     } else {
-        cover_uid = m_cover_provider->store(cover_image);
+        bool success = m_cover_provider->store(cover_image, thumb_hash);
 
-        if (cover_uid.isEmpty()) {
+        if (!success) {
             qCDebug (l_songfactory) << "No cover uuid returned. Falling back to default...";
             song.cover = QUrl(QString(m_cover_provider->default_cover_uri));
         } else {
-            song.cover = cover_provider::schema + cover_uid;
+            song.cover = cover_provider::schema + thumb_hash;
         }
     }
 
@@ -238,6 +260,23 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
     }
 
     return song;
+}
+
+/*  Deterministic, session-independent cache key for a song's thumbnail.
+    Hashing the absolute path (not file contents) keeps this cheap — an MD5
+    over a path-length string is microseconds, dwarfed by the decode/encode
+    it lets us skip. crop_and_resize is folded in too, since the cache
+    stores the already-resized image: without it, two call sites requesting
+    different sizes for the same song would collide on one cache entry and
+    silently serve the wrong resolution to whichever asked second. */
+QString
+song_factory::thumbnail_hash_for (const QUrl &source, size_t crop_and_resize)
+{
+    const QByteArray key = source.toLocalFile().toUtf8()
+                          + ':' + QByteArray::number(qulonglong(crop_and_resize));
+
+    return QString::fromLatin1(
+        QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
 }
 
 void
