@@ -1,4 +1,5 @@
 #include "songfactory.hpp"
+#include "coverprovider.hpp"
 #include "thumbnails.hpp"
 
 #include <QCryptographicHash>
@@ -7,6 +8,7 @@
 #include <QtConcurrent/QtConcurrent>
 
 #include <cstddef>
+#include <qloggingcategory.h>
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
@@ -218,42 +220,27 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
         return {};
     }
 
-    const QString thumb_hash = thumbnail_hash_for(m_source, a.crop_and_resize);
-    QImage cover_image;
-
-    if (a.use_thumbnail_cache) {
-        cover_image = localdata::fetch_thumbnail(thumb_hash);
-
-        if (cover_image.isNull()) {
-            cover_image = extract_cover(file.file(), a);
-
-            if (!cover_image.isNull()) {
-                // qCDebug (l_songfactory) << "Generated a thumbnail for " << m_source;
-                localdata::write_thumbnail(thumb_hash, cover_image);
-            }
-        } else {
-            // qCDebug (l_songfactory) << "Thumbnail successfully retrieved from disk for " << m_source;
-        }
-    } else {
-        cover_image = extract_cover(file.file(), a);
-
-        if (!cover_image.isNull() && !localdata::has_thumbnail(thumb_hash)) {
-            localdata::write_thumbnail(thumb_hash, cover_image);
-        }
-    }
-
     if (m_cover_provider == nullptr) {
         qCWarning(l_songfactory) << "Cover provider was not set. No covers will be appended.";
-    } else {
-        bool success = m_cover_provider->store(cover_image, thumb_hash);
 
-        if (!success) {
-            qCDebug (l_songfactory) << "No cover uuid returned. Falling back to default...";
-            song.cover = QUrl(QString(m_cover_provider->default_cover_uri));
-        } else {
-            song.cover = cover_provider::schema + thumb_hash;
+        if (promise.isCanceled()) {
+            return {};
         }
+
+        return song;
     }
+
+    const QString thumb_hash = thumbnail_hash_for(m_source, a.crop_and_resize);
+
+    // if the thumbnail is cached, cover_provider will handle it, but if not, manual store is triggered
+    if (!localdata::has_thumbnail(thumb_hash)) {
+        if (!m_cover_provider->store(thumb_hash, extract_cover(file.file(), a))) {
+            qCWarning (l_songfactory) << "Cover was retrieved from audio file, but was unable to store in memory cache.";
+        };
+    }
+
+    // the cover provider will handle the rest
+    song.cover = cover_provider::schema + thumb_hash;
 
     if (promise.isCanceled()) {
         return {};
