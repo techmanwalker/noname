@@ -3,6 +3,9 @@
 
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
+namespace covers {
+namespace live {
+
 cover_provider::cover_provider ()
     : QQuickImageProvider(QQuickImageProvider::Image)
 {
@@ -43,10 +46,10 @@ cover_provider::store(const QString &hash, const QVariant &cover_from_metadata, 
         qCWarning(l_coverprovider) << "Cover for" << hash << "exceeds the cache's max cost; not kept in memory.";
     }
 
-    if (!localdata::has_thumbnail(hash) && save_to_disk_cache) {
+    if (!covers::disk::has_thumbnail(hash) && save_to_disk_cache) {
 
         // async, won't block
-        localdata::write_thumbnail(hash, img);
+        covers::disk::write_thumbnail(hash, img);
     }
 
     return true;
@@ -82,7 +85,7 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
     }
 
     // If not in m_cache, fetch from disk
-    img = localdata::fetch_thumbnail(id);
+    img = covers::disk::fetch_thumbnail(id);
 
     if (!img.isNull()) {
 
@@ -125,4 +128,7 @@ cover_provider::is_cached (const QString &hash)
     m_spin_lock.clear(std::memory_order_release);
 
     return present;
+}
+
+}
 }

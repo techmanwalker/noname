@@ -44,7 +44,7 @@ main (int argc, char ** argv)
     auto &shortcuts_list = ShortcutsList::instance();
 
     // cover cache to hold the shortcuts covers
-    std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
 
 
     QList<QUrl> shortcuts {

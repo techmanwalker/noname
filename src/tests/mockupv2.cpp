@@ -63,7 +63,7 @@ main (int argc, char ** argv)
     testLyrics.appendLyric(15000, "Just like everybody else does");
 
     // Cover cache
-    std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
 
     // Playlist model
     auto &nextQueue = PlayQueue::instance();

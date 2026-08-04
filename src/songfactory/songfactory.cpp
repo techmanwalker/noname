@@ -1,4 +1,5 @@
 #include "songfactory.hpp"
+#include "coverextract.hpp"
 #include "coverprovider.hpp"
 #include "thumbnails.hpp"
 
@@ -8,28 +9,11 @@
 
 #include <QtConcurrent/QtConcurrent>
 
-#include <cstddef>
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
-extern "C" {
-#include <libavutil/pixfmt.h>
-#include <libswscale/swscale.h>
-}
-
-
-Q_LOGGING_CATEGORY(song_factory::l_songfactory, "noname.songfactory");
 
 namespace {
-
-/*  QImage::fromData() triggers Qt's own image-format plugin loading
-    (QFactoryLoader) the first several times a given picture format is
-    decoded — a process-wide, lazily-populated registry that isn't safe to
-    race from multiple threads simultaneously. Every worker thread in this
-    pool calls this for cover art, so the decode step gets serialized —
-    same fix as before, just living here again now that Qt is doing the
-    decoding instead of FFmpeg/swscale. */
-QMutex image_decode_mutex;
 
 QString
 to_qstring (const TagLib::String &s)
@@ -37,97 +21,15 @@ to_qstring (const TagLib::String &s)
     return QString::fromStdString(s.to8Bit(true)); // true = UTF-8
 }
 
-/* `square` must already be width == height. Returns a null QImage on
-   swscale context failure (e.g. unsupported CPU path — practically never
-   happens, but don't crash on it). */
-QImage
-lanczos_resize_square(const QImage &square, int target_size)
-{
-    const QImage src = square.convertToFormat(QImage::Format_RGBA8888);
-
-    // qCDebug (song_factory::l_songfactory()) << "Attempting to rescale a cover. Source size: " << src.width() << "x" << src.height();
-
-    SwsContext *sws = sws_getContext(
-        src.width(), src.height(), AV_PIX_FMT_RGBA,
-        target_size, target_size, AV_PIX_FMT_RGBA,
-        SWS_LANCZOS, nullptr, nullptr, nullptr);
-    if (!sws) {
-        return QImage();
-    }
-
-    QImage dst(target_size, target_size, QImage::Format_RGBA8888);
-
-    const uint8_t *src_slices[1] = { src.constBits() };
-    int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
-    uint8_t *dst_slices[1] = { dst.bits() };
-    int dst_strides[1] = { static_cast<int>(dst.bytesPerLine()) };
-
-    sws_scale(sws, src_slices, src_strides, 0, src.height(), dst_slices, dst_strides);
-    sws_freeContext(sws);
-
-    /* qCDebug (song_factory::l_songfactory()) << "Rescaling completed. Source size: " << src.width() << "x" << src.height()
-        << "; destination size: " << dst.width() << "x" << dst.height();*/
-
-    return dst;
 }
 
-QImage
-extract_cover (TagLib::File *file, size_t crop_and_resize)
-{
-    if (!file) {
-        return QImage();
-    }
 
-    // complexProperties("PICTURE") must be called on the File, not the Tag —
-    // for most formats the base File implementation just forwards to the
-    // Tag's own complexProperties(), but FLAC::File overrides this
-    // specifically, because FLAC's cover art (METADATA_BLOCK_PICTURE) is a
-    // top-level container block, not part of the tag itself. Calling this
-    // on tag() instead skips that override and silently returns nothing
-    // for every FLAC file, regardless of what's actually embedded.
-    TagLib::List<TagLib::VariantMap> pictures = file->complexProperties("PICTURE");
-    if (pictures.isEmpty()) {
-        return QImage();
-    }
-
-    const TagLib::VariantMap &picture = pictures.front();
-
-    auto it = picture.find("data");
-    if (it == picture.end() || it->second.isEmpty()) {
-        return QImage();
-    }
-
-    TagLib::ByteVector data = it->second.value<TagLib::ByteVector>();
-    if (data.isEmpty()) {
-        return QImage();
-    }
-    QImage cover;
-
-    {
-        QMutexLocker locker(&image_decode_mutex);
-        cover = QImage::fromData(reinterpret_cast<const uchar *>(data.data()), static_cast<int>(data.size()));
-    }
-
-    if (cover.isNull()) {
-        return QImage();
-    }
-
-    const int side = std::min(cover.width(), cover.height());
-    cover = cover.copy((cover.width() - side) / 2, (cover.height() - side) / 2, side, side);
-
-    if (crop_and_resize != 0 && static_cast<size_t>(side) != crop_and_resize) {
-        cover = lanczos_resize_square(cover, static_cast<int>(crop_and_resize));
-    }
-
-    return cover;
-}
-
-} // namespace
+Q_LOGGING_CATEGORY(song_factory::l_songfactory, "noname.songfactory");
 
 // No need for std::optional at the moment. A Song without source is already invalid.
 
 // clean constructor for both qfuture and callback variants
-song_factory::song_factory(const QUrl &source, std::shared_ptr<cover_provider> provider)
+song_factory::song_factory(const QUrl &source, std::shared_ptr<covers::live::cover_provider> provider)
     : m_source(source),
       m_cover_provider(provider)
 {}
@@ -154,7 +56,7 @@ song_factory::extraction_pool()
           and QMediaPlayer lifecycle run entirely on a dedicated worker thread.
 */
 QFuture<Types::Song>
-song_factory::extract(const QUrl &source, std::shared_ptr<cover_provider> provider, attributes a)
+song_factory::extract(const QUrl &source, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
 {
     // delegate instantiation and execution to Qt thread pool
     return QtConcurrent::run(extraction_pool(), [source, provider, a](QPromise<Types::Song> &promise) {
@@ -230,15 +132,17 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
         return song;
     }
 
+    using namespace covers::live;
+
     if (a.use_thumbnail_cache) {
 
-        const QString thumb_hash = thumbnail_hash_for(m_source, a.crop_and_resize);
+        const QString thumb_hash = covers::disk::thumbnail_hash_for(m_source, a.crop_and_resize);
 
         // if the thumbnail is cached, cover_provider will handle it, but if not, manual store is triggered
-        if (!localdata::has_thumbnail(thumb_hash)) {
+        if (!covers::disk::has_thumbnail(thumb_hash)) {
             bool success = m_cover_provider->store(
                 thumb_hash, 
-                extract_cover(file.file(), a.crop_and_resize)
+                covers::live::extract_cover(file.file(), a.crop_and_resize)
             );
 
             if (!success) {
@@ -247,7 +151,7 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
         }
 
         // the cover provider will handle the rest with the path hash
-        song.cover = cover_provider::schema + thumb_hash;
+        song.cover = covers::live::cover_provider::schema + thumb_hash;
     } else {
 
         // generate a unique uuid to not ever touch a real thumbnail
@@ -258,7 +162,7 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
 
         bool success = m_cover_provider->store(
             cover_uuid, 
-            extract_cover(file.file(), a.crop_and_resize), // always extract from audio file
+            covers::live::extract_cover(file.file(), a.crop_and_resize), // always extract from audio file
             false // do not save to disk cache, must be fetched by in memory cache
         );
 
@@ -276,23 +180,6 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
     }
 
     return song;
-}
-
-/*  Deterministic, session-independent cache key for a song's thumbnail.
-    Hashing the absolute path (not file contents) keeps this cheap — an MD5
-    over a path-length string is microseconds, dwarfed by the decode/encode
-    it lets us skip. crop_and_resize is folded in too, since the cache
-    stores the already-resized image: without it, two call sites requesting
-    different sizes for the same song would collide on one cache entry and
-    silently serve the wrong resolution to whichever asked second. */
-QString
-song_factory::thumbnail_hash_for (const QUrl &source, size_t crop_and_resize)
-{
-    const QByteArray key = source.toLocalFile().toUtf8()
-                          + ':' + QByteArray::number(qulonglong(crop_and_resize));
-
-    return QString::fromLatin1(
-        QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
 }
 
 void
