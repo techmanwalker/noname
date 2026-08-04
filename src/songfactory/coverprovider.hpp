@@ -1,9 +1,8 @@
 #pragma once
 
 #include <QCache>
+#include <QLoggingCategory>
 #include <QQuickImageProvider>
-#include <QObject>
-#include <qloggingcategory.h>
 
 Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
 
@@ -29,6 +28,10 @@ public:
     static constexpr char default_cover_uri[] = "";
 
 private:
-    QHash<QString, QImage> m_cache;
-    std::atomic_flag m_spin_lock = ATOMIC_FLAG_INIT; // multithreaded insertion
+    QCache<QString, QImage> m_cache;
+
+    /*  guards ALL cache access, not just insertion — QCache can evict (delete)
+        an entry from any thread during insert(), so unlocked reads are no longer
+        safe like they were with QHash */
+    std::atomic_flag m_spin_lock = ATOMIC_FLAG_INIT; 
 };
