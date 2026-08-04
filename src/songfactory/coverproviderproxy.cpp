@@ -13,9 +13,9 @@ __cover_provider_PROXY::__cover_provider_PROXY(
 // Simply redirect requests to the real cover provider.
 QImage 
 __cover_provider_PROXY::requestImage(
-    const QString &id,
+    const QString &hash,
     QSize *size,
     const QSize &requestedSize)
 {
-        return m_real->requestImage(id, size, requestedSize);
+        return m_real->requestImage(hash, size, requestedSize);
 }

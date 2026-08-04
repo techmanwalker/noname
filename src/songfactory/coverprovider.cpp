@@ -1,4 +1,9 @@
 #include "coverprovider.hpp"
+#include "thumbnails.hpp"
+#include <qloggingcategory.h>
+#include <qobject.h>
+
+Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
 cover_provider::cover_provider ()
     : QQuickImageProvider(QQuickImageProvider::Image)
@@ -6,7 +11,7 @@ cover_provider::cover_provider ()
 }
 
 bool
-cover_provider::store(const QVariant &cover_from_metadata, const QString &id)
+cover_provider::store(const QString &hash, const QVariant &cover_from_metadata)
 {
     if (!cover_from_metadata.canConvert<QImage>()) {
         return false;
@@ -22,8 +27,13 @@ cover_provider::store(const QVariant &cover_from_metadata, const QString &id)
         // very short active wait
     }
     
-    // guarantee contiguous memory
-    m_cache.insert(id, std::move(img));
+    m_cache.insert(hash, img);
+
+    if (!localdata::has_thumbnail(hash)) {
+
+        // async, won't block
+        localdata::write_thumbnail(hash, img);
+    }
 
     // free lock
     m_spin_lock.clear(std::memory_order_release);
@@ -36,8 +46,11 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
 {
     Q_UNUSED(requestedSize);
 
+    // Get from hot cache first
+
     // 'id' contains the fragment that goes after "image://covers/"
     // as previous covers are immutable and are not reallocated, concurrently reading is safe
+    // 'id' must correspond to a hash printed by song_factory::thumbnail_hash_for
     auto it = m_cache.find(id);
 
     if (it != m_cache.end()) {
@@ -50,6 +63,24 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
         return img;
     }
 
+    // If not in m_cache, fetch from disk
+    QImage img = localdata::fetch_thumbnail(id);
+
+    if (!img.isNull()) {
+
+        qCDebug(l_coverprovider) << "Fetched thumbnail from disk cache for " << id;
+
+        // Store in memory cache
+        store (id, img);
+
+        if (size) {
+            *size = img.size();
+        }
+
+        return img;
+    }
+
+    qCDebug (l_coverprovider) << "Could not fetch thumbnail from the requestImage standpoint.";
 
     // To be able to actually retrieve the default cover
     using namespace Qt::StringLiterals;
@@ -62,4 +93,10 @@ cover_provider::requestImage(const QString &id, QSize *size, const QSize &reques
     }
 
     return default_cover;
+}
+
+bool
+cover_provider::is_cached (const QString &hash)
+{
+    return m_cache.contains(hash);
 }
