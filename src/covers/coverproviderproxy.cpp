@@ -5,17 +5,16 @@
 __cover_provider_PROXY::__cover_provider_PROXY(
     std::shared_ptr<covers::live::cover_provider> realProvider
     )
-    : QQuickImageProvider(QQuickImageProvider::Image),
+    : QQuickAsyncImageProvider(),
       m_real(realProvider) 
 {
 }
 
 // Simply redirect requests to the real cover provider.
-QImage 
-__cover_provider_PROXY::requestImage(
-    const QString &hash,
-    QSize *size,
+QQuickImageResponse *
+__cover_provider_PROXY::requestImageResponse(
+    const QString &id,
     const QSize &requestedSize)
 {
-        return m_real->requestImage(hash, size, requestedSize);
+        return m_real->requestImageResponse(id, requestedSize);
 }

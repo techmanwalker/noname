@@ -134,24 +134,19 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
 
     using namespace covers::live;
 
-    if (a.use_thumbnail_cache) {
+        if (a.use_thumbnail_cache) {
 
         const QString thumb_hash = covers::disk::thumbnail_hash_for(m_source, a.crop_and_resize);
 
-        // if the thumbnail is cached, cover_provider will handle it, but if not, manual store is triggered
-        if (!covers::disk::has_thumbnail(thumb_hash)) {
-            bool success = m_cover_provider->store(
-                thumb_hash, 
-                covers::live::extract_cover(file.file(), a.crop_and_resize)
-            );
-
-            if (!success) {
-                qCWarning (l_songfactory) << "Cover was retrieved from audio file, but was unable to store in memory cache.";
-            };
-        }
+        /*  No decode here anymore — just tell cover_provider where to find
+            the cover if/when it's actually requested (e.g. the song scrolls
+            into view). Cheap regardless of whether a disk thumbnail already
+            exists; keeps the registry correct if the disk cache was ever
+            cleared externally. */
+        m_cover_provider->register_source(thumb_hash, m_source, a.crop_and_resize);
 
         // the cover provider will handle the rest with the path hash
-        song.cover = covers::live::cover_provider::schema + thumb_hash;
+        song.cover = cover_provider::schema + thumb_hash;
     } else {
 
         // generate a unique uuid to not ever touch a real thumbnail
