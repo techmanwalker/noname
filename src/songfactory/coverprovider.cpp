@@ -1,39 +1,34 @@
 #include "coverprovider.hpp"
 
-#include <QUuid>
-
 cover_provider::cover_provider ()
     : QQuickImageProvider(QQuickImageProvider::Image)
 {
 }
 
-QString
-cover_provider::store(const QVariant &cover_from_metadata)
+bool
+cover_provider::store(const QVariant &cover_from_metadata, const QString &id)
 {
     if (!cover_from_metadata.canConvert<QImage>()) {
-        return QString();
+        return false;
     }
 
     QImage img = cover_from_metadata.value<QImage>();
     if (img.isNull()) {
-        return QString();
+        return false;
     }
 
-    // generate uuid for this cover
-    QString uid = QUuid::createUuid().toString(QUuid::Id128);
-
-    // acquire tomic lock (fast loop on cpu, no syscalls)
+    // acquire atomic lock (fast loop on cpu, no syscalls)
     while (m_spin_lock.test_and_set(std::memory_order_acquire)) {
         // very short active wait
     }
     
     // guarantee contiguous memory
-    m_linear_cache.push_back({uid, std::move(img)});
+    m_linear_cache.push_back({id, std::move(img)});
 
     // free lock
     m_spin_lock.clear(std::memory_order_release);
 
-    return uid;
+    return true;
 }
 
 QImage
