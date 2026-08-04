@@ -3,7 +3,7 @@
 // --- Cheats so the QQmlEngine doesn't hard kill the player every time it's closed
 // Please don't pay too much attention to the syntax here. Qt threatened me to do this.
 __cover_provider_PROXY::__cover_provider_PROXY(
-    std::shared_ptr<cover_provider> realProvider
+    std::shared_ptr<covers::live::cover_provider> realProvider
     )
     : QQuickImageProvider(QQuickImageProvider::Image),
       m_real(realProvider) 

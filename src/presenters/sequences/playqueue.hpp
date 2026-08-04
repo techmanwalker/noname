@@ -51,7 +51,7 @@ public:
     void respawn_queue (const PlaylistSequence &new_queue);
 
     // where are the covers for drag and drop appends saved?
-    std::shared_ptr<cover_provider> chosen_cover_provider;
+    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
 signals:
     void playheadChanged(bool play_afterwards = false);

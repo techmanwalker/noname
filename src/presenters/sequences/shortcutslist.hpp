@@ -33,7 +33,7 @@ public:
     // shorthand
     QFuture<void> read_conf_and_load ();
 
-    std::shared_ptr<cover_provider> chosen_cover_provider;
+    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
 private:
     // hidden constructor

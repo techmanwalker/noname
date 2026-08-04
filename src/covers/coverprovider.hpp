@@ -6,6 +6,11 @@
 
 Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
 
+// covers::live: hot cache on memory right away to consume, already decoded and yet but cheap to decode
+
+namespace covers {
+namespace live {
+
 // Enables loading embedded thumbnails to memory.
 class cover_provider : public QQuickImageProvider
 {
@@ -35,3 +40,6 @@ private:
         safe like they were with QHash */
     std::atomic_flag m_spin_lock = ATOMIC_FLAG_INIT; 
 };
+
+}
+}

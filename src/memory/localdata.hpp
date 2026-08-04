@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QImage>
 #include <QLoggingCategory>
 #include <QUrl>
 

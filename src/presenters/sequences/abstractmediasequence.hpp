@@ -94,7 +94,7 @@ protected:
     batch_append(const Container &items);
 
     // only extract songs metadata
-    QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<cover_provider> provider);
+    QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<covers::live::cover_provider> provider);
 
     /*  Append items one at a time as each future resolves, instead of waiting for the whole
     batch — for progressive/incremental loading (e.g. song_factory emitting results as

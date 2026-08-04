@@ -14,7 +14,7 @@ int main (int argc, char ** argv)
     QCoreApplication app (argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
-    std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
     auto &conf = configuration::manager::instance();
 
     QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);

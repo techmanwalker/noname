@@ -43,7 +43,7 @@ public:
     Q_INVOKABLE QList<Types::Song> flattened () const; // equivalent to "All Tracks" 
 
     // where are loaded covers extracted to?
-    std::shared_ptr<cover_provider> chosen_cover_provider;
+    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
 signals:
     void refreshFinished ();

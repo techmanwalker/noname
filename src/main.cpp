@@ -22,7 +22,7 @@ main (int argc, char ** argv)
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
         // cover cache to hold the shortcuts covers across the entire session
-    std::shared_ptr<cover_provider> covers = std::make_shared<cover_provider>();
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */

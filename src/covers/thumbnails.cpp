@@ -12,7 +12,9 @@
 #include <algorithm>
 #include <thread>
 
-namespace localdata {
+namespace covers {
+
+namespace disk {
 
 Q_LOGGING_CATEGORY(l_localdata, "noname.memory.localdata")
 
@@ -56,7 +58,7 @@ constexpr ktx_uint32_t k_vk_format_r8g8b8a8_srgb = 43;
 QString
 thumbnail_file_path (const QString &hash)
 {
-    QDir thumb_dir (path(dirs::thumbnails).toLocalFile());
+    QDir thumb_dir (path(localdata::dirs::thumbnails).toLocalFile());
     thumb_dir.mkpath(".");
     return thumb_dir.absoluteFilePath(hash + QStringLiteral(".ktx2"));
 }
@@ -157,6 +159,23 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
 
 } // anonymous
 
+/*  Deterministic, session-independent cache key for a song's thumbnail.
+    Hashing the absolute path (not file contents) keeps this cheap — an MD5
+    over a path-length string is microseconds, dwarfed by the decode/encode
+    it lets us skip. crop_and_resize is folded in too, since the cache
+    stores the already-resized image: without it, two call sites requesting
+    different sizes for the same song would collide on one cache entry and
+    silently serve the wrong resolution to whichever asked second. */
+QString
+thumbnail_hash_for (const QUrl &source, size_t crop_and_resize)
+{
+    const QByteArray key = source.toLocalFile().toUtf8()
+                          + ':' + QByteArray::number(qulonglong(crop_and_resize));
+
+    return QString::fromLatin1(
+        QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
+}
+
 
 bool
 has_thumbnail (const QString &hash)
@@ -222,6 +241,8 @@ shutdown ()
     QThreadPool *pool = thumbnail_pool();
     pool->clear();          // drop anything queued but not yet started
     pool->waitForDone();    // let whatever's already encoding finish naturally
+}
+
 }
 
 }

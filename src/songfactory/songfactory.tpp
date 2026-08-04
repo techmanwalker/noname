@@ -9,7 +9,7 @@ std::ranges::forward_range<Container> // Any type of list
         std::is_same_v<typename Container::value_type, QString> // any uri or path
     ||  std::is_same_v<typename Container::value_type, QUrl>)
 QList<QFuture<Types::Song>>
-song_factory::progressive_extract (const Container &sources, std::shared_ptr<cover_provider> provider, attributes a)
+song_factory::progressive_extract (const Container &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
 {
     using value_type = typename Container::value_type;
 
@@ -41,7 +41,7 @@ std::ranges::forward_range<Container> // Any type of list
         std::is_same_v<typename Container::value_type, QString> // any uri or path
     ||  std::is_same_v<typename Container::value_type, QUrl>)
 QFuture<QList<Types::Song>>
-song_factory::batch_extract (const Container &sources, std::shared_ptr<cover_provider> provider, attributes a)
+song_factory::batch_extract (const Container &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
 {
     auto requests = progressive_extract(sources, provider, a);
 

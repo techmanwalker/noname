@@ -155,6 +155,9 @@ qt_add_qml_module(mediasequences
 )
 
 target_link_libraries(mediasequences
+    PUBLIC
+        covers
+        
     PRIVATE
         Qt6::Core
         Qt6::Quick
@@ -327,10 +330,32 @@ target_include_directories(audioengine
 
 )
 
+# Covers - where your vision lives
+add_library(covers STATIC
+    src/covers/coverextract.cpp
+    src/covers/coverprovider.cpp
+    src/covers/coverproviderproxy.cpp
+    src/covers/thumbnails.cpp
+)
+
+target_link_libraries(covers
+    PUBLIC
+        memory
+
+    PRIVATE
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Quick
+        KTX::ktx
+)
+
+target_include_directories(covers
+    PUBLIC
+        src/covers
+)
+
 # The Song factory - enables extracting metadata, media and covers from songs themselves
 add_library(songfactory STATIC
-    src/songfactory/coverprovider.cpp
-    src/songfactory/coverproviderproxy.cpp
     src/songfactory/songfactory.cpp
 )
 
@@ -344,6 +369,7 @@ target_link_libraries(songfactory
         FFmpeg::avutil
         FFmpeg::swscale
         TagLib::tag
+        covers # songfactory still extracts covers on its own, which must change
         memory
 )
 
@@ -374,14 +400,11 @@ target_include_directories(debugtools
 add_library(memory STATIC
     src/memory/configuration.cpp
     src/memory/localdata.cpp
-    src/memory/thumbnails.cpp
 )
 
 target_link_libraries(memory
     PRIVATE
         Qt6::Core
-        Qt6::Gui
-        KTX::ktx
 )
 
 target_include_directories(memory
@@ -433,6 +456,7 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${BASIC_LIBRARIES}
         audioengine
+        covers
         browser
         fullscreenplayer
         mediasequences
@@ -472,6 +496,7 @@ if(BUILD_TESTS)
     target_link_libraries(mockupv2
         PUBLIC
             ${BASIC_LIBRARIES}
+            covers
             fullscreenplayer
             playereffects
             primitives
@@ -507,6 +532,7 @@ if(BUILD_TESTS)
             ${BASIC_LIBRARIES}
             audioengine
             browser
+            covers
             debugtools
             mediasequences
             memory
@@ -528,6 +554,7 @@ if(BUILD_TESTS)
     target_link_libraries(refreshlisttest
         PUBLIC
             ${BASIC_LIBRARIES}
+            covers
             debugtools
             diskio
             mediasequences

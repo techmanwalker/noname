@@ -20,7 +20,7 @@ public:
 
     // Never touches each other's instances' signals nor members
     // Invoked as song_factory::extract(url, cover_provider);
-    static QFuture<Types::Song> extract(const QUrl &source, std::shared_ptr<cover_provider> provider, attributes a);
+    static QFuture<Types::Song> extract(const QUrl &source, std::shared_ptr<covers::live::cover_provider> provider, attributes a);
 
     // crop_and_resize: memory saving, crop the center square of the cover and rescale so width and height matches.
     // e.g. crop_and_resize = 256: crop the center of the cover and rescale to 256x256
@@ -35,7 +35,7 @@ public:
         ||  std::is_same_v<typename Container::value_type, QUrl>)
     static
     QList<QFuture<Types::Song>>
-    progressive_extract (const Container &sources, std::shared_ptr<cover_provider> provider, attributes a);
+    progressive_extract (const Container &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a);
 
     template <typename Container>
     requires
@@ -45,15 +45,11 @@ public:
         ||  std::is_same_v<typename Container::value_type, QUrl>)
     static
     QFuture<QList<Types::Song>>
-    batch_extract (const Container &sources, std::shared_ptr<cover_provider> provider, attributes a);
-
-    static
-    QString
-    thumbnail_hash_for (const QUrl &source, size_t crop_and_resize);
+    batch_extract (const Container &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a);
 
 private:
     // private and linear constructor
-    song_factory(const QUrl &source, std::shared_ptr<cover_provider> provider);
+    song_factory(const QUrl &source, std::shared_ptr<covers::live::cover_provider> provider);
 
     // Internally executes the extraction synchronously (to be called from worker threads, cancellable promise)
     Types::Song execute_extraction(QPromise<Types::Song> &promise, attributes a);
@@ -63,7 +59,7 @@ private:
 
     QUrl m_source;
 
-    std::shared_ptr<cover_provider> m_cover_provider = nullptr;
+    std::shared_ptr<covers::live::cover_provider> m_cover_provider = nullptr;
 };
 
 #include "songfactory.tpp"
