@@ -16,7 +16,6 @@ enum class conf_file_type {
     shortcuts
 };
 
-QString dir ();
 QUrl file (conf_file_type type);
 
 class manager : public QObject

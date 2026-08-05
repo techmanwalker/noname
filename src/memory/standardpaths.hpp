@@ -3,15 +3,15 @@
 #include <QLoggingCategory>
 #include <QUrl>
 
-namespace localdata {
+namespace standardpaths {
 
 Q_DECLARE_LOGGING_CATEGORY(l_localdata)
 
-enum class dirs {
+enum class standard_dirs {
+    configuration,
     thumbnails
 };
 
-QString dir();
-QUrl path (dirs type);
+QString dir(standard_dirs type);
 
 }

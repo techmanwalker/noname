@@ -1,29 +1,16 @@
 #include "configuration.hpp"
+#include "standardpaths.hpp"
 
 #include <QDir>
 #include <QLockFile>
 #include <QStandardPaths>
 
 #include <QtConcurrent/QtConcurrent>
-#include <qcontainerfwd.h>
-#include <qloggingcategory.h>
-#include <qobject.h>
-#include <qreadwritelock.h>
 
 namespace configuration {
 
 Q_LOGGING_CATEGORY(l_configuration, "noname.memory.configuration");
 
-QString
-dir ()
-{
-    // get the ~/.config path for noname
-    QString conf_path = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-
-    // guarantee that it exists
-    QDir().mkpath(conf_path);
-    return conf_path;
-}
 
 QUrl
 file (conf_file_type type)
@@ -42,7 +29,7 @@ file (conf_file_type type)
     // should not happen unless someone leaves an unhandled enum value
     if (conf_file_name.isEmpty()) return QUrl();
 
-    QDir conf_dir (dir());
+    QDir conf_dir (standardpaths::dir(standardpaths::standard_dirs::configuration));
 
     return QUrl::fromLocalFile(conf_dir.absoluteFilePath(conf_file_name));
 }

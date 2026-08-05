@@ -383,7 +383,7 @@ target_include_directories(debugtools
 # Configuration, caching and all data the player needs to remember
 add_library(memory STATIC
     src/memory/configuration.cpp
-    src/memory/localdata.cpp
+    src/memory/standardpaths.cpp
 )
 
 target_link_libraries(memory

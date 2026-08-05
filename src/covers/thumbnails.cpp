@@ -1,4 +1,4 @@
-#include "localdata.hpp"
+#include "standardpaths.cpp"
 #include "thumbnails.hpp"
 
 #include <QDir>
@@ -26,7 +26,7 @@ namespace { // anonymous
 QString
 thumbnail_file_path (const QString &hash)
 {
-    QDir thumb_dir (path(localdata::dirs::thumbnails).toLocalFile());
+    QDir thumb_dir (dir(standardpaths::standard_dirs::thumbnails));
     thumb_dir.mkpath(".");
     return thumb_dir.absoluteFilePath(hash + QStringLiteral(".jxl"));
 }
