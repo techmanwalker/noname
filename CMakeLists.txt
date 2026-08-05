@@ -30,50 +30,47 @@ qt_standard_project_setup(
     I18N_TRANSLATED_LANGUAGES es
 )
 
+# Helper to reduce repetitive file(GLOB_RECURSE ...) boilerplate
+function(module_sources out_var)
+    set(files "")
+    foreach(pattern IN LISTS ARGN)
+        file(GLOB_RECURSE matched
+            RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+            CONFIGURE_DEPENDS
+            "${pattern}"
+        )
+        list(APPEND files ${matched})
+    endforeach()
+    set(${out_var} ${files} PARENT_SCOPE)
+endfunction()
+
+
 ### Base build file listing
 
-file(GLOB_RECURSE PLAYER_QMLS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    CONFIGURE_DEPENDS
-    "src/qml/fullscreen/*.qml"
-)
+## QML files
 
-file(GLOB_RECURSE BROWSER_QMLS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    CONFIGURE_DEPENDS
-    "src/qml/browser/*.qml"
-)
+module_sources(PLAYER_QMLS      "src/qml/fullscreen/*.qml")
+module_sources(BROWSER_QMLS     "src/qml/browser/*.qml")
+module_sources(PRIMITIVES_QMLS  "src/qml/primitives/*.qml")
+module_sources(EFFECTS_QMLS     "src/qml/effects/*.qml")
+module_sources(LISTINGS_QMLS    "src/qml/listings/*.qml")
 
-# in Primitives
+# otherwise Qt gets grumpy
 set_source_files_properties("src/qml/primitives/MediaTypes.qml"
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
-file(GLOB_RECURSE PRIMITIVES_QMLS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    CONFIGURE_DEPENDS
-    "src/qml/primitives/*.qml"
-)
 
-file(GLOB_RECURSE EFFECTS_QMLS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    CONFIGURE_DEPENDS
-    "src/qml/effects/*.qml"
-)
-
-file(GLOB_RECURSE LISTINGS_QMLS
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    CONFIGURE_DEPENDS
-    "src/qml/listings/*.qml"
-)
-
-file(GLOB QML_MEDIASEQUENCES_SOURCES
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    CONFIGURE_DEPENDS
-    "src/presenters/sequences/*.hpp"
-    "src/presenters/sequences/*.cpp"
-)
-
+## C++ sources
+module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
+module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
+module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
+module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp")
+module_sources(COVERS_SOURCES           "src/covers/*.cpp")
+module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
+module_sources(MEMORY_SOURCES           "src/memory/*.cpp")
+module_sources(DISKIO_SOURCES           "src/diskio/*.cpp")
+module_sources(SONGFACTORY_SOURCES      "src/songfactory/*.cpp")
 
 ### Inter-module communication
 
@@ -145,7 +142,7 @@ qt_add_qml_module(mediasequences
     STATIC
     URI Player.MediaSequences
     SOURCES
-        ${QML_MEDIASEQUENCES_SOURCES}
+        ${MEDIASEQUENCES_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
 )
 
@@ -178,8 +175,7 @@ qt_add_qml_module(playerpresenter
     STATIC
     URI Player.PlayerPresenter
     SOURCES
-        src/presenters/context/playerpresenter/playerpresenter.hpp
-        src/presenters/context/playerpresenter/playerpresenter.cpp
+        ${PLAYERPRESENTER_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
 )
 
@@ -209,8 +205,7 @@ qt_add_qml_module(lyricsmanifest
     STATIC
     URI Player.LyricsManifest
     SOURCES
-        src/presenters/context/lyrics/lyricsmanifest.hpp
-        src/presenters/context/lyrics/lyricsmanifest.cpp
+        ${LYRICSMANIFEST_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
 
@@ -282,9 +277,7 @@ target_link_libraries(browser
 
 # The Playback controller
 add_library(audioengine STATIC
-    src/audioengine/audiodecode.cpp
-    src/audioengine/audioengine.cpp
-    src/audioengine/loggingcategory.cpp
+    ${AUDIOENGINE_SOURCES}
 )
 
 target_link_libraries(audioengine
@@ -314,11 +307,7 @@ target_include_directories(audioengine
 
 # Covers - where your vision lives
 add_library(covers STATIC
-    src/covers/coverextract.cpp
-    src/covers/coverimageresponse.cpp
-    src/covers/coverprovider.cpp
-    src/covers/coverproviderproxy.cpp
-    src/covers/thumbnails.cpp
+    ${COVERS_SOURCES}
 )
 
 target_link_libraries(covers
@@ -364,8 +353,7 @@ target_include_directories(songfactory
 
 # The debugging tools
 add_library(debugtools STATIC
-    src/debug/dump.cpp
-    src/debug/serialize.cpp
+    ${DEBUGTOOLS_SOURCES}
 )
 
 target_link_libraries(debugtools
@@ -382,8 +370,7 @@ target_include_directories(debugtools
 
 # Configuration, caching and all data the player needs to remember
 add_library(memory STATIC
-    src/memory/configuration.cpp
-    src/memory/standardpaths.cpp
+    ${MEMORY_SOURCES}
 )
 
 target_link_libraries(memory
@@ -398,8 +385,7 @@ target_include_directories(memory
 
 # Basic misc disk operations
 add_library(diskio STATIC
-    src/diskio/basicdiskio.cpp
-    src/diskio/loggingcategory.cpp
+    ${DISKIO_SOURCES}
 )
 
 target_link_libraries(diskio
