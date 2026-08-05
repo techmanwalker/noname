@@ -8,7 +8,9 @@ TextField {
 
         radius: height / 2 // perfect round
 
-        color: "#181818"
+        color: "#242424"
+
+        opacity: .3
     }
 
     height: font.pointSize * 4
