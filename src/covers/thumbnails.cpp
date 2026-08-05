@@ -7,7 +7,11 @@
 
 #include <QtConcurrent/QtConcurrent>
 
-#include <algorithm>
+#include <jxl/encode.h>
+#include <jxl/encode_cxx.h>
+#include <jxl/decode.h>
+#include <jxl/decode_cxx.h>
+#include <jxl/resizable_parallel_runner_cxx.h>
 
 namespace covers {
 
@@ -17,27 +21,6 @@ Q_LOGGING_CATEGORY(l_localdata, "noname.memory.localdata")
 
 namespace { // anonymous
 
-// TGA header is always 18 bytes
-#pragma pack(push, 1)
-struct TgaHeader
-{
-    quint8  idLength        = 0;     // no image ID
-    quint8  colorMapType    = 0;     // no color map
-    quint8  imageType       = 2;     // uncompressed true-color
-    quint16 colorMapStart   = 0;
-    quint16 colorMapLength  = 0;
-    quint8  colorMapDepth   = 0;
-    quint16 xOrigin         = 0;
-    quint16 yOrigin         = 0;
-    quint16 width           = 0;
-    quint16 height          = 0;
-    quint8  pixelDepth      = 32;    // 8-8-8-8
-    quint8  imageDescriptor = 0x28;  // top-left origin + 8-bit alpha
-};
-#pragma pack(pop)
-
-static_assert(sizeof(TgaHeader) == 18, "TGA header must be 18 bytes");
-
 // path(dirs::thumbnails) is the *directory*; this resolves the per-hash file
 // inside it and guarantees the directory itself exists before use.
 QString
@@ -45,7 +28,7 @@ thumbnail_file_path (const QString &hash)
 {
     QDir thumb_dir (path(localdata::dirs::thumbnails).toLocalFile());
     thumb_dir.mkpath(".");
-    return thumb_dir.absoluteFilePath(hash + QStringLiteral(".tga"));
+    return thumb_dir.absoluteFilePath(hash + QStringLiteral(".jxl"));
 }
 
 // thumbnail encode+write thread pool; uastc is heavy
@@ -74,25 +57,102 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
 
     const int width  = rgba.width();
     const int height = rgba.height();
-    const qsizetype tight_row_bytes = qsizetype(width) * 4;
+    const size_t pixels = size_t(width) * size_t(height);
+    const size_t bytes  = pixels * 4;
 
-    // Pack tightly (QImage may have padding)
-    QByteArray packed;
-    packed.resize(tight_row_bytes * height);
+    // Tightly packed RGBA8888 buffer
+    std::vector<uint8_t> packed(bytes);
     for (int y = 0; y < height; ++y) {
-        std::memcpy(packed.data() + y * tight_row_bytes,
+        std::memcpy(packed.data() + y * width * 4,
                     rgba.constScanLine(y),
-                    tight_row_bytes);
+                    size_t(width) * 4);
     }
 
-    // Convert RGBA → BGRA (classic TGA order) in-place
-    for (qsizetype i = 0; i < packed.size(); i += 4) {
-        std::swap(packed[i + 0], packed[i + 2]); // R ↔ B
+    auto enc = JxlEncoderMake(nullptr);
+    if (!enc) {
+        qCWarning(l_localdata) << "failed to create JxlEncoder for" << hash;
+        return false;
     }
 
-    TgaHeader header;
-    header.width  = static_cast<quint16>(width);
-    header.height = static_cast<quint16>(height);
+    auto runner = JxlResizableParallelRunnerMake(nullptr);
+    if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
+            JxlResizableParallelRunner, runner.get()))
+    {
+        qCWarning(l_localdata) << "failed to set parallel runner for" << hash;
+        return false;
+    }
+
+    JxlBasicInfo basic_info;
+    JxlEncoderInitBasicInfo(&basic_info);
+    basic_info.xsize = width;
+    basic_info.ysize = height;
+    basic_info.bits_per_sample = 8;
+    basic_info.alpha_bits = 8;
+    basic_info.num_color_channels = 3;
+    basic_info.num_extra_channels = 1;          // alpha
+    basic_info.uses_original_profile = JXL_FALSE;
+
+    if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
+        qCWarning(l_localdata) << "JxlEncoderSetBasicInfo failed for" << hash;
+        return false;
+    }
+
+    JxlColorEncoding color_encoding;
+    JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray=*/JXL_FALSE);
+    if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
+        qCWarning(l_localdata) << "JxlEncoderSetColorEncoding failed for" << hash;
+        return false;
+    }
+
+    JxlEncoderFrameSettings *frame_settings = JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
+
+    // Requested settings
+    JxlEncoderSetFrameDistance(frame_settings, 1.0f);                 // distance = 1
+    JxlEncoderFrameSettingsSetOption(frame_settings,
+                                     JXL_ENC_FRAME_SETTING_EFFORT, 7); // effort = 7
+
+    JxlPixelFormat pixel_format = {
+        4,                      // num_channels (RGBA)
+        JXL_TYPE_UINT8,
+        JXL_NATIVE_ENDIAN,
+        0                       // align
+    };
+
+    if (JXL_ENC_SUCCESS != JxlEncoderAddImageFrame(frame_settings,
+                                                   &pixel_format,
+                                                   packed.data(),
+                                                   bytes))
+    {
+        qCWarning(l_localdata) << "JxlEncoderAddImageFrame failed for" << hash;
+        return false;
+    }
+
+    JxlEncoderCloseInput(enc.get());
+
+    std::vector<uint8_t> compressed;
+    compressed.resize(64 * 1024);   // start with 64 KiB, grow as needed
+
+    uint8_t *next_out = compressed.data();
+    size_t avail_out = compressed.size();
+
+    JxlEncoderStatus status = JXL_ENC_NEED_MORE_OUTPUT;
+    while (status == JXL_ENC_NEED_MORE_OUTPUT) {
+        status = JxlEncoderProcessOutput(enc.get(), &next_out, &avail_out);
+
+        if (status == JXL_ENC_NEED_MORE_OUTPUT) {
+            size_t offset = next_out - compressed.data();
+            compressed.resize(compressed.size() * 2);
+            next_out = compressed.data() + offset;
+            avail_out = compressed.size() - offset;
+        }
+    }
+
+    if (status != JXL_ENC_SUCCESS) {
+        qCWarning(l_localdata) << "JxlEncoderProcessOutput failed for" << hash;
+        return false;
+    }
+
+    compressed.resize(next_out - compressed.data());
 
     const QString file_path = thumbnail_file_path(hash);
     QFile file(file_path);
@@ -102,12 +162,12 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
         return false;
     }
 
-    if (file.write(reinterpret_cast<const char*>(&header), sizeof(header)) != sizeof(header) ||
-        file.write(packed) != packed.size())
+    if (file.write(reinterpret_cast<const char*>(compressed.data()),
+                   qint64(compressed.size())) != qint64(compressed.size()))
     {
-        qCWarning(l_localdata) << "failed to write thumbnail data" << file_path
+        qCWarning(l_localdata) << "failed to write JPEG XL data" << file_path
                                 << file.errorString();
-        file.remove();          // leave no partial file
+        file.remove();
         return false;
     }
 
@@ -156,40 +216,97 @@ fetch_thumbnail (const QString &hash)
         return QImage();
     }
 
-    TgaHeader header;
-    if (file.read(reinterpret_cast<char*>(&header), sizeof(header)) != sizeof(header)) {
-        qCWarning(l_localdata) << "failed to read TGA header" << file_path;
+    const QByteArray compressed = file.readAll();
+    if (compressed.isEmpty()) {
+        qCWarning(l_localdata) << "empty JPEG XL file" << file_path;
         return QImage();
     }
 
-    // Basic validation
-    if (header.imageType != 2 || header.pixelDepth != 32 ||
-        header.width == 0 || header.height == 0)
+    auto dec = JxlDecoderMake(nullptr);
+    if (!dec) {
+        qCWarning(l_localdata) << "failed to create JxlDecoder for" << file_path;
+        return QImage();
+    }
+
+    auto runner = JxlResizableParallelRunnerMake(nullptr);
+    if (JXL_DEC_SUCCESS != JxlDecoderSetParallelRunner(dec.get(),
+            JxlResizableParallelRunner, runner.get()))
     {
-        qCWarning(l_localdata) << "unsupported or corrupt TGA" << file_path
-                                << "type=" << header.imageType
-                                << "depth=" << header.pixelDepth;
+        qCWarning(l_localdata) << "failed to set decoder parallel runner" << file_path;
         return QImage();
     }
 
-    const qsizetype expected_size = qsizetype(header.width) * header.height * 4;
-    QByteArray data = file.read(expected_size);
-    if (data.size() != expected_size) {
-        qCWarning(l_localdata) << "truncated size mismatch" << file_path
-                                << "expected" << expected_size
-                                << "got" << data.size();
+    if (JXL_DEC_SUCCESS != JxlDecoderSubscribeEvents(dec.get(),
+            JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE))
+    {
+        qCWarning(l_localdata) << "JxlDecoderSubscribeEvents failed" << file_path;
         return QImage();
     }
 
-    // BGRA → RGBA
-    for (qsizetype i = 0; i < data.size(); i += 4) {
-        std::swap(data[i + 0], data[i + 2]); // B ↔ R
+    JxlDecoderSetInput(dec.get(),
+                       reinterpret_cast<const uint8_t*>(compressed.constData()),
+                       size_t(compressed.size()));
+    JxlDecoderCloseInput(dec.get());
+
+    JxlBasicInfo info;
+    JxlPixelFormat format = {4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0};
+
+    std::vector<uint8_t> pixels;
+    bool got_image = false;
+
+    for (;;) {
+        JxlDecoderStatus status = JxlDecoderProcessInput(dec.get());
+
+        if (status == JXL_DEC_ERROR) {
+            qCWarning(l_localdata) << "JPEG XL decoder error" << file_path;
+            return QImage();
+        }
+        if (status == JXL_DEC_NEED_MORE_INPUT) {
+            qCWarning(l_localdata) << "JPEG XL needs more input (truncated?)" << file_path;
+            return QImage();
+        }
+        if (status == JXL_DEC_BASIC_INFO) {
+            if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo(dec.get(), &info)) {
+                qCWarning(l_localdata) << "JxlDecoderGetBasicInfo failed" << file_path;
+                return QImage();
+            }
+            if (info.xsize == 0 || info.ysize == 0) {
+                qCWarning(l_localdata) << "invalid dimensions in" << file_path;
+                return QImage();
+            }
+        }
+        else if (status == JXL_DEC_NEED_IMAGE_OUT_BUFFER) {
+            size_t buffer_size = 0;
+            if (JXL_DEC_SUCCESS != JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
+                qCWarning(l_localdata) << "JxlDecoderImageOutBufferSize failed" << file_path;
+                return QImage();
+            }
+
+            pixels.resize(buffer_size);
+            if (JXL_DEC_SUCCESS != JxlDecoderSetImageOutBuffer(dec.get(), &format,
+                                                               pixels.data(), buffer_size))
+            {
+                qCWarning(l_localdata) << "JxlDecoderSetImageOutBuffer failed" << file_path;
+                return QImage();
+            }
+        }
+        else if (status == JXL_DEC_FULL_IMAGE) {
+            got_image = true;
+        }
+        else if (status == JXL_DEC_SUCCESS) {
+            break;
+        }
     }
 
-    // Create QImage and force a deep copy so the buffer stays valid
-    QImage image(reinterpret_cast<const uchar*>(data.constData()),
-                 header.width, header.height,
-                 header.width * 4,
+    if (!got_image || pixels.empty()) {
+        qCWarning(l_localdata) << "no image decoded from" << file_path;
+        return QImage();
+    }
+
+    // Force deep copy
+    QImage image(pixels.data(),
+                 int(info.xsize), int(info.ysize),
+                 int(info.xsize) * 4,
                  QImage::Format_RGBA8888);
 
     return image.copy();
