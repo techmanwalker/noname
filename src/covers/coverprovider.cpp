@@ -15,7 +15,7 @@ cover_provider::cover_provider ()
     /*  Budget: 256 thumbnails' worth of a 256x256 RGBA8888 image (~64 MiB).
         or a little list when full res covers take up space for ~1 MiB each one. */
     static const qsizetype thumbnail_cost = QImage(256, 256, QImage::Format_RGBA8888).sizeInBytes();
-    m_cache.setMaxCost(256 * thumbnail_cost);
+    m_cache.setMaxCost(96 * thumbnail_cost);
 
     // all response calls here
     m_response_pool.setMaxThreadCount(std::max(2, QThread::idealThreadCount() / 2));
