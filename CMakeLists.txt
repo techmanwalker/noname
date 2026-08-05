@@ -18,6 +18,8 @@ find_package(TagLib REQUIRED)
 
 find_package(rapidfuzz REQUIRED)
 
+find_package(libjxl REQUIRED)
+
 qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
 qt_policy(SET QTP0005 NEW)
@@ -327,6 +329,8 @@ target_link_libraries(covers
         Qt6::Core
         Qt6::Gui
         Qt6::Quick
+
+        libjxl::libjxl
 )
 
 target_include_directories(covers
