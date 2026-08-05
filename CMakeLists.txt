@@ -54,6 +54,7 @@ module_sources(BROWSER_QMLS     "src/qml/browser/*.qml")
 module_sources(PRIMITIVES_QMLS  "src/qml/primitives/*.qml")
 module_sources(EFFECTS_QMLS     "src/qml/effects/*.qml")
 module_sources(LISTINGS_QMLS    "src/qml/listings/*.qml")
+module_sources(MAINWINDOW_QMLS  "src/qml/mainwindow/*.qml")
 
 # otherwise Qt gets grumpy
 set_source_files_properties("src/qml/primitives/MediaTypes.qml"
@@ -434,7 +435,7 @@ target_link_libraries(${PROJECT_NAME}
 qt_add_qml_module(${PROJECT_NAME}
     URI Player.App
     QML_FILES
-        src/qml/Main.qml
+        ${MAINWINDOW_QMLS}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/App"
 )

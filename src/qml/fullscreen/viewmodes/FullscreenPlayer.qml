@@ -18,19 +18,7 @@ Item {
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
 
-    property real coverGlobalX: mainRow.x + leftCol.x + nowplaying_cover.x
-
-    Background {
-        source: PlayerPresenter.cover
-        anchors.fill: parent
-
-        // Math.max(1, root.width) prevents zero-division errors during
-        // the brief moment when the window is still being constructed
-        playerLeft:  0
-        coverLeft:   root.coverGlobalX                                 / Math.max(1, root.width)
-        coverRight:  (root.coverGlobalX + nowplaying_cover.width)      / Math.max(1, root.width)
-        playerRight: 1
-    }
+    readonly property real coverGlobalX: mainRow.x + leftCol.x + nowplaying_cover.x
 
     // ── Cover sizing ───────────────────────────────────────────────────────
 
