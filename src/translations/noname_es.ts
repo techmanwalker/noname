@@ -4,34 +4,42 @@
 <context>
     <name>ArrangementList</name>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="27"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="18"/>
         <source>Home</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="44"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="25"/>
         <source>Albums</source>
         <translation>Álbumes</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="59"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="32"/>
         <source>Artists</source>
         <translation>Artistas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="74"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="39"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="89"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="46"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="106"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="53"/>
         <source>Tracks</source>
         <translation>Pistas</translation>
+    </message>
+</context>
+<context>
+    <name>Browser</name>
+    <message>
+        <location filename="../qml/browser/Browser.qml" line="45"/>
+        <source>Theater mode</source>
+        <translation>Modo teatro</translation>
     </message>
 </context>
 <context>
@@ -49,12 +57,12 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="57"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="60"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="218"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="226"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -70,25 +78,24 @@
 <context>
     <name>MinibarPlayer</name>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/MinibarPlayer.qml" line="98"/>
         <source>Fullscreen</source>
-        <translation>Pantalla completa</translation>
+        <translation type="vanished">Pantalla completa</translation>
     </message>
 </context>
 <context>
     <name>RepeatButton</name>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="40"/>
+        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="42"/>
         <source>Repeat one</source>
         <translation>Repetir una vez</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="41"/>
+        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="43"/>
         <source>Repeat all</source>
         <translation>Repetir todas las pistas</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="42"/>
+        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="44"/>
         <source>Repeat disabled</source>
         <translation>No repetir</translation>
     </message>
@@ -111,19 +118,27 @@
 <context>
     <name>ShuffleButton</name>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="37"/>
+        <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="39"/>
         <source>Shuffle tracks</source>
         <translation>Mezclar pistas</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="38"/>
+        <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="40"/>
         <source>Shuffle albums</source>
         <translation>Mezclar álbumes</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="39"/>
+        <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="41"/>
         <source>No shuffle</source>
         <translation>Sin mezclar</translation>
+    </message>
+</context>
+<context>
+    <name>SongContextMenu</name>
+    <message>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="13"/>
+        <source>Add to Play Queue</source>
+        <translation>Agregar a la cola de reproducción</translation>
     </message>
 </context>
 <context>
