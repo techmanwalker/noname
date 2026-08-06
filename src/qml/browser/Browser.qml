@@ -31,11 +31,6 @@ Item {
 
             anchors.topMargin: searchBar.y + searchBar.height // todo: align with the search bar
 
-            vtabLeftPadding: 20
-            vtabRightPadding: vtabLeftPadding
-            vtabTopPadding: 12 // link to window height, items are closer when window is shorter
-            vtabBottomPadding: vtabTopPadding
-
             stack: activeView
             homeIndex: 0
             tracksIndex: 1
