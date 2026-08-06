@@ -36,6 +36,20 @@ Item {
             tracksIndex: 1
             foldersIndex: 2
         }
+
+        Column {
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+
+            anchors.bottomMargin: vtabs.anchors.topMargin
+
+            VTabButton {
+                iconName: "view-fullscreen"
+                text: qsTr("Theater mode")
+
+                onClicked: root.switchView()
+            }
+        }
     }
 
     ColumnLayout {
@@ -115,8 +129,6 @@ Item {
         rightPadding: leftPadding
 
         coverToMetadataSpacing: 8
-
-        onFullscreenRequested: root.switchView()
     }
 
 }
