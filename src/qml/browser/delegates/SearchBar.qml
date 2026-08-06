@@ -1,16 +1,14 @@
 import QtQuick
 import QtQuick.Controls
 
+import Player.Primitives
+
 TextField {
-    background: Rectangle {
+    background: ElementBackground {
         anchors.fill: parent
         anchors.centerIn: parent
 
         radius: height / 2 // perfect round
-
-        color: "#242424"
-
-        opacity: .3
     }
 
     height: font.pointSize * 4

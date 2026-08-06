@@ -1,9 +1,9 @@
 import QtQuick
-import QtQuick.Controls
 
+import Player.Primitives
 import Player.PlayerPresenter
 
-ToolButton {
+ResizableButton {
     icon.name: "media-skip-forward"
 
     onClicked: PlayerPresenter.next()
