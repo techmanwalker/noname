@@ -1,10 +1,10 @@
 import QtQuick
-import QtQuick.Controls
 
 import QtMultimedia
+import Player.Primitives
 import Player.PlayerPresenter
 
-ToolButton {
+ResizableButton {
     id: root
 
     // Strictly real to the real playback state

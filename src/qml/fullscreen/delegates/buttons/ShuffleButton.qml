@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Controls
 
-ToolButton {
+import Player.Primitives
+
+ResizableButton {
     id: root
 
     enum ShuffleMode {
