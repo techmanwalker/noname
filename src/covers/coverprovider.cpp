@@ -111,7 +111,7 @@ cover_provider::resolve_blocking(const QString &id, const QSize &requestedSize)
 
     if (!img.isNull()) {
 
-        qCDebug(l_coverprovider) << "Fetched thumbnail from disk cache for " << id;
+        // qCDebug(l_coverprovider) << "Fetched thumbnail from disk cache for " << id;
 
         // Store in memory cache
         store (id, img);
@@ -140,7 +140,7 @@ cover_provider::resolve_blocking(const QString &id, const QSize &requestedSize)
             img = extract_cover(file.file(), crop_and_resize);
 
             if (!img.isNull()) {
-                qCDebug(l_coverprovider) << "Decoded cover on demand for " << id;
+                // qCDebug(l_coverprovider) << "Decoded cover on demand for " << id;
                 store(id, img);
                 return img;
             }
