@@ -44,6 +44,12 @@ Item {
     Row {
         anchors.right: parent.right
         anchors.top: parent.top
+
+        opacity: (!root.immersive || windex_hover.hovered) ? 1 : 0 // immersion
+
+        HoverHandler {
+            id: windex_hover
+        }
         
         ResizableButton {
             id: fullscreenToggle
@@ -52,9 +58,6 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
 
             text: qsTr("Back")
-
-            opacity: (!root.immersive || hovered) ? 1 : 0 // immersion
-            hoverEnabled: true
 
             padding: 20
 
