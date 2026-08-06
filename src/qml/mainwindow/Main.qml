@@ -30,32 +30,23 @@ ApplicationWindow {
         playerRight: 1
     }
 
-    WindowDecorations {
-        id: windex
-
-        window: root
-
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-    }
-
     StackLayout {
         id: activeView
 
-        anchors.top: windex.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        anchors.fill: parent
 
         Browser {
             id: browser
             onSwitchView: activeView.currentIndex = 1
+
+            parentWindow: root
         }
 
         FullscreenPlayer {
             id: fullscreenPlayer
             onSwitchView: activeView.currentIndex = 0
+
+            parentWindow: root
         }
     }
 }
