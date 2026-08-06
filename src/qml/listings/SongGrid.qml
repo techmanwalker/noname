@@ -15,6 +15,21 @@ GridView {
 
     signal songClicked(var song);
 
+    // selection
+
+    property var selectedSources: []
+
+    SongContextMenu {
+        id: songContextMenu
+        selectedUris: root.selectedSources
+
+        onClosed: {
+            if (root.selectedSources.length === 1) {
+                root.selectedSources = []
+            }
+        }
+    }
+
     delegate: Song {
         required property var model
 
@@ -29,7 +44,36 @@ GridView {
         coverWidth: root.songCoverWidth
         coverHeight: root.songCoverHeight
 
-        onClicked: root.songClicked(model)
+        // to visually mark it selected
+        selected: root.selectedSources.includes(model.source)
+
+        onClicked: {
+            // Standard click clears multi-selection
+            root.selectedSources = []
+            root.songClicked(model)
+        }
+
+        onCtrlClicked: {
+            let sources = root.selectedSources
+            let idx = sources.indexOf(model.source)
+            
+            if (idx === -1) {
+                sources.push(model.source)
+            } else {
+                sources.splice(idx, 1)
+            }
+            
+            // Reassign with slice() to guarantee the QML property binding is triggered
+            root.selectedSources = sources.slice() 
+        }
+
+        onRightClicked: {
+            // If right-clicked song isn't in current selection, select only it
+            if (!root.selectedSources.includes(model.source)) {
+                root.selectedSources = [model.source]
+            }
+            songContextMenu.popup()
+        }
     }
 
     TallestDummyCard {

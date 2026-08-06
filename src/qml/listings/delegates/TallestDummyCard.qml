@@ -11,4 +11,6 @@ Song {
     two lines`
 
     duration: 10000
+
+    selected: false
 }
