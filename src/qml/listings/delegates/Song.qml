@@ -26,6 +26,9 @@ Item {
     property bool showSeparator
 
     property bool playing
+
+    required property bool selected // governed by its container list
+
     property int lateralPadding
     property int fadePadding
 
@@ -36,12 +39,15 @@ Item {
     implicitHeight: content.implicitHeight
 
     signal clicked ();
+    signal ctrlClicked ();
+    signal rightClicked ();
 
     SongBackground {
         anchors.fill: parent
 
         playing: root.playing
         hovered: hover.hovered
+        selected: root.selected
 
         outer_leftstop:   0
         inner_leftstop:   root.fadePadding               / Math.max(1, root.width)
@@ -53,8 +59,25 @@ Item {
         id: hover
     }
 
+    // normal left click
     TapHandler {
-        onTapped: root.clicked();
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.NoModifier
+        onTapped: root.clicked()
+    }
+
+    // ctrl + left click
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.ControlModifier
+        onTapped: root.ctrlClicked()
+    }
+
+    // right click
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        acceptedModifiers: Qt.NoModifier 
+        onTapped: root.rightClicked()
     }
 
     FlexboxLayout {

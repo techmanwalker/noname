@@ -9,8 +9,6 @@ import Player.MediaSequences
 
 ListView {
     id: root
-    
-    signal songClicked(var song)
 
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
@@ -23,6 +21,23 @@ ListView {
     // Right padding reserves space for the scrollbar so it appears
     // to float outside the list content without overlapping it
     rightMargin: scrollbar.logicalWidth
+
+    signal songClicked(var song)
+
+    // selection
+
+    property var selectedSources: []
+
+    SongContextMenu {
+        id: songContextMenu
+        selectedUris: root.selectedSources
+
+        onClosed: {
+            if (root.selectedSources.length === 1) {
+                root.selectedSources = []
+            }
+        }
+    }
 
     delegate: Song {
         id: song
@@ -46,9 +61,38 @@ ListView {
         lateralPadding: 15
 
         playing: PlayQueue.playhead === PlayQueue.index(model.index, 0)
-        onClicked: root.songClicked(model)
 
         showSeparator: true
+
+        selected: root.selectedSources.includes(model.source)
+
+        onClicked: {
+            // Standard click clears multi-selection
+            root.selectedSources = []
+            root.songClicked(model)
+        }
+
+        onCtrlClicked: {
+            let sources = root.selectedSources
+            let idx = sources.indexOf(model.source)
+            
+            if (idx === -1) {
+                sources.push(model.source)
+            } else {
+                sources.splice(idx, 1)
+            }
+            
+            // Reassign with slice() to guarantee the QML property binding is triggered
+            root.selectedSources = sources.slice() 
+        }
+
+        onRightClicked: {
+            // If right-clicked song isn't in current selection, select only it
+            if (!root.selectedSources.includes(model.source)) {
+                root.selectedSources = [model.source]
+            }
+            songContextMenu.popup()
+        }
     }
 
     ScrollBar.vertical: AccessibleScrollBar {
