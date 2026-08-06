@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
+import Player.App
 import Player.Fullscreen
 import Player.Listings
 import Player.MediaSequences
@@ -10,6 +11,8 @@ import Player.Primitives
 
 Item {
     id: root
+
+    property Window parentWindow // to inset window decorations
 
     property bool immersive: false // hide all controls and buttons, leave you only with the music
 
@@ -38,23 +41,35 @@ Item {
 
     // ── Navigation ─────────────────────────────────────────────────────────
 
-    LabeledButton {
-        id: fullscreenToggle
-        iconName: "window-minimize"
-
-        text: qsTr("Back")
-
-        opacity: (!root.immersive || hovered) ? 1 : 0 // immersion
-        hoverEnabled: true
-
+    Row {
         anchors.right: parent.right
         anchors.top: parent.top
+        
+        LabeledButton {
+            id: fullscreenToggle
+            iconName: "window-minimize"
 
-        padding: 20
+            anchors.verticalCenter: parent.verticalCenter
 
-        magnify: true
+            text: qsTr("Back")
 
-        onClicked: root.switchView()
+            opacity: (!root.immersive || hovered) ? 1 : 0 // immersion
+            hoverEnabled: true
+
+            padding: 20
+
+            magnify: true
+
+            onClicked: root.switchView()
+        }
+
+        WindowDecorations {
+            window: root.parentWindow
+
+            Layout.alignment: Qt.AlignVCenter
+
+            anchors.verticalCenter: parent.verticalCenter
+        }
     }
 
     // ── Layout ─────────────────────────────────────────────────────────────

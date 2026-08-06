@@ -2,12 +2,15 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
+import Player.App
 import Player.Browser
 import Player.Fullscreen
 
 
 Item {
     id: root
+
+    property Window parentWindow // to inset window decorations
 
     signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
 
@@ -51,11 +54,28 @@ Item {
         anchors.topMargin: 18 //  shortcutsList.shortcutCoverHeight / 8
         anchors.bottomMargin: nowplayingbar.stateModel.isMediaLoaded ? 18 : 0
 
-        SearchBar {
-            id: searchBar
+        RowLayout {
+            Layout.fillWidth: true
 
-            Layout.preferredWidth: width
-            Layout.preferredHeight: height
+            SearchBar {
+                id: searchBar
+
+                Layout.preferredWidth: width
+                Layout.preferredHeight: height
+
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            WindowDecorations {
+                id: windex
+
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+
+                rightPadding: searchBar.leftPadding // keep symmetry
+
+                window: root.parentWindow
+            }
         }
 
         StackLayout {
