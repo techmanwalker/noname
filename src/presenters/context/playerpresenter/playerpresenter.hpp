@@ -42,6 +42,16 @@ class PlayerPresenter : public QObject
     QML_ELEMENT
     QML_SINGLETON
 
+public:
+    // direct mirror of audio_engine::playback_state
+    enum class PlaybackState {
+        paused,
+        playing,
+        stopped
+    };
+    
+    Q_ENUM(PlaybackState)
+
     // Q_PROPERTY defines the magic variables that QML can read and listen
     Q_PROPERTY(QString title       READ title       NOTIFY titleChanged)
     Q_PROPERTY(QString artist      READ artist      NOTIFY artistChanged)
@@ -56,9 +66,8 @@ class PlayerPresenter : public QObject
     // governed from the QML side
     Q_PROPERTY(bool duration_slider_pressed READ duration_slider_pressed WRITE setDurationSliderPressed)
 
-    Q_PROPERTY(audio_engine::playback_state playbackState READ playbackState NOTIFY playbackStateChanged)
+    Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
 
-public:
     // disable copy and reassignment
     PlayerPresenter(const PlayerPresenter&) = delete;
     PlayerPresenter &operator=(const PlayerPresenter&) = delete;
@@ -76,7 +85,7 @@ public:
     quint64 position_ms() const;
     quint8 volume() const;
     bool duration_slider_pressed() const;
-    audio_engine::playback_state playbackState() const;
+    PlaybackState playbackState() const;
     bool isMediaLoaded() const;
 
     // Setters (normally called from C++ logic when time or song changes)
