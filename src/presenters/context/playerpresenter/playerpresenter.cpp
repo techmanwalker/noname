@@ -58,7 +58,19 @@ bool    PlayerPresenter::isMediaLoaded() const { return playing.is_a_song_loaded
 
 bool    PlayerPresenter::duration_slider_pressed() const { return m_duration_slider_pressed.load(); }
 
-audio_engine::playback_state PlayerPresenter::playbackState() const { return playing.get_playback_state(); }
+PlayerPresenter::PlaybackState
+PlayerPresenter::playbackState() const
+{
+    using ae = audio_engine::playback_state;
+
+    switch (playing.get_playback_state()) {
+        case ae::paused:  return PlaybackState::paused;
+        case ae::playing: return PlaybackState::playing;
+        case ae::stopped: return PlaybackState::stopped;
+    }
+
+    Q_UNREACHABLE(); // audio_engine::playback_state has no other members
+}
 
 
 void

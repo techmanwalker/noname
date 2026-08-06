@@ -1,26 +1,24 @@
 import QtQuick
 
-import QtMultimedia
 import Player.Primitives
 import Player.PlayerPresenter
 
 ResizableButton {
     id: root
 
-    // Strictly real to the real playback state
     icon.name: {
         switch (PlayerPresenter.playbackState) {
-            case MediaPlayer.PlayingState:
+            case PlayerPresenter.PlaybackState.playing:
                 return "media-playback-pause"
-            case MediaPlayer.PausedState:
-            case MediaPlayer.StoppedState:
+            case PlayerPresenter.PlaybackState.paused:
+            case PlayerPresenter.PlaybackState.stopped:
             default:
                 return "media-playback-start"
         }
     }
 
     onClicked: {
-        if (PlayerPresenter.playbackState === MediaPlayer.PlayingState) {
+        if (PlayerPresenter.playbackState === PlayerPresenter.PlaybackState.playing) {
             PlayerPresenter.pause()
         } else {
             PlayerPresenter.play()
