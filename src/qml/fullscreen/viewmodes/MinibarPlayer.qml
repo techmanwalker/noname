@@ -91,7 +91,7 @@ ColumnLayout {
             width: title.font.pointSize * 8
         }
 
-        LabeledButton {
+        ResizableButton {
             id: fullscreenToggle
             iconName: "window-maximize"
 

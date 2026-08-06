@@ -45,7 +45,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         
-        LabeledButton {
+        ResizableButton {
             id: fullscreenToggle
             iconName: "window-minimize"
 
@@ -217,13 +217,17 @@ Item {
             Component {
                 id: nextQueue_p
 
-                MediumLabel {
+                Label {
                     text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
 
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
 
                     wrapMode: Text.WordWrap
+
+                    // MediumLabel
+                    font.pointSize: 13
+                    font.weight: Font.Medium
                 }
             }
 
