@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 import Player.Primitives
 
-Column {
+ColumnLayout {
     id: root
 
     property StackLayout stack
@@ -22,7 +22,7 @@ Column {
     required property int tracksIndex
     required property int foldersIndex
 
-    LabeledButton {
+    ResizableButton {
         iconName: "user-home-symbolic"
         text: qsTr("Home")
 
@@ -39,7 +39,7 @@ Column {
         onClicked: if (root.stack) root.stack.currentIndex = root.homeIndex
     }
 
-    LabeledButton {
+    ResizableButton {
         iconName: "media-album-cover"
         text: qsTr("Albums")
 
@@ -54,7 +54,7 @@ Column {
         visible: false // still unsupported
     }
 
-    LabeledButton {
+    ResizableButton {
         iconName: "view-media-artist"
         text: qsTr("Artists")
 
@@ -69,7 +69,7 @@ Column {
         visible: false // still unsupported
     }
 
-    LabeledButton {
+    ResizableButton {
         iconName: "view-media-playlist"
         text: qsTr("Playlists")
 
@@ -84,7 +84,7 @@ Column {
         visible: false // still unsupported
     }
 
-    LabeledButton {
+    ResizableButton {
         iconName: "folder-symbolic"
         text: qsTr("Folders")
 
@@ -101,7 +101,7 @@ Column {
         onClicked: if (root.stack) root.stack.currentIndex = root.foldersIndex
     }
 
-    LabeledButton {
+    ResizableButton {
         iconName: "library-music-symbolic"
         text: qsTr("Tracks")
 

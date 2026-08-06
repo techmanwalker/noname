@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 
 import Player.Primitives
 
@@ -11,12 +10,12 @@ Row {
 
     required property Window window
 
-    ToolButton {
+    ResizableButton {
         icon.name: "window-close"
         onClicked: root.window.close()
     }
 
-    ToolButton {
+    ResizableButton {
         icon.name: "window-maximize"
         onClicked: {
                 if (root.window.visibility === Window.Maximized) {
@@ -27,7 +26,7 @@ Row {
             }
     }
 
-    ToolButton {
+    ResizableButton {
         icon.name: "window-minimize"
         onClicked: root.window.showMinimized()
     }    
