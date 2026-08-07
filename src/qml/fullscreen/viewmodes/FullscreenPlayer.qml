@@ -226,18 +226,27 @@ Item {
     // ── Navigation ─────────────────────────────────────────────────────────
 
     Row {
+        anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
 
         opacity: (!root.immersive || windex_hover.hovered) ? 1 : 0 // immersion
 
+        layoutDirection: Qt.RightToLeft
+
         HoverHandler {
             id: windex_hover
+        }
+
+        WindowDecorations {
+            window: root.parentWindow
+
+            anchors.verticalCenter: parent.verticalCenter
         }
         
         ResizableButton {
             id: fullscreenToggle
-            iconName: "window-minimize"
+            iconName: "arrow-left"
 
             anchors.verticalCenter: parent.verticalCenter
 
@@ -250,12 +259,14 @@ Item {
             onClicked: root.switchView()
         }
 
-        WindowDecorations {
-            window: root.parentWindow
-
-            Layout.alignment: Qt.AlignVCenter
-
-            anchors.verticalCenter: parent.verticalCenter
+        DragHandler {
+            target: null
+            
+            onActiveChanged: {
+                if (active) {
+                    root.parentWindow.startSystemMove();
+                }
+            }
         }
     }
 
