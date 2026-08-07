@@ -57,7 +57,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: nowplayingbar.stateModel.isMediaLoaded ? nowplayingbar.top : parent.bottom
 
-        anchors.topMargin: 18 //  shortcutsList.shortcutCoverHeight / 8
+        anchors.topMargin: 20 //  shortcutsList.shortcutCoverHeight / 8
         anchors.bottomMargin: nowplayingbar.stateModel.isMediaLoaded ? 18 : 0
 
         RowLayout {

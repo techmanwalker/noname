@@ -230,6 +230,9 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
 
+        anchors.topMargin: 20 // leave free space for window resize handle
+        anchors.rightMargin: 20
+
         opacity: (!root.immersive || windex_hover.hovered) ? 1 : 0 // immersion
 
         layoutDirection: Qt.RightToLeft
