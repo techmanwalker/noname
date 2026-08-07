@@ -25,6 +25,8 @@ ColumnLayout {
 
     property bool insetDurationBarInPadding: true
 
+    signal metadataClicked () // the box containing the cover, title, album and/or artist
+
     DurationControl {
         id: duration
         
@@ -54,6 +56,10 @@ ColumnLayout {
             spacing: root.coverToMetadataSpacing
 
             Layout.fillWidth: true
+
+            TapHandler {
+                onTapped: root.metadataClicked()
+            }
             
             Cover {
                 Layout.preferredWidth: parent.height
