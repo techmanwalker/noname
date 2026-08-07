@@ -244,11 +244,14 @@ Item {
 
         layoutDirection: Qt.RightToLeft
 
+        spacing: windex.squareButtonWidth / 3 * 2
+
         HoverHandler {
             id: windex_hover
         }
 
         WindowDecorations {
+            id: windex 
             window: root.parentWindow
 
             anchors.verticalCenter: parent.verticalCenter
