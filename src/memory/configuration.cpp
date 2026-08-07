@@ -24,6 +24,9 @@ file (conf_file_type type)
         case conf_file_type::shortcuts:
             conf_file_name = "shortcuts";
             break;
+        case conf_file_type::window_geometry:
+            conf_file_name = "window_geometry";
+            break;
     }
 
     // should not happen unless someone leaves an unhandled enum value

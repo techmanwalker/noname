@@ -17,8 +17,6 @@ namespace covers {
 
 namespace disk {
 
-Q_LOGGING_CATEGORY(l_localdata, "noname.memory.localdata")
-
 namespace { // anonymous
 
 // path(dirs::thumbnails) is the *directory*; this resolves the per-hash file
@@ -47,7 +45,7 @@ bool
 write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
 {
     if (thumbnail.isNull()) {
-        qCWarning(l_localdata) << "refusing to write a null thumbnail for" << hash;
+        qCWarning(l_standardpaths) << "refusing to write a null thumbnail for" << hash;
         return false;
     }
 
@@ -70,7 +68,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
 
     auto enc = JxlEncoderMake(nullptr);
     if (!enc) {
-        qCWarning(l_localdata) << "failed to create JxlEncoder for" << hash;
+        qCWarning(l_standardpaths) << "failed to create JxlEncoder for" << hash;
         return false;
     }
 
@@ -78,7 +76,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
             JxlResizableParallelRunner, runner.get()))
     {
-        qCWarning(l_localdata) << "failed to set parallel runner for" << hash;
+        qCWarning(l_standardpaths) << "failed to set parallel runner for" << hash;
         return false;
     }
 
@@ -93,14 +91,14 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     basic_info.uses_original_profile = JXL_FALSE;
 
     if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
-        qCWarning(l_localdata) << "JxlEncoderSetBasicInfo failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderSetBasicInfo failed for" << hash;
         return false;
     }
 
     JxlColorEncoding color_encoding;
     JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray=*/JXL_FALSE);
     if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
-        qCWarning(l_localdata) << "JxlEncoderSetColorEncoding failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderSetColorEncoding failed for" << hash;
         return false;
     }
 
@@ -123,7 +121,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
                                                    packed.data(),
                                                    bytes))
     {
-        qCWarning(l_localdata) << "JxlEncoderAddImageFrame failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderAddImageFrame failed for" << hash;
         return false;
     }
 
@@ -148,7 +146,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     }
 
     if (status != JXL_ENC_SUCCESS) {
-        qCWarning(l_localdata) << "JxlEncoderProcessOutput failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderProcessOutput failed for" << hash;
         return false;
     }
 
@@ -157,7 +155,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     const QString file_path = thumbnail_file_path(hash);
     QFile file(file_path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qCWarning(l_localdata) << "failed to open thumbnail for writing" << file_path
+        qCWarning(l_standardpaths) << "failed to open thumbnail for writing" << file_path
                                 << file.errorString();
         return false;
     }
@@ -165,7 +163,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     if (file.write(reinterpret_cast<const char*>(compressed.data()),
                    qint64(compressed.size())) != qint64(compressed.size()))
     {
-        qCWarning(l_localdata) << "failed to write JPEG XL data" << file_path
+        qCWarning(l_standardpaths) << "failed to write JPEG XL data" << file_path
                                 << file.errorString();
         file.remove();
         return false;
@@ -211,20 +209,20 @@ fetch_thumbnail (const QString &hash)
 
     QFile file(file_path);
     if (!file.open(QIODevice::ReadOnly)) {
-        qCWarning(l_localdata) << "failed to open thumbnail" << file_path
+        qCWarning(l_standardpaths) << "failed to open thumbnail" << file_path
                                 << file.errorString();
         return QImage();
     }
 
     const QByteArray compressed = file.readAll();
     if (compressed.isEmpty()) {
-        qCWarning(l_localdata) << "empty JPEG XL file" << file_path;
+        qCWarning(l_standardpaths) << "empty JPEG XL file" << file_path;
         return QImage();
     }
 
     auto dec = JxlDecoderMake(nullptr);
     if (!dec) {
-        qCWarning(l_localdata) << "failed to create JxlDecoder for" << file_path;
+        qCWarning(l_standardpaths) << "failed to create JxlDecoder for" << file_path;
         return QImage();
     }
 
@@ -232,14 +230,14 @@ fetch_thumbnail (const QString &hash)
     if (JXL_DEC_SUCCESS != JxlDecoderSetParallelRunner(dec.get(),
             JxlResizableParallelRunner, runner.get()))
     {
-        qCWarning(l_localdata) << "failed to set decoder parallel runner" << file_path;
+        qCWarning(l_standardpaths) << "failed to set decoder parallel runner" << file_path;
         return QImage();
     }
 
     if (JXL_DEC_SUCCESS != JxlDecoderSubscribeEvents(dec.get(),
             JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE))
     {
-        qCWarning(l_localdata) << "JxlDecoderSubscribeEvents failed" << file_path;
+        qCWarning(l_standardpaths) << "JxlDecoderSubscribeEvents failed" << file_path;
         return QImage();
     }
 
@@ -258,27 +256,27 @@ fetch_thumbnail (const QString &hash)
         JxlDecoderStatus status = JxlDecoderProcessInput(dec.get());
 
         if (status == JXL_DEC_ERROR) {
-            qCWarning(l_localdata) << "JPEG XL decoder error" << file_path;
+            qCWarning(l_standardpaths) << "JPEG XL decoder error" << file_path;
             return QImage();
         }
         if (status == JXL_DEC_NEED_MORE_INPUT) {
-            qCWarning(l_localdata) << "JPEG XL needs more input (truncated?)" << file_path;
+            qCWarning(l_standardpaths) << "JPEG XL needs more input (truncated?)" << file_path;
             return QImage();
         }
         if (status == JXL_DEC_BASIC_INFO) {
             if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo(dec.get(), &info)) {
-                qCWarning(l_localdata) << "JxlDecoderGetBasicInfo failed" << file_path;
+                qCWarning(l_standardpaths) << "JxlDecoderGetBasicInfo failed" << file_path;
                 return QImage();
             }
             if (info.xsize == 0 || info.ysize == 0) {
-                qCWarning(l_localdata) << "invalid dimensions in" << file_path;
+                qCWarning(l_standardpaths) << "invalid dimensions in" << file_path;
                 return QImage();
             }
         }
         else if (status == JXL_DEC_NEED_IMAGE_OUT_BUFFER) {
             size_t buffer_size = 0;
             if (JXL_DEC_SUCCESS != JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
-                qCWarning(l_localdata) << "JxlDecoderImageOutBufferSize failed" << file_path;
+                qCWarning(l_standardpaths) << "JxlDecoderImageOutBufferSize failed" << file_path;
                 return QImage();
             }
 
@@ -286,7 +284,7 @@ fetch_thumbnail (const QString &hash)
             if (JXL_DEC_SUCCESS != JxlDecoderSetImageOutBuffer(dec.get(), &format,
                                                                pixels.data(), buffer_size))
             {
-                qCWarning(l_localdata) << "JxlDecoderSetImageOutBuffer failed" << file_path;
+                qCWarning(l_standardpaths) << "JxlDecoderSetImageOutBuffer failed" << file_path;
                 return QImage();
             }
         }
@@ -299,7 +297,7 @@ fetch_thumbnail (const QString &hash)
     }
 
     if (!got_image || pixels.empty()) {
-        qCWarning(l_localdata) << "no image decoded from" << file_path;
+        qCWarning(l_standardpaths) << "no image decoded from" << file_path;
         return QImage();
     }
 

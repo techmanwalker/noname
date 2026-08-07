@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Player.App
 import Player.Browser
 import Player.Fullscreen
 import Player.PlayerPresenter
@@ -14,10 +15,12 @@ ApplicationWindow {
     title: "noname"
     color: "#000"
 
-    width: 1200
-    height: 800
+    width: WindowGeometry.width
+    height: WindowGeometry.height
 
     flags: Qt.Window | Qt.FramelessWindowHint
+
+    onClosing: WindowGeometry.save(width, height)
 
     Background {
         source: activeView.currentIndex == 1 ? PlayerPresenter.cover : ""
