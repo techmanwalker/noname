@@ -69,6 +69,16 @@ Item {
 
                 , 0 /* safety*/)
 
+            DragHandler {
+                target: null
+                
+                onActiveChanged: {
+                    if (active) {
+                        root.parentWindow.startSystemMove();
+                    }
+                }
+            }
+
             SearchBar {
                 id: searchBar
 
