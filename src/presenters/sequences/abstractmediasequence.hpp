@@ -45,12 +45,22 @@ public:
 
     const decltype(m_items) & items() const;
 
-    // proxy for both sources
-    static QStringList sources (const QList<Types::Any> &items);
+    // fetch sources of any input list
+    template <typename Container>
+    requires
+        std::ranges::forward_range<Container> // Any type of list
+    &&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by m_items
+    static QStringList sources (const Container &items);
+
+    // fetch the source of every element on m_items
+    QStringList sources () const; // return the source or path component of all items
+
+    // fetch the source of every element convertible to media_type in m_items
+    template <typename media_type>
+    QStringList sources() const;
+
     std::optional<std::reference_wrapper<Types::Any>> pointed_to(const QPersistentModelIndex &idx);
     std::optional<size_t> row_pointed_to(const QPersistentModelIndex &idx) const;
-
-    QStringList sources () const; // return the source or path component of all items
 
     // Access to the raw item for inherited classes that need extra roles
     std::optional<std::reference_wrapper<Types::Any>> item_at(size_t index);
@@ -62,10 +72,6 @@ public:
     // items that can be converted to certain type
     template <typename media_type>
     QList<media_type> items() const;
-
-    // sources of convertibles to this type
-    template <typename media_type>
-    QStringList sources() const;
 
     // Find an item whose pointed member matches the needle, returns invalid if not found
     template <typename MediaType, typename FieldType>

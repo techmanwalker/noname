@@ -75,5 +75,12 @@ ColumnLayout {
         onSongClicked: (song) => {
             PlayQueue.switch_to(song.source)
         }
+
+        additionalMenuActions: [
+            {
+                text: qsTr("Play all"),
+                action: () => PlayQueue.respawn_queue(LocalLibrary.flattened_sources())
+            }
+        ]
     }
 }

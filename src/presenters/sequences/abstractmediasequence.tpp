@@ -48,6 +48,36 @@ AbstractMediaSequence::sources() const
     return uri_sources;
 }
 
+// proxy for both sources
+template <typename Container>
+requires
+    std::ranges::forward_range<Container> // Any type of list
+&&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by m_items
+QStringList
+AbstractMediaSequence::sources (const Container &items) // Marked const assuming it doesn't modify the sequence
+{
+    QStringList uri_sources;
+
+    // list everything that has a source or path
+    
+    // Pre-allocate memory for O(1) insertions to handle large sequences efficiently
+    uri_sources.reserve(items.size());
+
+    for (const Types::Any &item : std::as_const(items)) {
+        std::visit([&uri_sources](const auto &resolved_item) { // [1]
+            using T = std::decay_t<decltype(resolved_item)>;
+            
+            if constexpr (std::is_same_v<T, Types::Song>) {
+                uri_sources.append(resolved_item.source.toLocalFile());
+            }
+
+
+        }, item);
+    }
+
+    return uri_sources;
+}
+
 template <typename MediaType, typename FieldType>
 QPersistentModelIndex 
 AbstractMediaSequence::find(FieldType MediaType::* member, const FieldType &needle) const

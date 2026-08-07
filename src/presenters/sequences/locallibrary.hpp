@@ -41,6 +41,7 @@ public:
     QList<Types::Directory> items () const;
     QStringList paths ();
     Q_INVOKABLE QList<Types::Song> flattened () const; // equivalent to "All Tracks" 
+    Q_INVOKABLE QStringList flattened_sources () const;
 
     // where are loaded covers extracted to?
     std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;

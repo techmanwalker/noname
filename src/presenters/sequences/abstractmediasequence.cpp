@@ -267,34 +267,9 @@ AbstractMediaSequence::__row_pointed_to_unlocked(const QPersistentModelIndex &id
 }
 
 QStringList
-AbstractMediaSequence::sources(const QList<Types::Any> &items) // Marked const assuming it doesn't modify the sequence
-{
-    QStringList uri_sources;
-
-    // list everything that has a source or path
-    
-    // Pre-allocate memory for O(1) insertions to handle large sequences efficiently
-    uri_sources.reserve(items.size());
-
-    for (const Types::Any &item : std::as_const(items)) {
-        std::visit([&uri_sources](const auto &resolved_item) { // [1]
-            using T = std::decay_t<decltype(resolved_item)>;
-            
-            if constexpr (std::is_same_v<T, Types::Song>) {
-                uri_sources.append(resolved_item.source.toLocalFile());
-            }
-
-
-        }, item);
-    }
-
-    return uri_sources;
-}
-
-QStringList
 AbstractMediaSequence::sources () const
 {
-    return sources(m_items);
+    return sources<decltype(m_items)>(m_items);
 }
 
 QFuture<void>

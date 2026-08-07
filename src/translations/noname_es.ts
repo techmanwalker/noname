@@ -157,5 +157,10 @@
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
     </message>
+    <message>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="81"/>
+        <source>Play all</source>
+        <translation>Reproducir todo</translation>
+    </message>
 </context>
 </TS>
