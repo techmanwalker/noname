@@ -64,14 +64,16 @@ set_source_files_properties("src/qml/primitives/MediaTypes.qml"
 
 ## C++ sources
 module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
-module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
+module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
+module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
 module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp")
 module_sources(COVERS_SOURCES           "src/covers/*.cpp")
 module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
 module_sources(MEMORY_SOURCES           "src/memory/*.cpp")
 module_sources(DISKIO_SOURCES           "src/diskio/*.cpp")
 module_sources(SONGFACTORY_SOURCES      "src/songfactory/*.cpp")
+
 
 ### Inter-module communication
 
@@ -429,19 +431,34 @@ target_link_libraries(${PROJECT_NAME}
         audioengine
         browser
         fullscreenplayer
+        mainwindow
         mediasequences
 )
 
-qt_add_qml_module(${PROJECT_NAME}
+qt_add_qml_module(mainwindow
+    STATIC
     URI Player.App
+    SOURCES
+        ${WINDOWGEOMETRY_SOURCES}
     QML_FILES
         ${MAINWINDOW_QMLS}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/App"
 )
 
-qt_add_translations(noname
-    TS_FILE_BASE noname
+target_link_libraries(mainwindow
+    PRIVATE
+        ${BASIC_LIBRARIES}
+        memory
+)
+
+target_include_directories(mainwindow
+    PUBLIC
+        src/presenters/context/windowgeometry
+)
+
+qt_add_translations(${PROJECT_NAME}
+    TS_FILE_BASE ${PROJECT_NAME}
     TS_OUTPUT_DIRECTORY src/translations
 )
 

@@ -3,9 +3,9 @@
 #include <QLoggingCategory>
 #include <QUrl>
 
-namespace standardpaths {
+Q_DECLARE_LOGGING_CATEGORY(l_standardpaths)
 
-Q_DECLARE_LOGGING_CATEGORY(l_localdata)
+namespace standardpaths {
 
 enum class standard_dirs {
     configuration,

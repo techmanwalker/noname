@@ -13,7 +13,8 @@ Q_DECLARE_LOGGING_CATEGORY(l_configuration)
 
 enum class conf_file_type {
     known_music_directories,
-    shortcuts
+    shortcuts,
+    window_geometry
 };
 
 QUrl file (conf_file_type type);
