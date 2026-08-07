@@ -131,6 +131,8 @@ Item {
         visible: stateModel.isMediaLoaded
 
         coverToMetadataSpacing: 8
+
+        onMetadataClicked: root.switchView() // clicking cover and metadata also opens theater mode
     }
 
 }
