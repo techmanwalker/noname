@@ -10,7 +10,8 @@ Row {
 
     required property Window window
 
-    readonly property real closeButtonRightPadding: close.rightPadding
+    readonly property real  closeButtonRightPadding: close.rightPadding
+    readonly property alias squareButtonWidth: close.width
 
     ResizableButton {
         id: close
