@@ -39,6 +39,12 @@ LocalLibrary::flattened () const
     return flattened_directories_songs;
 }
 
+QStringList
+LocalLibrary::flattened_sources () const
+{
+    return AbstractMediaSequence::sources<QList<Types::Song>>(flattened());
+}
+
 QFuture<void>
 LocalLibrary::take_snapshot (const QString &dir_path)
 {

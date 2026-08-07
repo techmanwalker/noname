@@ -51,6 +51,7 @@ public:
     /// clear and repopulate the play queue in one step
     void respawn_queue (const QList<Types::Song> &new_queue);
     void respawn_queue (const PlaylistSequence &new_queue);
+    Q_INVOKABLE void respawn_queue (const QStringList &sources);
 
     // where are the covers for drag and drop appends saved?
     std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;

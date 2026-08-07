@@ -61,6 +61,21 @@ PlayQueue::respawn_queue(const PlaylistSequence &new_queue)
     if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
 }
 
+void
+PlayQueue::respawn_queue (const QStringList &sources)
+{
+    clear();
+
+    QList<QUrl> uri_sources;
+    uri_sources.reserve(sources.size());
+
+    for (const QString &source : sources) {
+        uri_sources.emplace_back(QUrl::fromLocalFile(source));
+    }
+
+    AbstractMediaSequence::batch_append(uri_sources, chosen_cover_provider);
+}
+
 QModelIndex
 PlayQueue::playhead () const
 {
