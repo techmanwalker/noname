@@ -27,6 +27,7 @@ ListView {
     // selection
 
     property var selectedSources: []
+    property var additionalMenuActions: []
 
     SongContextMenu {
         id: songContextMenu
@@ -37,6 +38,8 @@ ListView {
                 root.selectedSources = []
             }
         }
+
+        actions: defaultActions.concat(root.additionalMenuActions)
     }
 
     delegate: Song {

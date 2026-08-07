@@ -18,6 +18,7 @@ GridView {
     // selection
 
     property var selectedSources: []
+    property var additionalMenuActions: []
 
     SongContextMenu {
         id: songContextMenu
@@ -28,6 +29,8 @@ GridView {
                 root.selectedSources = []
             }
         }
+
+        actions: defaultActions.concat(root.additionalMenuActions)
     }
 
     delegate: Song {
