@@ -14,8 +14,8 @@ ApplicationWindow {
     title: "noname"
     color: "#000"
 
-    width: 950
-    height: 650
+    width: 1200
+    height: 800
 
     flags: Qt.Window | Qt.FramelessWindowHint
 
