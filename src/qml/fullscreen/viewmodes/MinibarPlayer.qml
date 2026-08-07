@@ -35,7 +35,7 @@ ColumnLayout {
         stateModel: root.stateModel
     }
 
-    Row {
+    RowLayout {
         id: playerview
 
         Layout.leftMargin: root.leftPadding
@@ -44,22 +44,29 @@ ColumnLayout {
 
         spacing: root.spacing
 
+        Layout.fillWidth: true
+
         BasicControls {
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
         }
 
-        Row {
+        RowLayout {
             spacing: root.coverToMetadataSpacing
+
+            Layout.fillWidth: true
             
             Cover {
-                width: parent.height
-                anchors.verticalCenter: parent.verticalCenter
+                Layout.preferredWidth: parent.height
+                Layout.preferredHeight: parent.height
+
+                Layout.alignment: Qt.AlignVCenter
 
                 source: PlayerPresenter.cover
             }
 
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.fillWidth: true
 
                 readonly property string displayArtist: root.stateModel.artist.length > 0 ? root.stateModel.artist : root.noArtistText
 
@@ -69,6 +76,10 @@ ColumnLayout {
                     text: root.stateModel.title.length > 0 ? root.stateModel.title : root.noTitleText
 
                     color: "#dfdfdf"
+
+                    elide: Text.ElideRight
+
+                    Layout.fillWidth: true
                 }
 
                 Label {
@@ -77,15 +88,19 @@ ColumnLayout {
                     text: parent.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
 
                     color: "#afafaf"
+
+                    elide: Text.ElideRight
+
+                    Layout.fillWidth: true
                 }
             }
         }
 
         VolumeControl {
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
             stateModel: root.stateModel
 
-            width: title.font.pointSize * 8
+            Layout.preferredWidth: title.font.pointSize * 12
         }
     }
 }

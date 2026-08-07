@@ -8,7 +8,7 @@ ToolButton {
 
     property string iconName
 
-    property bool magnify: false
+    property bool magnify: true
 
     property real iconSize: magnify ? 24 : 18
 
