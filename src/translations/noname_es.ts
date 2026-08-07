@@ -57,12 +57,17 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="60"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="224"/>
+        <source>Clear queue</source>
+        <translation>Vaciar cola</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="262"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="226"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="190"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -136,9 +141,13 @@
 <context>
     <name>SongContextMenu</name>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="13"/>
         <source>Add to Play Queue</source>
-        <translation>Agregar a la cola de reproducción</translation>
+        <translation type="vanished">Agregar a la cola de reproducción</translation>
+    </message>
+    <message>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="15"/>
+        <source>Add to play queue</source>
+        <translation>Agregar a la cola</translation>
     </message>
 </context>
 <context>

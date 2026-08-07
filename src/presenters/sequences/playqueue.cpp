@@ -36,6 +36,7 @@ PlayQueue::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 // --- The Play queue ---
 
 QList<Types::Song> PlayQueue::items () const { return AbstractMediaSequence::items<Types::Song>() ; }
+void PlayQueue::clear () { return PlaylistSequence::clear(); }
 
 QFuture<void> 
 PlayQueue::batch_append (const QList<QUrl> &sources)

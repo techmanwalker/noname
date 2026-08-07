@@ -43,6 +43,8 @@ public:
     Q_INVOKABLE void next ();
     Q_INVOKABLE void prev ();
 
+    Q_INVOKABLE void clear ();
+
     // to drag and drop lists of songs on the qml gui
     Q_INVOKABLE QFuture<void> batch_append (const QList<QUrl> &sources);
 

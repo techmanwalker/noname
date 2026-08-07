@@ -2,19 +2,24 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
+import Player.Primitives
 import Player.MediaSequences
 
-Menu {
+ActionMenu {
     id: root
 
     property var selectedUris: []
 
-    MenuItem {
-        text: qsTr("Add to Play Queue")
-        onTriggered: {
-            if (root.selectedUris.length > 0) {
-                PlayQueue.batch_append(root.selectedUris)
+    readonly property var defaultActions: [
+        {
+            text: qsTr("Add to play queue"),
+            action: () => {
+                if (root.selectedUris.length > 0) {
+                    PlayQueue.batch_append(root.selectedUris)
+                }
             }
         }
-    }
+    ]
+
+    actions: defaultActions
 }

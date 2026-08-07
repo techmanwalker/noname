@@ -138,7 +138,7 @@ Item {
             property int scrollBarWidth: 4
             width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
-            MetadataContainer {
+            PlayQueueHeader {
                 id: metadataContainer
                 title:  PlayerPresenter.title
                 artist: PlayerPresenter.artist
@@ -218,6 +218,13 @@ Item {
                     onSongClicked: (song) => {
                         PlayQueue.playhead = PlayQueue.index(song.index, 0)
                     }
+
+                    additionalMenuActions: [
+                        {
+                            text: qsTr("Clear queue"),
+                            action: () => PlayQueue.clear()
+                        }
+                    ]
                 }
             }
         }
