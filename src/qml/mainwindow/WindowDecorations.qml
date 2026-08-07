@@ -10,7 +10,10 @@ Row {
 
     required property Window window
 
+    readonly property real closeButtonRightPadding: close.rightPadding
+
     ResizableButton {
+        id: close
         icon.name: "window-close"
         onClicked: root.window.close()
     }

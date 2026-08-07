@@ -133,6 +133,8 @@ Item {
 
                     VolumeControl {
                         anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        
                         width: 100
 
                         stateModel: PlayerPresenter

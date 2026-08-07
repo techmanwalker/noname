@@ -14,10 +14,10 @@ Item {
 
     signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
 
-    Item {
+    ColumnLayout {
         id: leftCol
 
-        width: parent.width / 6 - searchBar.leftPadding // create an alignment on the left limits of the elements
+        width: Math.max(implicitWidth, parent.width / 6 - searchBar.leftPadding) // create an alignment on the left limits of the elements
         
         anchors.top:    parent.top
         anchors.left:   parent.left
@@ -26,10 +26,8 @@ Item {
         ArrangementList {
             id: vtabs
 
-            anchors.top: parent.top
-            anchors.left: parent.left
-
-            anchors.topMargin: searchBar.y + searchBar.height // todo: align with the search bar
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: searchBar.y + searchBar.height // todo: align with the search bar
 
             stack: activeView
             homeIndex: 0
@@ -38,10 +36,9 @@ Item {
         }
 
         Column {
-            anchors.left: parent.left
-            anchors.bottom: parent.bottom
+            Layout.alignment: Qt.AlignBottom
 
-            anchors.bottomMargin: vtabs.anchors.topMargin
+            Layout.bottomMargin: vtabs.Layout.topMargin
 
             VTabButton {
                 iconName: "view-fullscreen"
@@ -66,6 +63,12 @@ Item {
         RowLayout {
             Layout.fillWidth: true
 
+            Layout.rightMargin:Math.max(20 // VTabButton lateral padding
+                - windex.closeButtonRightPadding // inset in VTabButton padding
+                - 3 // the close icon has 6 pixels of empty space on its 24 px version
+
+                , 0 /* safety*/)
+
             SearchBar {
                 id: searchBar
 
@@ -81,8 +84,6 @@ Item {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
 
-                rightPadding: searchBar.leftPadding // keep symmetry
-
                 window: root.parentWindow
             }
         }
@@ -94,6 +95,8 @@ Item {
             Layout.fillHeight: true
 
             currentIndex: vtabs.tracksIndex // Folders — matches the old sourceComponent: folders default
+
+            Layout.rightMargin: 20 // should be consistent with VTabButton lateral padding
 
             Home {
                 id: homeitem
@@ -123,10 +126,9 @@ Item {
         topPadding: 20
         bottomPadding: topPadding
 
-        visible: stateModel.isMediaLoaded
+        width: Math.min(rightCol.width - 20, implicitWidth)
 
-        leftPadding: searchBar.leftPadding
-        rightPadding: leftPadding
+        visible: stateModel.isMediaLoaded
 
         coverToMetadataSpacing: 8
     }
