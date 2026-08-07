@@ -39,42 +39,6 @@ Item {
         root.height - controlsHeight - verticalPadding
     )
 
-    // ── Navigation ─────────────────────────────────────────────────────────
-
-    Row {
-        anchors.right: parent.right
-        anchors.top: parent.top
-
-        opacity: (!root.immersive || windex_hover.hovered) ? 1 : 0 // immersion
-
-        HoverHandler {
-            id: windex_hover
-        }
-        
-        ResizableButton {
-            id: fullscreenToggle
-            iconName: "window-minimize"
-
-            anchors.verticalCenter: parent.verticalCenter
-
-            text: qsTr("Back")
-
-            padding: 20
-
-            magnify: true
-
-            onClicked: root.switchView()
-        }
-
-        WindowDecorations {
-            window: root.parentWindow
-
-            Layout.alignment: Qt.AlignVCenter
-
-            anchors.verticalCenter: parent.verticalCenter
-        }
-    }
-
     // ── Layout ─────────────────────────────────────────────────────────────
 
     property real songCoverWidth: 48
@@ -258,4 +222,41 @@ Item {
             }
         }
     }
+
+    // ── Navigation ─────────────────────────────────────────────────────────
+
+    Row {
+        anchors.right: parent.right
+        anchors.top: parent.top
+
+        opacity: (!root.immersive || windex_hover.hovered) ? 1 : 0 // immersion
+
+        HoverHandler {
+            id: windex_hover
+        }
+        
+        ResizableButton {
+            id: fullscreenToggle
+            iconName: "window-minimize"
+
+            anchors.verticalCenter: parent.verticalCenter
+
+            text: qsTr("Back")
+
+            padding: 20
+
+            magnify: true
+
+            onClicked: root.switchView()
+        }
+
+        WindowDecorations {
+            window: root.parentWindow
+
+            Layout.alignment: Qt.AlignVCenter
+
+            anchors.verticalCenter: parent.verticalCenter
+        }
+    }
+
 }
