@@ -10,6 +10,8 @@ ActionMenu {
 
     property var selectedUris: []
 
+    signal clearSelectionRequested ()
+
     readonly property var defaultActions: [
         {
             text: qsTr("Add to play queue"),
@@ -18,8 +20,20 @@ ActionMenu {
                     PlayQueue.batch_append(root.selectedUris)
                 }
             }
+        },
+        {
+            text: qsTr("Clear selection"),
+            action: () => {
+                root.clearSelectionRequested ()
+            }
         }
     ]
+
+    onClosed: {
+        if (root.selectedUris.length === 1) {
+            root.clearSelectionRequested ()
+        }
+    }
 
     actions: defaultActions
 }

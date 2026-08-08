@@ -62,7 +62,7 @@
         <translation>Vaciar cola</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="262"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="266"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -145,9 +145,14 @@
         <translation type="vanished">Agregar a la cola de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="15"/>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="17"/>
         <source>Add to play queue</source>
         <translation>Agregar a la cola</translation>
+    </message>
+    <message>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="25"/>
+        <source>Clear selection</source>
+        <translation>Limpiar selección</translation>
     </message>
 </context>
 <context>

@@ -24,11 +24,7 @@ GridView {
         id: songContextMenu
         selectedUris: root.selectedSources
 
-        onClosed: {
-            if (root.selectedSources.length === 1) {
-                root.selectedSources = []
-            }
-        }
+        onClearSelectionRequested: root.selectedSources = []
 
         actions: defaultActions.concat(root.additionalMenuActions)
     }
