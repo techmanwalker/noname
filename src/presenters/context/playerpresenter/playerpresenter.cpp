@@ -1,5 +1,6 @@
 
 #include "playerpresenter.hpp"
+#include "audioengine.hpp"
 
 #include <QQmlEngine>
 
@@ -40,6 +41,9 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 
     connect(&playing, &audio_engine::position_changed,
             this, &PlayerPresenter::positionChanged);
+
+    connect(&playing, &audio_engine::track_finished,
+            this, &PlayerPresenter::handleTrackFinished);
 
     // Send the reverse signal to the controller when the slider is pressed or not
     connect(this, &PlayerPresenter::r_durationSliderPressedChanged,
@@ -144,6 +148,12 @@ PlayerPresenter::handleTrackChanged()
     emit durationChanged();
     emit positionChanged();
     emit mediaLoadedChanged();
+}
+
+void
+PlayerPresenter::handleTrackFinished()
+{
+    next();
 }
 
 void

@@ -229,8 +229,8 @@ signals:
     
     // Single atomic signal to send the whole block of data at once
     void track_changed();
+    void track_finished();
     void playback_state_changed();
-    void song_finished();
 
     // Reverse signal from QML down to the controller
     void r_duration_slider_pressed_changed(bool pressed);
@@ -240,8 +240,6 @@ private slots:
     void handle_playhead_changed(bool play_afterwards = false); // triggered by a switch_to or click in QML
 
     void handle_track_changed (); // mostly reemit signals
-
-    void handle_song_finished (); // opportunity for gapless playback
 
 private:
     // Private constructor for the singleton pattern
