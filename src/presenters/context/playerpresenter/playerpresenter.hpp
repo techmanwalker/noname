@@ -117,6 +117,7 @@ signals:
 public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
+    void handleTrackFinished();
     void handleVolumeChangedInController();
 
 private:

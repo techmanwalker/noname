@@ -65,16 +65,11 @@ audio_engine::audio_engine(QObject *parent)
         if (m_decoder_worker->get_ring_buffer()->eof_played.exchange(false)) {
             // Force the engine to acknowledge the paused state
             set_transport_paused(true); 
-            emit song_finished();
+            emit track_finished();
         } else {
             emit position_changed();
         }
     });
-
-    // on eof do
-    connect(this, &audio_engine::song_finished,
-            this, &audio_engine::handle_song_finished);
-
             
     m_audio_decoding_thread->start();
 
@@ -301,12 +296,6 @@ audio_engine::handle_duration_slider_pressed_changed(bool pressed)
             // no default this time
         }
     }
-}
-
-void
-audio_engine::handle_song_finished ()
-{
-    queue.next();
 }
 
 void
