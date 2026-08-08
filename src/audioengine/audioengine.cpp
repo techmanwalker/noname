@@ -314,7 +314,10 @@ audio_engine::handle_playhead_changed (bool play_afterwards)
 {
     QModelIndex current_index = queue.playhead();
 
-    if (!current_index.isValid()) return;
+    if (!current_index.isValid()) {
+        unload();
+        return;
+    };
 
     // get the Types::Any
     const std::optional<std::reference_wrapper<Types::Any>> item = queue.item_at(current_index.row());
