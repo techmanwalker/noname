@@ -80,9 +80,6 @@ audio_engine::audio_engine(QObject *parent)
     connect(this, &audio_engine::r_duration_slider_pressed_changed,
             this, &audio_engine::handle_duration_slider_pressed_changed);
 
-    connect(&queue, &PlayQueue::playheadChanged,
-            this, &audio_engine::handle_playhead_changed);
-
     connect(this, &audio_engine::track_changed,
             this, &audio_engine::handle_track_changed);
 }
@@ -295,30 +292,5 @@ audio_engine::handle_duration_slider_pressed_changed(bool pressed)
 
             // no default this time
         }
-    }
-}
-
-void
-audio_engine::handle_playhead_changed (bool play_afterwards)
-{
-    QModelIndex current_index = queue.playhead();
-
-    if (!current_index.isValid()) {
-        unload();
-        return;
-    };
-
-    // get the Types::Any
-    const std::optional<std::reference_wrapper<Types::Any>> item = queue.item_at(current_index.row());
-
-    if (!item.has_value()) return;
-
-    const Types::Any &media_item = item.value().get();
-
-    // narrow down to Types::Song
-    if (std::holds_alternative<Types::Song>(media_item)) {
-        const Types::Song &song = std::get<Types::Song>(media_item);
-        load(song);
-        if (play_afterwards) play();
     }
 }

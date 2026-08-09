@@ -118,6 +118,7 @@ public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
     void handleTrackFinished();
+    void handlePlayheadChanged(bool play_afterwards = false);
     void handleVolumeChangedInController();
 
 private:

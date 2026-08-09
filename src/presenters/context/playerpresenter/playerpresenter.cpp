@@ -1,6 +1,7 @@
 
 #include "playerpresenter.hpp"
 #include "audioengine.hpp"
+#include "playqueue.hpp"
 
 #include <QQmlEngine>
 
@@ -44,6 +45,9 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 
     connect(&playing, &audio_engine::track_finished,
             this, &PlayerPresenter::handleTrackFinished);
+
+    connect(&queue, &PlayQueue::playheadChanged,
+            this, &PlayerPresenter::handlePlayheadChanged);
 
     // Send the reverse signal to the controller when the slider is pressed or not
     connect(this, &PlayerPresenter::r_durationSliderPressedChanged,
@@ -148,6 +152,31 @@ PlayerPresenter::handleTrackChanged()
     emit durationChanged();
     emit positionChanged();
     emit mediaLoadedChanged();
+}
+
+void
+PlayerPresenter::handlePlayheadChanged(bool play_afterwards)
+{
+    QModelIndex current_index = queue.playhead();
+
+    if (!current_index.isValid()) {
+        playing.unload();
+        return;
+    };
+
+    // get the Types::Any
+    const std::optional<std::reference_wrapper<Types::Any>> item = queue.item_at(current_index.row());
+
+    if (!item.has_value()) return;
+
+    const Types::Any &media_item = item.value().get();
+
+    // narrow down to Types::Song
+    if (std::holds_alternative<Types::Song>(media_item)) {
+        const Types::Song &song = std::get<Types::Song>(media_item);
+        playing.load(song);
+        if (play_afterwards) play();
+}
 }
 
 void
