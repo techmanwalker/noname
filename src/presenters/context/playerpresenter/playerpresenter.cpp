@@ -157,32 +157,26 @@ PlayerPresenter::handleTrackChanged()
 void
 PlayerPresenter::handlePlayheadChanged(bool play_afterwards)
 {
-    QModelIndex current_index = queue.playhead();
-
-    if (!current_index.isValid()) {
-        playing.unload();
-        return;
-    };
-
     // get the Types::Any
-    const std::optional<std::reference_wrapper<Types::Any>> item = queue.item_at(current_index.row());
+    const std::optional<std::reference_wrapper<Types::Any>> item = queue.pointed_to(queue.playhead());
 
     if (!item.has_value()) return;
 
     const Types::Any &media_item = item.value().get();
 
     // narrow down to Types::Song
-    if (std::holds_alternative<Types::Song>(media_item)) {
-        const Types::Song &song = std::get<Types::Song>(media_item);
-        playing.load(song);
-        if (play_afterwards) play();
-}
+    if (!std::holds_alternative<Types::Song>(media_item)) return;
+
+    const Types::Song &song = std::get<Types::Song>(media_item);
+    playing.load(song);
+    
+    if (play_afterwards) play();
 }
 
 void
 PlayerPresenter::handleTrackFinished()
 {
-    next();
+    queue.switch_to(queue.index_next_to(queue.playhead()), true);
 }
 
 void

@@ -239,6 +239,20 @@ AbstractMediaSequence::pointed_to(const QPersistentModelIndex &idx)
     return std::ref(m_items[row.value()]);
 }
 
+// direct reference to the next item
+std::optional<std::reference_wrapper<Types::Any>>
+AbstractMediaSequence::next_to(const QPersistentModelIndex &idx)
+{
+    QReadLocker locker (&m_lock);
+
+    const QPersistentModelIndex next_idx = __index_next_to_unlocked(idx);
+
+    // __index_next_to_unlocked would make it invalid anyway but I prefer saving cpu cycles here
+    if (!next_idx.isValid()) return std::nullopt;
+
+    return pointed_to(next_idx);
+}
+
 std::optional<size_t>
 AbstractMediaSequence::row_pointed_to(const QPersistentModelIndex &idx) const
 {
@@ -249,6 +263,27 @@ AbstractMediaSequence::row_pointed_to(const QPersistentModelIndex &idx) const
     if (!row.has_value()) return std::nullopt;
 
     return std::ref(row.value());
+}
+
+QPersistentModelIndex 
+AbstractMediaSequence::index_next_to (const QPersistentModelIndex &idx) const
+{
+    // simple read guard
+    QReadLocker locker (&m_lock);
+
+    return __index_next_to_unlocked(idx);
+}
+
+std::optional<size_t>
+AbstractMediaSequence::row_next_to(const QPersistentModelIndex &idx) const
+{
+    QReadLocker locker (&m_lock);
+
+    const std::optional<size_t> next_row = __row_next_to_unlocked(idx);
+
+    if (!next_row.has_value()) return std::nullopt;
+
+    return next_row.value();
 }
 
 std::optional<size_t>
@@ -264,6 +299,37 @@ AbstractMediaSequence::__row_pointed_to_unlocked(const QPersistentModelIndex &id
     }
 
     return row;
+}
+
+std::optional<size_t>
+AbstractMediaSequence::__row_next_to_unlocked(const QPersistentModelIndex &idx) const
+{
+    if (!idx.isValid()) {
+        return std::nullopt;
+    }
+
+    const int row = idx.row() + 1;
+
+    // if the row net to idx was -1, that was wrong
+    if (row < 1 || row >= static_cast<int>(m_items.size())) {
+        return std::nullopt;
+    }
+
+    return row;
+}
+
+QPersistentModelIndex
+AbstractMediaSequence::__index_next_to_unlocked (const QPersistentModelIndex &idx) const
+{
+    if (!idx.isValid()) {
+        return QPersistentModelIndex();
+    }
+
+    const std::optional<size_t> next_row = __row_next_to_unlocked(idx);
+
+    if (!next_row.has_value()) return QPersistentModelIndex();
+
+    return index(next_row.value());
 }
 
 QStringList

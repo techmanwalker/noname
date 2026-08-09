@@ -11,6 +11,8 @@
 
 #include <QtQmlIntegration/qqmlintegration.h>
  
+#include <functional>
+#include <qabstractitemmodel.h>
 #include <rapidfuzz/fuzz.hpp>
 
 
@@ -59,11 +61,17 @@ public:
     template <typename media_type>
     QStringList sources() const;
 
-    std::optional<std::reference_wrapper<Types::Any>> pointed_to(const QPersistentModelIndex &idx);
+    // position solvers
+    std::optional<std::reference_wrapper<Types::Any>> pointed_to (const QPersistentModelIndex &idx);
     std::optional<size_t> row_pointed_to(const QPersistentModelIndex &idx) const;
+
+    QPersistentModelIndex index_next_to (const QPersistentModelIndex &idx) const;
+    std::optional<std::reference_wrapper<Types::Any>> next_to (const QPersistentModelIndex &idx);
+    std::optional<size_t> row_next_to(const QPersistentModelIndex &idx) const;
 
     // Access to the raw item for inherited classes that need extra roles
     std::optional<std::reference_wrapper<Types::Any>> item_at(size_t index);
+
     int itemCount() const;
 
     // read a role directly
@@ -117,6 +125,8 @@ protected:
     void batch_remove (const QList<QPersistentModelIndex> &items);
 
     std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
+    std::optional<size_t> __row_next_to_unlocked (const QPersistentModelIndex &idx) const;
+    QPersistentModelIndex __index_next_to_unlocked (const QPersistentModelIndex &idx) const;
 
     mutable QReadWriteLock m_lock;
     
