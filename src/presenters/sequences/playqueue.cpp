@@ -83,10 +83,10 @@ PlayQueue::respawn_queue (const QStringList &sources)
     AbstractMediaSequence::batch_append(uri_sources, chosen_cover_provider);
 }
 
-QModelIndex
-PlayQueue::playhead () const
+QPersistentModelIndex &
+PlayQueue::playhead ()
 {
-    return m_playhead;
+    return m_playhead; // QPersistentModelIndex
 }
 
 void
