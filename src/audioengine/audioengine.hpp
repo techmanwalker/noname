@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mediatypes.hpp"
-#include "playqueue.hpp"
 
 #include <QLoggingCategory>
 #include <QObject>
@@ -237,7 +236,6 @@ signals:
 
 private slots:
     void handle_duration_slider_pressed_changed(bool pressed);
-    void handle_playhead_changed(bool play_afterwards = false); // triggered by a switch_to or click in QML
 
     void handle_track_changed (); // mostly reemit signals
 
@@ -264,8 +262,6 @@ private:
     
     // The core of synchronization: control of load versions
     uint64_t m_current_transaction_id = 0;
-
-    PlayQueue &queue = PlayQueue::instance();
 };
 
 #include "prettyerrors.tpp"
