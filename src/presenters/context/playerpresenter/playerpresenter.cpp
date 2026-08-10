@@ -43,7 +43,7 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
             this, &PlayerPresenter::handleVolumeChangedInController);
 
     connect(&playing, &audio_engine::playback_state_changed,
-            this, &PlayerPresenter::playbackStateChanged);
+            this, &PlayerPresenter::handlePlaybackStateChanged);
 
     connect(&playing, &audio_engine::position_changed,
             this, &PlayerPresenter::positionChanged);
@@ -101,16 +101,18 @@ PlayerPresenter::play() const {
     }
 
     playing.play();
-
-    m_position_poll_timer->start();
 }
 
 void
 PlayerPresenter::pause() const
 {
     playing.pause();
+}
 
-    m_position_poll_timer->stop();
+void
+PlayerPresenter::stop() const
+{
+    playing.stop();
 }
 
 void
@@ -150,7 +152,26 @@ void
 PlayerPresenter::handleQueuedTracksFinished()
 {
     // if ever there is a slipoff on not preloading the next song, that will be played anyway
-    queue.switch_to(queue.index_next_to(queue.playhead()), true);
+    if (!queue.switch_to(queue.index_next_to(queue.playhead()), true)) {
+        stop();
+    }
+}
+
+void
+PlayerPresenter::handlePlaybackStateChanged()
+{
+    emit playbackStateChanged();
+    
+    using playback_state = audio_engine::playback_state;
+    switch(playing.get_playback_state()) {
+        case playback_state::playing:
+            m_position_poll_timer->start();
+            break;
+        case playback_state::paused:
+        case playback_state::stopped:
+            m_position_poll_timer->stop();
+            break;
+    }
 }
 
 void
