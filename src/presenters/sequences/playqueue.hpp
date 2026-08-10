@@ -62,6 +62,7 @@ signals:
 private slots:
     void preload_next_track_whenever_possible ();
     void handle_queued_tracks_finished ();
+    void handle_track_changed ();
 
 private:
     // private constructor to disallow external creations

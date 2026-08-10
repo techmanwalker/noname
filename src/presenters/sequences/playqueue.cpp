@@ -18,6 +18,9 @@ PlayQueue::PlayQueue(QObject *parent)
     : PlaylistSequence(parent)
 {
     connect (&playing, &audio_engine::track_changed,
+            this, &PlayQueue::handle_track_changed);
+    
+    connect (this, &PlayQueue::countChanged,
             this, &PlayQueue::preload_next_track_whenever_possible);
 
     connect(&playing, &audio_engine::queued_tracks_finished,
@@ -190,7 +193,6 @@ PlayQueue::prev ()
 void
 PlayQueue::preload_next_track_whenever_possible ()
 {
-    emit track_changed();
 
     // preload the next song
     QPersistentModelIndex next_song_idx = index_next_to(playhead());
@@ -200,11 +202,16 @@ PlayQueue::preload_next_track_whenever_possible ()
     auto song_opt = pointed_to(next_song_idx);
     if (!song_opt.has_value()) return;
 
-    Types::Any &song_item = song_opt.value().get();
+    Types::Any &any_item = song_opt.value().get();
 
-    if (!std::holds_alternative<Types::Song>(song_item)) return;
+    if (!std::holds_alternative<Types::Song>(any_item)) return;
 
-    playing.prepare_next_track(std::get<Types::Song>(song_item));
+    Types::Song &song_item = std::get<Types::Song>(any_item);
+
+    // don't preload again an already preloaded song
+    if (playing.next_track_prepared().source == song_item.source) return;
+    
+    playing.prepare_next_track(song_item);
 
     qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
 }
@@ -218,4 +225,12 @@ PlayQueue::handle_queued_tracks_finished()
     if (!switch_to(index_next_to(playhead()), true)) {
         playing.stop();
     }
+}
+
+void
+PlayQueue::handle_track_changed ()
+{
+    emit track_changed();
+
+    preload_next_track_whenever_possible();
 }
