@@ -47,9 +47,6 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 
     connect(&playing, &audio_engine::position_changed,
             this, &PlayerPresenter::positionChanged);
-
-    connect(&playing, &audio_engine::queued_tracks_finished,
-            this, &PlayerPresenter::handleQueuedTracksFinished);
 }
 
 // Getters block
@@ -137,6 +134,7 @@ PlayerPresenter::prev() const
 void
 PlayerPresenter::handleTrackChanged()
 {
+    // note: only to update the ui
     
     // Suddenly awake the QML declarative tree
     emit titleChanged();
@@ -149,19 +147,10 @@ PlayerPresenter::handleTrackChanged()
 }
 
 void
-PlayerPresenter::handleQueuedTracksFinished()
-{
-    // if ever there is a slipoff on not preloading the next song, that will be played anyway
-    if (!queue.switch_to(queue.index_next_to(queue.playhead()), true)) {
-        stop();
-    }
-}
-
-void
 PlayerPresenter::handlePlaybackStateChanged()
 {
     emit playbackStateChanged();
-    
+
     using playback_state = audio_engine::playback_state;
     switch(playing.get_playback_state()) {
         case playback_state::playing:

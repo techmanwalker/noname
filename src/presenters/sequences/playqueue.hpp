@@ -16,7 +16,7 @@ class PlayQueue : public PlaylistSequence {
     QML_ELEMENT
     QML_SINGLETON
 
-    Q_PROPERTY(QModelIndex playhead READ playhead WRITE qml_switch_to NOTIFY trackChanged)
+    Q_PROPERTY(QModelIndex playhead READ playhead WRITE qml_switch_to NOTIFY track_changed)
 
 public:
     // disable copy and assignment for single instance
@@ -57,8 +57,11 @@ public:
     std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
 signals:
-    // triggered by audio_engine::track_changed
-    void trackChanged ();
+    void track_changed ();
+
+private slots:
+    void preload_next_track_whenever_possible ();
+    void handle_queued_tracks_finished ();
 
 private:
     // private constructor to disallow external creations

@@ -446,6 +446,26 @@ audio_decode_worker::queue_next_song(const Types::Song& next_song)
     m_has_queued_song = true;
 }
 
+void
+audio_decode_worker::clear_queued_song()
+{
+    std::lock_guard<std::mutex> lock(m_queue_mutex);
+    m_has_queued_song = false;
+    m_queued_next_song = Types::Song{};
+}
+
+void 
+audio_engine::undo_prepare_next_track() 
+{
+    // Clear the local front-end tracker
+    m_prolly_next_track = Types::Song{};
+    
+    // Asynchronously clear the backend queue
+    QMetaObject::invokeMethod(m_decoder_worker, [this]() {
+        m_decoder_worker->clear_queued_song();
+    }, Qt::QueuedConnection);
+}
+
 int
 audio_decode_worker::convert_to_float (AVFrame *frame, float **output)
 {

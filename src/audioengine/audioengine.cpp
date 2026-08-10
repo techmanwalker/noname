@@ -148,6 +148,8 @@ audio_engine::stop()
     QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::clean, Qt::BlockingQueuedConnection);
     
     m_decoder_worker->get_ring_buffer()->reset_cancel();
+
+    emit playback_state_changed();
 }
 
 void

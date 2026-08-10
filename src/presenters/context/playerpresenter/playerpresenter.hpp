@@ -108,7 +108,6 @@ signals:
 public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
-    void handleQueuedTracksFinished();
     void handlePlaybackStateChanged();
     void handleVolumeChangedInController();
 
