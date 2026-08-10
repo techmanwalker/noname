@@ -114,22 +114,37 @@ PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
 void
 PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 {
-    if (
-        !song.isValid()
-    ||   song.model() != this // not from queue
-    ) return;
+    // load the current song
+    {
+        if (
+            !song.isValid()
+        ||   song.model() != this // not from queue
+        ) return;
 
-    auto song_opt = pointed_to(song);
-    if (!song_opt.has_value()) return;
+        auto song_opt = pointed_to(song);
+        if (!song_opt.has_value()) return;
 
-    Types::Any &song_item = song_opt.value().get();
+        Types::Any &song_item = song_opt.value().get();
 
-    if (!std::holds_alternative<Types::Song>(song_item)) return;
+        if (!std::holds_alternative<Types::Song>(song_item)) return;
 
-    playing.load(std::get<Types::Song>(song_item));
+        playing.load(std::get<Types::Song>(song_item));
 
-    if (play_afterwards) {
-        playing.play();
+        if (play_afterwards) {
+            playing.play();
+        }
+    }
+
+    // preload the next song
+    {
+        auto song_opt = pointed_to(index_next_to(song));;
+        if (!song_opt.has_value()) return;
+
+        Types::Any &song_item = song_opt.value().get();
+
+        if (!std::holds_alternative<Types::Song>(song_item)) return;
+
+        playing.prepare_next_track(std::get<Types::Song>(song_item));
     }
 }
 
