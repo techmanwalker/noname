@@ -56,31 +56,6 @@ audio_engine::audio_engine(QObject *parent)
 
     connect(m_decoder_worker, &audio_decode_worker::seeked,
             this, &audio_engine::position_changed);
-
-    m_eof_poll_timer = new QTimer(this);
-    m_eof_poll_timer->setInterval(100); // 10 Hz
-
-    // poll for eof tracking
-    connect(m_eof_poll_timer, &QTimer::timeout, this, [this]() {
-        // 1. Check for gapless track transitions
-        if (auto next_song = m_decoder_worker->get_ring_buffer()->check_and_pop_boundary()) {
-            
-            m_current_track = next_song.value();
-            
-            // Reset the local track playback time to 0 while keeping the hardware stream running
-            m_decoder_worker->get_ring_buffer()->frames_played.store(0, std::memory_order_relaxed);
-            m_decoder_worker->get_ring_buffer()->playback_base_ms.store(0, std::memory_order_relaxed);
-            
-            // Let the UI know the song has officially changed
-            emit track_changed(); 
-        }
-
-        // 2. Normal EOF check
-        if (m_decoder_worker->get_ring_buffer()->eof_played.exchange(false)) {
-            // Handle end of playlist / transport stop, or unloaded next song
-            emit queued_tracks_finished();
-        }
-    });
             
     m_audio_decoding_thread->start();
 
@@ -108,12 +83,6 @@ void
 audio_engine::set_transport_paused(bool paused)
 {
     m_decoder_worker->get_ring_buffer()->is_paused.store(paused);
-
-    if (paused) {
-        m_eof_poll_timer->stop();
-    } else {
-        m_eof_poll_timer->start();
-    }
 
     emit playback_state_changed();
 }
@@ -299,4 +268,37 @@ audio_engine::handle_track_changed ()
     emit duration_changed();
     emit position_changed();
     emit playback_state_changed();
+}
+
+// To reactively trigger the changes signals
+void
+audio_engine::process_track_boundary()
+{
+    if (auto next_song = m_decoder_worker->get_ring_buffer()->check_and_pop_boundary()) {
+        m_current_track = next_song.value();
+
+        // Reset local track playback position to 0
+        m_decoder_worker->get_ring_buffer()->frames_played.store(0, std::memory_order_relaxed);
+        m_decoder_worker->get_ring_buffer()->playback_base_ms.store(0, std::memory_order_relaxed);
+
+        // If another boundary was already queued behind this one, update the atomic threshold
+        auto* ring_buf = m_decoder_worker->get_ring_buffer();
+        std::lock_guard<std::mutex> lock(ring_buf->boundary_mutex);
+        if (!ring_buf->upcoming_boundaries.empty()) {
+            ring_buf->next_boundary_frame.store(
+                ring_buf->upcoming_boundaries.front().absolute_frame_start,
+                std::memory_order_release
+            );
+        } else {
+            ring_buf->next_boundary_frame.store(UINT64_MAX, std::memory_order_release);
+        }
+
+        emit track_changed();
+    }
+}
+
+void
+audio_engine::process_playlist_finished()
+{
+    emit queued_tracks_finished();
 }
