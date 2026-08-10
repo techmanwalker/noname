@@ -62,8 +62,8 @@ ColumnLayout {
             }
             
             Cover {
-                Layout.preferredWidth: parent.height
-                Layout.preferredHeight: parent.height
+                Layout.fillHeight: true
+                Layout.preferredWidth: height
 
                 Layout.alignment: Qt.AlignVCenter
 
@@ -72,7 +72,9 @@ ColumnLayout {
 
             ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
+
                 Layout.fillWidth: true
+                Layout.fillHeight: true
 
                 readonly property string displayArtist: root.stateModel.artist.length > 0 ? root.stateModel.artist : root.noArtistText
 
