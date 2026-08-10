@@ -38,6 +38,9 @@ audio_engine::audio_engine(QObject *parent)
     m_outstream->format = SoundIoFormatFloat32NE; 
     m_outstream->sample_rate = m_decoder_worker->get_ring_buffer()->get_sample_rate();
 
+    // avoid playing position drift
+    m_outstream->software_latency = 0.15;
+
     // connect hardware with our ring buffer
     m_outstream->userdata = m_decoder_worker->get_ring_buffer();
     m_outstream->write_callback = write_callback;
