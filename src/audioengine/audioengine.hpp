@@ -120,7 +120,6 @@ public:
     std::mutex boundary_mutex;
     std::queue<track_boundary> upcoming_boundaries;
 
-    // Call this from write_callback to check if we crossed a boundary
     std::optional<Types::Song> check_and_pop_boundary() {
         std::lock_guard<std::mutex> lock(boundary_mutex);
         if (!upcoming_boundaries.empty()) {

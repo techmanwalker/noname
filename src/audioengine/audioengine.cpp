@@ -124,12 +124,16 @@ void
 audio_engine::play()
 {
     set_transport_paused(false); // play means "unpause"
+
+    emit playback_state_changed();
 }
 
 void
 audio_engine::pause()
 {
     set_transport_paused(true);
+
+    emit playback_state_changed();
 }
 
 void

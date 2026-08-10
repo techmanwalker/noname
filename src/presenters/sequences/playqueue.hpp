@@ -35,7 +35,7 @@ public:
 
     // controls
     void switch_to (const Types::Song &song, bool play_afterwards = false); // clean the queue completely and repopulate with this song
-    void switch_to (const QPersistentModelIndex &song, bool play_afterwards = false); // for lvalues
+    bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false); // for lvalues
     void qml_switch_to (const QModelIndex &index); // proxy for qml that auto plays the selection afterwards
 
     Q_INVOKABLE void switch_to (const QUrl &source);

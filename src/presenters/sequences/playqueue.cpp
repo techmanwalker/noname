@@ -111,22 +111,24 @@ PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
     }
 }
 
-void
+bool
 PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 {
+    // true only means that the current song was successfully loaded
+
     // load the current song
     {
         if (
             !song.isValid()
         ||   song.model() != this // not from queue
-        ) return;
+        ) return false;
 
         auto song_opt = pointed_to(song);
-        if (!song_opt.has_value()) return;
+        if (!song_opt.has_value()) return false;
 
         Types::Any &song_item = song_opt.value().get();
 
-        if (!std::holds_alternative<Types::Song>(song_item)) return;
+        if (!std::holds_alternative<Types::Song>(song_item)) return false;
 
         playing.load(std::get<Types::Song>(song_item));
 
@@ -138,14 +140,16 @@ PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
     // preload the next song
     {
         auto song_opt = pointed_to(index_next_to(song));;
-        if (!song_opt.has_value()) return;
+        if (!song_opt.has_value()) return true;
 
         Types::Any &song_item = song_opt.value().get();
 
-        if (!std::holds_alternative<Types::Song>(song_item)) return;
+        if (!std::holds_alternative<Types::Song>(song_item)) return true;
 
         playing.prepare_next_track(std::get<Types::Song>(song_item));
     }
+
+    return true;
 }
 
 void

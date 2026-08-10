@@ -89,6 +89,7 @@ public:
     // Playback controls
     Q_INVOKABLE void play()  const;
     Q_INVOKABLE void pause() const;
+    Q_INVOKABLE void stop()  const;
     Q_INVOKABLE void next()  const;
     Q_INVOKABLE void prev()  const;
     
@@ -108,6 +109,7 @@ public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
     void handleQueuedTracksFinished();
+    void handlePlaybackStateChanged();
     void handleVolumeChangedInController();
 
 private:
