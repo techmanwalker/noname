@@ -124,6 +124,20 @@ audio_ring_buffer::writable_size() const {
     return (capacity - 1) - used;
 }
 
+std::optional<Types::Song> 
+audio_ring_buffer::check_and_pop_boundary()
+{
+    std::lock_guard<std::mutex> lock(boundary_mutex);
+    if (!upcoming_boundaries.empty()) {
+        if (absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundaries.front().absolute_frame_start) {
+            auto next_song = upcoming_boundaries.front().song_metadata;
+            upcoming_boundaries.pop();
+            return next_song;
+        }
+    }
+    return std::nullopt;
+}
+
 
 // The Decoding workhorse
 

@@ -120,17 +120,7 @@ public:
     std::mutex boundary_mutex;
     std::queue<track_boundary> upcoming_boundaries;
 
-    std::optional<Types::Song> check_and_pop_boundary() {
-        std::lock_guard<std::mutex> lock(boundary_mutex);
-        if (!upcoming_boundaries.empty()) {
-            if (absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundaries.front().absolute_frame_start) {
-                auto next_song = upcoming_boundaries.front().song_metadata;
-                upcoming_boundaries.pop();
-                return next_song;
-            }
-        }
-        return std::nullopt;
-    }
+    std::optional<Types::Song> check_and_pop_boundary();
 };
 
 class audio_decode_worker : public QObject
