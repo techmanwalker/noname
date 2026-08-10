@@ -7,8 +7,6 @@
 
 #include <QtQmlIntegration/qqmlintegration.h>
 
-#include <atomic>
-
 // forward declarations
 class QQmlEngine;
 class QJSEngine;
@@ -63,9 +61,6 @@ public:
 
     Q_PROPERTY(bool isMediaLoaded READ isMediaLoaded NOTIFY mediaLoadedChanged)
 
-    // governed from the QML side
-    Q_PROPERTY(bool duration_slider_pressed READ duration_slider_pressed WRITE setDurationSliderPressed)
-
     Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
 
     // disable copy and reassignment
@@ -84,14 +79,12 @@ public:
     quint64 duration_ms() const;
     quint64 position_ms() const;
     quint8 volume() const;
-    bool duration_slider_pressed() const;
     PlaybackState playbackState() const;
     bool isMediaLoaded() const;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position);
     void setVolume (quint8 volume);
-    void setDurationSliderPressed (bool pressed);
 
     // Playback controls
     Q_INVOKABLE void play()  const;
@@ -111,15 +104,11 @@ signals:
     void playbackStateChanged();
     void mediaLoadedChanged();
 
-    // Reverse signals; NOTIFY but from QML to C++
-    void r_durationSliderPressedChanged(bool pressed);
-
 public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
     void handleQueuedTracksFinished();
     void handlePlayheadChanged(bool play_afterwards = false);
-    void handleDurationSliderPressedChanged();
     void handleVolumeChangedInController();
 
 private:
@@ -130,6 +119,4 @@ private:
     PlayQueue &queue = PlayQueue::instance();
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
-
-    std::atomic_bool m_duration_slider_pressed = false; // is the duration slider pressed or dragged?
 };
