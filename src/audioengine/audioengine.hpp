@@ -250,6 +250,7 @@ public:
 
     // Safe getters for current data status
     Types::Song current_track()       const;
+    Types::Song next_track_prepared() const;
     quint64     current_position_ms() const;
     quint8      current_volume()      const; // volume from 0 to 100
     playback_state get_playback_state() const;

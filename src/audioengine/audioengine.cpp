@@ -1,4 +1,5 @@
 #include "audioengine.hpp"
+#include "mediatypes.hpp"
 
 #include <QFuture>
 
@@ -232,6 +233,12 @@ Types::Song
 audio_engine::current_track() const
 {
     return m_current_track;
+}
+
+Types::Song
+audio_engine::next_track_prepared() const
+{
+    return m_prolly_next_track;
 }
 
 quint8
