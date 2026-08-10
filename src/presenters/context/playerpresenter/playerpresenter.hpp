@@ -119,6 +119,7 @@ public slots:
     void handleTrackChanged();
     void handleQueuedTracksFinished();
     void handlePlayheadChanged(bool play_afterwards = false);
+    void handleDurationSliderPressedChanged();
     void handleVolumeChangedInController();
 
 private:
@@ -127,6 +128,8 @@ private:
 
     audio_engine &playing = audio_engine::instance();
     PlayQueue &queue = PlayQueue::instance();
+
+    QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 
     std::atomic_bool m_duration_slider_pressed = false; // is the duration slider pressed or dragged?
 };
