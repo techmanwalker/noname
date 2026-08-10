@@ -46,7 +46,7 @@ class audio_ring_buffer
 
     const uint64_t sample_rate; // by default
 
-    size_t capacity = sample_rate * 5 * 2; // ~5s of stereo audio
+    size_t capacity = sample_rate * 10 * 2; // ~5s of stereo audio
 
     // not deque so it does not move
     std::vector<float> buffer;
