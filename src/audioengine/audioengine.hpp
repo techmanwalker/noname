@@ -258,10 +258,7 @@ signals:
     void queued_tracks_finished();
     void playback_state_changed();
 
-    // Reverse signal from QML down to the controller
-    void r_duration_slider_pressed_changed(bool pressed);
-
-private slots:
+public slots:
     void handle_duration_slider_pressed_changed(bool pressed);
 
     void handle_track_changed (); // mostly reemit signals
@@ -280,7 +277,7 @@ private:
 
     // Polls the ring buffer's playback clock while actively playing. The
     // decoder never needs to know or care about UI update cadence.
-    QTimer *m_position_poll_timer = nullptr;
+    QTimer *m_eof_poll_timer = nullptr;
 
     // Protected internal status
     Types::Song m_current_track;

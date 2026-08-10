@@ -56,12 +56,11 @@ audio_engine::audio_engine(QObject *parent)
     connect(m_decoder_worker, &audio_decode_worker::seeked,
             this, &audio_engine::position_changed);
 
-    // Smoothly advances the UI while actually playing.
-    m_position_poll_timer = new QTimer(this);
-    m_position_poll_timer->setInterval(100); // 10 Hz
+    m_eof_poll_timer = new QTimer(this);
+    m_eof_poll_timer->setInterval(100); // 10 Hz
 
-    // poll for time tracking and eof
-    connect(m_position_poll_timer, &QTimer::timeout, this, [this]() {
+    // poll for eof tracking
+    connect(m_eof_poll_timer, &QTimer::timeout, this, [this]() {
         // 1. Check for gapless track transitions
         if (auto next_song = m_decoder_worker->get_ring_buffer()->check_and_pop_boundary()) {
             
@@ -79,19 +78,10 @@ audio_engine::audio_engine(QObject *parent)
         if (m_decoder_worker->get_ring_buffer()->eof_played.exchange(false)) {
             // Handle end of playlist / transport stop, or unloaded next song
             emit queued_tracks_finished();
-        } else {
-            emit position_changed();
         }
     });
             
     m_audio_decoding_thread->start();
-
-
-
-    // Assuming that PlayerPresenter converted this class in the
-    // signal sender, let's do an autoconnect
-    connect(this, &audio_engine::r_duration_slider_pressed_changed,
-            this, &audio_engine::handle_duration_slider_pressed_changed);
 
     connect(this, &audio_engine::track_changed,
             this, &audio_engine::handle_track_changed);
@@ -119,9 +109,9 @@ audio_engine::set_transport_paused(bool paused)
     m_decoder_worker->get_ring_buffer()->is_paused.store(paused);
 
     if (paused) {
-        m_position_poll_timer->stop();
+        m_eof_poll_timer->stop();
     } else {
-        m_position_poll_timer->start();
+        m_eof_poll_timer->start();
     }
 
     emit playback_state_changed();
@@ -313,4 +303,5 @@ audio_engine::handle_duration_slider_pressed_changed(bool pressed)
             // no default this time
         }
     }
+        
 }

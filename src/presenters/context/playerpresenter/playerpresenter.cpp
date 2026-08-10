@@ -30,6 +30,11 @@ PlayerPresenter *PlayerPresenter::create(QQmlEngine *qmlEngine, QJSEngine *jsEng
 PlayerPresenter::PlayerPresenter(QObject *parent)
     : QObject(parent)
 {
+    m_position_poll_timer->setInterval(10);
+
+    connect(m_position_poll_timer, &QTimer::timeout, 
+            this, &PlayerPresenter::positionChanged);
+
     // Listen to the audio controller; when metadata updates, notify the QML engine
     connect(&playing, &audio_engine::track_changed,
             this, &PlayerPresenter::handleTrackChanged);
@@ -51,7 +56,7 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 
     // Send the reverse signal to the controller when the slider is pressed or not
     connect(this, &PlayerPresenter::r_durationSliderPressedChanged,
-            &playing, &audio_engine::r_duration_slider_pressed_changed);
+            this, &PlayerPresenter::handleDurationSliderPressedChanged);
 }
 
 // Getters block
@@ -113,12 +118,16 @@ PlayerPresenter::play() const {
     }
 
     playing.play();
+
+    m_position_poll_timer->start();
 }
 
 void
 PlayerPresenter::pause() const
 {
     playing.pause();
+
+    m_position_poll_timer->stop();
 }
 
 void
@@ -189,6 +198,18 @@ PlayerPresenter::handlePlayheadChanged(bool play_afterwards)
         const Types::Song &song = std::get<Types::Song>(media_item);
         playing.prepare_next_track(song);
     } */
+}
+
+void
+PlayerPresenter::handleDurationSliderPressedChanged()
+{
+    if (m_duration_slider_pressed) {
+        m_position_poll_timer->stop();
+    } else {
+        m_position_poll_timer->start();
+    }
+
+    playing.handle_duration_slider_pressed_changed(m_duration_slider_pressed);
 }
 
 void
