@@ -53,10 +53,6 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 
     connect(&queue, &PlayQueue::playheadChanged,
             this, &PlayerPresenter::handlePlayheadChanged);
-
-    // Send the reverse signal to the controller when the slider is pressed or not
-    connect(this, &PlayerPresenter::r_durationSliderPressedChanged,
-            this, &PlayerPresenter::handleDurationSliderPressedChanged);
 }
 
 // Getters block
@@ -68,8 +64,6 @@ quint64 PlayerPresenter::duration_ms()   const { return playing.current_track().
 quint64 PlayerPresenter::position_ms()   const { return playing.current_position_ms();    }
 quint8  PlayerPresenter::volume()        const { return playing.current_volume();         }
 bool    PlayerPresenter::isMediaLoaded() const { return playing.is_a_song_loaded();       }
-
-bool    PlayerPresenter::duration_slider_pressed() const { return m_duration_slider_pressed.load(); }
 
 PlayerPresenter::PlaybackState
 PlayerPresenter::playbackState() const
@@ -97,14 +91,6 @@ void
 PlayerPresenter::setVolume(quint8 volume)
 {
     playing.set_volume(volume);
-}
-
-void
-PlayerPresenter::setDurationSliderPressed(bool pressed)
-{
-    m_duration_slider_pressed.store(pressed);
-
-    emit r_durationSliderPressedChanged(pressed);
 }
 
 // --- Playback controls ---
@@ -198,18 +184,6 @@ PlayerPresenter::handlePlayheadChanged(bool play_afterwards)
         const Types::Song &song = std::get<Types::Song>(media_item);
         playing.prepare_next_track(song);
     } */
-}
-
-void
-PlayerPresenter::handleDurationSliderPressedChanged()
-{
-    if (m_duration_slider_pressed) {
-        m_position_poll_timer->stop();
-    } else {
-        m_position_poll_timer->start();
-    }
-
-    playing.handle_duration_slider_pressed_changed(m_duration_slider_pressed);
 }
 
 void

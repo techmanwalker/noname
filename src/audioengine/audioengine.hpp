@@ -110,6 +110,13 @@ public:
     // Tracks total frames consumed by libsoundio
     std::atomic_uint64_t absolute_frames_played{0};
 
+    // Tracks ongoing seek operations to mute the hardware loop
+    std::atomic<int> pending_seeks{0};
+    
+    // Handshake sequence to safely reset head/tail without clobbering
+    std::atomic_bool flush_request{false};
+    std::atomic_bool flush_ack{false};
+
     std::mutex boundary_mutex;
     std::queue<track_boundary> upcoming_boundaries;
 
@@ -259,7 +266,6 @@ signals:
     void playback_state_changed();
 
 public slots:
-    void handle_duration_slider_pressed_changed(bool pressed);
 
     void handle_track_changed (); // mostly reemit signals
 
@@ -283,8 +289,6 @@ private:
     Types::Song m_current_track;
 
     Types::Song m_prolly_next_track;
-
-    playback_state playback_state_when_last_slider_drag_started;
     
     // The core of synchronization: control of load versions
     uint64_t m_current_transaction_id = 0;

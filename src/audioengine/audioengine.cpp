@@ -190,16 +190,25 @@ audio_engine::unload()
 void
 audio_engine::set_position(const quint64 position_ms)
 {
-    // tell the decoder worker to seek
-    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::seek, Qt::QueuedConnection, static_cast<uint64_t>(position_ms));
+    // 1. Immediately wake up the decoder thread if it's asleep in push_blocking()
+    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
 
-    /* Do NOT emit position_changed() here. At this point the seek hasn't
-       run yet (it's queued to the decoder thread), so current_position_ms()
-       still reads the pre-seek pts; emitting now just broadcasts a stale
-       value and causes a visible snap-back right before the real update.
-       The decoder thread is the single source of truth for position, since it
-       reports the confirmed value itself via pts_changed() once
-       av_seek_frame() succeeds.*/
+    // 2. Flag the RT thread to stop popping old audio and feed zeroes
+    m_decoder_worker->get_ring_buffer()->pending_seeks.fetch_add(1, std::memory_order_release);
+
+    // 3. Clear the OS hardware buffer so any already-popped audio is dropped
+    if (m_outstream) {
+        int err = soundio_outstream_clear_buffer(m_outstream);
+        
+        // Pipewire/PulseAudio backends do not support buffer clearing and return 11.
+        // We explicitly ignore this specific error to prevent console flooding.
+        if (err != 0 && err != SoundIoErrorIncompatibleBackend) {
+            qCWarning(l_soundio) << "soundio_outstream_clear_buffer failed with exit code" << err << ":" << soundio_strerror(err);
+        }
+    }
+
+    // 4. Queue the seek in the decoder thread
+    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::seek, Qt::QueuedConnection, static_cast<uint64_t>(position_ms));
 }
 
 void
@@ -277,31 +286,4 @@ audio_engine::handle_track_changed ()
     emit duration_changed();
     emit position_changed();
     emit playback_state_changed();
-}
-
-void
-audio_engine::handle_duration_slider_pressed_changed(bool pressed)
-{
-    // Yet another reactive binding
-
-    // if a drag started
-    if (pressed) {
-        playback_state_when_last_slider_drag_started = get_playback_state();
-        pause(); // you don't want it to sound while it is being dragged
-    } else {
-        // restore the playback to where it was
-        using playback_state = audio_engine::playback_state;
-        switch (playback_state_when_last_slider_drag_started) {
-            case playback_state::playing:
-                play(); // if it was playing, start playing again
-                break;
-            case playback_state::paused:
-            case playback_state::stopped:
-                pause(); // keep paused and maintain the position
-                break;
-
-            // no default this time
-        }
-    }
-        
 }

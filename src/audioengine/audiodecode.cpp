@@ -349,22 +349,30 @@ audio_decode_worker::decode_step ()
 
 void
 audio_decode_worker::seek(uint64_t position_ms) {
-    if (!fmt_ctx) return;
-
-    // NEW: unblock the decoder FIRST so seek doesn't deadlock
-    // against a push_blocking() waiting inside decode_step()
-    m_ring_buffer.cancel_blocking_push();
+    // If no context, abort and decrement the pending seek count
+    if (!fmt_ctx) {
+        m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
+        m_ring_buffer.reset_cancel(); // Re-arm even if we abort
+        return;
+    }
 
     // reset eof
     m_ring_buffer.eof_decoded.store(false);
     m_ring_buffer.eof_played.store(false);
 
-    // Re-arm for normal operation
+    // Re-arm for normal operation before taking the lock and decoding new frames
     m_ring_buffer.reset_cancel();
-
-
+    
     // decode and seek are mutually exclusive
     std::lock_guard<std::mutex> lock (m_decoder_mutex);
+
+    // hndshake with the RT thread to safely lock it into a flush state
+    m_ring_buffer.flush_request.store(true, std::memory_order_release);
+    while (!m_ring_buffer.flush_ack.load(std::memory_order_acquire)) {
+        QThread::yieldCurrentThread(); 
+    }
+
+    // we are now in a safe zone where the RT thread will NOT touch head or tail
 
     // convert ms to FFmpeg timestamps
     int64_t seek_target = av_rescale_q(position_ms, 
@@ -374,23 +382,43 @@ audio_decode_worker::seek(uint64_t position_ms) {
 
     // perform the seek
     if (av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) >= 0) {
-        // seek was successful
         
-        // clean decoder buffers (avoid glitches)
+        // Clear FFmpeg decoder buffers
         avcodec_flush_buffers(codec_ctx);
         
-        // 4. Clean ring buffer to receive more data
-        m_ring_buffer.head.store(0);
-        m_ring_buffer.tail.store(0);
+        // IMPORTANT: Flush the SwrContext resampler cache to prevent old audio spillage!
+        if (swr_ctx) {
+            swr_init(swr_ctx);
+        }
+        
+        // Safely reset ring buffer (RT thread is paused waiting)
+        m_ring_buffer.head.store(0, std::memory_order_relaxed);
+        m_ring_buffer.tail.store(0, std::memory_order_relaxed);
 
-        /* This is the new zero point for the playback clock: the next
-           frame write_callback plays will be audio starting at
-           position_ms, so that's where frames_played == 0 now maps to. */
-        m_ring_buffer.playback_base_ms.store(position_ms);
-        m_ring_buffer.frames_played.store(0);
+        m_ring_buffer.playback_base_ms.store(position_ms, std::memory_order_relaxed);
+        m_ring_buffer.frames_played.store(0, std::memory_order_relaxed);
+        
+        // Reset absolute gapless trackers for the new position
+        m_ring_buffer.absolute_frames_decoded.store(0, std::memory_order_relaxed);
+        m_ring_buffer.absolute_frames_played.store(0, std::memory_order_relaxed);
+
+        {
+            std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
+            std::queue<track_boundary> empty;
+            std::swap(m_ring_buffer.upcoming_boundaries, empty);
+        }
 
         emit seeked();
     }
+
+    // release the RT thread flush handshake
+    m_ring_buffer.flush_request.store(false, std::memory_order_release);
+    while (m_ring_buffer.flush_ack.load(std::memory_order_acquire)) {
+        QThread::yieldCurrentThread();
+    }
+
+    // mark seek as complete so actual audio playback can safely resume
+    m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
 }
 
 uint64_t
@@ -509,6 +537,17 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
     audio_ring_buffer *ring_buf = static_cast<audio_ring_buffer*>(outstream->userdata);
     
     int frames_left = frame_count_max;
+
+    // Evaluate handshake status at the start of the callback
+    bool needs_flush = ring_buf->flush_request.load(std::memory_order_acquire);
+    bool is_seeking = ring_buf->pending_seeks.load(std::memory_order_acquire) > 0;
+    
+    // Acknowledge the flush request to the decoder thread
+    if (needs_flush) {
+        ring_buf->flush_ack.store(true, std::memory_order_release);
+    } else {
+        ring_buf->flush_ack.store(false, std::memory_order_release);
+    }
     
     // remaining frames yet to decode
     while (frames_left > 0) {
@@ -526,8 +565,8 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
 
         if (frame_count == 0) break; // no room, exit
 
-        if (ring_buf->is_paused.load()) {
-            // Fill with zeroes and DON't do pop()
+        // If a seek is in progress, flush is requested, or transport is paused, feed silence.
+        if (needs_flush || is_seeking || ring_buf->is_paused.load(std::memory_order_acquire)) {
             for (int frame = 0; frame < frame_count; ++frame) {
                 for (int ch = 0; ch < outstream->layout.channel_count; ++ch) {
                     float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
