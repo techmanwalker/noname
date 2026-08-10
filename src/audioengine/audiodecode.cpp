@@ -325,15 +325,24 @@ audio_decode_worker::decode_step ()
 
         // 2. GAPLESS HANDOFF CHECK
         std::lock_guard<std::mutex> q_lock(m_queue_mutex);
+
         if (m_has_queued_song) {
+
             // Register the boundary for the UI
+            uint64_t boundary_frame = m_ring_buffer.absolute_frames_decoded.load(std::memory_order_relaxed);
             {
                 std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
                 m_ring_buffer.upcoming_boundaries.push({
-                    m_ring_buffer.absolute_frames_decoded.load(),
+                    boundary_frame,
                     m_queued_next_song
                 });
             }
+
+            // Arm the atomic tracker if it's currently unassigned
+            uint64_t expected = UINT64_MAX;
+            m_ring_buffer.next_boundary_frame.compare_exchange_strong(
+                expected, boundary_frame, std::memory_order_release
+            );
 
             // Swap contexts transparently
             close_ffmpeg_contexts();
@@ -421,6 +430,9 @@ audio_decode_worker::seek(uint64_t position_ms) {
             std::queue<track_boundary> empty;
             std::swap(m_ring_buffer.upcoming_boundaries, empty);
         }
+
+        // Reset the atomic boundary target here
+        m_ring_buffer.next_boundary_frame.store(UINT64_MAX, std::memory_order_relaxed);
 
         emit seeked();
     }
@@ -620,8 +632,12 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
 
             // detect true end of playback
             if (floats_read < floats_to_read && ring_buf->eof_decoded.load(std::memory_order_acquire)) {
-                ring_buf->eof_played.store(true, std::memory_order_release);
-                ring_buf->is_paused.store(true, std::memory_order_release);
+                if (!ring_buf->eof_played.exchange(true)) {
+                    ring_buf->is_paused.store(true, std::memory_order_release);
+                    QMetaObject::invokeMethod(&audio_engine::instance(), 
+                                            &audio_engine::process_playlist_finished, 
+                                            Qt::QueuedConnection);
+                }
             }
             
             // libsoundio requires us to fill the channels using our own pointers (areas)
@@ -645,8 +661,20 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
                                                std::memory_order_relaxed);
 
             //  Track absolute played frames to trigger gapless UI updates
-            ring_buf->absolute_frames_played.fetch_add(static_cast<uint64_t>(frame_count),
-                                               std::memory_order_relaxed);
+            uint64_t played = ring_buf->absolute_frames_played.fetch_add(
+                    static_cast<uint64_t>(frame_count), std::memory_order_relaxed) + frame_count;
+
+            uint64_t boundary_target = ring_buf->next_boundary_frame.load(std::memory_order_acquire);
+
+            if (boundary_target != UINT64_MAX && played >= boundary_target) {
+                // Disarm target so it fires only once
+                ring_buf->next_boundary_frame.store(UINT64_MAX, std::memory_order_release);
+
+                // Notify main thread reactively
+                QMetaObject::invokeMethod(&audio_engine::instance(), 
+                                        &audio_engine::process_track_boundary, 
+                                        Qt::QueuedConnection);
+            }
 
         }
         

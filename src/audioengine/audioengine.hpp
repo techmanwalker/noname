@@ -120,6 +120,9 @@ public:
     std::mutex boundary_mutex;
     std::queue<track_boundary> upcoming_boundaries;
 
+    // Target frame count for the next upcoming track boundary (UINT64_MAX when none)
+    std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
+
     std::optional<Types::Song> check_and_pop_boundary();
 };
 
@@ -247,6 +250,10 @@ public:
     playback_state get_playback_state() const;
     bool is_a_song_loaded() const;
 
+    // Reactively wait for EOF or track switches
+    void process_track_boundary();
+    void process_playlist_finished();
+
 signals:
     void position_changed();
     void duration_changed();
@@ -272,10 +279,6 @@ private:
     struct SoundIo *m_soundio = nullptr;
     struct SoundIoDevice *m_device = nullptr;
     struct SoundIoOutStream *m_outstream = nullptr;
-
-    // Polls the ring buffer's playback clock while actively playing. The
-    // decoder never needs to know or care about UI update cadence.
-    QTimer *m_eof_poll_timer = nullptr;
 
     // Protected internal status
     Types::Song m_current_track;
