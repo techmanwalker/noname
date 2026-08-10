@@ -62,10 +62,23 @@ audio_engine::audio_engine(QObject *parent)
 
     // poll for time tracking and eof
     connect(m_position_poll_timer, &QTimer::timeout, this, [this]() {
+        // 1. Check for gapless track transitions
+        if (auto next_song = m_decoder_worker->get_ring_buffer()->check_and_pop_boundary()) {
+            
+            m_current_track = next_song.value();
+            
+            // Reset the local track playback time to 0 while keeping the hardware stream running
+            m_decoder_worker->get_ring_buffer()->frames_played.store(0, std::memory_order_relaxed);
+            m_decoder_worker->get_ring_buffer()->playback_base_ms.store(0, std::memory_order_relaxed);
+            
+            // Let the UI know the song has officially changed
+            emit track_changed(); 
+        }
+
+        // 2. Normal EOF check
         if (m_decoder_worker->get_ring_buffer()->eof_played.exchange(false)) {
-            // Force the engine to acknowledge the paused state
-            set_transport_paused(true); 
-            emit track_finished();
+            // Handle end of playlist / transport stop, or unloaded next song
+            emit queued_tracks_finished();
         } else {
             emit position_changed();
         }
@@ -163,6 +176,13 @@ audio_engine::load (const Types::Song &song) // song IS the metadata, no need to
     m_current_track = song;
 
     emit track_changed();
+}
+
+void audio_engine::prepare_next_track(const Types::Song &song) {
+    m_prolly_next_track = song;
+    QMetaObject::invokeMethod(m_decoder_worker, [this, song]() {
+        m_decoder_worker->queue_next_song(song);
+    }, Qt::QueuedConnection);
 }
 
 void

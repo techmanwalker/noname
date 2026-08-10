@@ -64,6 +64,11 @@ audio_ring_buffer::push_blocking(const float* data, size_t count)
         buffer[(h + i) % capacity] = data[i];
     }
     head.store((h + count) % capacity, std::memory_order_release);
+
+    // track absolute decoded frames for track boundaries.
+    // count is the number of floats; divide by 2 for stereo frames.
+    absolute_frames_decoded.fetch_add(count / 2, std::memory_order_relaxed);
+
     return true;
 }
 
@@ -140,79 +145,75 @@ audio_decode_worker::is_song_loaded () const
 
 void 
 audio_decode_worker::load(const QString &file_path) {
-    // 0. Clear any previous context
-    if (fmt_ctx != nullptr) {
-        // close
-        avformat_close_input(&fmt_ctx);
-        avcodec_free_context(&codec_ctx);
-    }
-
+    // clear any previous context
     clean();
 
+    // Open the new file using the helper
+    if (!open_file_internal(file_path)) {
+        m_song_loaded = false;
+    }
+}
+
+bool
+audio_decode_worker::open_file_internal(const QString &file_path)
+{
     // 1. Open the format (the container)
     if (avformat_open_input(&fmt_ctx, file_path.toUtf8().constData(), nullptr, nullptr) < 0) {
-        return; // Open error
+        return false;
     }
 
     // 2. Read streams info
     if (avformat_find_stream_info(fmt_ctx, nullptr) < 0) {
-        return; // Error while reading metadata
+        return false;
     }
 
-    // 3. Find best audio stream (stream index)
+    // 3. Find best audio stream
     audio_stream_index = av_find_best_stream(fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
 
     if (audio_stream_index >= 0) {
-
-        // 4. setup decoder
-        AVCodecParameters *params = fmt_ctx->streams[audio_stream_index]->codecpar; // get stream properties (sample rate, format, etc)
-        const AVCodec *codec = avcodec_find_decoder(params->codec_id); // guess best decoder
-        codec_ctx = avcodec_alloc_context3(codec); // use the decoder
+        // 4. Setup decoder
+        AVCodecParameters *params = fmt_ctx->streams[audio_stream_index]->codecpar;
+        const AVCodec *codec = avcodec_find_decoder(params->codec_id);
+        codec_ctx = avcodec_alloc_context3(codec);
         
-        avcodec_parameters_to_context(codec_ctx, params); // pair the decoder with the stream properties
-        avcodec_open2(codec_ctx, codec, nullptr); // init decoder
+        avcodec_parameters_to_context(codec_ctx, params);
+        avcodec_open2(codec_ctx, codec, nullptr);
 
         AVChannelLayout out_ch_layout = AV_CHANNEL_LAYOUT_STEREO;
-
-        // codec_ctx->ch_layout; // replacement of channel_layout
         AVChannelLayout in_ch_layout = codec_ctx->ch_layout;
 
         swr_ctx = nullptr; // reset
         int ret = swr_alloc_set_opts2(
             &swr_ctx,
-            &out_ch_layout, AV_SAMPLE_FMT_FLT, get_ring_buffer()->sample_rate,     // output
-            &in_ch_layout,  codec_ctx->sample_fmt, codec_ctx->sample_rate, // input
+            &out_ch_layout, AV_SAMPLE_FMT_FLT, get_ring_buffer()->sample_rate,
+            &in_ch_layout,  codec_ctx->sample_fmt, codec_ctx->sample_rate, 
             0, nullptr
         );
 
-        // resampler init failed
         if (ret < 0) {
             char err_buf[AV_ERROR_MAX_STRING_SIZE];
             av_strerror(ret, err_buf, AV_ERROR_MAX_STRING_SIZE);
-            
-            // log the error
             qCFatal(l_ffmpeg) << "Critical error in SwrContext: " << err_buf;
 
-            // 2. total state clean
-            clean();
+            close_ffmpeg_contexts();
             
-            // notify the engine
             QString err_q = QString::fromUtf8(err_buf);
             emit song_load_failed(err_q);
-            return;
+            return false;
         }
 
         swr_init(swr_ctx);
-        
         m_song_loaded = true;
-    } else {
-        // no audio stream
-        avformat_close_input(&fmt_ctx);
-        QString err_q = "File does not contain a valid audio stream.";
-
-        m_song_loaded = false;
-        emit song_load_failed(err_q);
-    }
+        return true;
+    } 
+    
+    // No valid audio stream found
+    close_ffmpeg_contexts();
+    QString err_q = "File does not contain a valid audio stream.";
+    m_song_loaded = false;
+    emit song_load_failed(err_q);
+    
+    return false;
 }
 
 void
@@ -293,12 +294,8 @@ audio_decode_worker::decode_step ()
         m_decode_timer->setInterval(0);
 
     } else if (read_ret == AVERROR_EOF && !m_ring_buffer.eof_decoded.load()) {
-        // eof state
-
-        // 1. Send a flush packet (nullptr)
+        // 1. Send a flush packet and drain the remaining frames
         avcodec_send_packet(codec_ctx, nullptr);
-        
-        // 2. Drain whatever frames are still inside the decoder
         while (avcodec_receive_frame(codec_ctx, frame) == 0) {
             float *pcm_output;
             int samples_out = convert_to_float(frame, &pcm_output);
@@ -311,10 +308,35 @@ audio_decode_worker::decode_step ()
             av_freep(&pcm_output);
             av_frame_unref(frame);
         }
-        
-        // 3. Mark decoding as totally finished
-        m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
-        m_decode_timer->setInterval(100); // Back off, nothing left to decode
+
+        // 2. GAPLESS HANDOFF CHECK
+        std::lock_guard<std::mutex> q_lock(m_queue_mutex);
+        if (m_has_queued_song) {
+            // Register the boundary for the UI
+            {
+                std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
+                m_ring_buffer.upcoming_boundaries.push({
+                    m_ring_buffer.absolute_frames_decoded.load(),
+                    m_queued_next_song
+                });
+            }
+
+            // Swap contexts transparently
+            close_ffmpeg_contexts();
+            if (open_file_internal(m_queued_next_song.source.toLocalFile())) {
+                m_has_queued_song = false;
+                
+                // Immediately loop again to start decoding the new file
+                m_decode_timer->setInterval(0); 
+            } else {
+                // Next file failed to open, handle gracefully
+                m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
+            }
+        } else {
+            // No queued song, actually stop decoding
+            m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
+            m_decode_timer->setInterval(100); 
+        }
     } else {
         // generic error or eof already processed
 
@@ -388,6 +410,14 @@ audio_ring_buffer::get_sample_rate () const
     return sample_rate;
 }
 
+void
+audio_decode_worker::queue_next_song(const Types::Song& next_song)
+{
+    std::lock_guard<std::mutex> lock(m_queue_mutex);
+    m_queued_next_song = next_song;
+    m_has_queued_song = true;
+}
+
 int
 audio_decode_worker::convert_to_float (AVFrame *frame, float **output)
 {
@@ -447,6 +477,23 @@ audio_decode_worker::clean ()
 
     // mark no loaded song
     m_song_loaded.store(false);
+}
+
+void
+audio_decode_worker::close_ffmpeg_contexts()
+{
+    if (codec_ctx) {
+        avcodec_free_context(&codec_ctx);
+        codec_ctx = nullptr;
+    }
+    if (fmt_ctx) {
+        avformat_close_input(&fmt_ctx);
+        fmt_ctx = nullptr;
+    }
+    if (swr_ctx) {
+        swr_free(&swr_ctx);
+        swr_ctx = nullptr;
+    }
 }
 
 /**
@@ -522,6 +569,10 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
                real elapsed playback time, silence-padded underrun or not.
                Lock-free atomic add: safe for the RT callback. */
             ring_buf->frames_played.fetch_add(static_cast<uint64_t>(frame_count),
+                                               std::memory_order_relaxed);
+
+            //  Track absolute played frames to trigger gapless UI updates
+            ring_buf->absolute_frames_played.fetch_add(static_cast<uint64_t>(frame_count),
                                                std::memory_order_relaxed);
 
         }

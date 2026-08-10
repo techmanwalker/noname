@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <qloggingcategory.h>
+#include <queue>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -33,6 +34,11 @@ Q_DECLARE_LOGGING_CATEGORY(l_ffmpeg) // errors in ffmpeg decoding
 
 // sndio
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);
+
+struct track_boundary {
+    uint64_t absolute_frame_start; 
+    Types::Song song_metadata;
+};
 
 class audio_ring_buffer
 {
@@ -95,10 +101,30 @@ public:
     // Current playback position in ms, derived from the above.
     uint64_t playback_position_ms() const;
 
-
-
     // Stream data
     uint64_t get_sample_rate () const;
+
+    // Tracks total frames pushed by the decoder since the engine started
+    std::atomic_uint64_t absolute_frames_decoded{0};
+    
+    // Tracks total frames consumed by libsoundio
+    std::atomic_uint64_t absolute_frames_played{0};
+
+    std::mutex boundary_mutex;
+    std::queue<track_boundary> upcoming_boundaries;
+
+    // Call this from write_callback to check if we crossed a boundary
+    std::optional<Types::Song> check_and_pop_boundary() {
+        std::lock_guard<std::mutex> lock(boundary_mutex);
+        if (!upcoming_boundaries.empty()) {
+            if (absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundaries.front().absolute_frame_start) {
+                auto next_song = upcoming_boundaries.front().song_metadata;
+                upcoming_boundaries.pop();
+                return next_song;
+            }
+        }
+        return std::nullopt;
+    }
 };
 
 class audio_decode_worker : public QObject
@@ -132,12 +158,17 @@ private slots:
     // single work iteration, reprograms itself via m_decode_timer
     void decode_step ();
 
+    // Queues the next file to be seamlessly opened upon EOF
+    void queue_next_song(const Types::Song& next_song);
+
 signals:
     void song_load_failed (QString &err);
 
     void seeked();
 
 private:
+
+    friend class audio_engine;
 
     int convert_to_float (AVFrame *frame, float **output);
 
@@ -153,6 +184,16 @@ private:
 
     // decode and seek are mutually exclusive
     std::mutex m_decoder_mutex;
+
+    Types::Song m_queued_next_song;
+    bool m_has_queued_song{false};
+    std::mutex m_queue_mutex;
+
+    // Closes FFmpeg contexts without clearing the ring buffer
+    void close_ffmpeg_contexts(); 
+    
+    // Opens a new file and prepares SwrContext (essentially the FFmpeg parts of your current load() method)
+    bool open_file_internal(const QString& file_path);
 
     int audio_stream_index = -1;
 };
@@ -173,21 +214,6 @@ public:
         playing,
         stopped
     };
-
-    /*
-
-    enum class media_status {
-        no_media,
-        loading_media,
-        loaded_media,
-        stalled_media,
-        buffering_media,
-        buffered_media,
-        end_of_media,
-        invalid_media
-    };
-    */
-
 
     // Disable copy and reassignment to guarantee single instance
     audio_engine(const audio_engine&) = delete;
@@ -213,13 +239,14 @@ public:
     // Load process is synchronous on its call, but asynchronous on its resolution
     void load(const Types::Song &song);
 
+    void prepare_next_track(const Types::Song &song);
+
     // Safe getters for current data status
     Types::Song current_track()       const;
     quint64     current_position_ms() const;
     quint8      current_volume()      const; // volume from 0 to 100
     playback_state get_playback_state() const;
     bool is_a_song_loaded() const;
-    // media_status get_media_status()     const;
 
 signals:
     void position_changed();
@@ -228,7 +255,7 @@ signals:
     
     // Single atomic signal to send the whole block of data at once
     void track_changed();
-    void track_finished();
+    void queued_tracks_finished();
     void playback_state_changed();
 
     // Reverse signal from QML down to the controller
@@ -257,6 +284,8 @@ private:
 
     // Protected internal status
     Types::Song m_current_track;
+
+    Types::Song m_prolly_next_track;
 
     playback_state playback_state_when_last_slider_drag_started;
     
