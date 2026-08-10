@@ -159,11 +159,12 @@ target_link_libraries(mediasequences
         Qt6::Quick
         Qt6::Qml
         Qt6::QmlIntegration
+        audioengine
         diskio
         memory
         primitives
         rapidfuzz::rapidfuzz
-        # must not depend on audioengine nor playerpresenter
+        # must not depend on playerpresenter
 )
 
 target_include_directories(mediasequences
@@ -290,7 +291,6 @@ target_link_libraries(audioengine
     PRIVATE
         Qt6::Core
         Qt6::Quick
-        mediasequences
         primitives
         SoundIo::SoundIo
         FFmpeg::avcodec

@@ -1,4 +1,5 @@
 #include "abstractmediasequence.hpp"
+#include "audioengine.hpp"
 #include "playlistsequence.hpp"
 #include "songfactory.hpp"
 #include "playqueue.hpp"
@@ -14,6 +15,8 @@ PlayQueue::instance()
 PlayQueue::PlayQueue(QObject *parent)
     : PlaylistSequence(parent)
 {
+    connect (&playing, &audio_engine::track_changed,
+            this, &PlayQueue::trackChanged);
 }
 
 // factory for the qml engine
@@ -39,8 +42,10 @@ QList<Types::Song> PlayQueue::items () const { return AbstractMediaSequence::ite
 
 void PlayQueue::clear () { 
 
-    PlaylistSequence::clear(); 
-    emit playheadChanged();
+    PlaylistSequence::clear();
+
+    playing.stop();
+    playing.unload();
 
     return;
 }
@@ -56,7 +61,7 @@ PlayQueue::respawn_queue(const QList<Types::Song> &new_queue)
 {
     PlaylistSequence::respawn_list(new_queue);
 
-    if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
+    if (itemCount() > 0 && !playhead().isValid()) switch_to(index(0));
 }
 
 void
@@ -65,7 +70,7 @@ PlayQueue::respawn_queue(const PlaylistSequence &new_queue)
     // this version is synchronous
     PlaylistSequence::respawn_list(new_queue.items());
 
-    if (itemCount() > 0 && !m_playhead.isValid()) switch_to(index(0));
+    if (itemCount() > 0 && !playhead().isValid()) switch_to(index(0));
 }
 
 void
@@ -83,10 +88,10 @@ PlayQueue::respawn_queue (const QStringList &sources)
     AbstractMediaSequence::batch_append(uri_sources, chosen_cover_provider);
 }
 
-QPersistentModelIndex &
+QPersistentModelIndex
 PlayQueue::playhead ()
 {
-    return m_playhead; // QPersistentModelIndex
+    return AbstractMediaSequence::find(&Types::Song::source, playing.current_track().source);
 }
 
 void
@@ -94,23 +99,16 @@ PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
 {
     const QPersistentModelIndex prolly_in_queue = AbstractMediaSequence::find(&Types::Song::source, song.source);
 
-    // not in queue
-    if (!prolly_in_queue.isValid()) {
-        /* clear the whole queue and create a new one with only
-           this song como youtube music */
-        PlaylistSequence replacement (QList<Types::Song> {song});
-        respawn_queue(replacement);
+    /* clear the whole queue and create a new one with only
+        this song como youtube music */
+    PlaylistSequence replacement (QList<Types::Song> {song});
+    respawn_queue(replacement);
 
-        m_playhead = index(0);
+    playing.load(items()[0]);
 
-        emit playheadChanged(play_afterwards);
-        return;
+    if (play_afterwards) {
+        playing.play();
     }
-
-    m_playhead = prolly_in_queue;
-
-    emit playheadChanged(play_afterwards);
-    return;
 }
 
 void
@@ -118,28 +116,21 @@ PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 {
     if (
         !song.isValid()
-    ||  m_playhead == song   // we are currently in that index
-    ||  song.model() != this // not from queue
+    ||   song.model() != this // not from queue
     ) return;
 
-    m_playhead = song;
+    auto song_opt = pointed_to(song);
+    if (!song_opt.has_value()) return;
 
-    emit playheadChanged(play_afterwards);
-}
+    Types::Any &song_item = song_opt.value().get();
 
-void
-PlayQueue::switch_to (const QModelIndex &song, bool play_afterwards)
-{
-    if (
-        !song.isValid()
-    ||  m_playhead == song   // we are currently in that index
-    ||  song.model() != this // not from queue
-    ) return;
+    if (!std::holds_alternative<Types::Song>(song_item)) return;
 
-    // QPersistentModelIndex accepts QModelIndex in its = operator =)
-    m_playhead = song;
+    playing.load(std::get<Types::Song>(song_item));
 
-    emit playheadChanged(play_afterwards);
+    if (play_afterwards) {
+        playing.play();
+    }
 }
 
 void
@@ -165,16 +156,8 @@ PlayQueue::qml_switch_to(const QModelIndex &song)
 void
 PlayQueue::next ()
 {
-    if (itemCount() == 0) return;
-
-    // cycle
-    if (!m_playhead.isValid() || m_playhead.row() == itemCount() - 1) {
-        switch_to(index(0));
-        return;
-    }
-
     // play right after switching
-    switch_to(index(m_playhead.row() + 1), true);
+    switch_to(index_next_to(playhead()), true);
 }
 
 void
@@ -184,11 +167,11 @@ PlayQueue::prev ()
     if (last_index < 0) return; // empty queue
 
     // cycle
-    if (!m_playhead.isValid() || m_playhead.row() == 0) {
+    if (!playhead().isValid() || playhead().row() == 0) {
         switch_to(index(last_index, 0));
         return;
     }
 
     // play right after switching
-    switch_to(index(m_playhead.row() - 1, 0), true);
+    switch_to(index(playhead().row() - 1, 0), true);
 }

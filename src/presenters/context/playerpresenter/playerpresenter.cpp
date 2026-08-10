@@ -50,9 +50,6 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 
     connect(&playing, &audio_engine::queued_tracks_finished,
             this, &PlayerPresenter::handleQueuedTracksFinished);
-
-    connect(&queue, &PlayQueue::playheadChanged,
-            this, &PlayerPresenter::handlePlayheadChanged);
 }
 
 // Getters block
@@ -150,45 +147,9 @@ PlayerPresenter::handleTrackChanged()
 }
 
 void
-PlayerPresenter::handlePlayheadChanged(bool play_afterwards)
-{
-    {
-        // get the Types::Any
-        const std::optional<std::reference_wrapper<Types::Any>> item = queue.pointed_to(queue.playhead());
-
-        if (!item.has_value()) return;
-
-        const Types::Any &media_item = item.value().get();
-
-        // narrow down to Types::Song
-        if (!std::holds_alternative<Types::Song>(media_item)) return;
-
-        const Types::Song &song = std::get<Types::Song>(media_item);
-        playing.load(song);
-        
-        if (play_afterwards) play();
-    }
-
-    // todo, future: prepare the next song
-    /* {
-        // get the Types::Any
-        const std::optional<std::reference_wrapper<Types::Any>> item = queue.pointed_to(queue.index_next_to(queue.playhead()));
-
-        if (!item.has_value()) return;
-
-        const Types::Any &media_item = item.value().get();
-
-        // narrow down to Types::Song
-        if (!std::holds_alternative<Types::Song>(media_item)) return;
-
-        const Types::Song &song = std::get<Types::Song>(media_item);
-        playing.prepare_next_track(song);
-    } */
-}
-
-void
 PlayerPresenter::handleQueuedTracksFinished()
 {
+    // if ever there is a slipoff on not preloading the next song, that will be played anyway
     queue.switch_to(queue.index_next_to(queue.playhead()), true);
 }
 
