@@ -229,13 +229,13 @@ audio_engine::set_volume(quint8 volume_percent)
     emit volume_changed();
 }
 
-Types::Song
+const Types::Song &
 audio_engine::current_track() const
 {
     return m_current_track;
 }
 
-Types::Song
+const Types::Song &
 audio_engine::next_track_prepared() const
 {
     return m_prolly_next_track;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "audioengine.hpp"
 #include "playlistsequence.hpp"
 
 #include <QtQmlIntegration/qqmlintegration.h>
@@ -15,7 +16,7 @@ class PlayQueue : public PlaylistSequence {
     QML_ELEMENT
     QML_SINGLETON
 
-    Q_PROPERTY(QModelIndex playhead READ playhead WRITE qml_switch_to NOTIFY playheadChanged)
+    Q_PROPERTY(QModelIndex playhead READ playhead WRITE qml_switch_to NOTIFY trackChanged)
 
 public:
     // disable copy and assignment for single instance
@@ -27,15 +28,14 @@ public:
     static PlayQueue *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // getters
-    QPersistentModelIndex & playhead();
+    QPersistentModelIndex playhead();
 
     // all items
     QList<Types::Song> items() const;
 
     // controls
-    void switch_to (const Types::Song &song, bool play_afterwards = false); // no matter if it is on the queue or not
+    void switch_to (const Types::Song &song, bool play_afterwards = false); // clean the queue completely and repopulate with this song
     void switch_to (const QPersistentModelIndex &song, bool play_afterwards = false); // for lvalues
-    void switch_to (const QModelIndex &index, bool play_afterwards = false); // base for QML and temporary indices
     void qml_switch_to (const QModelIndex &index); // proxy for qml that auto plays the selection afterwards
 
     Q_INVOKABLE void switch_to (const QUrl &source);
@@ -57,12 +57,14 @@ public:
     std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
 signals:
-    void playheadChanged(bool play_afterwards = false);
+    // triggered by audio_engine::track_changed
+    void trackChanged ();
 
 private:
     // private constructor to disallow external creations
     explicit PlayQueue(QObject *parent = nullptr);
 
-    QPersistentModelIndex m_playhead;
+    // the playhead is passively calculated
+    audio_engine &playing = audio_engine::instance();
 
 };
