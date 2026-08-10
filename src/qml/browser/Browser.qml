@@ -137,6 +137,7 @@ Item {
         bottomPadding: topPadding
 
         width: Math.min(rightCol.width - 20, implicitWidth)
+        height: 96
 
         visible: stateModel.isMediaLoaded
 
