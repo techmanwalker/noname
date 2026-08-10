@@ -4,6 +4,8 @@
 #include "songfactory.hpp"
 #include "playqueue.hpp"
 
+#include <QLoggingCategory>
+
 // Meyers singleton implementation
 PlayQueue &
 PlayQueue::instance()
@@ -16,7 +18,10 @@ PlayQueue::PlayQueue(QObject *parent)
     : PlaylistSequence(parent)
 {
     connect (&playing, &audio_engine::track_changed,
-            this, &PlayQueue::trackChanged);
+            this, &PlayQueue::preload_next_track_whenever_possible);
+
+    connect(&playing, &audio_engine::queued_tracks_finished,
+            this, &PlayQueue::handle_queued_tracks_finished);
 }
 
 // factory for the qml engine
@@ -117,37 +122,24 @@ PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
     // true only means that the current song was successfully loaded
 
     // load the current song
-    {
-        if (
-            !song.isValid()
-        ||   song.model() != this // not from queue
-        ) return false;
+    if (
+        !song.isValid()
+    ||   song.model() != this // not from queue
+    ) return false;
 
-        auto song_opt = pointed_to(song);
-        if (!song_opt.has_value()) return false;
+    auto song_opt = pointed_to(song);
+    if (!song_opt.has_value()) return false;
 
-        Types::Any &song_item = song_opt.value().get();
+    Types::Any &song_item = song_opt.value().get();
 
-        if (!std::holds_alternative<Types::Song>(song_item)) return false;
+    if (!std::holds_alternative<Types::Song>(song_item)) return false;
 
-        playing.load(std::get<Types::Song>(song_item));
+    playing.load(std::get<Types::Song>(song_item));
 
-        if (play_afterwards) {
-            playing.play();
-        }
+    if (play_afterwards) {
+        playing.play();
     }
 
-    // preload the next song
-    {
-        auto song_opt = pointed_to(index_next_to(song));;
-        if (!song_opt.has_value()) return true;
-
-        Types::Any &song_item = song_opt.value().get();
-
-        if (!std::holds_alternative<Types::Song>(song_item)) return true;
-
-        playing.prepare_next_track(std::get<Types::Song>(song_item));
-    }
 
     return true;
 }
@@ -193,4 +185,37 @@ PlayQueue::prev ()
 
     // play right after switching
     switch_to(index(playhead().row() - 1, 0), true);
+}
+
+void
+PlayQueue::preload_next_track_whenever_possible ()
+{
+    emit track_changed();
+
+    // preload the next song
+    QPersistentModelIndex next_song_idx = index_next_to(playhead());
+
+    if (!next_song_idx.isValid()) playing.undo_prepare_next_track(); // avoid accidental replay
+
+    auto song_opt = pointed_to(next_song_idx);
+    if (!song_opt.has_value()) return;
+
+    Types::Any &song_item = song_opt.value().get();
+
+    if (!std::holds_alternative<Types::Song>(song_item)) return;
+
+    playing.prepare_next_track(std::get<Types::Song>(song_item));
+
+    qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
+}
+
+void
+PlayQueue::handle_queued_tracks_finished()
+{
+    qCDebug (l_mediasequences) << "The chain of preloaded songs has finished.";
+
+    // if ever there is a slipoff on not preloading the next song, that will be played anyway
+    if (!switch_to(index_next_to(playhead()), true)) {
+        playing.stop();
+    }
 }

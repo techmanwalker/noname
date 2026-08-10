@@ -166,6 +166,7 @@ private slots:
 
     // Queues the next file to be seamlessly opened upon EOF
     void queue_next_song(const Types::Song& next_song);
+    void clear_queued_song();
 
 signals:
     void song_load_failed (QString &err);
@@ -246,6 +247,7 @@ public:
     void load(const Types::Song &song);
 
     void prepare_next_track(const Types::Song &song);
+    void undo_prepare_next_track();
 
     // Safe getters for current data status
     const Types::Song & current_track()       const;
