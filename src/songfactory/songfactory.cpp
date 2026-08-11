@@ -134,8 +134,7 @@ song_factory::execute_extraction(QPromise<Types::Song> &promise, attributes a)
 
     using namespace covers::live;
 
-        if (a.use_thumbnail_cache) {
-
+    if (a.use_thumbnail_cache) {
         const QString thumb_hash = covers::disk::thumbnail_hash_for(m_source, a.crop_and_resize);
 
         /*  No decode here anymore — just tell cover_provider where to find
