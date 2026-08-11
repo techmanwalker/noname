@@ -97,6 +97,9 @@ public:
 
     // to stop the poll timer while scrubbing
     Q_INVOKABLE void notify_slider_pressed_change (bool pressed);
+
+    // save volume level to disk on demand
+    Q_INVOKABLE void saveVolume () const;
     
 signals:
     // Needed signals for QML to be reactive
