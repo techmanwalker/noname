@@ -112,6 +112,9 @@ public:
 
     // Tracks ongoing seek operations to mute the hardware loop
     std::atomic<int> pending_seeks{0};
+
+    // Governed by a perceptual volume control that rescales logarithmic values back for soundio
+    std::atomic<float> volume_multiplier{1.0f};
     
     // Handshake sequence to safely reset head/tail without clobbering
     std::atomic_bool flush_request{false};
@@ -257,12 +260,12 @@ public:
 signals:
     void seek_finished();
     void duration_changed();
-    void volume_changed();
     
     // Single atomic signal to send the whole block of data at once
     void track_changed();
     void queued_tracks_finished();
     void playback_state_changed();
+    void volume_changed();
 
 public slots:
 
@@ -284,6 +287,8 @@ private:
     Types::Song m_current_track;
 
     Types::Song m_prolly_next_track;
+
+    double m_log_volume = 0;
     
     // The core of synchronization: control of load versions
     uint64_t m_current_transaction_id = 0;
