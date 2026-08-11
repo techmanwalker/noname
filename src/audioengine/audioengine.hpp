@@ -255,7 +255,7 @@ public:
     void process_playlist_finished();
 
 signals:
-    void position_changed();
+    void seek_finished();
     void duration_changed();
     void volume_changed();
     

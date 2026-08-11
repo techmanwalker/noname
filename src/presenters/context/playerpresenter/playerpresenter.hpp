@@ -6,6 +6,8 @@
 #include <QObject>
 
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <atomic>
+#include <qtmetamacros.h>
 
 // forward declarations
 class QQmlEngine;
@@ -92,6 +94,9 @@ public:
     Q_INVOKABLE void stop()  const;
     Q_INVOKABLE void next()  const;
     Q_INVOKABLE void prev()  const;
+
+    // to stop the poll timer while scrubbing
+    Q_INVOKABLE void notify_slider_pressed_change (bool pressed);
     
 signals:
     // Needed signals for QML to be reactive
@@ -104,12 +109,15 @@ signals:
     void volumeChanged();
     void playbackStateChanged();
     void mediaLoadedChanged();
+    void sliderPressedChanged();
 
 public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
     void handlePlaybackStateChanged();
     void handleVolumeChangedInController();
+    void handleSliderPressedChanged(); // diff between seek and playback state change
+    void gate_poll_timer();
 
 private:
     // Private constructor
@@ -119,4 +127,6 @@ private:
     PlayQueue &queue = PlayQueue::instance();
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
+
+    std::atomic_bool m_slider_pressed {false};
 };

@@ -21,7 +21,7 @@ RowLayout {
 
     Label {
         id: currentTime
-        text: root.formatTime(root.stateModel.position_ms)
+        text: root.formatTime(slider.value) // passive
 
         font.weight: Font.Medium
 
@@ -31,11 +31,15 @@ RowLayout {
     }
 
     AccessibleSlider {
+        id: slider
+
         from: 0
         to: root.stateModel.duration_ms
         value: root.stateModel.position_ms
 
         onPressedChanged: {
+
+            root.stateModel.notify_slider_pressed_change(pressed);
             
             if (!pressed) {
                 root.stateModel.position_ms = value

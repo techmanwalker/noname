@@ -58,7 +58,7 @@ audio_engine::audio_engine(QObject *parent)
             m_decoder_worker, &audio_decode_worker::start_decoding);
 
     connect(m_decoder_worker, &audio_decode_worker::seeked,
-            this, &audio_engine::position_changed);
+            this, &audio_engine::seek_finished);
             
     m_audio_decoding_thread->start();
 
@@ -269,7 +269,7 @@ void
 audio_engine::handle_track_changed ()
 {
     emit duration_changed();
-    emit position_changed();
+    emit seek_finished(); // to 0:00
     emit playback_state_changed();
 }
 
