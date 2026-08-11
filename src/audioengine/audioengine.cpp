@@ -193,18 +193,40 @@ audio_engine::set_position(const quint64 position_ms)
 void
 audio_engine::set_volume(quint8 volume_percent)
 {
-    // Force upper limit
     if (volume_percent > 100) {
         volume_percent = 100;
     }
 
-    // Convert the 0..100 scale to 0.0f..1.0f for QAudioOutput
-    float volume_float = static_cast<float>(volume_percent) / 100.0f;
+    if (volume_percent == 0) {
+        m_log_volume = -std::numeric_limits<double>::infinity();
+    } else {
+        double amplitude = std::pow(static_cast<double>(volume_percent) / 100.0, 3.0);
+        m_log_volume = 20.0 * std::log10(amplitude);
+    }
 
-    // todo: set it on libsndio
+    float hw_multiplier = (volume_percent == 0) ? 0.0f : static_cast<float>(std::pow(10.0, m_log_volume / 20.0));
+    
+    // Transmitir el volumen al búfer DSP para su procesamiento en tiempo real
+    m_decoder_worker->get_ring_buffer()->volume_multiplier.store(hw_multiplier, std::memory_order_relaxed);
 
-    // Emit signal
     emit volume_changed();
+}
+
+quint8
+audio_engine::current_volume() const
+{
+    // catch the sentinel value first
+    if (m_log_volume <= -std::numeric_limits<double>::infinity()) {
+        return 0;
+    }
+
+    // reverse the dB calculation back to the amplitude multiplier
+    double amplitude = std::pow(10.0, m_log_volume / 20.0);
+    
+    // reverse the cubic curve mapping back to the linear 0-100 ui scale
+    double volume_percent = std::cbrt(amplitude) * 100.0;
+
+    return static_cast<quint8>(qRound(volume_percent));
 }
 
 const Types::Song &
@@ -217,17 +239,6 @@ const Types::Song &
 audio_engine::next_track_prepared() const
 {
     return m_prolly_next_track;
-}
-
-quint8
-audio_engine::current_volume() const
-{
-    // Fetch 0-1 volume value
-    // todo: implement with sndio
-
-    // Scale up to 0-100
-    // return static_cast<quint8>(qRound(volume_float * 100.0f));
-    return 100;
 }
 
 quint64

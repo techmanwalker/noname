@@ -82,7 +82,12 @@ audio_ring_buffer::pop(float* dest, size_t count) {
     size_t available = (h + capacity - t) % capacity;
     size_t to_read = std::min(count, available);
 
-    for(size_t i = 0; i < to_read; ++i) dest[i] = buffer[(t + i) % capacity];
+    // apply the recalculated linear volume multiplier
+    float current_vol = volume_multiplier.load(std::memory_order_relaxed);
+
+    for(size_t i = 0; i < to_read; ++i) {
+        dest[i] = buffer[(t + i) % capacity] * current_vol;
+    };
     
     tail.store((t + to_read) % capacity, std::memory_order_release);
 

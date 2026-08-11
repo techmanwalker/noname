@@ -40,14 +40,14 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
     connect(&playing, &audio_engine::track_changed,
             this, &PlayerPresenter::handleTrackChanged);
 
-    connect(&playing, &audio_engine::volume_changed,
-            this, &PlayerPresenter::handleVolumeChangedInController);
-
     connect(&playing, &audio_engine::playback_state_changed,
             this, &PlayerPresenter::handlePlaybackStateChanged);
 
     connect(&playing, &audio_engine::seek_finished,
             this, &PlayerPresenter::positionChanged);
+
+    connect(&playing, &audio_engine::volume_changed,
+            this, &PlayerPresenter::volumeChanged);
         
     connect(this, &PlayerPresenter::sliderPressedChanged,
             this, &PlayerPresenter::handleSliderPressedChanged);
@@ -199,10 +199,4 @@ PlayerPresenter::handleSliderPressedChanged()
                 });
     }
 
-}
-
-void
-PlayerPresenter::handleVolumeChangedInController()
-{
-    emit volumeChanged();
 }

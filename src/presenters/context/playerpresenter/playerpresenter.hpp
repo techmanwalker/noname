@@ -115,7 +115,6 @@ public slots:
     // Formally expose as a metadata block receiver
     void handleTrackChanged();
     void handlePlaybackStateChanged();
-    void handleVolumeChangedInController();
     void handleSliderPressedChanged(); // diff between seek and playback state change
     void gate_poll_timer();
 
