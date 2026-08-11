@@ -288,26 +288,25 @@ audio_engine::handle_track_changed ()
 void
 audio_engine::process_track_boundary()
 {
-    if (auto next_song = m_decoder_worker->get_ring_buffer()->check_and_pop_boundary()) {
-        m_current_track = next_song.value();
+    if (m_decoder_worker->get_ring_buffer()->check_for_boundary_and_advance()) {
+
+        m_current_track = m_prolly_next_track;
+        
+        undo_prepare_next_track(); // nothing is preloaded yet :)
 
         // Reset local track playback position to 0
         m_decoder_worker->get_ring_buffer()->frames_played.store(0, std::memory_order_relaxed);
         m_decoder_worker->get_ring_buffer()->playback_base_ms.store(0, std::memory_order_relaxed);
 
-        // If another boundary was already queued behind this one, update the atomic threshold
-        auto* ring_buf = m_decoder_worker->get_ring_buffer();
-        std::lock_guard<std::mutex> lock(ring_buf->boundary_mutex);
-        if (!ring_buf->upcoming_boundaries.empty()) {
-            ring_buf->next_boundary_frame.store(
-                ring_buf->upcoming_boundaries.front().absolute_frame_start,
-                std::memory_order_release
-            );
-        } else {
-            ring_buf->next_boundary_frame.store(UINT64_MAX, std::memory_order_release);
-        }
+        // No need to peek for upcoming boundaries.
+        // The atomic next_boundary_frame was already set to UINT64_MAX by write_callback.
 
         emit track_changed();
+
+        // If the 'next' track was empty/invalid, we hit the end of the line
+        if (!m_current_track.is_valid()) {
+            process_playlist_finished();
+        }
     }
 }
 

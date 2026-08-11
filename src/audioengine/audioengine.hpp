@@ -13,8 +13,6 @@
 #include <cstddef>
 
 #include <cstdint>
-#include <qloggingcategory.h>
-#include <queue>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -34,11 +32,6 @@ Q_DECLARE_LOGGING_CATEGORY(l_ffmpeg) // errors in ffmpeg decoding
 
 // sndio
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);
-
-struct track_boundary {
-    uint64_t absolute_frame_start; 
-    Types::Song song_metadata;
-};
 
 class audio_ring_buffer
 {
@@ -121,12 +114,13 @@ public:
     std::atomic_bool flush_ack{false};
 
     std::mutex boundary_mutex;
-    std::queue<track_boundary> upcoming_boundaries;
+    bool has_upcoming_boundary{false};
+    uint64_t upcoming_boundary_frame{0};
 
     // Target frame count for the next upcoming track boundary (UINT64_MAX when none)
     std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
 
-    std::optional<Types::Song> check_and_pop_boundary();
+    bool check_for_boundary_and_advance();
 };
 
 class audio_decode_worker : public QObject
