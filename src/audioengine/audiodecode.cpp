@@ -483,18 +483,6 @@ audio_decode_worker::clear_queued_song()
     m_queued_next_song = Types::Song{};
 }
 
-void 
-audio_engine::undo_prepare_next_track() 
-{
-    // Clear the local front-end tracker
-    m_prolly_next_track = Types::Song{};
-    
-    // Asynchronously clear the backend queue
-    QMetaObject::invokeMethod(m_decoder_worker, [this]() {
-        m_decoder_worker->clear_queued_song();
-    }, Qt::QueuedConnection);
-}
-
 int
 audio_decode_worker::convert_to_float (AVFrame *frame, float **output)
 {
@@ -547,6 +535,24 @@ audio_decode_worker::clean ()
     // reset playback time to 0
     m_ring_buffer.frames_played.store(0);
     m_ring_buffer.playback_base_ms.store(0);
+
+    // reset absolute gapless trackers
+    m_ring_buffer.absolute_frames_decoded.store(0, std::memory_order_relaxed);
+    m_ring_buffer.absolute_frames_played.store(0, std::memory_order_relaxed);
+
+    // invalidate the track boundary of the outgoing song
+    {
+        std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
+        m_ring_buffer.has_upcoming_boundary = false;
+    }
+    m_ring_buffer.next_boundary_frame.store(UINT64_MAX, std::memory_order_relaxed);
+
+    // clear any gapless handoff attached to the old song
+    {
+        std::lock_guard<std::mutex> q_lock(m_queue_mutex);
+        m_has_queued_song = false;
+        m_queued_next_song = Types::Song{};
+    }
 
     // also reset eof state
     m_ring_buffer.eof_decoded.store(false);
