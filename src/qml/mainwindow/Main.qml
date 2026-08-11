@@ -20,7 +20,11 @@ ApplicationWindow {
 
     flags: Qt.Window | Qt.FramelessWindowHint
 
-    onClosing: WindowGeometry.save(width, height)
+    onClosing: {
+        // save last used values
+        WindowGeometry.save(width, height);
+        PlayerPresenter.saveVolume();
+    }
 
     Background {
         source: activeView.currentIndex == 1 ? PlayerPresenter.cover : ""

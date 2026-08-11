@@ -1,10 +1,13 @@
 
 #include "playerpresenter.hpp"
+
 #include "audioengine.hpp"
+#include "configuration.hpp"
 #include "playqueue.hpp"
 
 #include <QQmlEngine>
 #include <atomic>
+#include <qloggingcategory.h>
 
 // meyers singleton
 PlayerPresenter &PlayerPresenter::instance() {
@@ -51,6 +54,22 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
         
     connect(this, &PlayerPresenter::sliderPressedChanged,
             this, &PlayerPresenter::handleSliderPressedChanged);
+
+    // load volume from conf file
+    auto &conf = configuration::manager::instance();
+    const auto lines = conf.read_lines(configuration::conf_file_type::volume);
+
+    // only the volume value, nothing else
+    if (lines.size() == 1) {
+        bool vOK = false; // was volume successfully read as an int?
+
+        const int volume = lines[0].toInt(&vOK);
+
+        if (vOK) {
+            // audioengine will clamp it or manage however it is to be done
+            setVolume(volume);
+        }
+    }
 }
 
 // Getters block
@@ -89,6 +108,17 @@ void
 PlayerPresenter::setVolume(quint8 volume)
 {
     playing.set_volume(volume);
+}
+
+void
+PlayerPresenter::saveVolume () const
+{
+    
+    configuration::manager::instance().write_lines(
+        configuration::conf_file_type::volume,
+        { QString::number(volume()) }
+    );
+
 }
 
 // --- Playback controls ---

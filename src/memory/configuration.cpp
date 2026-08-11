@@ -27,6 +27,8 @@ file (conf_file_type type)
         case conf_file_type::window_geometry:
             conf_file_name = "window_geometry";
             break;
+        case conf_file_type::volume:
+            conf_file_name = "volume";
     }
 
     // should not happen unless someone leaves an unhandled enum value
