@@ -144,6 +144,9 @@ audio_engine::load (const Types::Song &song) // song IS the metadata, no need to
 
     m_current_track = song;
 
+    // the queue was just wiped, ui needs to decide what song to preload next
+    undo_prepare_next_track();
+
     emit track_changed();
 }
 
@@ -151,6 +154,18 @@ void audio_engine::prepare_next_track(const Types::Song &song) {
     m_prolly_next_track = song;
     QMetaObject::invokeMethod(m_decoder_worker, [this, song]() {
         m_decoder_worker->queue_next_song(song);
+    }, Qt::QueuedConnection);
+}
+
+void 
+audio_engine::undo_prepare_next_track() 
+{
+    // Clear the local front-end tracker
+    m_prolly_next_track = Types::Song{};
+    
+    // Asynchronously clear the backend queue
+    QMetaObject::invokeMethod(m_decoder_worker, [this]() {
+        m_decoder_worker->clear_queued_song();
     }, Qt::QueuedConnection);
 }
 
