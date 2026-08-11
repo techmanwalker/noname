@@ -129,18 +129,21 @@ audio_ring_buffer::writable_size() const {
     return (capacity - 1) - used;
 }
 
-std::optional<Types::Song> 
-audio_ring_buffer::check_and_pop_boundary()
+// have we crossed yet?
+bool
+audio_ring_buffer::check_for_boundary_and_advance()
 {
     std::lock_guard<std::mutex> lock(boundary_mutex);
-    if (!upcoming_boundaries.empty()) {
-        if (absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundaries.front().absolute_frame_start) {
-            auto next_song = upcoming_boundaries.front().song_metadata;
-            upcoming_boundaries.pop();
-            return next_song;
+    if (has_upcoming_boundary) {
+        if (absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundary_frame) {
+            
+            // Invalidate the boundary since we just crossed it
+            has_upcoming_boundary = false;
+            
+            return true;
         }
     }
-    return std::nullopt;
+    return false;
 }
 
 
@@ -337,20 +340,16 @@ audio_decode_worker::decode_step ()
             uint64_t boundary_frame = m_ring_buffer.absolute_frames_decoded.load(std::memory_order_relaxed);
             {
                 std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
-                m_ring_buffer.upcoming_boundaries.push({
-                    boundary_frame,
-                    m_queued_next_song
-                });
+                m_ring_buffer.upcoming_boundary_frame = boundary_frame;
+                m_ring_buffer.has_upcoming_boundary = true;
             }
 
-            // Arm the atomic tracker if it's currently unassigned
-            uint64_t expected = UINT64_MAX;
-            m_ring_buffer.next_boundary_frame.compare_exchange_strong(
-                expected, boundary_frame, std::memory_order_release
-            );
+            // Arm the atomic tracker. An unconditional store is safe here since we strictly track one boundary at a time.
+            m_ring_buffer.next_boundary_frame.store(boundary_frame, std::memory_order_release);
 
             // Swap contexts transparently
             close_ffmpeg_contexts();
+
             if (open_file_internal(m_queued_next_song.source.toLocalFile())) {
                 m_has_queued_song = false;
                 
@@ -432,8 +431,7 @@ audio_decode_worker::seek(uint64_t position_ms) {
 
         {
             std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
-            std::queue<track_boundary> empty;
-            std::swap(m_ring_buffer.upcoming_boundaries, empty);
+            m_ring_buffer.has_upcoming_boundary = false;
         }
 
         // Reset the atomic boundary target here
