@@ -223,7 +223,7 @@ PlayQueue::handle_queued_tracks_finished()
 
     // if ever there is a slipoff on not preloading the next song, that will be played anyway
     if (!switch_to(index_next_to(playhead()), true)) {
-        playing.stop();
+        playing.pause(); // still allow for seeking back if desired
     }
 }
 
