@@ -4,6 +4,7 @@
 #include "playqueue.hpp"
 
 #include <QQmlEngine>
+#include <atomic>
 
 // meyers singleton
 PlayerPresenter &PlayerPresenter::instance() {
@@ -45,8 +46,11 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
     connect(&playing, &audio_engine::playback_state_changed,
             this, &PlayerPresenter::handlePlaybackStateChanged);
 
-    connect(&playing, &audio_engine::position_changed,
+    connect(&playing, &audio_engine::seek_finished,
             this, &PlayerPresenter::positionChanged);
+        
+    connect(this, &PlayerPresenter::sliderPressedChanged,
+            this, &PlayerPresenter::handleSliderPressedChanged);
 }
 
 // Getters block
@@ -129,6 +133,29 @@ PlayerPresenter::prev() const
     queue.prev();
 }
 
+void
+PlayerPresenter::notify_slider_pressed_change (bool pressed)
+{
+    m_slider_pressed.store(pressed);
+
+    emit sliderPressedChanged ();
+}
+
+void
+PlayerPresenter::gate_poll_timer ()
+{
+    using playback_state = audio_engine::playback_state;
+    switch(playing.get_playback_state()) {
+        case playback_state::playing:
+            m_position_poll_timer->start();
+            break;
+        case playback_state::paused:
+        case playback_state::stopped:
+            m_position_poll_timer->stop();
+            break;
+    }
+}
+
 // --- Signal handlers
 
 void
@@ -151,16 +178,27 @@ PlayerPresenter::handlePlaybackStateChanged()
 {
     emit playbackStateChanged();
 
-    using playback_state = audio_engine::playback_state;
-    switch(playing.get_playback_state()) {
-        case playback_state::playing:
-            m_position_poll_timer->start();
-            break;
-        case playback_state::paused:
-        case playback_state::stopped:
-            m_position_poll_timer->stop();
-            break;
+    gate_poll_timer();
+}
+
+void
+PlayerPresenter::handleSliderPressedChanged()
+{
+    // write only from qml so no need to emit signal here
+
+    // avoid ui and audioengine fighting to print their position
+    // this point of execution means that the pressed state changed
+    // as the name suggests
+    if (m_slider_pressed.load(std::memory_order_relaxed)) {
+        m_position_poll_timer->stop();
+        return;
+    } else {
+        connect (&playing, &audio_engine::seek_finished,
+                this, [this] () {
+                    gate_poll_timer(); // can freely decide
+                });
     }
+
 }
 
 void
