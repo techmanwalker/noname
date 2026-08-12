@@ -17,6 +17,8 @@ namespace debug {
     QJsonObject serialize(const Types::Directory &dir);
     QJsonObject serialize(const Types::Any &unit);
 
+    QJsonArray serialize(const std::vector<std::string> &lines);
+
     template <typename MediaType>
     requires std::is_convertible_v<MediaType, Types::Any>
     QJsonObject serialize (const QFuture<MediaType> &future_unit);

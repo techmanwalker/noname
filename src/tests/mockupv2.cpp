@@ -1,6 +1,5 @@
 #include "configuration.hpp"
 #include "coverproviderproxy.hpp"
-#include "lyricsmanifest.hpp"
 #include "playqueue.hpp"
 #include "songfactory.hpp"
 // #include "serialize.hpp"
@@ -53,14 +52,15 @@ main (int argc, char ** argv)
     });
     */
 
-    // Create model
-    auto &testLyrics = LyricsManifest::instance();
+    /*
     
     // Populate it (example - load from file or hardcode for testing)
     testLyrics.appendLyric(0, "You shut your mouth");
     testLyrics.appendLyric(5000, "How can you say mockupvI go about things the wrong way?");
     testLyrics.appendLyric(10000, "I am human and I need to be loved");
     testLyrics.appendLyric(15000, "Just like everybody else does");
+
+    */
 
     // Cover cache
     std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();

@@ -82,6 +82,18 @@ debug::serialize (const Types::Any &unit)
 }
 
 QJsonArray
+debug::serialize (const std::vector<std::string> &lines)
+{
+    QJsonArray out;
+
+    for (const auto &line : lines) {
+        out.append(QString::fromStdString(line));
+    }
+
+    return out;
+}
+
+QJsonArray
 debug::serialize (const QList<QUrl> &uris)
 {
     QJsonArray out;

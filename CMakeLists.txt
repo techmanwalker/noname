@@ -20,6 +20,8 @@ find_package(rapidfuzz REQUIRED)
 
 find_package(libjxl REQUIRED)
 
+add_subdirectory(submodules/syrinc)
+
 qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
 qt_policy(SET QTP0005 NEW)
@@ -190,9 +192,15 @@ target_link_libraries(playerpresenter
         Qt6::QmlIntegration
         Qt6::Quick
         audioengine
+        debugtools
         listings
+        lyricsmanifest
         mediasequences
         primitives
+
+        # from syrinc
+        lrc-core
+        audio
 )
 
 target_include_directories(playerpresenter
@@ -218,6 +226,10 @@ target_link_libraries(lyricsmanifest
         Qt6::Core
         Qt6::Qml
         Qt6::QmlIntegration
+
+        # from syrinc
+        lrc-core
+        audio
 )
 
 target_include_directories(lyricsmanifest
@@ -239,9 +251,9 @@ qt_add_qml_module(fullscreenplayer
 target_link_libraries(fullscreenplayer
     PUBLIC
         listings
+        lyricsmanifest
         mediasequences
         playerpresenter
-        lyricsmanifest
 
     PRIVATE
         Qt6::Core

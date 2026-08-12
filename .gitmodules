@@ -1,0 +1,3 @@
+[submodule "submodules/syrinc"]
+	path = submodules/syrinc
+	url = https://github.com/techmanwalker/syrinc
