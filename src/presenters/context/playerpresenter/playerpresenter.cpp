@@ -5,9 +5,12 @@
 #include "configuration.hpp"
 #include "playqueue.hpp"
 
+#include "serialize.hpp"
+
 #include <QQmlEngine>
 #include <atomic>
-#include <qloggingcategory.h>
+
+Q_LOGGING_CATEGORY (l_playerpresenter, "noname.context.playerpresenter");
 
 // meyers singleton
 PlayerPresenter &PlayerPresenter::instance() {
@@ -201,6 +204,23 @@ PlayerPresenter::handleTrackChanged()
     emit durationChanged();
     emit positionChanged();
     emit mediaLoadedChanged();
+
+    // read lyrics from audio file and update
+    lm.repopulate_with_lyrics_for_file(playing.current_track().source.toLocalFile())
+        .then([this] () {
+                std::vector<std::string> debug_lrc_lines;
+
+                // serialize the logical lyrics back to .lrc only to print it back
+                for (lyric single_timestamp_line : lm.current_lines()) {
+                    debug_lrc_lines.emplace_back(
+                        "[" + single_timestamp_line.ts.as_string() + "] " 
+                        + single_timestamp_line.text.toStdString());
+                };
+
+                debug::print(l_playerpresenter(), "Lyrics in the LyricManifest:");
+                debug::print(l_playerpresenter(), debug::serialize(debug_lrc_lines));
+                
+            });
 }
 
 void

@@ -1,22 +1,32 @@
 #pragma once
 
+// from syrinc
+#include "globals.hpp" // Note: this is globals.hpp from syrinc
+#include "timestamps.hpp"
+
 #include <QAbstractListModel>
+#include <QFuture>
+#include <QLoggingCategory>
 #include <QObject>
+#include <QReadWriteLock>
 
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <qloggingcategory.h>
+#include <qreadwritelock.h>
 
-#include <vector>
+Q_DECLARE_LOGGING_CATEGORY(l_lyricsmanifest);
 
-// NOTE: use this as reference to implement new singleton models.
+using namespace syrinc;
+
+// decoupled
+struct lyric {
+    syrinc::timestamps::timestamp ts;
+    QString text;
+};
 
 // forward declarations
 class QQmlEngine;
 class QJSEngine;
-
-struct Lyric {
-    unsigned long timestampInMs;
-    QString text;
-};
 
 // The lyrics of the current playing song, accessible from within the entire player.
 class LyricsManifest : public QAbstractListModel
@@ -36,28 +46,35 @@ public:
 
     // fixed role list
     enum Roles {
-        TimestampRole = Qt::UserRole + 1,
         TextRole
     };
     Q_ENUM(Roles)
+
+    QFuture<void> repopulate_with_lyrics_for_file (const QString &source);
 
     // Required QAbstractListModel implementations
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    std::vector<lyric> current_lines() const;
+
     // Q_INVOKABLE makes them callable from QML
-    Q_INVOKABLE void appendLyric(unsigned long timestampInMs, const QString &text);
-    Q_INVOKABLE void removeLyric(size_t index);
     Q_INVOKABLE void clear();
 
-    // Get a specific lyric (useful for current time tracking)
-    Q_INVOKABLE QString textAt(size_t index) const;
-    Q_INVOKABLE unsigned long timestampAt(size_t index) const;
+signals:
+    void linesChanged();
 
 private:
     // private constructor
     explicit LyricsManifest(QObject *parent = nullptr);
+
+    // tell syrinc to read the audio LYRICS tag to fetch the lyrics
+    [[nodiscard ("Unused file read execution result")]] QFuture<filelines> read_from_metadata_tag (const QString &source);
+
     
-    std::vector<Lyric> m_lyrics;
+    // currently displayed lyrics
+    std::vector<lyric> m_lyrics;
+
+    QReadWriteLock m_lock;
 };

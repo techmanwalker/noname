@@ -1,6 +1,21 @@
 #include "lyricsmanifest.hpp"
 
+#include "lines.hpp"
+#include "metadata.hpp" // from syrinc
+#include "process.hpp"
+#include "tokens.hpp"
+
+#include <QFile>
 #include <QQmlEngine>
+
+#include <QtConcurrent/QtConcurrent>
+#include <qloggingcategory.h>
+#include <qreadwritelock.h>
+
+Q_LOGGING_CATEGORY(l_lyricsmanifest, "noname.lyrics");
+
+using namespace syrinc::audio;
+using namespace syrinc::timestamps;
 
 // Meyers singleton implementation
 LyricsManifest &
@@ -46,16 +61,8 @@ LyricsManifest::data(const QModelIndex &index, int role) const
     if (!index.isValid() || index.row() >= static_cast<int>(m_lyrics.size()))
         return QVariant();
 
-    const Lyric &lyric = m_lyrics[index.row()];
-
-    switch (role) {
-    case TimestampRole:
-        return QVariant::fromValue(lyric.timestampInMs);
-    case TextRole:
-        return lyric.text;
-    default:
-        return QVariant();
-    }
+    // ftm just return the full fledged string
+    return QVariant::fromValue(m_lyrics[index.row()]);
 }
 
 QHash<int, QByteArray>
@@ -63,28 +70,86 @@ LyricsManifest::roleNames()
     const
 {
     QHash<int, QByteArray> roles;
-    roles[TimestampRole] = "timestamp";
     roles[TextRole] = "text";
     return roles;
 }
 
-void
-LyricsManifest::appendLyric(unsigned long timestampInMs, const QString &text)
+std::vector<lyric>
+LyricsManifest::current_lines() const
 {
-    beginInsertRows(QModelIndex(), m_lyrics.size(), m_lyrics.size());
-    m_lyrics.push_back({timestampInMs, text});
-    endInsertRows();
+    return m_lyrics;
 }
 
-void
-LyricsManifest::removeLyric(size_t index)
+// left open to also read stray .lrc files in the future
+QFuture<void>
+LyricsManifest::repopulate_with_lyrics_for_file (const QString &source)
 {
-    if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
-        return;
+    // read lyrics from the LYRICS tag or a stray .lrc file and
+    // repopulate this model
+    // here they already come unwrapped
+    return read_from_metadata_tag(source).then(
+        // do not execute in the model context just yet
+        [] (filelines lines) {
+            std::vector<lyric> decoupled_lines;
 
-    beginRemoveRows(QModelIndex(), index, index);
-    m_lyrics.erase(m_lyrics.begin() + index);
-    endRemoveRows();
+            for (const std::string &line : lines) {
+                // unwrap must ensure each line has exactly 1 timestamp
+                std::vector<timestamp> prolly_single_timestamp = lines::line_timestamps(line);
+
+                timestamp timestamp_to_use;
+
+                if (prolly_single_timestamp.size() != 1) [[unlikely]] {
+                    qCWarning(l_lyricsmanifest) << "The syrinc lyrics submodule did not unwrap the lyrics correctly. "
+                        << "This should not happen, and lyrics progression may not work as expected.";
+
+                    if (prolly_single_timestamp.size() == 0) {
+                        timestamp_to_use = timestamp(0);
+                    } else {
+                        timestamp_to_use = prolly_single_timestamp.at(0);
+                    }
+                } else [[likely]] {
+                    timestamp_to_use = prolly_single_timestamp.at(0);
+                }
+
+                // successfully separated t
+                decoupled_lines.emplace_back(
+                    timestamp_to_use,
+                    QString::fromStdString(tokens::trim_string(lines::strip_timestamps(line)))
+                );
+            }
+
+            return std::move(decoupled_lines);
+        }
+    ).then(this, [this](std::vector<lyric> lines_to_add) {
+        beginResetModel();
+
+        {
+            QWriteLocker locker (&m_lock);
+            m_lyrics = std::move(lines_to_add);
+        }
+
+        endResetModel();
+    });
+}
+
+QFuture<filelines>
+LyricsManifest::read_from_metadata_tag (const QString &source)
+{
+    if (!QFile::exists(source)) {
+        return QtFuture::makeReadyValueFuture(filelines());
+    }
+    
+    // Create a local lvalue string
+    return QtConcurrent::run([source] () {
+        std::string nativeString = source.toStdString();
+        return get_audio_lyrics(nativeString);
+    }).then([] (filelines extracted_lines) {
+        // do not explicitly correct offset, only do unwrap
+        return process::process_lyrics(extracted_lines, {
+            .dropmetadata=true,
+            .unwrap=true,
+        });
+    });
 }
 
 void
@@ -96,21 +161,4 @@ LyricsManifest::clear()
     beginResetModel();
     m_lyrics.clear();
     endResetModel();
-}
-
-QString
-LyricsManifest::textAt(size_t index) const
-{
-    if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
-        return QString();
-    return m_lyrics[index].text;
-}
-
-unsigned
-long LyricsManifest::timestampAt(size_t index)
-    const
-{
-    if (index < 0 || index >= static_cast<int>(m_lyrics.size()))
-        return 0;
-    return m_lyrics[index].timestampInMs;
 }

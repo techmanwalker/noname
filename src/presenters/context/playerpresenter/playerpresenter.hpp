@@ -1,13 +1,16 @@
 #pragma once
 
 #include "audioengine.hpp"
+#include "lyricsmanifest.hpp"
 #include "playqueue.hpp"
 
 #include <QObject>
 
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <atomic>
-#include <qtmetamacros.h>
+#include <qloggingcategory.h>
+
+Q_DECLARE_LOGGING_CATEGORY (l_playerpresenter)
 
 // forward declarations
 class QQmlEngine;
@@ -127,6 +130,7 @@ private:
 
     audio_engine &playing = audio_engine::instance();
     PlayQueue &queue = PlayQueue::instance();
+    LyricsManifest &lm = LyricsManifest::instance();
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 
