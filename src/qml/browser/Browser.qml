@@ -86,6 +86,8 @@ Item {
                 Layout.preferredHeight: height
 
                 Layout.alignment: Qt.AlignVCenter
+
+                onTextEdited: activeView.currentIndex = vtabs.tracksIndex
             }
 
             WindowDecorations {
