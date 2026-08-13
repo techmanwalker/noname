@@ -23,11 +23,26 @@ Item {
         anchors.left:   parent.left
         anchors.bottom: parent.bottom
 
+        Item {
+            id: leftColHandle
+            Layout.fillWidth: true
+            Layout.preferredHeight: searchBar.y + searchBar.height // todo: align with the search bar
+
+            DragHandler {
+                target: null
+                
+                onActiveChanged: {
+                    if (active) {
+                        root.parentWindow.startSystemMove();
+                    }
+                }
+            }
+        }
+
         ArrangementList {
             id: vtabs
 
             Layout.alignment: Qt.AlignTop
-            Layout.topMargin: searchBar.y + searchBar.height // todo: align with the search bar
 
             stack: activeView
             homeIndex: 0
@@ -35,10 +50,25 @@ Item {
             foldersIndex: 2
         }
 
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            DragHandler {
+                target: null
+                
+                onActiveChanged: {
+                    if (active) {
+                        root.parentWindow.startSystemMove();
+                    }
+                }
+            }
+        }
+
         Column {
             Layout.alignment: Qt.AlignBottom
 
-            Layout.bottomMargin: vtabs.Layout.topMargin
+            Layout.bottomMargin: leftColHandle.height
 
             VTabButton {
                 iconName: "view-fullscreen"
