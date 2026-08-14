@@ -70,7 +70,6 @@ LyricsManifest::roleNames()
     const
 {
     QHash<int, QByteArray> roles;
-    roles[TextRole] = "text";
     return roles;
 }
 

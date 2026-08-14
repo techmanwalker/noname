@@ -235,6 +235,10 @@ target_link_libraries(lyricsmanifest
 target_include_directories(lyricsmanifest
     PUBLIC
         src/presenters/context/lyrics
+
+    PRIVATE
+        src/presenters/basicdefinitions # for the role compiler, todo: factor out
+        src/presenters/formatters # for the role compiler, todo: factor out
 )
 
 

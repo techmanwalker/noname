@@ -33,11 +33,11 @@ class AbstractMediaSequence : public QAbstractListModel {
     Q_PROPERTY (qsizetype count READ rowCount NOTIFY countChanged)
 
 private:
-    CompiledRoleSet           m_roles;
-    QList<Types::Any>         m_items;
+    CompiledRoleSet<Types::Any> m_roles;
+    QList<Types::Any>           m_items;
 
 public:
-    explicit AbstractMediaSequence(QObject *parent, std::vector<std::pair<QByteArray, RoleExtractor>> role_defs);
+    explicit AbstractMediaSequence(QObject *parent, std::vector<std::pair<QByteArray, RoleExtractor<Types::Any>>> role_defs);
 
     int                    rowCount(const QModelIndex &parent = QModelIndex())        const override;
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
