@@ -42,7 +42,8 @@ LyricsManifest::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
 
 // private constructor (now doing nothing special)
 LyricsManifest::LyricsManifest(QObject *parent)
-    : QAbstractListModel(parent)
+    : QAbstractListModel(parent),
+      m_roles(lyrics_roles)
 {
 }
 
@@ -52,25 +53,31 @@ LyricsManifest::rowCount(const QModelIndex &parent) const
     // For list models, parent is always invalid
     if (parent.isValid())
         return 0;
+
     return static_cast<int>(m_lyrics.size());
 }
 
+/// Retrieves the value of a specific role for the item at the given index
 QVariant
-LyricsManifest::data(const QModelIndex &index, int role) const
+LyricsManifest::data(
+    const QModelIndex &index,
+    int role
+) const
 {
-    if (!index.isValid() || index.row() >= static_cast<int>(m_lyrics.size()))
-        return QVariant();
+    QReadLocker locker (&m_lock);
 
-    // ftm just return the full fledged string
-    return QVariant::fromValue(m_lyrics[index.row()]);
+    if (!index.isValid() || index.row() < 0
+        || index.row() >= static_cast<int>(m_lyrics.size()))
+        return {};
+
+    return m_roles.extract(role, m_lyrics[index.row()]);
 }
 
+/// Returns the role name map, allowing QML to resolve properties by their string names.
 QHash<int, QByteArray>
-LyricsManifest::roleNames()
-    const
+LyricsManifest::roleNames() const
 {
-    QHash<int, QByteArray> roles;
-    return roles;
+    return m_roles.roleNames();
 }
 
 std::vector<lyric>
