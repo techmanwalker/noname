@@ -50,7 +50,7 @@ ApplicationWindow {
             parentWindow: root
         }
 
-        FullscreenPlayer {
+        Player {
             id: fullscreenPlayer
             onSwitchView: activeView.currentIndex = 0
 

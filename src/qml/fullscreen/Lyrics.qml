@@ -2,26 +2,13 @@ import QtQuick
 
 import Player.Fullscreen
 
-Column {
+ListView {
     id: root
-    spacing: 0
 
-    width: implicitWidth
-    height: implicitHeight
+    delegate: LyricDelegate {
+        required property var model
 
-    required property var model
-    
-    Repeater {
-        id: repeater
-
-        model: root.model
-
-        delegate: LyricsItemDelegate {
-            required property var model
-
-            text: model.text
-            timestamp: model.timestamp
-
-        }
+        timestamp: model.timestamp
+        text: model.text
     }
 }
