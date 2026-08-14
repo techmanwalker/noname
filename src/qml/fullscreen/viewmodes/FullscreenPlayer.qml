@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Player.App
 import Player.Fullscreen
 import Player.Listings
+import Player.LyricsManifest
 import Player.MediaSequences
 import Player.PlayerPresenter
 import Player.Primitives
@@ -12,11 +13,7 @@ import Player.Primitives
 Item {
     id: root
 
-    property Window parentWindow // to inset window decorations
-
-    property bool immersive: false // hide all controls and buttons, leave you only with the music
-
-    signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
+    required property bool immersive
 
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
@@ -33,11 +30,14 @@ Item {
     readonly property real controlsHeight:  controls.implicitHeight + 40
     readonly property real verticalPadding: 80  // top + bottom breathing room
 
+    
     // Actual size: shrinks when the window is too small, floats freely otherwise
     readonly property real coverSize: Math.min(
         coverIdealSize,
         root.height - controlsHeight - verticalPadding
     )
+
+    signal switchToLyricsViewRequested () // request
 
     // ── Layout ─────────────────────────────────────────────────────────────
 
@@ -73,6 +73,10 @@ Item {
                 Layout.preferredWidth:  root.coverSize
                 Layout.preferredHeight: root.coverSize
                 Layout.alignment: Qt.AlignHCenter
+
+                TapHandler {
+                    onTapped: root.switchToLyricsViewRequested ()
+                }
             }
 
             ColumnLayout {
@@ -229,58 +233,4 @@ Item {
             }
         }
     }
-
-    // ── Navigation ─────────────────────────────────────────────────────────
-
-    Row {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-
-        anchors.topMargin: 20 // leave free space for window resize handle
-        anchors.rightMargin: 20
-
-        opacity: (!root.immersive || windex_hover.hovered) ? 1 : 0 // immersion
-
-        layoutDirection: Qt.RightToLeft
-
-        spacing: windex.squareButtonWidth / 3 * 2
-
-        HoverHandler {
-            id: windex_hover
-        }
-
-        WindowDecorations {
-            id: windex 
-            window: root.parentWindow
-
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        
-        ResizableButton {
-            id: fullscreenToggle
-            iconName: "arrow-left"
-
-            anchors.verticalCenter: parent.verticalCenter
-
-            text: qsTr("Back")
-
-            padding: 20
-
-            magnify: true
-
-            onClicked: root.switchView()
-        }
-
-        DragHandler {
-            target: null
-            
-            onActiveChanged: {
-                if (active) {
-                    root.parentWindow.startSystemMove();
-                }
-            }
-        }
-    }
-
 }
