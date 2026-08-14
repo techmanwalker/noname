@@ -77,8 +77,6 @@ PlayQueue::respawn_queue(const PlaylistSequence &new_queue)
 {
     // this version is synchronous
     PlaylistSequence::respawn_list(new_queue.items());
-
-    if (itemCount() > 0 && !playhead().isValid()) switch_to(index(0));
 }
 
 void
@@ -105,7 +103,7 @@ PlayQueue::playhead ()
 void
 PlayQueue::switch_to(const Types::Song &song, bool play_afterwards)
 {
-    const QPersistentModelIndex prolly_in_queue = AbstractMediaSequence::find(&Types::Song::source, song.source);
+    // const QPersistentModelIndex prolly_in_queue = AbstractMediaSequence::find(&Types::Song::source, song.source);
 
     /* clear the whole queue and create a new one with only
         this song como youtube music */
@@ -129,6 +127,13 @@ PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
         !song.isValid()
     ||   song.model() != this // not from queue
     ) return false;
+
+    if (song == playhead()) {
+        if (play_afterwards) {
+            playing.play();
+        }
+        return true; 
+    }
 
     auto song_opt = pointed_to(song);
     if (!song_opt.has_value()) return false;
@@ -230,7 +235,7 @@ PlayQueue::handle_queued_tracks_finished()
 void
 PlayQueue::handle_track_changed ()
 {
-    emit track_changed();
+    emit trackChanged();
 
     preload_next_track_whenever_possible();
 }
