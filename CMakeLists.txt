@@ -480,7 +480,7 @@ qt_add_translations(${PROJECT_NAME}
 
 # Executable tests per module - filled with dummy data for easy development
 
-if(BUILD_TESTS)
+if(NONAME_BUILD_TESTS)
 
     qt_add_executable(mockupv2
         src/tests/mockupv2.cpp
