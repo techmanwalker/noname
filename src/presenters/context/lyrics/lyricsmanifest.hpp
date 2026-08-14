@@ -1,6 +1,7 @@
 #pragma once
 
 // from syrinc
+#include "defaultroles.hpp"
 #include "globals.hpp" // Note: this is globals.hpp from syrinc
 #include "timestamps.hpp"
 
@@ -22,6 +23,15 @@ using namespace syrinc;
 struct lyric {
     syrinc::timestamps::timestamp ts;
     QString text;
+};
+
+static const RoleDefinitions<lyric> lyrics_roles = {
+    { "timestamp", [](const lyric &x) -> QVariant {
+        return static_cast<qulonglong>(x.ts.as_ms());
+    }},
+    { "text", [](const lyric &x) -> QVariant {
+        return x.text;
+    }}
 };
 
 // forward declarations
@@ -70,5 +80,8 @@ private:
     // currently displayed lyrics
     std::vector<lyric> m_lyrics;
 
-    QReadWriteLock m_lock;
+    // read roles
+    CompiledRoleSet<lyric> m_roles;
+
+    mutable QReadWriteLock m_lock;
 };
