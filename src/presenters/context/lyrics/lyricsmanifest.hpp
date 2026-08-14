@@ -44,12 +44,6 @@ public:
     static LyricsManifest &instance();
     static LyricsManifest *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
-    // fixed role list
-    enum Roles {
-        TextRole
-    };
-    Q_ENUM(Roles)
-
     QFuture<void> repopulate_with_lyrics_for_file (const QString &source);
 
     // Required QAbstractListModel implementations

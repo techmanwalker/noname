@@ -18,7 +18,7 @@ Q_LOGGING_CATEGORY(l_mediasequences, "noname.mediasequences")
 /// Constructs the model and compiles the given role definitions into sequential Qt user roles.
 AbstractMediaSequence::AbstractMediaSequence(
     QObject *parent,
-    RoleDefinitions role_defs
+    RoleDefinitions<Types::Any> role_defs
 )
     : QAbstractListModel(parent),
       m_roles(role_defs)

@@ -4,91 +4,108 @@
 #include "prettifiers.hpp"
 
 #include <QVariant>
+#include <QHash>
 
 #include <optional>
+#include <functional>
+#include <vector>
 
-/// Role definition. Enables automatic QML role generation.
+/// Role definition. Enables automatic QML role generation for any data type.
+template <typename T>
 struct CompiledRole {
     int number;
     QByteArray name;
-    std::function<QVariant(const Types::Any &)> extractor;
+    std::function<QVariant(const T &)> extractor;
 };
 
 /**
-    @brief Unidirectional, read-only callback that extracts a specific property from a media metadata container.
+    @brief Unidirectional, read-only callback that extracts a specific property from a container.
     
-    @details This functional wrapper processes a read-only reference to a dynamic item (`const Types::Any&`),
-    which can hold distinct underlying data types like Types::Song, Types::Album, or Types::Playlist.
-    It inspects the variant's active type at runtime—typically using std::visit—and projects the requested 
-    field into a QVariant returned by value.
+    @details This functional wrapper processes a read-only reference to a dynamic item (`const T&`).
+    It projects the requested field into a QVariant returned by value.
 
     @note This extractor is strictly read-only. It provides a copy of the data, meaning it does not support 
     writing back to the source or bidirectional QML assignments through itself.
 */
-using RoleExtractor = std::function<QVariant(const Types::Any &)>;
+template <typename T>
+using RoleExtractor = std::function<QVariant(const T &)>;
 
 /**
     @brief Gives the developer simplified controls to define roles.
-    A good example on how to do it is defaultroles.hpp.
 */
-using RoleDefinition  = std::pair<QByteArray, RoleExtractor>;
-using RoleDefinitions = std::vector<RoleDefinition>;
+template <typename T>
+using RoleDefinition  = std::pair<QByteArray, RoleExtractor<T>>;
 
+template <typename T>
+using RoleDefinitions = std::vector<RoleDefinition<T>>;
 
 /**
     @brief Compiles a RoleDefinitions list into sequential Qt roles once, and answers
-    the three questions every Types::Any-backed model needs: role → name, name → role,
-    role → extracted value. Shared by AbstractMediaSequence and any projection model
-    (e.g. SongLibraryModel) that exposes Types::Any-convertible items, so the compiling
-    step and role lookups exist in exactly one place.
+    the three questions every T-backed model needs: role → name, name → role,
+    role → extracted value. 
 */
+template <typename T>
 class CompiledRoleSet
 {
 public:
-    explicit CompiledRoleSet (const RoleDefinitions &role_defs)
+    explicit CompiledRoleSet(const RoleDefinitions<T> &role_defs)
     {
         int n = Qt::UserRole + 1;
-        for (const auto &[name, extractor] : role_defs)
+        for (const auto &[name, extractor] : role_defs) {
             m_compiledroles.push_back({ n++, name, extractor });
+        }
     }
 
-    QHash<int, QByteArray> roleNames () const
+    QHash<int, QByteArray> roleNames() const
     {
         QHash<int, QByteArray> hash;
-        for (const CompiledRole &r : m_compiledroles)
-            hash[r.number] = r.name;
+        for (const CompiledRole<T> &r : m_compiledroles) {
+            hash.insert(r.number, r.name);
+        }
         return hash;
     }
 
-    std::optional<int> roleNumber (const QByteArray &role) const
+    std::optional<int> roleNumber(const QByteArray &role) const
     {
-        for (const CompiledRole &r : m_compiledroles)
-            if (r.name == role)
+        for (const CompiledRole<T> &r : m_compiledroles) {
+            if (r.name == role) {
                 return r.number;
+            }
+        }
         return std::nullopt;
     }
 
-    QVariant extract (int role, const Types::Any &item) const
+    QVariant extract(int role, const T &item) const
     {
-        for (const CompiledRole &r : m_compiledroles)
-            if (r.number == role)
+        for (const CompiledRole<T> &r : m_compiledroles) {
+            if (r.number == role) {
                 return r.extractor(item);
+            }
+        }
         return {};
     }
 
 private:
-    std::vector<CompiledRole> m_compiledroles;
+    std::vector<CompiledRole<T>> m_compiledroles;
 };
 
+// Type trait to identify std::variant
+template <typename T>
+struct is_variant : std::false_type {};
 
+template <typename... Args>
+struct is_variant<std::variant<Args...>> : std::true_type {};
 
+// C++20 Concept
+template <typename T>
+concept IsVariant = is_variant<std::remove_cvref_t<T>>::value;
 
-// Helper to encapsulate the repetitive pattern of std::visit on the variant
-static auto make_visitor = [](auto&& projector) {
-    return [projector = std::forward<decltype(projector)>(projector)](const Types::Any &i) -> QVariant {
+// Fully decoupled visitor
+constexpr auto make_visitor = [](auto&& projector) {
+    return [projector = std::forward<decltype(projector)>(projector)](const IsVariant auto &variant_instance) -> QVariant {
         return std::visit([&](const auto &x) -> QVariant { 
             return projector(x); 
-        }, i);
+        }, variant_instance);
     };
 };
 
@@ -98,7 +115,7 @@ static auto make_visitor = [](auto&& projector) {
     @details These are mostly basic getters/setters for each role. Defines a list of roles that
     are shared across most of models that inherit the Abstract Model.
 */
-static const RoleDefinitions container_roles = {
+static const RoleDefinitions<Types::Any> container_roles = {
     // Direct roles (thanks to the duck-typing of generic lambdas)
     { "title",  make_visitor([](const auto &x) {
         return x.title;
@@ -182,11 +199,12 @@ static const RoleDefinitions container_roles = {
 };
 
 // Enable concatenation of role definition lists
-inline RoleDefinitions operator+(
-    const RoleDefinitions &a,
-    const RoleDefinitions &b)
+template <typename T>
+inline RoleDefinitions<T> operator+(
+    const RoleDefinitions<T> &a,
+    const RoleDefinitions<T> &b)
 {
-    RoleDefinitions result;
+    RoleDefinitions<T> result;
     result.reserve(a.size() + b.size());
     result.insert(result.end(), a.begin(), a.end());
     result.insert(result.end(), b.begin(), b.end());
