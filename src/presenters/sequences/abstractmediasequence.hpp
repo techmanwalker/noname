@@ -1,8 +1,8 @@
 #pragma once
 
 #include "coverprovider.hpp"
-#include "defaultroles.hpp"
 #include "mediatypes.hpp"
+#include "rolecompiler.hpp"
 
 #include <QAbstractItemModel>
 #include <QFuture>
