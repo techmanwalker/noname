@@ -16,15 +16,15 @@ cover_provider::requestImageResponse(const QString &id, const QSize &requestedSi
 }
 
 void
-cover_provider::register_source(const QString &hash, const QUrl &source, size_t crop_and_resize)
+cover_provider::register_cover_reference(const CoverRef &ref)
 {
-    m_real->register_source(hash, source, crop_and_resize);
+    m_real->register_cover_reference(ref);
 }
 
 bool
-cover_provider::store(const QString &hash, const QVariant &cover_from_metadata, bool save_to_disk_cache)
+cover_provider::store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache)
 {
-    return m_real->store(hash, cover_from_metadata, save_to_disk_cache);
+    return m_real->store(ref, cover_from_metadata, save_to_disk_cache);
 }
 
 } // namespace covers::live

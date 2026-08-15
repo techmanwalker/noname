@@ -1,4 +1,5 @@
-#include "standardpaths.cpp"
+#include "mediatypes.hpp"
+#include "standardpaths.hpp"
 #include "thumbnails.hpp"
 
 #include <QDir>
@@ -21,13 +22,6 @@ namespace { // anonymous
 
 // path(dirs::thumbnails) is the *directory*; this resolves the per-hash file
 // inside it and guarantees the directory itself exists before use.
-QString
-thumbnail_file_path (const QString &hash)
-{
-    QDir thumb_dir (dir(standardpaths::standard_dirs::thumbnails));
-    thumb_dir.mkpath(".");
-    return thumb_dir.absoluteFilePath(hash + QStringLiteral(".jxl"));
-}
 
 // thumbnail encode+write thread pool; uastc is heavy
 QThreadPool *
@@ -42,10 +36,10 @@ thumbnail_pool ()
     the public write_thumbnail() below only ever queues this onto
     thumbnail_pool(), it's never called directly. */
 bool
-write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
+write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 {
     if (thumbnail.isNull()) {
-        qCWarning(l_standardpaths) << "refusing to write a null thumbnail for" << hash;
+        qCWarning(l_standardpaths) << "refusing to write a null thumbnail for" << ref.hash();
         return false;
     }
 
@@ -68,7 +62,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
 
     auto enc = JxlEncoderMake(nullptr);
     if (!enc) {
-        qCWarning(l_standardpaths) << "failed to create JxlEncoder for" << hash;
+        qCWarning(l_standardpaths) << "failed to create JxlEncoder for" << ref.hash();
         return false;
     }
 
@@ -76,7 +70,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
             JxlResizableParallelRunner, runner.get()))
     {
-        qCWarning(l_standardpaths) << "failed to set parallel runner for" << hash;
+        qCWarning(l_standardpaths) << "failed to set parallel runner for" << ref.hash();
         return false;
     }
 
@@ -91,14 +85,14 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     basic_info.uses_original_profile = JXL_FALSE;
 
     if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
-        qCWarning(l_standardpaths) << "JxlEncoderSetBasicInfo failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderSetBasicInfo failed for" << ref.hash();
         return false;
     }
 
     JxlColorEncoding color_encoding;
     JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray=*/JXL_FALSE);
     if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
-        qCWarning(l_standardpaths) << "JxlEncoderSetColorEncoding failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderSetColorEncoding failed for" << ref.hash();
         return false;
     }
 
@@ -121,7 +115,7 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
                                                    packed.data(),
                                                    bytes))
     {
-        qCWarning(l_standardpaths) << "JxlEncoderAddImageFrame failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderAddImageFrame failed for" << ref.hash();
         return false;
     }
 
@@ -146,13 +140,13 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
     }
 
     if (status != JXL_ENC_SUCCESS) {
-        qCWarning(l_standardpaths) << "JxlEncoderProcessOutput failed for" << hash;
+        qCWarning(l_standardpaths) << "JxlEncoderProcessOutput failed for" << ref.hash();
         return false;
     }
 
     compressed.resize(next_out - compressed.data());
 
-    const QString file_path = thumbnail_file_path(hash);
+    const QString file_path = ref.thumbnail_path();
     QFile file(file_path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qCWarning(l_standardpaths) << "failed to open thumbnail for writing" << file_path
@@ -174,37 +168,13 @@ write_thumbnail_blocking (const QString &hash, const QImage &thumbnail)
 
 } // anonymous
 
-/*  Deterministic, session-independent cache key for a song's thumbnail.
-    Hashing the absolute path (not file contents) keeps this cheap — an MD5
-    over a path-length string is microseconds, dwarfed by the decode/encode
-    it lets us skip. crop_and_resize is folded in too, since the cache
-    stores the already-resized image: without it, two call sites requesting
-    different sizes for the same song would collide on one cache entry and
-    silently serve the wrong resolution to whichever asked second. */
-QString
-thumbnail_hash_for (const QUrl &source, size_t crop_and_resize)
-{
-    const QByteArray key = source.toLocalFile().toUtf8()
-                          + ':' + QByteArray::number(qulonglong(crop_and_resize));
-
-    return QString::fromLatin1(
-        QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
-}
-
-
-bool
-has_thumbnail (const QString &hash)
-{
-    return QFile::exists(thumbnail_file_path(hash));
-}
-
 // Read the file ~/.local/share/noname/thumbnails/<hash>.tga and decode it
 QImage
-fetch_thumbnail (const QString &hash)
+fetch_thumbnail (const CoverRef &ref)
 {
-    const QString file_path = thumbnail_file_path(hash);
+    const QString file_path = ref.thumbnail_path();
 
-    if (!has_thumbnail(hash))
+    if (!ref.thumbnail_file_exists())
         return QImage();
 
     QFile file(file_path);
@@ -311,10 +281,10 @@ fetch_thumbnail (const QString &hash)
 }
 
 QFuture<void>
-write_thumbnail (const QString &hash, QImage thumbnail)
+write_thumbnail (const CoverRef &ref, QImage thumbnail)
 {
-    return QtConcurrent::run(thumbnail_pool(), [hash, thumbnail] {
-        write_thumbnail_blocking(hash, thumbnail);
+    return QtConcurrent::run(thumbnail_pool(), [ref, thumbnail] {
+        write_thumbnail_blocking(ref, thumbnail);
     });
 }
 
