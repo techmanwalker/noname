@@ -1,8 +1,8 @@
-#include "audioengine.hpp"
+#include "audiodecodeworker.hpp"
+#include "audioringbuffer.hpp"
 
-#include <cstdint>
-#include <qloggingcategory.h>
-#include <soundio/soundio.h>
+#include <QLoggingCategory>
+#include <QThread>
 
 extern "C" {
 #include <libavutil/frame.h>
@@ -10,142 +10,6 @@ extern "C" {
 
 Q_LOGGING_CATEGORY(l_soundio, "noname.soundio");
 Q_LOGGING_CATEGORY(l_ffmpeg, "noname.ffmpeg");
-
-// The Ring buffer
-
-audio_ring_buffer::audio_ring_buffer (std::optional<size_t> requested_sample_rate)
-    :  sample_rate (requested_sample_rate.value_or(48000)),
-       buffer(capacity)
-    
-{
-}
-
-audio_ring_buffer*
-audio_decode_worker::get_ring_buffer()
-{
-    return &m_ring_buffer;
-}
-
-bool
-audio_ring_buffer::__push_unlocked (const float* data, size_t count)
-{
-    // what do h and next_h contain here?
-    size_t h = head.load(std::memory_order_relaxed);
-    size_t next_h = (h + count) % capacity;
-    
-    // verify if there is enough space
-    if ((next_h + capacity - tail.load(std::memory_order_acquire)) % capacity < count)
-        return false; // full buffer
-
-    // copy data
-    for(size_t i = 0; i < count; ++i) buffer[(h + i) % capacity] = data[i];
-    
-    head.store(next_h, std::memory_order_release);
-    return true;
-}
-
-bool
-audio_ring_buffer::push_blocking(const float* data, size_t count)
-{
-    // A request larger than the buffer can ever hold would deadlock
-    if (count >= capacity) return false;
-
-    std::unique_lock<std::mutex> lock(m_mutex);
-    
-    m_cv.wait(lock, [this, count] {
-        return m_cancelled.load() || writable_size() >= count;
-    });
-    
-    if (m_cancelled.load()) return false;
-    
-    // guaranteed to succeed - do the push
-    size_t h = head.load(std::memory_order_relaxed);
-    for(size_t i = 0; i < count; ++i) {
-        buffer[(h + i) % capacity] = data[i];
-    }
-    head.store((h + count) % capacity, std::memory_order_release);
-
-    // track absolute decoded frames for track boundaries.
-    // count is the number of floats; divide by 2 for stereo frames.
-    absolute_frames_decoded.fetch_add(count / 2, std::memory_order_relaxed);
-
-    return true;
-}
-
-size_t
-audio_ring_buffer::pop(float* dest, size_t count) {
-    // what do h and t contain here?
-    size_t t = tail.load(std::memory_order_relaxed);
-    size_t h = head.load(std::memory_order_acquire);
-    
-    // available what? to read what?
-    size_t available = (h + capacity - t) % capacity;
-    size_t to_read = std::min(count, available);
-
-    // apply the recalculated linear volume multiplier
-    float current_vol = volume_multiplier.load(std::memory_order_relaxed);
-
-    for(size_t i = 0; i < to_read; ++i) {
-        dest[i] = buffer[(t + i) % capacity] * current_vol;
-    };
-    
-    tail.store((t + to_read) % capacity, std::memory_order_release);
-
-    // wake the decoder if it was blocked waiting for space
-    if (to_read > 0) {
-        m_cv.notify_one();
-    }
-
-    return to_read;
-}
-
-void
-audio_ring_buffer::cancel_blocking_push()
-{
-    m_cancelled.store(true);
-    m_cv.notify_one();
-}
-
-void
-audio_ring_buffer::reset_cancel()
-{
-    m_cancelled.store(false);
-}
-
-bool
-audio_ring_buffer::is_full() const {
-    return writable_size() == 0;
-}
-
-size_t
-audio_ring_buffer::writable_size() const {
-    size_t h = head.load(std::memory_order_acquire);
-    size_t t = tail.load(std::memory_order_acquire);
-
-    // How much data is currently stored
-    size_t used = (h + capacity - t) % capacity;
-
-    // Total usable space is capacity - 1 (one slot reserved to distinguish empty from full)
-    return (capacity - 1) - used;
-}
-
-// have we crossed yet?
-bool
-audio_ring_buffer::check_for_boundary_and_advance()
-{
-    std::lock_guard<std::mutex> lock(boundary_mutex);
-    if (has_upcoming_boundary) {
-        if (absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundary_frame) {
-            
-            // Invalidate the boundary since we just crossed it
-            has_upcoming_boundary = false;
-            
-            return true;
-        }
-    }
-    return false;
-}
-
 
 // The Decoding workhorse
 
@@ -157,6 +21,12 @@ audio_decode_worker::audio_decode_worker (QObject *parent)
 
 audio_decode_worker::~audio_decode_worker ()
 {
+}
+
+audio_ring_buffer*
+audio_decode_worker::get_ring_buffer()
+{
+    return &m_ring_buffer;
 }
 
 bool
@@ -450,23 +320,6 @@ audio_decode_worker::seek(uint64_t position_ms) {
     m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
 }
 
-uint64_t
-audio_ring_buffer::playback_position_ms() const
-{
-    uint64_t frames  = frames_played.load(std::memory_order_relaxed);
-    uint64_t base_ms = playback_base_ms.load(std::memory_order_relaxed);
-
-    if (sample_rate == 0) return base_ms; // stream not open yet
-
-    return base_ms + (frames * 1000) / sample_rate;
-}
-
-uint64_t
-audio_ring_buffer::get_sample_rate () const
-{
-    return sample_rate;
-}
-
 void
 audio_decode_worker::queue_next_song(const Types::Song& next_song)
 {
@@ -576,118 +429,5 @@ audio_decode_worker::close_ffmpeg_contexts()
     if (swr_ctx) {
         swr_free(&swr_ctx);
         swr_ctx = nullptr;
-    }
-}
-
-/**
-    @brief Function callback for libsndio.
-
-    @details Executed at a very high priority.
-    Must never block, nor assign memory (no new nor std::vector),
-    nor print to console. 
-*/
-
-void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
-    // fetch our buffer from the userdata pointer
-    audio_ring_buffer *ring_buf = static_cast<audio_ring_buffer*>(outstream->userdata);
-    
-    int frames_left = frame_count_max;
-
-    // Evaluate handshake status at the start of the callback
-    bool needs_flush = ring_buf->flush_request.load(std::memory_order_acquire);
-    bool is_seeking = ring_buf->pending_seeks.load(std::memory_order_acquire) > 0;
-    
-    // Acknowledge the flush request to the decoder thread
-    if (needs_flush) {
-        ring_buf->flush_ack.store(true, std::memory_order_release);
-    } else {
-        ring_buf->flush_ack.store(false, std::memory_order_release);
-    }
-    
-    // remaining frames yet to decode
-    while (frames_left > 0) {
-        int frame_count = frames_left;
-        struct SoundIoChannelArea *areas;
-        
-        // ask hardware to make room in memory
-        if (execute_soundio(soundio_outstream_begin_write,
-                outstream,
-                &areas,
-                &frame_count
-            ) != 0) {
-                break;
-            }
-
-        if (frame_count == 0) break; // no room, exit
-
-        // If a seek is in progress, flush is requested, or transport is paused, feed silence.
-        if (needs_flush || is_seeking || ring_buf->is_paused.load(std::memory_order_acquire)) {
-            for (int frame = 0; frame < frame_count; ++frame) {
-                for (int ch = 0; ch < outstream->layout.channel_count; ++ch) {
-                    float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
-                    *ptr = 0.0f; 
-                }
-            }
-        } else {
-            // Not paused, normal execution
-            
-            // Assign a temporal buffer on stack to be really fast
-            // 8192 should be enough for any standard audio request (4096 frames * 2 channels)
-            float temp_buf[8192] = {0.0f}; 
-            
-            // Extract interleaved data (L-R-L-R) from our ring buffer
-            size_t floats_to_read = frame_count * outstream->layout.channel_count;
-            size_t floats_read = ring_buf->pop(temp_buf, floats_to_read);
-
-            // detect true end of playback
-            if (floats_read < floats_to_read && ring_buf->eof_decoded.load(std::memory_order_acquire)) {
-                if (!ring_buf->eof_played.exchange(true)) {
-                    ring_buf->is_paused.store(true, std::memory_order_release);
-                    QMetaObject::invokeMethod(&audio_engine::instance(), 
-                                            &audio_engine::process_playlist_finished, 
-                                            Qt::QueuedConnection);
-                }
-            }
-            
-            // libsoundio requires us to fill the channels using our own pointers (areas)
-            int float_idx = 0;
-            for (int frame = 0; frame < frame_count; ++frame) {
-                for (int ch = 0; ch < outstream->layout.channel_count; ++ch) {
-                    float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
-                    
-                    if (float_idx < floats_read) {
-                        *ptr = temp_buf[float_idx++];
-                    } else {
-                        *ptr = 0.0f; // if no data, add silence
-                    }
-                }
-            }
-
-            /* These frame_count frames are now committed to the hardware -
-               real elapsed playback time, silence-padded underrun or not.
-               Lock-free atomic add: safe for the RT callback. */
-            ring_buf->frames_played.fetch_add(static_cast<uint64_t>(frame_count),
-                                               std::memory_order_relaxed);
-
-            //  Track absolute played frames to trigger gapless UI updates
-            uint64_t played = ring_buf->absolute_frames_played.fetch_add(
-                    static_cast<uint64_t>(frame_count), std::memory_order_relaxed) + frame_count;
-
-            uint64_t boundary_target = ring_buf->next_boundary_frame.load(std::memory_order_acquire);
-
-            if (boundary_target != UINT64_MAX && played >= boundary_target) {
-                // Disarm target so it fires only once
-                ring_buf->next_boundary_frame.store(UINT64_MAX, std::memory_order_release);
-
-                // Notify main thread reactively
-                QMetaObject::invokeMethod(&audio_engine::instance(), 
-                                        &audio_engine::process_track_boundary, 
-                                        Qt::QueuedConnection);
-            }
-
-        }
-        
-        execute_soundio(soundio_outstream_end_write, outstream);
-        frames_left -= frame_count;
     }
 }
