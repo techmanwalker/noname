@@ -1,14 +1,9 @@
 #include "songfactoryimpl.hpp"
-#include "coverprovider.hpp"
-#include "defaultcoveruri.hpp"
 #include "mediatypes.hpp"
 
 #include <QCryptographicHash>
 #include <QLoggingCategory>
 #include <QUuid>
-
-#include <QJSEngine>
-#include <QQmlEngine>
 
 #include <QtConcurrent/QtConcurrent>
 
@@ -32,9 +27,8 @@ Q_LOGGING_CATEGORY(song_factory_impl::l_songfactory, "noname.songfactory");
 // No need for std::optional at the moment. A Song without source is already invalid.
 
 // clean constructor for both qfuture and callback variants
-song_factory_impl::song_factory_impl(const QUrl &source, std::shared_ptr<covers::live::cover_provider> provider)
-    : m_source(source),
-      m_cover_provider(provider)
+song_factory_impl::song_factory_impl(const QUrl &source)
+    : m_source(source)
 {}
 
 QThreadPool*
@@ -59,11 +53,11 @@ song_factory_impl::extraction_pool()
           and QMediaPlayer lifecycle run entirely on a dedicated worker thread.
 */
 QFuture<Types::Song>
-song_factory_impl::extract(const QUrl &source, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
+song_factory_impl::extract(const QUrl &source, attributes a)
 {
     // delegate instantiation and execution to Qt thread pool
-    return QtConcurrent::run(extraction_pool(), [source, provider, a](QPromise<Types::Song> &promise) {
-        song_factory_impl worker(source, provider);
+    return QtConcurrent::run(extraction_pool(), [source, a](QPromise<Types::Song> &promise) {
+        song_factory_impl worker(source);
         Types::Song result = worker.execute_extraction(promise, a);
 
         if (!promise.isCanceled()) {
@@ -78,23 +72,23 @@ song_factory_impl::extract(const QUrl &source, std::shared_ptr<covers::live::cov
 }
 
 QList<QFuture<Types::Song>>
-song_factory_impl::progressive_extract (const QList<QUrl> &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
+song_factory_impl::progressive_extract (const QList<QUrl> &sources, attributes a)
 {
     // Read the metadata of the sources one by one in parallel, you can do something as soon as one extraction finishes
     QList<QFuture<Types::Song>> requests;
     requests.reserve(sources.size());
 
     for (const QUrl &source : sources) {
-        requests.append(song_factory_impl::extract(source, provider, a));
+        requests.append(song_factory_impl::extract(source, a));
     }
 
     return requests;
 }
 
 QFuture<QList<Types::Song>>
-song_factory_impl::batch_extract (const QList<QUrl> &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
+song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
 {
-    auto requests = progressive_extract(sources, provider, a);
+    auto requests = progressive_extract(sources, a);
 
     // Wait for all songs in the list to finish metadata extraction
 
@@ -178,62 +172,8 @@ song_factory_impl::execute_extraction(QPromise<Types::Song> &promise, attributes
         return {};
     }
 
-    if (m_cover_provider == nullptr) {
-        qCWarning(l_songfactory) << "Cover provider was not set. No covers will be appended.";
-
-        if (promise.isCanceled()) {
-            return {};
-        }
-
-        return song;
-    }
-
-    using namespace covers::live;
-
     // create the cover reference
-    CoverRef ref (m_source, a.crop_and_resize);
-
-    if (a.use_thumbnail_cache) {
-        const QString thumb_hash = ref.hash();
-
-        /*  No decode here anymore — just tell cover_provider where to find
-            the cover if/when it's actually requested (e.g. the song scrolls
-            into view). Cheap regardless of whether a disk thumbnail already
-            exists; keeps the registry correct if the disk cache was ever
-            cleared externally. */
-        m_cover_provider->register_cover_reference(ref);
-
-        // the cover provider will handle the rest with the path hash
-        song.cover = covers::schema + thumb_hash;
-    } else {
-        /* currently incompatible with the cover reference system
-
-        QUuid::createUuid().toString(QUuid::WithoutBraces)
-
-        CoverRef temp_ref ()
-
-        // generate a unique uuid to not ever touch a real thumbnail
-
-        QString cover_uuid = ;
-
-        qCDebug (l_songfactory) << "no cache thumbnail uuid: " << cover_uuid;
-
-        bool success = m_cover_provider->store(
-            cover_uuid, 
-            covers::live::extract_cover(file.file(), a.crop_and_resize), // always extract from audio file
-            false // do not save to disk cache, must be fetched by in memory cache
-        );
-
-        if (!success) {
-            qCWarning (l_songfactory) << "Cover was retrieved from audio file, but was unable to store in memory cache.";
-        }
-
-        */
-
-        // the cover provider never really cared about the hash if it is from memory
-        song.cover = covers::schema + covers::default_cover_uri;
-
-    }
+    song.cover = CoverRef (m_source, a.crop_and_resize);
 
     if (promise.isCanceled()) {
         return {};

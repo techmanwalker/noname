@@ -17,12 +17,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
-// Forward declare the cover provider
-namespace covers::live {
-    class cover_provider;
-}
-
-
 /**
     @brief List of any form of playable media, enumerated in the Types:: namespace. 
     This is not intended to be instantiated directly but rather to use one of the inherited classes.
@@ -110,9 +104,6 @@ protected:
     &&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by m_items
     QList<QPersistentModelIndex>
     batch_append(const Container &items);
-
-    // only extract songs metadata
-    QFuture<void> batch_append (const QList<QUrl> &sources, std::shared_ptr<covers::live::cover_provider> provider);
 
     /*  Append items one at a time as each future resolves, instead of waiting for the whole
     batch — for progressive/incremental loading (e.g. song_factory emitting results as

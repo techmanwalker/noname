@@ -1,14 +1,10 @@
 #include "abstractmediasequence.hpp"
-#include "coverprovider.hpp"
 #include "mediatypes.hpp"
-#include "songfactory.hpp"
 #include <algorithm>
+
 #include <cstddef>
 #include <functional>
-#include <qabstractitemmodel.h>
-#include <qcontainerfwd.h>
-#include <qloggingcategory.h>
-#include <qreadwritelock.h>
+
 #include <rapidfuzz/fuzz.hpp>
 #include <variant>
 
@@ -337,14 +333,6 @@ QStringList
 AbstractMediaSequence::sources () const
 {
     return sources<decltype(m_items)>(m_items);
-}
-
-QFuture<void>
-AbstractMediaSequence::batch_append (const QList<QUrl> &sources, std::shared_ptr<covers::live::cover_provider> provider)
-{
-    return song_factory::batch_extract(sources, provider, {}).then(this, [this, provider] (QList<Types::Song> result) {
-        batch_append(result);
-    });
 }
 
 std::string 

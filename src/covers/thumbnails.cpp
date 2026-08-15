@@ -146,7 +146,7 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 
     compressed.resize(next_out - compressed.data());
 
-    const QString file_path = ref.thumbnail_path();
+    const QString file_path = ref.thumbnail_file_path();
     QFile file(file_path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qCWarning(l_standardpaths) << "failed to open thumbnail for writing" << file_path
@@ -172,7 +172,7 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 QImage
 fetch_thumbnail (const CoverRef &ref)
 {
-    const QString file_path = ref.thumbnail_path();
+    const QString file_path = ref.thumbnail_file_path();
 
     if (!ref.thumbnail_file_exists())
         return QImage();

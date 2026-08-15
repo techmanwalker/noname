@@ -1,5 +1,6 @@
 #include "basicdiskio.hpp"
 #include "configuration.hpp"
+#include "coverprovider.hpp" // IWYU pragma: keep
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
@@ -109,7 +110,7 @@ LocalLibrary::take_snapshot (const QString &dir_path)
     qCDebug(l_mediasequences) << "Reading directory: " << target_dir.path;
 
     // Ask song_factory to extract the metadata of songs, all at once
-    return song_factory::batch_extract (not_yet_loaded, chosen_cover_provider, {256, true} /* enough for 1440p, can be tweaked any time later */)
+    return song_factory::batch_extract (not_yet_loaded, {256, true} /* enough for 1440p, can be tweaked any time later */)
         .then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
             /*  Re-resolve through the persistent index rather than trusting target_dir from
                 above: m_items may have reallocated (another take_snapshot() appending a new
@@ -139,6 +140,8 @@ LocalLibrary::take_snapshot (const QString &dir_path)
                 auto it = std::ranges::find_if(target_dir.songs, [&song](const Types::Song &existing_song) {
                     return existing_song.source == song.source;
                 });
+
+                chosen_cover_provider->register_cover_reference(song.cover);
 
                 if (it != target_dir.songs.end()) {
                     *it = std::move(song);

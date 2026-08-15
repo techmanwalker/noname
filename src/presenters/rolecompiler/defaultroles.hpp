@@ -6,6 +6,7 @@
 
 #include <QVariant>
 #include <QHash>
+#include <qvariant.h>
 
 /**
     @brief Roles that are common to all container models.
@@ -29,10 +30,10 @@ static const RoleDefinitions<Types::Any> container_roles = {
     { "cover",  make_visitor([](const auto &x) {
         
         using T = std::decay_t<decltype(x)>;
-        if constexpr (std::is_same_v<T, Types::Directory>) {
-            return QVariant{};
+        if constexpr (std::is_same_v<T, Types::Song>) {
+            return x.cover.uri();
         } else {
-            return x.cover;
+            return QVariant{};
         }
     })},
 

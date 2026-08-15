@@ -17,7 +17,7 @@ debug::serialize (const Types::Song &song)
     out["album"] = song.album;
     out["duration"] = static_cast<qint64>(song.duration);
     out["source"] = song.source.toString();
-    out["cover"] = song.cover.toString();
+    out["cover"] = song.cover.uri().toString();
 
     return out;
 }
@@ -29,7 +29,6 @@ debug::serialize (const Types::Album &album)
 
     out["title"] = album.title;
     out["artist"] = album.artist;
-    out["cover"] = album.cover.toString();
     out["duration"] = static_cast<qint64>(album.duration());
 
     QJsonArray songs;

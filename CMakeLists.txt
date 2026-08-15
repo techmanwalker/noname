@@ -101,15 +101,11 @@ add_library(mediasequences
 
 target_link_libraries(mediasequences
     PUBLIC
-        songfactory
         mediatypes
         
     PRIVATE
         Qt6::Core
 
-        covers # cover storage only
-        diskio
-        memory
         rapidfuzz::rapidfuzz
 )
 
@@ -182,7 +178,6 @@ target_link_libraries(songfactory
         FFmpeg::swscale
         TagLib::tag
 
-        covers # to tell the factory where should the covers be stored
         mediatypes
 )
 
@@ -320,6 +315,7 @@ qt_add_qml_module(playerpresenter
 target_link_libraries(playerpresenter
     PRIVATE
         audioengine
+        covers
         debugtools
         listings
         lyricsmanifest
@@ -427,8 +423,8 @@ target_link_libraries (locallibrary
     PRIVATE
         covers
         diskio
-        mediasequences
         mediatypes
+        songfactory # local library interface, needs to load the songs metadata
         memory
 )
 
@@ -458,6 +454,8 @@ target_link_libraries(${PROJECT_NAME}
         locallibrary # your entire collection
         mainwindow # window decorations and such
         playerpresenter
+
+        songfactory # MUST be able to shut down its thread pool if something goes wrong
 )
 
 qt_add_qml_module(mainwindow
@@ -507,6 +505,7 @@ if(NONAME_BUILD_TESTS)
             mediasequences
             mediatypes
             memory
+            songfactory
     )
 
     target_include_directories(mockupv2
@@ -534,6 +533,7 @@ if(NONAME_BUILD_TESTS)
             covers
             debugtools
             fullscreenplayer
+            songfactory
             locallibrary
     )
 

@@ -2,6 +2,7 @@
 #include "audioengine.hpp"
 #include "playlistsequence.hpp"
 #include "songfactory.hpp"
+#include "coverprovider.hpp" // IWYU pragma: keep
 #include "playqueue.hpp"
 
 #include <QLoggingCategory>
@@ -64,8 +65,15 @@ void PlayQueue::clear () {
 
 QFuture<void> 
 PlayQueue::batch_append (const QList<QUrl> &sources)
-{ 
-    return AbstractMediaSequence::batch_append(sources, chosen_cover_provider);
+{
+    return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Song> to_append) {
+        for (const Types::Song &song : to_append) {
+            chosen_cover_provider->register_cover_reference(song.cover);
+        }
+
+        AbstractMediaSequence::batch_append(std::move(to_append));
+    });
+
 }
 
 void
@@ -95,7 +103,7 @@ PlayQueue::respawn_queue (const QStringList &sources)
         uri_sources.emplace_back(QUrl::fromLocalFile(source));
     }
 
-    AbstractMediaSequence::batch_append(uri_sources, chosen_cover_provider);
+    batch_append(uri_sources);
 }
 
 QPersistentModelIndex
@@ -159,10 +167,11 @@ PlayQueue::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 void
 PlayQueue::switch_to (const QUrl &source)
 {
-    song_factory::extract(source, chosen_cover_provider, {}).then(
+    song_factory::extract(source, {}).then(
         this,
         [this](Types::Song song) {
             if (song.is_valid()) {
+                chosen_cover_provider->register_cover_reference(song.cover);
                 switch_to(song, true);
             }
         }

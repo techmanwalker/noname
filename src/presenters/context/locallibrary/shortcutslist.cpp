@@ -1,7 +1,7 @@
 #include "abstractmediasequence.hpp"
 #include "configuration.hpp"
 #include "defaultroles.hpp"
-#include "songfactory.hpp"
+#include "songfactory.hpp" // IWYU pragma: keep
 #include "shortcutslist.hpp"
 
 #include <QQmlEngine> // include here, where it's actually used
@@ -40,8 +40,12 @@ ShortcutsList::read_conf_and_load ()
 
     auto shortcuts_song_paths = conf.read_lines(shortcuts);
 
-    return song_factory::batch_extract(shortcuts_song_paths, chosen_cover_provider, {256, true})
+    return song_factory::batch_extract(shortcuts_song_paths, {256, true})
     .then(this, [this](QList<Types::Song> loaded_shortcuts) {
+        for (const Types::Song &song : loaded_shortcuts) {
+            chosen_cover_provider->register_cover_reference(song.cover);
+        }
+
         batch_append(std::move(loaded_shortcuts));
     });
 }
