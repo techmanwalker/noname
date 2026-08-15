@@ -17,13 +17,6 @@ ColumnLayout {
         will be copied here to display its songs */
     property var activeDirectoryModel
 
-    Component.onCompleted: {
-        if (LocalLibrary.count > 0) {
-            const songs = LocalLibrary.readRole(0, "songs")
-            if (songs && songs.length !== 0) root.activeDirectoryModel = songs
-        }
-    }
-
     SectionHeading {
         id: shortcutsHeading
 
