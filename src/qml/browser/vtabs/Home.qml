@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player.Listings
-import Player.MediaSequences
+import Player.LocalLibrary
+import Player.PlayerPresenter
 import Player.Primitives
 
 ColumnLayout {

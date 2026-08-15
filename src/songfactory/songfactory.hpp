@@ -1,11 +1,15 @@
 #pragma once
 
-#include "coverprovider.hpp"
 #include "mediatypes.hpp"
 
 #include <QFuture>
 #include <QLoggingCategory>
 #include <QObject>
+
+// Forward declare the cover provider
+namespace covers::live {
+    class cover_provider;
+}
 
 class song_factory : public QObject {
     Q_OBJECT

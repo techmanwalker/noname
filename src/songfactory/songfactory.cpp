@@ -7,6 +7,9 @@
 #include <QLoggingCategory>
 #include <QUuid>
 
+#include <QJSEngine>
+#include <QQmlEngine>
+
 #include <QtConcurrent/QtConcurrent>
 
 #include <taglib/fileref.h>

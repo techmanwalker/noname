@@ -1,5 +1,5 @@
-#include "configuration.hpp"
-#include "coverproviderproxy.hpp"
+#include "coverprovider.hpp"
+#include "coverstorage.hpp"
 #include "playqueue.hpp"
 #include "songfactory.hpp"
 // #include "serialize.hpp"
@@ -25,7 +25,7 @@ main (int argc, char ** argv)
 
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
-    auto &conf = configuration::manager::instance();
+    // auto &conf = configuration::manager::instance();
 
     // Load configuration for the first time, the file must not be auto created if no write_lines was called
     /* WORKS FINE
@@ -63,7 +63,9 @@ main (int argc, char ** argv)
     */
 
     // Cover cache
-    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
+    std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
+
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>(cover_private_storage);
 
     // Playlist model
     auto &nextQueue = PlayQueue::instance();
@@ -113,8 +115,11 @@ main (int argc, char ** argv)
         decrement the reference counter safely without prematurely freeing the
         displaced memory block where the qml engine thinks the cover_provider is.
     */
-    auto *cpproxy = new __cover_provider_PROXY(covers);
-    engine.addImageProvider("covers", cpproxy);
+    /*  Give the QML engine its own proxy instance allocated with 'new'.
+        It will safely invoke 'delete' on this proxy without corrupting the heap
+        or interfering with the 'covers' shared_ptr used by the C++ models.
+    */
+    engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
 
 
 

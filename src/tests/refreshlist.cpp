@@ -1,5 +1,6 @@
 #include "configuration.hpp"
 #include "coverprovider.hpp"
+#include "coverstorage.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 #include "serialize.hpp"
@@ -14,7 +15,10 @@ int main (int argc, char ** argv)
     QCoreApplication app (argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
-    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
+    // cover cache to hold the shortcuts covers across the entire session
+    std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>(cover_private_storage);
+
     auto &conf = configuration::manager::instance();
 
     QStringList known_music_directories_lines = conf.read_lines(configuration::conf_file_type::known_music_directories);

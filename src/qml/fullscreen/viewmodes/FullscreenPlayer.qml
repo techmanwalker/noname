@@ -6,7 +6,7 @@ import Player.App
 import Player.Fullscreen
 import Player.Listings
 import Player.LyricsManifest
-import Player.MediaSequences
+import Player.LocalLibrary
 import Player.PlayerPresenter
 import Player.Primitives
 

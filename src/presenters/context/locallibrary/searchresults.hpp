@@ -2,6 +2,9 @@
 
 #include "playlistsequence.hpp"
 
+class QQmlEngine;
+class QJSEngine;
+
 class SearchResults : public PlaylistSequence {
     Q_OBJECT
     QML_ELEMENT

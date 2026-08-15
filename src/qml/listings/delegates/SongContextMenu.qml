@@ -1,9 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 
-import Player.Primitives
-import Player.MediaSequences
+import Player.PlayerPresenter
 
 ActionMenu {
     id: root

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "coverprovider.hpp"
 #include "mediatypes.hpp"
 #include "rolecompiler.hpp"
 
@@ -17,6 +16,11 @@
 
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
+
+// Forward declare the cover provider
+namespace covers::live {
+    class cover_provider;
+}
 
 
 /**

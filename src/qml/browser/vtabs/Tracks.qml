@@ -3,7 +3,8 @@ import QtQuick.Layouts
 
 import Player.Browser
 import Player.Listings
-import Player.MediaSequences
+import Player.LocalLibrary
+import Player.PlayerPresenter
 import Player.Primitives
 
 ColumnLayout {
