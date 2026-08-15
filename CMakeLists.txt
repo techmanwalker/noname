@@ -105,8 +105,6 @@ target_link_libraries(mediasequences
         
     PRIVATE
         Qt6::Core
-
-        rapidfuzz::rapidfuzz
 )
 
 target_include_directories(mediasequences
@@ -316,13 +314,10 @@ target_link_libraries(playerpresenter
     PRIVATE
         audioengine
         covers
-        debugtools
-        listings
         lyricsmanifest
         mediasequences
-        songfactory
-        memory
-        uiprimitives
+        memory # load last volume from its save file
+        songfactory # qml can drop songs to the play queue graphically, needs to read them
 
         # from syrinc
         lrc-core
@@ -426,6 +421,8 @@ target_link_libraries (locallibrary
         mediatypes
         songfactory # local library interface, needs to load the songs metadata
         memory
+
+        rapidfuzz::rapidfuzz
 )
 
 target_include_directories(locallibrary

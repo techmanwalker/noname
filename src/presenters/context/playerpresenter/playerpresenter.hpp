@@ -10,8 +10,6 @@
 
 #include <atomic>
 
-Q_DECLARE_LOGGING_CATEGORY (l_playerpresenter)
-
 // forward declarations
 class QQmlEngine;
 class QJSEngine;

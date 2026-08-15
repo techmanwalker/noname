@@ -10,8 +10,6 @@
 #include <QQmlEngine>
 #include <atomic>
 
-Q_LOGGING_CATEGORY (l_playerpresenter, "noname.context.playerpresenter");
-
 // meyers singleton
 PlayerPresenter &PlayerPresenter::instance() {
     static PlayerPresenter s_instance;
