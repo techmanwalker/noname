@@ -1,4 +1,5 @@
 #include "mediatypes.hpp"
+#include "coveruris.hpp"
 #include "standardpaths.hpp"
 
 #include <QCryptographicHash>
@@ -6,11 +7,20 @@
 #include <QStandardPaths>
 
 #include <cstddef>
+#include <qurl.h>
 
 Q_LOGGING_CATEGORY(l_mediatypes, "noname.mediatypes")
 
 
 namespace Types {
+
+quint64
+Album::duration() const {
+    quint64 total = 0;
+    for (const Song &s : songs)
+        total += s.duration;
+    return total;
+}
 
 Directory::Directory (const QString &source_path)
     : path(source_path),
@@ -24,6 +34,12 @@ bool
 Song::is_valid () const
 {
     return !source.isEmpty();
+}
+
+QUrl
+Song::coveruri () const 
+{
+    return cover.uri();
 }
 
 bool
@@ -44,11 +60,6 @@ QString
 CoverRef::hash () const
 {
     if (!m_hash.isEmpty()) return m_hash;
-
-    if (m_source.isEmpty()) {
-        // better to prevent
-        qCFatal (l_mediatypes) << "Attempted to create a hash for a cover reference with an empty source.";
-    }
 
     const QByteArray key = m_source.toLocalFile().toUtf8()
                           + ':' + QByteArray::number(qulonglong(m_square_size));
@@ -72,7 +83,7 @@ CoverRef::size() const
 }
 
 QString
-CoverRef::thumbnail_path  () const
+CoverRef::thumbnail_file_path  () const
 {
     // temporary ref, no thumnbail
     if (hash().isEmpty()) return QString();
@@ -85,5 +96,12 @@ CoverRef::thumbnail_path  () const
 bool
 CoverRef::thumbnail_file_exists () const
 {
-    return QFile::exists(thumbnail_path());
+    return QFile::exists(thumbnail_file_path());
+}
+
+QUrl
+CoverRef::uri () const
+{
+    QString prolly_hashed = hash();
+    return covers::schema + (prolly_hashed.isEmpty() ? covers::default_cover_uri : prolly_hashed);
 }

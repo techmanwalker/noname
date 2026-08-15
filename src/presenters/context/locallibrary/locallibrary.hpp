@@ -1,6 +1,7 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
+#include "coverprovider.hpp"
 #include "mediatypes.hpp"
 
 #include <QFuture>

@@ -3,8 +3,6 @@
 #include "attributesstruct.hpp"
 #include "songfactory.hpp"
 
-#include "songfactoryimpl.hpp"
-
 namespace song_factory {
 
 template <typename Container>
@@ -14,7 +12,7 @@ std::ranges::forward_range<Container>
         std::is_same_v<typename Container::value_type, QString>
     ||  std::is_same_v<typename Container::value_type, QUrl>)
 QList<QFuture<Types::Song>>
-progressive_extract (const Container &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
+progressive_extract (const Container &sources, attributes a)
 {
     using value_type = typename Container::value_type;
 
@@ -28,7 +26,7 @@ progressive_extract (const Container &sources, std::shared_ptr<covers::live::cov
         sources_to_read = sources;
     }
 
-    return progressive_extract(sources_to_read, provider, a);
+    return progressive_extract(sources_to_read, a);
 }
 
 template <typename Container>
@@ -38,7 +36,7 @@ std::ranges::forward_range<Container> // Any type of list
         std::is_same_v<typename Container::value_type, QString> // any uri or path
     ||  std::is_same_v<typename Container::value_type, QUrl>)
 QFuture<QList<Types::Song>>
-batch_extract (const Container &sources, std::shared_ptr<covers::live::cover_provider> provider, attributes a)
+batch_extract (const Container &sources, attributes a)
 {
     using value_type = typename Container::value_type;
 
@@ -52,7 +50,7 @@ batch_extract (const Container &sources, std::shared_ptr<covers::live::cover_pro
         sources_to_read = sources;
     }
 
-    return batch_extract(sources_to_read, provider, a);
+    return batch_extract(sources_to_read, a);
 }
 
 }

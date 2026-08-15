@@ -59,9 +59,9 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/bangbangbangbang.flac")
     };
 
-    song_factory::batch_extract(shortcuts, covers, {}).then(
+    song_factory::batch_extract(shortcuts,  {}).then(
         &app,
-        [&shortcuts_list](const QList<Types::Song> loaded_shortcuts) {
+        [&shortcuts_list, covers](const QList<Types::Song> loaded_shortcuts) {
             /*
             QList<Types::Any> any_shortcuts;
             any_shortcuts.reserve(loaded_shortcuts.size());
@@ -69,6 +69,10 @@ main (int argc, char ** argv)
             // convert Types::Song to Types::Any
             std::copy(loaded_shortcuts.begin(), loaded_shortcuts.end(), std::back_inserter(any_shortcuts));
             */
+
+            for (const Types::Song &song : loaded_shortcuts) {
+                covers->register_cover_reference(song.cover);
+            }
 
             shortcuts_list.batch_append(loaded_shortcuts);
 

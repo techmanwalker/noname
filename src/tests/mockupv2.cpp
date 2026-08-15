@@ -89,14 +89,17 @@ main (int argc, char ** argv)
         QUrl::fromLocalFile("/home/notangel/Documentos/Archivos del teléfono/Music/ykwim.flac")
     };
     
-    song_factory::batch_extract(new_queue, covers, {}).then(&app, [&nextQueue](const QList<Types::Song> loaded_songs) {
+    song_factory::batch_extract(new_queue, {}).then(&app, [&nextQueue, covers](const QList<Types::Song> loaded_songs) {
         /*
         QList<Types::Any> any_songs(loaded_songs.begin(), loaded_songs.end());
         qDebug().noquote() << QJsonDocument(debug::serialize(any_songs)).toJson(QJsonDocument::Indented);
         */
+        for (const Types::Song &song : loaded_songs) {
+            covers->register_cover_reference(song.cover);
+        }
 
         // when the playlist finishes loading, replace the current PlayQueue songs with these ones
-        nextQueue.respawn_queue(loaded_songs);
+        nextQueue.respawn_queue(std::move(loaded_songs));
     });
 
 

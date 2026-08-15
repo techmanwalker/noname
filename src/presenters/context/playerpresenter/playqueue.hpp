@@ -6,6 +6,10 @@
 
 class audio_engine;
 
+namespace covers::live {
+    class cover_provider;
+}
+
 // NOTE: use this as reference to implement singleton models inherited from non-singletons.
 
 class QQmlEngine;
