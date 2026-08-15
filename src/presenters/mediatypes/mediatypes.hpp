@@ -1,10 +1,14 @@
 #pragma once
 
 #include <QFileInfo>
+#include <QLoggingCategory>
 #include <QString>
 #include <QUrl>
 
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <cstddef>
+
+Q_DECLARE_LOGGING_CATEGORY(l_mediatypes)
 
 /// All the forms of identifiable structures of audio that this player supports.
 namespace Types {
@@ -72,3 +76,30 @@ namespace Types {
 // Expose the structures and their sequences at compile-time
 Q_DECLARE_METATYPE(Types::Song)
 Q_DECLARE_METATYPE(QList<Types::Song>)
+
+/*  Deterministic, session-independent cache key for a song's thumbnail.
+    Hashing the absolute path (not file contents) keeps this cheap — an MD5
+    over a path-length string is microseconds, dwarfed by the decode/encode
+    it lets us skip. crop_and_resize is folded in too, since the cache
+    stores the already-resized image: without it, two call sites requesting
+    different sizes for the same song would collide on one cache entry and
+    silently serve the wrong resolution to whichever asked second. */
+struct CoverRef {
+    CoverRef (const QUrl &source_media_path, size_t square_size = 0);
+
+    QUrl source () const;
+    QString hash () const;
+    size_t size () const;
+
+    // path on disk where the thumbnail is stored and retrieved
+    QString thumbnail_path () const;
+
+    bool thumbnail_file_exists () const;
+
+    private:
+        QUrl m_source;
+        mutable QString m_hash;
+
+        // a square size of 0 means full resolution
+        size_t m_square_size;
+};

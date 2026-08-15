@@ -1,5 +1,6 @@
 #include "coverextract.hpp"
 #include "coverstorage.hpp"
+#include "mediatypes.hpp"
 #include "thumbnails.hpp"
 
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
@@ -35,14 +36,14 @@ cover_storage::requestImageResponse(const QString &id, const QSize &requestedSiz
 }
 
 void
-cover_storage::register_source(const QString &hash, const QUrl &source, size_t crop_and_resize)
+cover_storage::register_cover_reference(const CoverRef &ref)
 {
     QWriteLocker locker(&m_sources_lock);
-    m_sources.insert(hash, { source, crop_and_resize });
+    m_refs.append(ref);
 }
 
 bool
-cover_storage::store(const QString &hash, const QVariant &cover_from_metadata, bool save_to_disk_cache)
+cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache)
 {
     if (!cover_from_metadata.canConvert<QImage>()) {
         return false;
@@ -63,19 +64,19 @@ cover_storage::store(const QString &hash, const QVariant &cover_from_metadata, b
     // QCache takes ownership of the pointer. On failure (cost > maxCost,
     // i.e. a single cover bigger than the whole budget) it deletes it for
     // us — no manual cleanup needed either way.
-    const bool cached = m_cache.insert(hash, new QImage(img), cost);
+    const bool cached = m_cache.insert(ref.hash(), new QImage(img), cost);
 
     // free lock
     m_spin_lock.clear(std::memory_order_release);
 
     if (!cached) {
-        qCWarning(l_coverprovider) << "Cover for" << hash << "exceeds the cache's max cost; not kept in memory.";
+        qCWarning(l_coverprovider) << "Cover for" << ref.hash() << "exceeds the cache's max cost; not kept in memory.";
     }
 
-    if (!covers::disk::has_thumbnail(hash) && save_to_disk_cache) {
+    if (!ref.thumbnail_file_exists() && save_to_disk_cache) {
 
         // async, won't block
-        covers::disk::write_thumbnail(hash, img);
+        covers::disk::write_thumbnail(ref, img);
     }
 
     return true;
@@ -83,6 +84,35 @@ cover_storage::store(const QString &hash, const QVariant &cover_from_metadata, b
 
 QImage
 cover_storage::resolve_blocking(const QString &id, const QSize &requestedSize)
+{
+    CoverRef target_ref(QUrl(), 0);
+    
+    bool found = false;
+
+    {
+        // Protect the read iteration
+        QReadLocker locker(&m_sources_lock);
+        
+        // Lean on C++20 ranges
+        auto it = std::ranges::find_if(m_refs, [&id](const CoverRef& ref) {
+            return ref.hash() == id;
+        });
+
+        if (it != m_refs.end()) {
+            target_ref = *it;
+            found = true;
+        }
+    } // Read lock released safely before heavy decoding
+
+    if (found) {
+        return resolve_blocking(target_ref, requestedSize);
+    }
+
+    return QImage();
+}
+
+QImage
+cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
 {
     Q_UNUSED(requestedSize);
 
@@ -94,7 +124,7 @@ cover_storage::resolve_blocking(const QString &id, const QSize &requestedSize)
         // very short active wait
     }
 
-    QImage *cached_ptr = m_cache.object(id);
+    QImage *cached_ptr = m_cache.object(ref.hash());
     // Copy while still locked: QImage is implicitly shared, so this copy is
     // just a refcount bump, but it's what keeps the pixel buffer alive if
     // another thread's insert() evicts (deletes) this entry right after we unlock.
@@ -107,41 +137,31 @@ cover_storage::resolve_blocking(const QString &id, const QSize &requestedSize)
     }
 
     // If not in m_cache, fetch from disk
-    img = covers::disk::fetch_thumbnail(id);
+    img = covers::disk::fetch_thumbnail(ref);
 
     if (!img.isNull()) {
 
         // qCDebug(l_coverprovider) << "Fetched thumbnail from disk cache for " << id;
 
         // Store in memory cache
-        store (id, img);
+        store (ref, img);
 
         return img;
     }
 
-    // Nothing cached anywhere — first time this cover has ever been
-    // asked for. Look up where to decode it from.
-    QUrl source;
-    size_t crop_and_resize = 0;
-    {
-        QReadLocker locker(&m_sources_lock);
-        auto it = m_sources.constFind(id);
-        if (it != m_sources.constEnd()) {
-            source = it->source;
-            crop_and_resize = it->crop_and_resize;
-        }
-    }
+    // The reference tells us where to look for the coer
 
-    if (!source.isEmpty()) {
-        const QByteArray local_path = source.toLocalFile().toUtf8();
+
+    if (!ref.source().isEmpty()) {
+        const QByteArray local_path = ref.source().toLocalFile().toUtf8();
         TagLib::FileRef file(local_path.constData());
 
         if (!file.isNull()) {
-            img = extract_cover(file.file(), crop_and_resize);
+            img = extract_cover(file.file(), ref.size());
 
             if (!img.isNull()) {
                 // qCDebug(l_coverprovider) << "Decoded cover on demand for " << id;
-                store(id, img);
+                store(ref, img);
                 return img;
             }
         }
@@ -164,13 +184,13 @@ cover_storage::resolve_blocking(const QString &id, const QSize &requestedSize)
 }
 
 bool
-cover_storage::is_cached (const QString &hash)
+cover_storage::is_cached (const CoverRef &ref)
 {
     while (m_spin_lock.test_and_set(std::memory_order_acquire)) {
         // very short active wait
     }
 
-    const bool present = m_cache.contains(hash);
+    const bool present = m_cache.contains(ref.hash());
 
     m_spin_lock.clear(std::memory_order_release);
 

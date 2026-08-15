@@ -87,6 +87,9 @@ add_library(mediatypes STATIC
 target_link_libraries(mediatypes
     PUBLIC
         Qt6::Core
+    
+    PRIVATE
+        memory
 )
 
 # Media sequences - playlists, queues and shorcuts representations
@@ -152,6 +155,7 @@ add_library(covers STATIC
 target_link_libraries(covers
     PUBLIC
         Qt6::Quick
+        mediatypes
         memory
 
     PRIVATE
@@ -167,7 +171,7 @@ target_include_directories(covers
 
 # The Song factory - enables extracting metadata, media and covers from songs themselves
 add_library(songfactory STATIC
-    src/songfactory/songfactory.cpp
+    ${SONGFACTORY_SOURCES}
 )
 
 target_link_libraries(songfactory
@@ -320,6 +324,7 @@ target_link_libraries(playerpresenter
         listings
         lyricsmanifest
         mediasequences
+        songfactory
         memory
         uiprimitives
 
@@ -422,6 +427,7 @@ target_link_libraries (locallibrary
     PRIVATE
         covers
         diskio
+        mediasequences
         mediatypes
         memory
 )

@@ -5,7 +5,8 @@
 #include <QUrl>
 #include <QVariant>
 #include <memory>
-#include <string_view>
+
+class CoverRef;
 
 // Forward declare the implementation to hide it from the rest of the application
 namespace covers::live {
@@ -22,11 +23,8 @@ public:
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
 
     // Exposed forwarding calls
-    void register_source(const QString &hash, const QUrl &source, size_t crop_and_resize);
-    bool store(const QString &hash, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
-
-    // Address where cached covers are located
-    static constexpr std::basic_string_view<char16_t> schema = u"image://covers/";
+    void register_cover_reference(const CoverRef &ref);
+    bool store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
 private:
     std::shared_ptr<covers::live::cover_storage> m_real;

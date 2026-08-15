@@ -10,6 +10,8 @@ Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
 
 // covers::live: hot cache on memory right away to consume, already decoded and yet but cheap to decode
 
+class CoverRef;
+
 namespace covers {
 namespace live {
 
@@ -22,34 +24,23 @@ public:
     ~cover_storage(); // shutdown and pool drain
 
     // Save picture and return a generated UUID
-    bool store(const QString &hash, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
+    bool store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
     /*  Called by QtQuick to kick off an (async) image request; the actual
         resolution work runs on m_response_pool, off the GUI thread. */
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
 
-    // save {hash -> the original source path and size it was calculated from}
-    void register_source(const QString &hash, const QUrl &source, size_t crop_and_resize);
+    bool is_cached (const CoverRef &ref);
 
-    bool is_cached (const QString &hash);
-
-    // Address where cached covers are (should be) located
-    static constexpr std::basic_string_view<char16_t> schema = u"image://covers/";
-
-    // Default cover image uri
-    static constexpr char default_cover_uri[] = "";
-
-        /*  Blocking resolution chain: memory cache -> disk cache -> decode from
-        registered source. Called from a worker thread only
-        (cover_image_response::run()) — never the GUI thread. */
+    /*  Blocking resolution chain: memory cache -> disk cache -> decode from
+    registered source. Called from a worker thread only
+    (cover_image_response::run()) — never the GUI thread. */
+    QImage resolve_blocking(const CoverRef &ref, const QSize &requestedSize);
     QImage resolve_blocking(const QString &id, const QSize &requestedSize);
 
-private:
+    void register_cover_reference(const CoverRef &ref);
 
-    struct cover_source {
-        QUrl source;
-        size_t crop_and_resize;
-    };
+private:
 
     QCache<QString, QImage> m_cache;
 
@@ -58,7 +49,7 @@ private:
         safe like they were with QHash */
     std::atomic_flag m_spin_lock = ATOMIC_FLAG_INIT; 
 
-    QHash<QString, cover_source> m_sources;
+    QList<CoverRef> m_refs;
     QReadWriteLock m_sources_lock; // separate lock from m_spin_lock: writes come in bursts during a scan, reads can come from many concurrent decode jobs at once
 
     QThreadPool m_response_pool; // dedicated so cover decoding never queues behind (or blocks) song_factory's metadata scan
