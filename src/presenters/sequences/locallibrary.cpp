@@ -1,5 +1,6 @@
 #include "basicdiskio.hpp"
 #include "configuration.hpp"
+#include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 #include "songfactory.hpp"

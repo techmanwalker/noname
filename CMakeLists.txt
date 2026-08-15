@@ -65,6 +65,7 @@ set_source_files_properties("src/qml/primitives/MediaTypes.qml"
 
 
 ## C++ sources
+module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
 module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
@@ -113,10 +114,13 @@ qt_add_qml_module(primitives
     QML_FILES
         ${PRIMITIVES_QMLS}
         src/qml/primitives/Formatters.mjs
-    SOURCES
-        src/presenters/basicdefinitions/mediatypes.cpp
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
+)
+
+target_link_libraries(primitives
+    PUBLIC
+        mediatypes
 )
 
 target_include_directories(primitives
@@ -161,8 +165,10 @@ target_link_libraries(mediasequences
         Qt6::Quick
         Qt6::Qml
         Qt6::QmlIntegration
+
         audioengine
         diskio
+        mediatypes
         memory
         primitives
         rapidfuzz::rapidfuzz
@@ -171,7 +177,6 @@ target_link_libraries(mediasequences
 
 target_include_directories(mediasequences
     PUBLIC
-        src/presenters/formatters
         src/presenters/sequences # to make qmltyperegistrar happy
 )
 
@@ -226,6 +231,7 @@ target_link_libraries(lyricsmanifest
         Qt6::Core
         Qt6::Qml
         Qt6::QmlIntegration
+        mediatypes
 
         # from syrinc
         lrc-core
@@ -235,10 +241,6 @@ target_link_libraries(lyricsmanifest
 target_include_directories(lyricsmanifest
     PUBLIC
         src/presenters/context/lyrics
-
-    PRIVATE
-        src/presenters/basicdefinitions # for the role compiler, todo: factor out
-        src/presenters/formatters # for the role compiler, todo: factor out
 )
 
 
@@ -294,6 +296,22 @@ target_link_libraries(browser
 
 
 ### C++ Modules
+
+add_library(mediatypes STATIC
+    ${MEDIATYPES_SOURCES}
+)
+
+target_link_libraries(mediatypes
+    PRIVATE
+        Qt6::Core
+)
+
+target_include_directories(mediatypes
+    PUBLIC
+        src/presenters/formatters
+        src/presenters/mediatypes
+        src/presenters/rolecompiler
+)
 
 # The Playback controller
 add_library(audioengine STATIC
@@ -378,7 +396,7 @@ add_library(debugtools STATIC
 target_link_libraries(debugtools
     PRIVATE
         Qt6::Core
-        mediasequences
+        mediatypes
         primitives
 )
 
@@ -448,7 +466,6 @@ target_link_libraries(${PROJECT_NAME}
         browser
         fullscreenplayer
         mainwindow
-        mediasequences
 )
 
 qt_add_qml_module(mainwindow
@@ -491,7 +508,6 @@ if(NONAME_BUILD_TESTS)
             ${BASIC_LIBRARIES}
             audioengine
             fullscreenplayer
-            mediasequences
     )
 
     target_include_directories(mockupv2
@@ -537,11 +553,8 @@ if(NONAME_BUILD_TESTS)
             ${BASIC_LIBRARIES}
             covers
             debugtools
-            diskio
             mediasequences
             memory
-            primitives
-            songfactory
     )
 
     target_include_directories(refreshlisttest

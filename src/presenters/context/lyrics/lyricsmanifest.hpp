@@ -1,8 +1,8 @@
 #pragma once
 
 // from syrinc
-#include "defaultroles.hpp"
 #include "globals.hpp" // Note: this is globals.hpp from syrinc
+#include "rolecompiler.hpp"
 #include "timestamps.hpp"
 
 #include <QAbstractListModel>
