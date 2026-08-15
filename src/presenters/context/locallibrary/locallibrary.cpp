@@ -4,8 +4,6 @@
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 #include "songfactory.hpp"
-#include <qabstractitemmodel.h>
-#include <qfuture.h>
 
 LocalLibrary &
 LocalLibrary::instance ()

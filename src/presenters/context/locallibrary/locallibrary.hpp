@@ -1,7 +1,6 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
-#include "coverprovider.hpp"
 #include "mediatypes.hpp"
 
 #include <QFuture>
@@ -9,9 +8,6 @@
 #include <QLoggingCategory>
 #include <QQmlEngine>
 #include <QUrl>
-#include <qabstractitemmodel.h>
-#include <qfuture.h>
-#include <qtmetamacros.h>
 
 // Snapshots of directories built from the songs of all known directories and other music sources, if ever supported
 class LocalLibrary : public AbstractMediaSequence

@@ -1,6 +1,6 @@
-#include "coverprovider.hpp"
+#include "coverstorage.hpp"
 
-cover_image_response::cover_image_response(covers::live::cover_provider *provider, const QString &id, const QSize &requestedSize)
+cover_image_response::cover_image_response(covers::live::cover_storage *provider, const QString &id, const QSize &requestedSize)
     : m_provider(provider), m_id(id), m_requested_size(requestedSize)
 {
     // Required: QQuickImageResponse manages its own lifetime (deleteLater()

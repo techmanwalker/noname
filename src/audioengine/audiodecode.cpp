@@ -21,6 +21,7 @@ audio_decode_worker::audio_decode_worker (QObject *parent)
 
 audio_decode_worker::~audio_decode_worker ()
 {
+    close_ffmpeg_contexts();
 }
 
 audio_ring_buffer*

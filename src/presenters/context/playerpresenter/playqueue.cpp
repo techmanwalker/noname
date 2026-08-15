@@ -6,6 +6,9 @@
 
 #include <QLoggingCategory>
 
+#include <QJSEngine>
+#include <QQmlEngine>
+
 // Meyers singleton implementation
 PlayQueue &
 PlayQueue::instance()
@@ -15,7 +18,8 @@ PlayQueue::instance()
 }
 
 PlayQueue::PlayQueue(QObject *parent)
-    : PlaylistSequence(parent)
+    : PlaylistSequence(parent),
+      playing(audio_engine::instance())
 {
     connect (&playing, &audio_engine::track_changed,
             this, &PlayQueue::handle_track_changed);

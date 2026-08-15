@@ -3,9 +3,9 @@
 
 #include "audioengine.hpp"
 #include "configuration.hpp"
+#include "lyricsmanifest.hpp"
+#include "mediatypes.hpp"
 #include "playqueue.hpp"
-
-#include "serialize.hpp"
 
 #include <QQmlEngine>
 #include <atomic>
@@ -35,7 +35,10 @@ PlayerPresenter *PlayerPresenter::create(QQmlEngine *qmlEngine, QJSEngine *jsEng
 
 // Private constructor
 PlayerPresenter::PlayerPresenter(QObject *parent)
-    : QObject(parent)
+    : QObject(parent),
+      playing(audio_engine::instance()),
+      queue(PlayQueue::instance()),
+      lm(LyricsManifest::instance())
 {
     m_position_poll_timer->setInterval(10);
 
@@ -167,6 +170,12 @@ PlayerPresenter::prev() const
 }
 
 void
+PlayerPresenter::load(Types::Song &song) const
+{
+    playing.load(song);
+}
+
+void
 PlayerPresenter::notify_slider_pressed_change (bool pressed)
 {
     m_slider_pressed.store(pressed);
@@ -217,8 +226,9 @@ PlayerPresenter::handleTrackChanged()
                         + single_timestamp_line.text.toStdString());
                 };
 
+                /*
                 debug::print(l_playerpresenter(), "Lyrics in the LyricManifest:");
-                debug::print(l_playerpresenter(), debug::serialize(debug_lrc_lines));
+                debug::print(l_playerpresenter(), debug::serialize(debug_lrc_lines));*/
                 
             });
 }

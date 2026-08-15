@@ -53,7 +53,7 @@ endfunction()
 
 module_sources(PLAYER_QMLS      "src/qml/fullscreen/*.qml")
 module_sources(BROWSER_QMLS     "src/qml/browser/*.qml")
-module_sources(PRIMITIVES_QMLS  "src/qml/primitives/*.qml")
+module_sources(UIPRIMITIVES_QMLS  "src/qml/primitives/*.qml")
 module_sources(EFFECTS_QMLS     "src/qml/effects/*.qml")
 module_sources(LISTINGS_QMLS    "src/qml/listings/*.qml")
 module_sources(MAINWINDOW_QMLS  "src/qml/mainwindow/*.qml")
@@ -70,230 +70,13 @@ module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
 module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
 module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
+module_sources(LOCALLIBRARY_SOURCES     "src/presenters/context/locallibrary/*.cpp")
 module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp" "src/audioengine/*.hpp")
 module_sources(COVERS_SOURCES           "src/covers/*.cpp")
 module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
 module_sources(MEMORY_SOURCES           "src/memory/*.cpp")
 module_sources(DISKIO_SOURCES           "src/diskio/*.cpp")
 module_sources(SONGFACTORY_SOURCES      "src/songfactory/*.cpp")
-
-
-### Inter-module communication
-
-# Effects - any module depends on these to look nice
-
-qt_add_qml_module(playereffects
-    STATIC
-    URI Player.Effects
-    QML_FILES
-        ${EFFECTS_QMLS}
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/Effects"
-)
-
-qt_add_shaders(playereffects "_shaders"
-    BATCHABLE
-    PRECOMPILE
-    OPTIMIZED
-    PREFIX "/shaders"
-    BASE "src/shaders"
-    FILES
-        src/shaders/background_overlay.frag
-        src/shaders/edge_fade.frag
-        src/shaders/kawase_down.frag
-        src/shaders/kawase_up.frag
-        src/shaders/noise.frag
-        src/shaders/noise_seed.frag
-)
-
-# Primitives - the base of all modules
-
-qt_add_qml_module(primitives
-    STATIC
-    URI Player.Primitives
-    QML_FILES
-        ${PRIMITIVES_QMLS}
-        src/qml/primitives/Formatters.mjs
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
-)
-
-target_link_libraries(primitives
-    PUBLIC
-        mediatypes
-)
-
-target_include_directories(primitives
-    PUBLIC
-        src/presenters/basicdefinitions
-)
-
-
-# Listings - turning a song to logical pixels - basic tooling to display media metadata
-
-qt_add_qml_module(listings
-    STATIC
-    URI Player.Listings
-    QML_FILES
-        ${LISTINGS_QMLS}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/Listings"
-)
-
-target_link_libraries(listings
-    PUBLIC
-        playereffects
-        primitives
-)
-
-# Media sequences - playlists, queues and shorcuts representations
-
-qt_add_qml_module(mediasequences
-    STATIC
-    URI Player.MediaSequences
-    SOURCES
-        ${MEDIASEQUENCES_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
-)
-
-target_link_libraries(mediasequences
-    PUBLIC
-        covers
-        songfactory
-        
-    PRIVATE
-        Qt6::Core
-        Qt6::Quick
-        Qt6::Qml
-        Qt6::QmlIntegration
-
-        audioengine
-        diskio
-        mediatypes
-        memory
-        primitives
-        rapidfuzz::rapidfuzz
-        # must not depend on playerpresenter
-)
-
-target_include_directories(mediasequences
-    PUBLIC
-        src/presenters/sequences # to make qmltyperegistrar happy
-)
-
-# Playback presentation - everything that the C++ side exposes for your control and view
-
-qt_add_qml_module(playerpresenter
-    STATIC
-    URI Player.PlayerPresenter
-    SOURCES
-        ${PLAYERPRESENTER_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
-)
-
-target_link_libraries(playerpresenter
-    PRIVATE
-        Qt6::Core
-        Qt6::Qml
-        Qt6::QmlIntegration
-        Qt6::Quick
-        audioengine
-        debugtools
-        listings
-        lyricsmanifest
-        mediasequences
-        primitives
-
-        # from syrinc
-        lrc-core
-        audio
-)
-
-target_include_directories(playerpresenter
-    PUBLIC
-        src/presenters/context/playerpresenter
-
-    PRIVATE
-        src/presenters/sequences
-)
-
-# Lyrics manifest - access the lyrics from your playing song anywhere
-
-qt_add_qml_module(lyricsmanifest
-    STATIC
-    URI Player.LyricsManifest
-    SOURCES
-        ${LYRICSMANIFEST_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
-)
-
-target_link_libraries(lyricsmanifest
-    PRIVATE
-        Qt6::Core
-        Qt6::Qml
-        Qt6::QmlIntegration
-        mediatypes
-
-        # from syrinc
-        lrc-core
-        audio
-)
-
-target_include_directories(lyricsmanifest
-    PUBLIC
-        src/presenters/context/lyrics
-)
-
-
-# The Player module
-qt_add_qml_module(fullscreenplayer
-    STATIC
-    URI Player.Fullscreen
-    QML_FILES
-        ${PLAYER_QMLS}
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/Fullscreen"
-)
-
-target_link_libraries(fullscreenplayer
-    PUBLIC
-        listings
-        lyricsmanifest
-        mediasequences
-        playerpresenter
-
-    PRIVATE
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Qml
-        Qt6::Quick
-        Qt6::QuickControls2
-        Qt6::ShaderTools
-)
-
-# The Start Page - your entry to the experience
-qt_add_qml_module(browser
-    STATIC
-    URI Player.Browser
-    QML_FILES
-        ${BROWSER_QMLS}
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/Browser"
-)
-
-target_link_libraries(browser
-    PUBLIC
-        listings
-        mediasequences
-        primitives
-
-    PRIVATE
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Qml
-        Qt6::Quick
-        Qt6::QuickControls2
-)
-
 
 ### C++ Modules
 
@@ -302,8 +85,34 @@ add_library(mediatypes STATIC
 )
 
 target_link_libraries(mediatypes
+    PUBLIC
+        Qt6::Core
+)
+
+# Media sequences - playlists, queues and shorcuts representations
+
+add_library(mediasequences
+    STATIC
+        ${MEDIASEQUENCES_SOURCES}
+)
+
+target_link_libraries(mediasequences
+    PUBLIC
+        songfactory
+        mediatypes
+        
     PRIVATE
         Qt6::Core
+
+        covers # cover storage only
+        diskio
+        memory
+        rapidfuzz::rapidfuzz
+)
+
+target_include_directories(mediasequences
+    PUBLIC
+        src/presenters/sequences # to make qmltyperegistrar happy
 )
 
 target_include_directories(mediatypes
@@ -319,13 +128,9 @@ add_library(audioengine STATIC
 )
 
 target_link_libraries(audioengine
-    PUBLIC
-        songfactory
-
     PRIVATE
-        Qt6::Core
-        Qt6::Quick
-        primitives
+        mediatypes
+
         SoundIo::SoundIo
         FFmpeg::avcodec
         FFmpeg::avformat
@@ -337,9 +142,6 @@ target_include_directories(audioengine
     PUBLIC
         src/audioengine # enable including its own headers como Qt6:: libraries
 
-    PRIVATE
-        src/presenters/sequences
-
 )
 
 # Covers - where your vision lives
@@ -349,12 +151,11 @@ add_library(covers STATIC
 
 target_link_libraries(covers
     PUBLIC
+        Qt6::Quick
         memory
 
     PRIVATE
-        Qt6::Core
         Qt6::Gui
-        Qt6::Quick
 
         libjxl::libjxl
 )
@@ -371,16 +172,14 @@ add_library(songfactory STATIC
 
 target_link_libraries(songfactory
     PRIVATE
-        Qt6::Core
-        Qt6::Quick
-        primitives
         FFmpeg::avcodec
         FFmpeg::avformat
         FFmpeg::avutil
         FFmpeg::swscale
         TagLib::tag
-        covers # songfactory still extracts covers on its own, which must change
-        memory
+
+        covers # to tell the factory where should the covers be stored
+        mediatypes
 )
 
 target_include_directories(songfactory
@@ -395,9 +194,7 @@ add_library(debugtools STATIC
 
 target_link_libraries(debugtools
     PRIVATE
-        Qt6::Core
         mediatypes
-        primitives
 )
 
 target_include_directories(debugtools
@@ -435,16 +232,206 @@ target_include_directories(diskio
         src/diskio
 )
 
-### General excecutable linking definitions
+### Inter-module communication
 
-set(BASIC_LIBRARIES
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Qml
-    Qt6::Quick
-    Qt6::QuickControls2
-    primitives
+# Effects - any module depends on these to look nice
+
+qt_add_qml_module(playereffects
+    STATIC
+    URI Player.Effects
+    QML_FILES
+        ${EFFECTS_QMLS}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Effects"
 )
+
+qt_add_shaders(playereffects "_shaders"
+    BATCHABLE
+    PRECOMPILE
+    OPTIMIZED
+    PREFIX "/shaders"
+    BASE "src/shaders"
+    FILES
+        src/shaders/background_overlay.frag
+        src/shaders/edge_fade.frag
+        src/shaders/kawase_down.frag
+        src/shaders/kawase_up.frag
+        src/shaders/noise.frag
+        src/shaders/noise_seed.frag
+)
+
+# Primitives - basis of the style of the graphical view
+
+qt_add_qml_module(uiprimitives
+    STATIC
+    URI Player.Primitives
+    QML_FILES
+        ${UIPRIMITIVES_QMLS}
+        src/qml/primitives/Formatters.mjs
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
+)
+
+target_link_libraries(uiprimitives
+    PUBLIC
+        Qt6::Core
+        Qt6::Quick
+        Qt6::Qml
+
+        mediatypes
+)
+
+target_include_directories(uiprimitives
+    PUBLIC
+        src/presenters/basicdefinitions
+)
+
+
+# Listings - turning a song to logical pixels - basic tooling to display media metadata
+
+qt_add_qml_module(listings
+    STATIC
+    URI Player.Listings
+    QML_FILES
+        ${LISTINGS_QMLS}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/Listings"
+)
+
+target_link_libraries(listings
+    PUBLIC
+        playereffects
+        uiprimitives
+)
+
+# Playback presentation - everything that the C++ side exposes for your control and view
+
+qt_add_qml_module(playerpresenter
+    STATIC
+    URI Player.PlayerPresenter
+    SOURCES
+        ${PLAYERPRESENTER_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
+)
+
+target_link_libraries(playerpresenter
+    PRIVATE
+        audioengine
+        debugtools
+        listings
+        lyricsmanifest
+        mediasequences
+        memory
+        uiprimitives
+
+        # from syrinc
+        lrc-core
+        audio
+)
+
+target_include_directories(playerpresenter
+    PUBLIC
+        src/presenters/context/playerpresenter
+
+    PRIVATE
+        src/presenters/sequences
+)
+
+# Lyrics manifest - access the lyrics from your playing song anywhere
+
+qt_add_qml_module(lyricsmanifest
+    STATIC
+    URI Player.LyricsManifest
+    SOURCES
+        ${LYRICSMANIFEST_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
+)
+
+target_link_libraries(lyricsmanifest
+    PRIVATE
+        Qt6::Core
+        mediatypes
+
+        # from syrinc
+        lrc-core
+        audio
+)
+
+target_include_directories(lyricsmanifest
+    PUBLIC
+        src/presenters/context/lyrics
+)
+
+
+# The Player module
+qt_add_qml_module(fullscreenplayer
+    STATIC
+    URI Player.Fullscreen
+    QML_FILES
+        ${PLAYER_QMLS}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Fullscreen"
+)
+
+target_link_libraries(fullscreenplayer
+    PUBLIC
+        playerpresenter
+        uiprimitives
+
+    PRIVATE
+        Qt6::Quick
+        Qt6::QuickControls2
+        Qt6::ShaderTools
+)
+
+# The Start Page - your entry to the experience
+qt_add_qml_module(browser
+    STATIC
+    URI Player.Browser
+    QML_FILES
+        ${BROWSER_QMLS}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Browser"
+)
+
+target_link_libraries(browser
+    PUBLIC
+        listings
+        locallibrary
+        mediasequences
+        uiprimitives
+
+    PRIVATE
+        Qt6::Quick
+        Qt6::QuickControls2
+)
+
+# All of your collection of tracks noname has currently knowledge of
+qt_add_qml_module(locallibrary
+    STATIC
+    URI Player.LocalLibrary
+    SOURCES
+        ${LOCALLIBRARY_SOURCES}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
+)
+
+target_link_libraries (locallibrary
+    PUBLIC
+        mediasequences
+        
+    PRIVATE
+        covers
+        diskio
+        mediatypes
+        memory
+)
+
+target_include_directories(locallibrary
+    PUBLIC
+        src/presenters/context/locallibrary
+)
+
+### General excecutable linking definitions
 
 set(PLAYER_INCLUDE_DIRECTORIES
     src/presenters
@@ -461,11 +448,10 @@ qt_add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        ${BASIC_LIBRARIES}
-        audioengine
-        browser
-        fullscreenplayer
-        mainwindow
+        covers # every executable that features its own cover storage will feature this
+        locallibrary # your entire collection
+        mainwindow # window decorations and such
+        playerpresenter
 )
 
 qt_add_qml_module(mainwindow
@@ -481,7 +467,10 @@ qt_add_qml_module(mainwindow
 
 target_link_libraries(mainwindow
     PRIVATE
-        ${BASIC_LIBRARIES}
+        Qt6::Core
+        Qt6::Quick
+        Qt6::Qml
+
         memory
 )
 
@@ -498,6 +487,7 @@ qt_add_translations(${PROJECT_NAME}
 # Executable tests per module - filled with dummy data for easy development
 
 if(NONAME_BUILD_TESTS)
+    # These tests are full fledged subsets of the main executable. You'll see basic deps repeated here.
 
     qt_add_executable(mockupv2
         src/tests/mockupv2.cpp
@@ -505,9 +495,12 @@ if(NONAME_BUILD_TESTS)
 
     target_link_libraries(mockupv2
         PUBLIC
-            ${BASIC_LIBRARIES}
             audioengine
+            covers
             fullscreenplayer
+            mediasequences
+            mediatypes
+            memory
     )
 
     target_include_directories(mockupv2
@@ -521,7 +514,6 @@ if(NONAME_BUILD_TESTS)
 
     target_link_libraries(backgroundgradinghelper
         PUBLIC
-            ${BASIC_LIBRARIES}
             fullscreenplayer
     )
 
@@ -531,12 +523,12 @@ if(NONAME_BUILD_TESTS)
 
     target_link_libraries(startpagetest
         PUBLIC
-            ${BASIC_LIBRARIES}
             audioengine
             browser
+            covers
             debugtools
             fullscreenplayer
-            mediasequences
+            locallibrary
     )
 
     target_include_directories(startpagetest
@@ -550,9 +542,10 @@ if(NONAME_BUILD_TESTS)
 
     target_link_libraries(refreshlisttest
         PUBLIC
-            ${BASIC_LIBRARIES}
             covers
             debugtools
+            locallibrary
+            mediatypes
             mediasequences
             memory
     )

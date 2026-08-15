@@ -1,8 +1,11 @@
 #include "searchresults.hpp"
 #include "locallibrary.hpp"
-#include "prettifiers.hpp"
+#include "prettifiers.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
 #include <QList>
+
+#include <QJSEngine>
+#include <QQmlEngine>
 
 // Meyers singleton implementation
 SearchResults &

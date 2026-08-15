@@ -1,4 +1,5 @@
-#include "coverproviderproxy.hpp"
+#include "coverprovider.hpp"
+#include "coverstorage.hpp"
 #include "locallibrary.hpp"
 #include "playqueue.hpp"
 #include "shortcutslist.hpp"
@@ -21,8 +22,20 @@ main (int argc, char ** argv)
 
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
-        // cover cache to hold the shortcuts covers across the entire session
-    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
+    // cover cache to hold the shortcuts covers across the entire session
+    std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
+
+    // protect the cover cache from the qml gc gremlin
+
+    /*  Explanation of the proxy mechanism:
+
+        QQmlEngine will take ownership of this proxy, and upon program teardown,
+        will invoke 'delete' on it.
+        As m_real is a std::shared_ptr, when the proxy is destroyed it will
+        decrement the reference counter safely without prematurely freeing the
+        displaced memory block where the qml engine thinks the cover_provider is.
+    */
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>(cover_private_storage);
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
@@ -41,29 +54,18 @@ main (int argc, char ** argv)
     // load shortcuts
     sl.read_conf_and_load();
 
-
-
     QTranslator translator;
     if (translator.load(QLocale::system(), "noname", "_", ":/i18n")) {
         QCoreApplication::installTranslator(&translator);
     }
 
-    
     // create base engine
     QQmlApplicationEngine engine;
 
-    // protect the cover cache from the qml gc gremlin
-
-    /*  Explanation of the proxy mechanism:
-
-        QQmlEngine will take ownership of this proxy, and upon program teardown,
-        will invoke 'delete' on it.
-        As m_real is a std::shared_ptr, when the proxy is destroyed it will
-        decrement the reference counter safely without prematurely freeing the
-        displaced memory block where the qml engine thinks the cover_provider is.
-    */
-    auto *cpproxy = new __cover_provider_PROXY(covers);
-    engine.addImageProvider("covers", cpproxy);
+    // Give the QML engine its own proxy instance allocated with 'new'.
+    // It will safely invoke 'delete' on this proxy without corrupting the heap
+    // or interfering with the 'covers' shared_ptr used by the C++ models.
+    engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
 
 
     // load qml module for noname

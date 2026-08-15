@@ -1,5 +1,6 @@
 #include "audioengine.hpp"
-#include "coverproviderproxy.hpp"
+#include "coverstorage.hpp"
+#include "coverprovider.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 //#include "serialize.hpp"
@@ -44,7 +45,8 @@ main (int argc, char ** argv)
     auto &shortcuts_list = ShortcutsList::instance();
 
     // cover cache to hold the shortcuts covers
-    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>();
+    std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
+    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>(cover_private_storage);
 
 
     QList<QUrl> shortcuts {
@@ -168,8 +170,7 @@ main (int argc, char ** argv)
         decrement the reference counter safely without prematurely freeing the
         displaced memory block where the qml engine thinks the cover_provider is.
     */
-    auto *cpproxy = new __cover_provider_PROXY(covers);
-    engine.addImageProvider("covers", cpproxy);
+    engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
 
 
     // load qml

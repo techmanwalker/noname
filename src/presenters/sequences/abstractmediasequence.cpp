@@ -1,4 +1,5 @@
 #include "abstractmediasequence.hpp"
+#include "coverprovider.hpp"
 #include "mediatypes.hpp"
 #include "songfactory.hpp"
 #include <algorithm>

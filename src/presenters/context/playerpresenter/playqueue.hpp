@@ -1,9 +1,10 @@
 #pragma once
 
-#include "audioengine.hpp"
 #include "playlistsequence.hpp"
 
 #include <QtQmlIntegration/qqmlintegration.h>
+
+class audio_engine;
 
 // NOTE: use this as reference to implement singleton models inherited from non-singletons.
 
@@ -69,6 +70,6 @@ private:
     explicit PlayQueue(QObject *parent = nullptr);
 
     // the playhead is passively calculated
-    audio_engine &playing = audio_engine::instance();
+    audio_engine &playing;
 
 };

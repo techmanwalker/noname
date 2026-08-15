@@ -42,14 +42,24 @@ audio_internal_controller::~audio_internal_controller()
 {
     m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
 
+    // stop the soundio callback first, the buffer ring must outlive it
+    if (m_outstream) {
+        soundio_outstream_destroy(m_outstream);
+        m_outstream = nullptr;
+    }
+
+    // safely destroy
+    QMetaObject::invokeMethod(m_decoder_worker, [worker = m_decoder_worker]() {
+        delete worker;
+    }, Qt::BlockingQueuedConnection);
+
+    m_decoder_worker = nullptr;
+
     m_audio_decoding_thread->quit();
     m_audio_decoding_thread->wait();
     
-    if (m_outstream) soundio_outstream_destroy(m_outstream);
     if (m_device) soundio_device_unref(m_device);
     if (m_soundio) soundio_destroy(m_soundio);
-
-    delete m_decoder_worker;
 }
 
 void audio_internal_controller::set_transport_paused(bool paused) {
