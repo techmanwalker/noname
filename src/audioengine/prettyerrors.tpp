@@ -2,10 +2,13 @@
 
 #include "audioengine.hpp"
 
+#include <soundio/soundio.h>
+
+// Friendlier error messages, return the errcode itself
 // Friendlier error messages, return the errcode itself
 template<typename Func, typename... Args>
 int 
-audio_engine::log_soundio_internal(const char* func_name, Func soundio_func, Args&&... args) {
+audio_internal_controller::log_soundio_internal(const char* func_name, Func soundio_func, Args&&... args) {
     int errcode = soundio_func(std::forward<Args>(args)...);
 
     if (errcode != 0) {
@@ -17,5 +20,5 @@ audio_engine::log_soundio_internal(const char* func_name, Func soundio_func, Arg
             << soundio_strerror(errcode);
     }
 
-    return errcode; // nesting support
+    return errcode;
 }
