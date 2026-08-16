@@ -42,8 +42,6 @@ ColumnLayout {
                 root.activeDirectoryModel = songs;
             }
         }
-
-        clip: true
     }
 
     SongGrid {
@@ -54,8 +52,6 @@ ColumnLayout {
         Layout.fillHeight: true
 
         songCoverWidth: 144
-
-        clip: true
 
         reuseItems: true
 

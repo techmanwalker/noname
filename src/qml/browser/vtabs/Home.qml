@@ -35,8 +35,6 @@ ColumnLayout {
         shortcutCoverWidth: root.shortcutCoverWidth
         shortcutCoverHeight: root.shortcutCoverHeight
 
-        clip: true // prevent sudden disappearing on the edges
-
         onSongClicked: (song) => {
             PlayQueue.switch_to(song.source)
         }
