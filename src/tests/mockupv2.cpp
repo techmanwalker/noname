@@ -69,7 +69,7 @@ main (int argc, char ** argv)
 
     // Playlist model
     auto &nextQueue = PlayQueue::instance();
-    nextQueue.chosen_cover_provider = covers;
+    nextQueue.set_cover_provider(covers);
 
     // Populate it (example)
     // Now with concurrent batch loading: it will extract metadata in parallel 

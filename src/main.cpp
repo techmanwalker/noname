@@ -45,7 +45,7 @@ main (int argc, char ** argv)
 
     // load the same cover provider in all relevant places
     ll.chosen_cover_provider = covers;
-    pq.chosen_cover_provider = covers;
+    pq.set_cover_provider(covers);
     sl.chosen_cover_provider = covers;
 
     // trigger first refresh

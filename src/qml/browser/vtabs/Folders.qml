@@ -5,7 +5,7 @@ import Player.Browser
 import Player.Listings
 import Player.Primitives
 import Player.LocalLibrary
-import Player.PlayerPresenter
+import Player.PlayQueue
 
 ColumnLayout {
     id: root

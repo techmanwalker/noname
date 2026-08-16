@@ -69,12 +69,13 @@ module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
 module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
+module_sources(PLAYQUEUE_SOURCES        "src/presenters/context/playqueue/*.cpp")
 module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
 module_sources(LOCALLIBRARY_SOURCES     "src/presenters/context/locallibrary/*.cpp")
 module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp" "src/audioengine/*.hpp")
 module_sources(COVERS_SOURCES           "src/covers/*.cpp")
 module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
-module_sources(MEMORY_SOURCES           "src/memory/*.cpp")
+module_sources(CONFIGURATION_SOURCES    "src/configuration/*.cpp")
 module_sources(DISKIO_SOURCES           "src/diskio/*.cpp")
 module_sources(SONGFACTORY_SOURCES      "src/songfactory/*.cpp")
 
@@ -87,9 +88,25 @@ add_library(mediatypes STATIC
 target_link_libraries(mediatypes
     PUBLIC
         Qt6::Core
-    
+
     PRIVATE
-        memory
+        diskio
+)
+
+target_include_directories(mediatypes
+    PUBLIC
+        src/presenters/formatters
+        src/presenters/mediatypes
+)
+
+# List model role compiler - easy declaration of qml roles with header only files
+
+add_library(rolecompiler INTERFACE)
+
+target_include_directories(rolecompiler
+    INTERFACE 
+        src/presenters/rolecompiler
+
 )
 
 # Media sequences - playlists, queues and shorcuts representations
@@ -105,18 +122,13 @@ target_link_libraries(mediasequences
         
     PRIVATE
         Qt6::Core
+
+        rolecompiler
 )
 
 target_include_directories(mediasequences
     PUBLIC
         src/presenters/sequences # to make qmltyperegistrar happy
-)
-
-target_include_directories(mediatypes
-    PUBLIC
-        src/presenters/formatters
-        src/presenters/mediatypes
-        src/presenters/rolecompiler
 )
 
 # The Playback controller
@@ -125,9 +137,10 @@ add_library(audioengine STATIC
 )
 
 target_link_libraries(audioengine
-    PRIVATE
-        mediatypes
+    PUBLIC 
+        mediatypes # legibly returns its track information
 
+    PRIVATE
         SoundIo::SoundIo
         FFmpeg::avcodec
         FFmpeg::avformat
@@ -149,11 +162,13 @@ add_library(covers STATIC
 target_link_libraries(covers
     PUBLIC
         Qt6::Quick
-        mediatypes
-        memory
 
     PRIVATE
         Qt6::Gui
+
+        diskio
+        mediatypes
+        configuration
 
         libjxl::libjxl
 )
@@ -184,7 +199,8 @@ target_include_directories(songfactory
         src/songfactory
 )
 
-# The debugging tools
+# The debugging tools - mostly type serialization
+
 add_library(debugtools STATIC
     ${DEBUGTOOLS_SOURCES}
 )
@@ -200,18 +216,20 @@ target_include_directories(debugtools
 )
 
 # Configuration, caching and all data the player needs to remember
-add_library(memory STATIC
-    ${MEMORY_SOURCES}
+add_library(configuration STATIC
+    ${CONFIGURATION_SOURCES}
 )
 
-target_link_libraries(memory
+target_link_libraries(configuration
     PRIVATE
         Qt6::Core
+
+        diskio
 )
 
-target_include_directories(memory
+target_include_directories(configuration
     PUBLIC
-        src/memory
+        src/configuration
 )
 
 # Basic misc disk operations
@@ -274,8 +292,6 @@ target_link_libraries(uiprimitives
         Qt6::Core
         Qt6::Quick
         Qt6::Qml
-
-        mediatypes
 )
 
 target_include_directories(uiprimitives
@@ -312,24 +328,45 @@ qt_add_qml_module(playerpresenter
 
 target_link_libraries(playerpresenter
     PRIVATE
-        audioengine
-        covers
+        audioengine # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
         lyricsmanifest
-        mediasequences
-        memory # load last volume from its save file
-        songfactory # qml can drop songs to the play queue graphically, needs to read them
-
-        # from syrinc
-        lrc-core
-        audio
+        configuration # load last volume from its save file
+        mediatypes
+        playqueue
 )
 
 target_include_directories(playerpresenter
     PUBLIC
         src/presenters/context/playerpresenter
+)
 
+# What has played, what is playing and what is to be played
+
+qt_add_qml_module(playqueue
+    STATIC
+    URI Player.PlayQueue
+    SOURCES
+        ${PLAYQUEUE_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayQueue"
+)
+
+target_link_libraries(playqueue
     PRIVATE
-        src/presenters/sequences
+        audioengine # coordinates the progression and flow of the batch that's currently playing, controls what will play
+
+        # since the songfactory/covers separation, every song_factory caller must register the cover on their own; there
+        # will always be a dependency to a cover provider as this is a mandatory requirement for QQuickAsyncImageProvider
+        # bidirectional hash<->source conversion... unless something like base64 or other non destructive encoder/decoder
+        # is used in the future to get rid of this
+        covers
+
+        mediasequences
+        songfactory # qml can drop songs to the play queue graphically, needs to read them
+)
+
+target_include_directories(playqueue
+    PUBLIC
+        src/presenters/context/playqueue
 )
 
 # Lyrics manifest - access the lyrics from your playing song anywhere
@@ -345,7 +382,8 @@ qt_add_qml_module(lyricsmanifest
 target_link_libraries(lyricsmanifest
     PRIVATE
         Qt6::Core
-        mediatypes
+
+        rolecompiler
 
         # from syrinc
         lrc-core
@@ -393,7 +431,6 @@ target_link_libraries(browser
     PUBLIC
         listings
         locallibrary
-        mediasequences
         uiprimitives
 
     PRIVATE
@@ -418,9 +455,9 @@ target_link_libraries (locallibrary
     PRIVATE
         covers
         diskio
-        mediatypes
+        configuration
         songfactory # local library interface, needs to load the songs metadata
-        memory
+        rolecompiler
 
         rapidfuzz::rapidfuzz
 )
@@ -450,7 +487,7 @@ target_link_libraries(${PROJECT_NAME}
         covers # every executable that features its own cover storage will feature this
         locallibrary # your entire collection
         mainwindow # window decorations and such
-        playerpresenter
+        playqueue
 
         songfactory # MUST be able to shut down its thread pool if something goes wrong
 )
@@ -472,7 +509,7 @@ target_link_libraries(mainwindow
         Qt6::Quick
         Qt6::Qml
 
-        memory
+        configuration
 )
 
 target_include_directories(mainwindow
@@ -501,8 +538,9 @@ if(NONAME_BUILD_TESTS)
             fullscreenplayer
             mediasequences
             mediatypes
-            memory
+            configuration
             songfactory
+            playqueue
     )
 
     target_include_directories(mockupv2
@@ -550,7 +588,7 @@ if(NONAME_BUILD_TESTS)
             locallibrary
             mediatypes
             mediasequences
-            memory
+            configuration
     )
 
     target_include_directories(refreshlisttest

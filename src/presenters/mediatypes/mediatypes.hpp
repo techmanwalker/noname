@@ -34,7 +34,6 @@ struct CoverRef {
 
     private:
         QUrl m_source;
-        mutable QString m_hash;
 
         // a square size of 0 means full resolution
         size_t m_square_size;

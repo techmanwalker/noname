@@ -1,7 +1,7 @@
 #pragma once
 
+// mediatypes.hpp must stay since Types::Any is exposed through public method signatures
 #include "mediatypes.hpp"
-#include "rolecompiler.hpp"
 
 #include <QAbstractItemModel>
 #include <QFuture>
@@ -9,13 +9,14 @@
 #include <QReadWriteLock>
 
 #include <QtQmlIntegration/qqmlintegration.h>
- 
+
 #include <functional>
-#include <qabstractitemmodel.h>
+#include <memory>
 #include <rapidfuzz/fuzz.hpp>
 
-
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
+
+class AbstractMediaSequencePrivate;
 
 /**
     @brief List of any form of playable media, enumerated in the Types:: namespace. 
@@ -30,12 +31,10 @@ class AbstractMediaSequence : public QAbstractListModel {
 
     Q_PROPERTY (qsizetype count READ rowCount NOTIFY countChanged)
 
-private:
-    CompiledRoleSet<Types::Any> m_roles;
-    QList<Types::Any>           m_items;
-
 public:
-    explicit AbstractMediaSequence(QObject *parent, std::vector<std::pair<QByteArray, RoleExtractor<Types::Any>>> role_defs);
+    // rolecompiler.hpp dropped by utilizing std::function directly
+    explicit AbstractMediaSequence(QObject *parent, std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> role_defs);
+    ~AbstractMediaSequence() override;
 
     int                    rowCount(const QModelIndex &parent = QModelIndex())        const override;
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -43,19 +42,19 @@ public:
 
     std::optional<int>     roleNumber(const QByteArray &role) const;
 
-    const decltype(m_items) & items() const;
+    const QList<Types::Any> & items() const;
 
     // fetch sources of any input list
     template <typename Container>
     requires
         std::ranges::forward_range<Container> // Any type of list
-    &&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by m_items
+    &&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by internal list
     static QStringList sources (const Container &items);
 
-    // fetch the source of every element on m_items
-    QStringList sources () const; // return the source or path component of all items
+    // fetch the source of every element
+    QStringList sources () const;
 
-    // fetch the source of every element convertible to media_type in m_items
+    // fetch the source of every element convertible to media_type
     template <typename media_type>
     QStringList sources() const;
 
@@ -100,20 +99,11 @@ protected:
 
     template <typename Container>
     requires
-        std::ranges::forward_range<Container> // Any type of list
-    &&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by m_items
+        std::ranges::forward_range<Container>
+    &&  std::convertible_to<typename Container::value_type, Types::Any>
     QList<QPersistentModelIndex>
     batch_append(const Container &items);
 
-    /*  Append items one at a time as each future resolves, instead of waiting for the whole
-    batch — for progressive/incremental loading (e.g. song_factory emitting results as
-    they're produced, rather than all at once). Arrival order doesn't matter: consumers
-    that care about order already re-sort on read (see container_roles' "songs" role).
-    A failed individual future is logged and skipped, not fatal to the rest of the batch.
-    Returns a future that resolves once every item has been attempted.
-    Types::Album/Playlist progressive semantics (merging into an existing entry rather
-    than treating each arrival as a new row) are deliberately NOT handled here — this
-    stays type-agnostic, same as the rest of AbstractMediaSequence. */
     QFuture<void> progressive_batch_append (QList<QFuture<Types::Any>> futures);
 
     // remove items in batch using their persistent indices
@@ -123,10 +113,17 @@ protected:
     std::optional<size_t> __row_next_to_unlocked (const QPersistentModelIndex &idx) const;
     QPersistentModelIndex __index_next_to_unlocked (const QPersistentModelIndex &idx) const;
 
-    mutable QReadWriteLock m_lock;
-    
     void remove(size_t index);
     void clear();
+
+private:
+    std::unique_ptr<AbstractMediaSequencePrivate> m_d;
+
+    // Private reference bypasses to permit abstractmediasequence.tpp logic
+    // avoiding the dependency on complete types from the Pimpl design.
+    QList<Types::Any>& _items();
+    const QList<Types::Any>& _items() const;
+    QReadWriteLock& _lock() const;
 };
 
 #include "abstractmediasequence.tpp"
