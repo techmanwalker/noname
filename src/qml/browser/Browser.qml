@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Player.App
 import Player.Browser
 import Player.Fullscreen
-
+import Player.Primitives
 
 Item {
     id: root
@@ -118,6 +118,19 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
 
                 onTextEdited: activeView.currentIndex = vtabs.tracksIndex
+            }
+
+            ResizableButton {
+                text: qsTr("Clear")
+                onClicked: {
+                    searchBar.text = ""
+                    searchBar.textEdited()
+                }
+
+                leftPadding: searchBar.leftPadding / 2
+                rightPadding: searchBar.rightPadding / 2
+
+                Layout.preferredHeight: searchBar.height
             }
 
             WindowDecorations {
