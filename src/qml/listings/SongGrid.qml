@@ -20,6 +20,8 @@ GridView {
     property var selectedSources: []
     property var additionalMenuActions: []
 
+    clip: true
+
     SongContextMenu {
         id: songContextMenu
         selectedUris: root.selectedSources

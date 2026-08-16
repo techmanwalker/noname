@@ -16,6 +16,8 @@ ListView {
 
     implicitHeight: contentItem.childrenRect.height
 
+    clip: true
+
     signal songClicked (var song)
 
     // selection

@@ -63,6 +63,8 @@ ListView {
 
         showSeparator: true
 
+        clip: true
+
         selected: root.selectedSources.includes(model.source)
 
         onClicked: {

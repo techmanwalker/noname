@@ -69,8 +69,6 @@ ColumnLayout {
 
         songCoverWidth: 144
 
-        clip: true
-
         reuseItems: true
 
         onSongClicked: (song) => {

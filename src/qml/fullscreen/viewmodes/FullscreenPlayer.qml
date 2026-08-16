@@ -214,7 +214,6 @@ Item {
                     songCoverWidth: root.songCoverWidth
                     songInnerSpacing: root.songInnerSpacing
 
-                    clip: true
                     reuseItems: true // tons of songs moving
 
                     onSongClicked: (song) => {
