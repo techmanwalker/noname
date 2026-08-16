@@ -1,76 +1,84 @@
 #include "abstractmediasequence.hpp"
+#include "rolecompiler.hpp" // Isolated completely to the implementation
 #include "mediatypes.hpp"
-#include <algorithm>
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
-
 #include <rapidfuzz/fuzz.hpp>
 #include <variant>
 
 Q_LOGGING_CATEGORY(l_mediasequences, "noname.mediasequences")
 
-// Default role definitions for any AbstractMediaSequence
+class AbstractMediaSequencePrivate {
+public:
+    AbstractMediaSequencePrivate(const std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> &role_defs)
+        : m_roles(role_defs) {}
 
-/// Constructs the model and compiles the given role definitions into sequential Qt user roles.
+    CompiledRoleSet<Types::Any> m_roles;
+    QList<Types::Any> m_items;
+    mutable QReadWriteLock m_lock;
+};
+
 AbstractMediaSequence::AbstractMediaSequence(
     QObject *parent,
-    RoleDefinitions<Types::Any> role_defs
+    std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> role_defs
 )
     : QAbstractListModel(parent),
-      m_roles(role_defs)
+      m_d(std::make_unique<AbstractMediaSequencePrivate>(role_defs))
 {
 }
 
-// Count items (intended for QML)
+// Ensure the standard unique_ptr destructor handles incomplete types correctly
+AbstractMediaSequence::~AbstractMediaSequence() = default;
+
+// Accessors for .tpp file logic
+QList<Types::Any>& AbstractMediaSequence::_items() { return m_d->m_items; }
+const QList<Types::Any>& AbstractMediaSequence::_items() const { return m_d->m_items; }
+QReadWriteLock& AbstractMediaSequence::_lock() const { return m_d->m_lock; }
+
 int
 AbstractMediaSequence::rowCount(
     const QModelIndex &parent
 ) const
 {
     if (parent.isValid()) return 0;
-    
-    return static_cast<int>(m_items.size());
+    return static_cast<int>(m_d->m_items.size());
 }
 
-// Count items (intended for C++)
 int
 AbstractMediaSequence::itemCount() const
 {
-    return static_cast<int>(m_items.size());
+    return static_cast<int>(m_d->m_items.size());
 }
 
-/// Retrieves the value of a specific role for the item at the given index
 QVariant
 AbstractMediaSequence::data(
     const QModelIndex &index,
     int role
 ) const
 {
-    QReadLocker locker (&m_lock);
+    QReadLocker locker (&m_d->m_lock);
 
     if (!index.isValid() || index.row() < 0
-        || index.row() >= static_cast<int>(m_items.size()))
+        || index.row() >= static_cast<int>(m_d->m_items.size()))
         return {};
 
-    return m_roles.extract(role, m_items[index.row()]);
+    return m_d->m_roles.extract(role, m_d->m_items[index.row()]);
 }
 
-/// Returns the role name map, allowing QML to resolve properties by their string names.
 QHash<int, QByteArray>
 AbstractMediaSequence::roleNames() const
 {
-    return m_roles.roleNames();
+    return m_d->m_roles.roleNames();
 }
 
-/// Reverse of roleNames(): resolves a role's string name back to its compiled int, if registered.
 std::optional<int>
 AbstractMediaSequence::roleNumber(const QByteArray &role) const
 {
-    return m_roles.roleNumber(role);
+    return m_d->m_roles.roleNumber(role);
 }
 
-/// Reads a single role for a given row, for callers outside a delegate context.
 QVariant
 AbstractMediaSequence::readRole(qsizetype row, const QByteArray &role) const
 {
@@ -83,26 +91,20 @@ AbstractMediaSequence::readRole(qsizetype row, const QByteArray &role) const
 }
 
 QPersistentModelIndex
-AbstractMediaSequence::append(
-    const Types::Any &item
-)
+AbstractMediaSequence::append(const Types::Any &item)
 {
-    // delegate and return its new persistent index
     return batch_append(QList<Types::Any> {item}).at(0);
 }
 
 void
-AbstractMediaSequence::remove(
-    size_t index
-)
+AbstractMediaSequence::remove(size_t index)
 {
-    // won't map to batch remove to avoid overhead
-    if (index >= static_cast<int>(m_items.size())) return;
+    if (index >= static_cast<int>(m_d->m_items.size())) return;
     beginRemoveRows({}, index, index);
 
     {
-        QWriteLocker locker (&m_lock);
-        m_items.erase(m_items.begin() + index);
+        QWriteLocker locker (&m_d->m_lock);
+        m_d->m_items.erase(m_d->m_items.begin() + index);
     }
 
     endRemoveRows();
@@ -119,8 +121,6 @@ AbstractMediaSequence::progressive_batch_append (QList<QFuture<Types::Any>> futu
     for (QFuture<Types::Any> &pending : futures) {
         completion_signals.append(
             pending.then(this, [this](const Types::Any &result) {
-                    // append() -> batch_append(Container) already filters empty-source
-                    // Songs, so nothing extra needed here.
                     append(result);
                 })
                 .onFailed(this, [this] {
@@ -143,45 +143,34 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
     for (const QPersistentModelIndex &item : items) {
         std::optional<size_t> prolly_exists = row_pointed_to(item);
         if (!prolly_exists.has_value()) continue;
-
         indices.push_back(prolly_exists.value());
     }
 
     if (indices.empty()) return;
 
-    // 1. Sort descending so we can safely process chunks from the end of the container forward
     std::ranges::sort(indices, std::greater<size_t>());
-
-    // 2. Linear scan to group and process contiguous intervals
     
     size_t i = 0;
     while (i < indices.size()) {
-        size_t last_idx = indices[i];  // The highest index in the current contiguous chunk
-        size_t first_idx = last_idx;   // Will track the lowest index in this chunk
+        size_t last_idx = indices[i];
+        size_t first_idx = last_idx;
 
-        // Look ahead to find where the contiguous block ends
         size_t j = i + 1;
         while (j < indices.size() && indices[j] == first_idx - 1) {
             first_idx = indices[j];
             j++;
         }
 
-        // 3. Notify Qt about this specific contiguous sub-range
         beginRemoveRows(QModelIndex(), static_cast<int>(first_idx), static_cast<int>(last_idx));
         
         {
-            QWriteLocker locker (&m_lock);
-            /*  4. Erase the items from the underlying container for this chunk
-                Since indices[i] through indices[j-1] are sorted descending, 
-                erasing them in this order keeps the remaining indices valid. */
+            QWriteLocker locker (&m_d->m_lock);
             for (size_t k = i; k < j; ++k) {
-                m_items.removeAt(static_cast<int>(indices[k]));
+                m_d->m_items.removeAt(static_cast<int>(indices[k]));
             }
         }
 
         endRemoveRows();
-
-        // Advance to the next non-contiguous chunk
         i = j;
     }
 
@@ -192,59 +181,51 @@ void
 AbstractMediaSequence::clear()
 {
     beginResetModel();
-
     {
-        QWriteLocker locker (&m_lock);
-        m_items.clear();
+        QWriteLocker locker (&m_d->m_lock);
+        m_d->m_items.clear();
     }
-
     endResetModel();
-
     emit countChanged();
 }
 
 std::optional<std::reference_wrapper<Types::Any>>
-AbstractMediaSequence::item_at(
-    size_t index
-)
+AbstractMediaSequence::item_at(size_t index)
 {
-    QReadLocker locker (&m_lock);
-    if (index >= static_cast<int>(m_items.size())) {
+    QReadLocker locker (&m_d->m_lock);
+    if (index >= static_cast<int>(m_d->m_items.size())) {
         return std::nullopt;
     };
 
-    return std::ref(m_items[index]);
+    return std::ref(m_d->m_items[index]);
 }
 
-const decltype(AbstractMediaSequence::m_items) &
+const QList<Types::Any> &
 AbstractMediaSequence::items() const
 {
-    QReadLocker locker (&m_lock);
-    return m_items;
+    QReadLocker locker (&m_d->m_lock);
+    return m_d->m_items;
 }
 
-// read write access to idx!
 std::optional<std::reference_wrapper<Types::Any>>
 AbstractMediaSequence::pointed_to(const QPersistentModelIndex &idx)
 {
-    QReadLocker locker (&m_lock);
+    QReadLocker locker (&m_d->m_lock);
 
     const std::optional<size_t> row = __row_pointed_to_unlocked(idx);
 
     if (!row.has_value()) return std::nullopt;
 
-    return std::ref(m_items[row.value()]);
+    return std::ref(m_d->m_items[row.value()]);
 }
 
-// direct reference to the next item
 std::optional<std::reference_wrapper<Types::Any>>
 AbstractMediaSequence::next_to(const QPersistentModelIndex &idx)
 {
-    QReadLocker locker (&m_lock);
+    QReadLocker locker (&m_d->m_lock);
 
     const QPersistentModelIndex next_idx = __index_next_to_unlocked(idx);
 
-    // __index_next_to_unlocked would make it invalid anyway but I prefer saving cpu cycles here
     if (!next_idx.isValid()) return std::nullopt;
 
     return pointed_to(next_idx);
@@ -253,7 +234,7 @@ AbstractMediaSequence::next_to(const QPersistentModelIndex &idx)
 std::optional<size_t>
 AbstractMediaSequence::row_pointed_to(const QPersistentModelIndex &idx) const
 {
-    QReadLocker locker (&m_lock);
+    QReadLocker locker (&m_d->m_lock);
 
     const std::optional<size_t> row = __row_pointed_to_unlocked(idx);
 
@@ -265,16 +246,14 @@ AbstractMediaSequence::row_pointed_to(const QPersistentModelIndex &idx) const
 QPersistentModelIndex 
 AbstractMediaSequence::index_next_to (const QPersistentModelIndex &idx) const
 {
-    // simple read guard
-    QReadLocker locker (&m_lock);
-
+    QReadLocker locker (&m_d->m_lock);
     return __index_next_to_unlocked(idx);
 }
 
 std::optional<size_t>
 AbstractMediaSequence::row_next_to(const QPersistentModelIndex &idx) const
 {
-    QReadLocker locker (&m_lock);
+    QReadLocker locker (&m_d->m_lock);
 
     const std::optional<size_t> next_row = __row_next_to_unlocked(idx);
 
@@ -291,7 +270,7 @@ AbstractMediaSequence::__row_pointed_to_unlocked(const QPersistentModelIndex &id
     }
 
     const int row = idx.row();
-    if (row < 0 || row >= static_cast<int>(m_items.size())) {
+    if (row < 0 || row >= static_cast<int>(m_d->m_items.size())) {
         return std::nullopt;
     }
 
@@ -307,8 +286,7 @@ AbstractMediaSequence::__row_next_to_unlocked(const QPersistentModelIndex &idx) 
 
     const int row = idx.row() + 1;
 
-    // if the row net to idx was -1, that was wrong
-    if (row < 1 || row >= static_cast<int>(m_items.size())) {
+    if (row < 1 || row >= static_cast<int>(m_d->m_items.size())) {
         return std::nullopt;
     }
 
@@ -332,16 +310,14 @@ AbstractMediaSequence::__index_next_to_unlocked (const QPersistentModelIndex &id
 QStringList
 AbstractMediaSequence::sources () const
 {
-    return sources<decltype(m_items)>(m_items);
+    return sources<QList<Types::Any>>(m_d->m_items);
 }
 
 std::string 
 AbstractMediaSequence::normalize_string_for_search (const QString &str) 
 {
-    // Decompose string into base characters and separate diacritic marks
     QString normalized = str.normalized(QString::NormalizationForm_KD).toLower();
     
-    // Efficiently strip out all non-spacing marks (the diacritics)
     normalized.removeIf([](QChar c) {
         return c.category() == QChar::Mark_NonSpacing;
     });
@@ -351,52 +327,36 @@ AbstractMediaSequence::normalize_string_for_search (const QString &str)
 
 QList<QPersistentModelIndex>
 AbstractMediaSequence::search_by_title (
-    const QString &keywords, // search tokens, QString has wider locale support
-    double score_thresh // out of 100
+    const QString &keywords,
+    double score_thresh
 )
 {
+    QReadLocker locker (&m_d->m_lock);
 
-    // extracted from rapidfuzz README
-    QReadLocker locker (&m_lock);
-
-    // prepare to be ranked
-    using rankable_item = std::pair<
-            size_t, // list item index
-            double // rapidfuzz score
-        >;
-
-    // rank result from scorer
-    using rankable_list = std::vector<
-        rankable_item
-    >;
+    using rankable_item = std::pair<size_t, double>;
+    using rankable_list = std::vector<rankable_item>;
     
     rankable_list rankable;
 
     const std::string clean_keywords = normalize_string_for_search(keywords);
     rapidfuzz::fuzz::CachedPartialRatio<char> scorer (clean_keywords.c_str());
 
-    for (size_t i = 0; i < m_items.size(); ++i) {
+    for (size_t i = 0; i < m_d->m_items.size(); ++i) {
 
-        // get the item title or name to compare
         const std::string clean_title = std::visit([](const auto& item) -> std::string {
             return normalize_string_for_search(item.title);
-        }, m_items.at(i));
+        }, m_d->m_items.at(i));
 
-        // Apply the pointer-to-member operator (->*) to evaluate the target field
         double score = scorer.similarity(clean_title.c_str(), score_thresh);
 
         qCDebug(l_mediasequences) << "Searching for \"" << clean_keywords << "\", matching against " << clean_title
             << " scores " << score;
 
         if (score >= score_thresh) {
-            rankable.emplace_back( // here
-                i,
-                score
-            );
+            rankable.emplace_back(i, score);
         }
     }
 
-    // rank by scores in descending order
     std::ranges::sort (
         rankable, std::greater<>(), &rankable_item::second
     );
@@ -405,7 +365,6 @@ AbstractMediaSequence::search_by_title (
     ranked.reserve(rankable.size());
 
     for (const rankable_item &already_ranked : rankable) {
-        // create persistent indices
         ranked.emplace_back(
             index(static_cast<int>(already_ranked.first))
         );

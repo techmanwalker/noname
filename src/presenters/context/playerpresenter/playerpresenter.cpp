@@ -213,22 +213,14 @@ PlayerPresenter::handleTrackChanged()
     emit mediaLoadedChanged();
 
     // read lyrics from audio file and update
-    lm.repopulate_with_lyrics_for_file(playing.current_track().source.toLocalFile())
-        .then([this] () {
-                std::vector<std::string> debug_lrc_lines;
+    lm.repopulate_with_lyrics_for_file(playing.current_track().source.toLocalFile()); /*
+        .then([this] (std::vector<std::string> lrc_lines) {
 
-                // serialize the logical lyrics back to .lrc only to print it back
-                for (lyric single_timestamp_line : lm.current_lines()) {
-                    debug_lrc_lines.emplace_back(
-                        "[" + single_timestamp_line.ts.as_string() + "] " 
-                        + single_timestamp_line.text.toStdString());
-                };
-
-                /*
+                // uncomment this to print the lyrics model contents
                 debug::print(l_playerpresenter(), "Lyrics in the LyricManifest:");
-                debug::print(l_playerpresenter(), debug::serialize(debug_lrc_lines));*/
+                debug::print(l_playerpresenter(), debug::serialize(lrc_lines));
                 
-            });
+            });*/
 }
 
 void

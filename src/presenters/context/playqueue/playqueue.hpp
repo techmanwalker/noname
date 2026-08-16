@@ -1,22 +1,23 @@
 #pragma once
 
-#include "playlistsequence.hpp"
+#include "mediatypes.hpp"
 
+#include <QIdentityProxyModel>
+#include <QFuture>
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <memory>
 
-class audio_engine;
+class QQmlEngine;
+class QJSEngine;
 
 namespace covers::live {
     class cover_provider;
 }
 
-// NOTE: use this as reference to implement singleton models inherited from non-singletons.
-
-class QQmlEngine;
-class QJSEngine;
+struct PlayQueuePrivate;
 
 // Media that will play up next.
-class PlayQueue : public PlaylistSequence {
+class PlayQueue : public QIdentityProxyModel {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
@@ -32,16 +33,21 @@ public:
     static PlayQueue &instance();
     static PlayQueue *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
+    // Required in the header for std::unique_ptr to destroy the incomplete type
+    ~PlayQueue() override;
+
     // getters
     QPersistentModelIndex playhead();
 
     // all items
     QList<Types::Song> items() const;
 
+    int itemCount () const;
+
     // controls
-    void switch_to (const Types::Song &song, bool play_afterwards = false); // clean the queue completely and repopulate with this song
-    bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false); // for lvalues
-    void qml_switch_to (const QModelIndex &index); // proxy for qml that auto plays the selection afterwards
+    void switch_to (const Types::Song &song, bool play_afterwards = false);
+    bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false);
+    void qml_switch_to (const QModelIndex &index);
 
     Q_INVOKABLE void switch_to (const QUrl &source);
 
@@ -50,19 +56,17 @@ public:
 
     Q_INVOKABLE void clear ();
 
-    // to drag and drop lists of songs on the qml gui
     Q_INVOKABLE QFuture<void> batch_append (const QList<QUrl> &sources);
 
-    /// clear and repopulate the play queue in one step
     void respawn_queue (const QList<Types::Song> &new_queue);
-    void respawn_queue (const PlaylistSequence &new_queue);
     Q_INVOKABLE void respawn_queue (const QStringList &sources);
 
-    // where are the covers for drag and drop appends saved?
-    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
+    // Replaces the public property to keep the provider opaque
+    void set_cover_provider(std::shared_ptr<covers::live::cover_provider> provider);
 
 signals:
     void trackChanged ();
+    void countChanged ();
 
 private slots:
     void preload_next_track_whenever_possible ();
@@ -70,10 +74,7 @@ private slots:
     void handle_track_changed ();
 
 private:
-    // private constructor to disallow external creations
     explicit PlayQueue(QObject *parent = nullptr);
 
-    // the playhead is passively calculated
-    audio_engine &playing;
-
+    std::unique_ptr<PlayQueuePrivate> m_d;
 };

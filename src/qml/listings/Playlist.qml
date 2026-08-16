@@ -5,7 +5,7 @@ import QtQuick.Controls
 
 import Player.Listings
 import Player.Primitives
-import Player.PlayerPresenter
+import Player.PlayQueue
 
 ListView {
     id: root

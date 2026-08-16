@@ -2,12 +2,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
-import Player.App
 import Player.Fullscreen
 import Player.Listings
-import Player.LyricsManifest
-import Player.LocalLibrary
 import Player.PlayerPresenter
+import Player.PlayQueue
 import Player.Primitives
 
 Item {

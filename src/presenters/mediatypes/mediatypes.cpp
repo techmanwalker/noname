@@ -59,15 +59,11 @@ CoverRef::CoverRef (const QUrl &source_media_path, size_t square_size)
 QString
 CoverRef::hash () const
 {
-    if (!m_hash.isEmpty()) return m_hash;
-
     const QByteArray key = m_source.toLocalFile().toUtf8()
                           + ':' + QByteArray::number(qulonglong(m_square_size));
 
-    m_hash = QString::fromLatin1(
+    return QString::fromLatin1(
         QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
-
-    return m_hash;
 }
 
 QUrl
