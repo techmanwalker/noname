@@ -2,6 +2,8 @@
 #include "coverstorage.hpp"
 #include "mediatypes.hpp"
 #include "thumbnails.hpp"
+#include <qimage.h>
+#include <qmutex.h>
 
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
@@ -56,22 +58,13 @@ cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, b
 
     const qsizetype cost = img.sizeInBytes();
 
-    // acquire atomic lock (fast loop on cpu, no syscalls)
-    while (m_spin_lock.test_and_set(std::memory_order_acquire)) {
-        // very short active wait
-    }
-
-    // QCache takes ownership of the pointer. On failure (cost > maxCost,
-    // i.e. a single cover bigger than the whole budget) it deletes it for
-    // us — no manual cleanup needed either way.
-    const bool cached = m_cache.insert(ref.hash(), new QImage(img), cost);
-
-    // free lock
-    m_spin_lock.clear(std::memory_order_release);
-
-    if (!cached) {
-        qCWarning(l_coverprovider) << "Cover for" << ref.hash() << "exceeds the cache's max cost; not kept in memory.";
-    }
+    {
+        QMutexLocker locker(&m_cache_lock);
+        const bool cached = m_cache.insert(ref.hash(), new QImage(img), cost);
+        if (!cached) {
+            qCWarning(l_coverprovider) << "Cover for" << ref.hash() << "exceeds the cache's max cost; not kept in memory.";
+        }
+    } // lock safely released
 
     if (!ref.thumbnail_file_exists() && save_to_disk_cache) {
 
@@ -117,20 +110,20 @@ cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
     Q_UNUSED(requestedSize);
 
     // Get from hot cache first
+    QImage img = QImage();
 
-    // 'id' contains the fragment that goes after "image://covers/"
-    // 'id' must correspond to a hash printed by song_factory::thumbnail_hash_for
-    while (m_spin_lock.test_and_set(std::memory_order_acquire)) {
-        // very short active wait
+    {
+        QMutexLocker locker (&m_cache_lock);
+
+        QImage *cached_ptr = m_cache.object(ref.hash());
+        // Copy while still locked: QImage is implicitly shared, so this copy is
+        // just a refcount bump, but it's what keeps the pixel buffer alive if
+        // another thread's insert() evicts (deletes) this entry right after we unlock.
+
+        if (cached_ptr) {
+            img = *cached_ptr;
+        }
     }
-
-    QImage *cached_ptr = m_cache.object(ref.hash());
-    // Copy while still locked: QImage is implicitly shared, so this copy is
-    // just a refcount bump, but it's what keeps the pixel buffer alive if
-    // another thread's insert() evicts (deletes) this entry right after we unlock.
-    QImage img = cached_ptr ? *cached_ptr : QImage();
-
-    m_spin_lock.clear(std::memory_order_release);
 
     if (!img.isNull()) {
         return img;
@@ -186,15 +179,10 @@ cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
 bool
 cover_storage::is_cached (const CoverRef &ref)
 {
-    while (m_spin_lock.test_and_set(std::memory_order_acquire)) {
-        // very short active wait
+    {
+        QMutexLocker locker (&m_cache_lock);
+        return m_cache.contains(ref.hash());
     }
-
-    const bool present = m_cache.contains(ref.hash());
-
-    m_spin_lock.clear(std::memory_order_release);
-
-    return present;
 }
 
 }

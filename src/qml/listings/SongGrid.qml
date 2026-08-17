@@ -22,6 +22,10 @@ GridView {
 
     clip: true
 
+    // Reduce frame drops while scrolling
+    displayMarginBeginning: 1000
+    displayMarginEnd: 1000
+
     SongContextMenu {
         id: songContextMenu
         selectedUris: root.selectedSources

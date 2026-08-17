@@ -2,6 +2,7 @@
 
 #include <QCache>
 #include <QLoggingCategory>
+#include <QMutex>
 #include <QQuickAsyncImageProvider>
 #include <QReadWriteLock>
 #include <QThreadPool>
@@ -47,7 +48,7 @@ private:
     /*  guards ALL cache access, not just insertion — QCache can evict (delete)
         an entry from any thread during insert(), so unlocked reads are no longer
         safe like they were with QHash */
-    std::atomic_flag m_spin_lock = ATOMIC_FLAG_INIT; 
+    QMutex m_cache_lock;
 
     QList<CoverRef> m_refs;
     QReadWriteLock m_sources_lock; // separate lock from m_spin_lock: writes come in bursts during a scan, reads can come from many concurrent decode jobs at once
