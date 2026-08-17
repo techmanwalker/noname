@@ -1,2 +1,4 @@
 .cache
+.qtcreator
 build/
+*.qtd
