@@ -1,9 +1,8 @@
 #include "coverextract.hpp"
 #include "coverstorage.hpp"
 #include "mediatypes.hpp"
+#include "pixelformats.hpp"
 #include "thumbnails.hpp"
-#include <qimage.h>
-#include <qmutex.h>
 
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
@@ -17,7 +16,7 @@ cover_storage::cover_storage ()
 {
     /*  Budget: 256 thumbnails' worth of a 256x256 RGBA8888 image (~64 MiB).
         or a little list when full res covers take up space for ~1 MiB each one. */
-    static const qsizetype thumbnail_cost = QImage(256, 256, QImage::Format_RGBA8888).sizeInBytes();
+    static const qsizetype thumbnail_cost = QImage(256, 256, pixelformat_qimage).sizeInBytes();
     m_cache.setMaxCost(96 * thumbnail_cost);
 
     // all response calls here

@@ -1,4 +1,5 @@
 #include "mediatypes.hpp"
+#include "pixelformats.hpp"
 #include "standardpaths.hpp"
 #include "thumbnails.hpp"
 
@@ -43,9 +44,9 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
         return false;
     }
 
-    const QImage rgba = thumbnail.format() == QImage::Format_RGBA8888
+    const QImage rgba = thumbnail.format() == pixelformat_qimage
         ? thumbnail
-        : thumbnail.convertToFormat(QImage::Format_RGBA8888);
+        : thumbnail.convertToFormat(pixelformat_qimage);
 
     const int width  = rgba.width();
     const int height = rgba.height();
@@ -275,7 +276,7 @@ fetch_thumbnail (const CoverRef &ref)
     QImage image(pixels.data(),
                  int(info.xsize), int(info.ysize),
                  int(info.xsize) * 4,
-                 QImage::Format_RGBA8888);
+                 pixelformat_qimage);
 
     return image.copy();
 }

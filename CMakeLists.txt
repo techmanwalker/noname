@@ -171,6 +171,10 @@ target_link_libraries(covers
         configuration
 
         libjxl::libjxl
+
+        # ACTUALLY this uses FFmpeg for cover decoding, I'm astonished this even works without explicitly declaring
+        # though it wouldn't really surprise me if this was because FFmpeg gets resolved at link time together with
+        # songfactory...
 )
 
 target_include_directories(covers
