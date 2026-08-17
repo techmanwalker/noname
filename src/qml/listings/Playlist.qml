@@ -49,9 +49,8 @@ ListView {
 
         title:      model.title
         cover:      model.cover
-        artist:     model.artist
-        album:      model.album
-        duration:   model.duration
+        metadata:     model.printable_joint_metadata
+        duration:   model.duration_mmss
 
         coverWidth: root.songCoverWidth
 

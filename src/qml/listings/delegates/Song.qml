@@ -9,10 +9,10 @@ Item {
     property bool card: false
 
     property string title: "Untitled song"
-    property string artist: "Unknown artist"
-    property string album
+    
+    property string metadata // printable metadata, its parent decides what the second line should contain
 
-    property int duration: 0 // in milliseconds
+    property string duration // printable duration, ideally from <Song.duration_mmss>
 
     property url cover: ""
 
@@ -123,7 +123,7 @@ Item {
             Label {
                 id: secondLine
 
-                text: root.artist + ((root.hideAlbum || root.album.length == 0) ? "" : " · " + root.album)
+                text: root.metadata
 
                 width: parent.width
 
@@ -136,7 +136,7 @@ Item {
         Label {
             id: durationLabel
 
-            text: Formatters.formatDuration(root.duration)
+            text: root.duration
 
             visible: !root.hideDuration
         }

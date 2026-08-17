@@ -53,9 +53,10 @@ namespace Types {
         Q_PROPERTY(QUrl source MEMBER source)
         Q_PROPERTY(QUrl cover READ coveruri)
 
-    private:
-       
-    
+        // Pretty printers for QML
+        Q_PROPERTY(QString duration_mmss READ duration_mmss)
+        Q_PROPERTY(QString printable_joint_metadata READ printable_joint_metadata)
+
     public:
 
         QString  title;
@@ -63,6 +64,10 @@ namespace Types {
         QString  album;
         quint64  duration; // ms
         QUrl     source; // to the audio path
+
+        // ready to print in qml
+        QString duration_mmss () const;
+        QString printable_joint_metadata () const;
 
         CoverRef cover = CoverRef(source);
 

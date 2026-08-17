@@ -57,6 +57,26 @@ static const RoleDefinitions<Types::Any> container_roles = {
         }
     })},
 
+    { "duration_mmss", make_visitor([](const auto &x) -> QVariant {
+        using T = std::decay_t<decltype(x)>;
+
+        if constexpr (std::is_same_v<T, Types::Song>) {
+            return x.duration_mmss();
+        } else {
+            return QVariant{};
+        }
+    })},
+
+    { "printable_joint_metadata", make_visitor([](const auto &x) -> QVariant {
+        using T = std::decay_t<decltype(x)>;
+
+        if constexpr (std::is_same_v<T, Types::Song>) {
+            return x.printable_joint_metadata();
+        } else {
+            return QVariant{};
+        }
+    })},
+
     { "type", make_visitor([](const auto &x) {
         using T = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<T, Types::Song>)      return "Song";

@@ -7,6 +7,7 @@
 #include <QStandardPaths>
 
 #include <cstddef>
+#include <qobject.h>
 #include <qurl.h>
 
 Q_LOGGING_CATEGORY(l_mediatypes, "noname.mediatypes")
@@ -34,6 +35,23 @@ bool
 Song::is_valid () const
 {
     return !source.isEmpty();
+}
+
+QString
+Song::duration_mmss () const
+{
+    quint64 total_seconds =  duration / 1000;
+
+    quint64 mm = total_seconds / 60;
+    quint8 ss = total_seconds % 60;
+
+    return QString::number(mm) + ":" + (ss < 10 ? "0" : "") + QString::number(ss);
+}
+
+QString
+Song::printable_joint_metadata () const
+{
+    return artist + (album.length() > 0 ? " · " + album : "");
 }
 
 QUrl

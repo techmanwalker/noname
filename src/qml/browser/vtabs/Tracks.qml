@@ -34,7 +34,7 @@ ColumnLayout {
         enabled: false // gated closed until the initial refresh finishes, above
 
         function onDataChanged() {
-            if (root.searchBarItem.text == "") {
+            if (root.searchBarItem.text === "") {
                 SearchResults.performSearch("", LocalLibrary);
             }
         }
