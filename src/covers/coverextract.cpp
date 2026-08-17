@@ -1,62 +1,6 @@
+#include "coverdecode.hpp"
 #include "coverextract.hpp"
-
-#include <QMutex>
-
-extern "C" {
-#include <libavutil/pixfmt.h>
-#include <libswscale/swscale.h>
-}
-
-namespace {
-
-/*  QImage::fromData() triggers Qt's own image-format plugin loading
-    (QFactoryLoader) the first several times a given picture format is
-    decoded — a process-wide, lazily-populated registry that isn't safe to
-    race from multiple threads simultaneously. Every worker thread in this
-    pool calls this for cover art, so the decode step gets serialized —
-    same fix as before, just living here again now that Qt is doing the
-    decoding instead of FFmpeg/swscale. */
-QMutex image_decode_mutex;
-
-/* `square` must already be width == height. Returns a null QImage on
-   swscale context failure (e.g. unsupported CPU path — practically never
-   happens, but don't crash on it). */
-QImage
-lanczos_resize_square(const QImage &square, int target_size)
-{
-    const QImage src = square.convertToFormat(QImage::Format_RGBA8888);
-
-    // qCDebug (song_factory::l_songfactory()) << "Attempting to rescale a cover. Source size: " << src.width() << "x" << src.height();
-
-    SwsContext *sws = sws_getContext(
-        src.width(), src.height(), AV_PIX_FMT_RGBA,
-        target_size, target_size, AV_PIX_FMT_RGBA,
-        SWS_LANCZOS, nullptr, nullptr, nullptr);
-    if (!sws) {
-        return QImage();
-    }
-
-    QImage dst(target_size, target_size, QImage::Format_RGBA8888);
-
-    const uint8_t *src_slices[1] = { src.constBits() };
-    int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
-    uint8_t *dst_slices[1] = { dst.bits() };
-    int dst_strides[1] = { static_cast<int>(dst.bytesPerLine()) };
-
-    sws_scale(sws, src_slices, src_strides, 0, src.height(), dst_slices, dst_strides);
-    sws_freeContext(sws);
-
-    /* qCDebug (song_factory::l_songfactory()) << "Rescaling completed. Source size: " << src.width() << "x" << src.height()
-        << "; destination size: " << dst.width() << "x" << dst.height();*/
-
-    return dst;
-}
-
-} // namespace
-
-
-
-
+#include "pixelformats.hpp"
 
 namespace covers {
 namespace live {
@@ -91,22 +35,18 @@ extract_cover (TagLib::File *file, size_t crop_and_resize)
     if (data.isEmpty()) {
         return QImage();
     }
-    QImage cover;
-
-    {
-        QMutexLocker locker(&image_decode_mutex);
-        cover = QImage::fromData(reinterpret_cast<const uchar *>(data.data()), static_cast<int>(data.size()));
-    }
+    QImage cover = decode::decode_cover_ffmpeg(
+        reinterpret_cast<const uchar*>(data.data()), 
+        data.size(), 
+        pixelformat_qimage //[cite: 16]
+    );
 
     if (cover.isNull()) {
         return QImage();
     }
 
-    const int side = std::min(cover.width(), cover.height());
-    cover = cover.copy((cover.width() - side) / 2, (cover.height() - side) / 2, side, side);
-
-    if (crop_and_resize != 0 && static_cast<size_t>(side) != crop_and_resize) {
-        cover = lanczos_resize_square(cover, static_cast<int>(crop_and_resize));
+    if (crop_and_resize != 0) {
+        cover = decode::lanczos_resize_square(cover, static_cast<int>(crop_and_resize));
     }
 
     return cover;
