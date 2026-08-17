@@ -10,4 +10,7 @@ extern "C" {
 // Unified on this file to prevent confusion.
 
 static constexpr QImage::Format pixelformat_qimage = QImage::Format_RGBA8888;
-static constexpr AVPixelFormat  pixelformat_ffmpeg = AV_PIX_FMT_RGBA;
+
+// Exact-layout mapping: swscale must always write the layout the QImage
+// was actually sized for — never a hardcoded one.
+AVPixelFormat av_format_for_qimage(QImage::Format f);
