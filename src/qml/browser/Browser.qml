@@ -130,6 +130,8 @@ Item {
                 leftPadding: searchBar.leftPadding / 2
                 rightPadding: searchBar.rightPadding / 2
 
+                visible: searchBar.text !== ""
+
                 Layout.preferredHeight: searchBar.height
             }
 
