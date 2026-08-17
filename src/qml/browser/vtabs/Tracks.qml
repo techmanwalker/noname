@@ -19,7 +19,7 @@ ColumnLayout {
     required property SearchBar searchBarItem
 
     Connections {
-        target: LocalLibrary
+        target: LocalLibrary // qmllint disable
 
         function onRefreshFinished() {
             SearchResults.performSearch("", LocalLibrary);
@@ -30,7 +30,7 @@ ColumnLayout {
 
     Connections {
         id: libraryChanges
-        target: LocalLibrary
+        target: LocalLibrary // qmllint disable
         enabled: false // gated closed until the initial refresh finishes, above
 
         function onDataChanged() {

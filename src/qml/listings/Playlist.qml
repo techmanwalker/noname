@@ -58,7 +58,7 @@ ListView {
         fadePadding:   root.songFadePadding
         lateralPadding: 15
 
-        playing: PlayQueue.playhead === PlayQueue.index(model.index, 0)
+        playing: PlayQueue.playhead === PlayQueue.index(model.index, 0) // qmllint disable
 
         showSeparator: true
 
