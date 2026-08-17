@@ -109,28 +109,6 @@ target_include_directories(rolecompiler
 
 )
 
-# Media sequences - playlists, queues and shorcuts representations
-
-add_library(mediasequences
-    STATIC
-        ${MEDIASEQUENCES_SOURCES}
-)
-
-target_link_libraries(mediasequences
-    PUBLIC
-        mediatypes
-        
-    PRIVATE
-        Qt6::Core
-
-        rolecompiler
-)
-
-target_include_directories(mediasequences
-    PUBLIC
-        src/presenters/sequences # to make qmltyperegistrar happy
-)
-
 # The Playback controller
 add_library(audioengine STATIC
     ${AUDIOENGINE_SOURCES}
@@ -302,6 +280,7 @@ target_include_directories(uiprimitives
         src/presenters/basicdefinitions
 )
 
+# Media sequences - playlists, queues and shorcuts representations
 
 # Listings - turning a song to logical pixels - basic tooling to display media metadata
 
@@ -341,6 +320,30 @@ target_link_libraries(playerpresenter
 target_include_directories(playerpresenter
     PUBLIC
         src/presenters/context/playerpresenter
+)
+
+
+qt_add_qml_module(mediasequences
+    STATIC
+    URI Player.MediaSequences
+    SOURCES
+        ${MEDIASEQUENCES_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
+)
+
+target_link_libraries(mediasequences
+    PUBLIC
+        mediatypes
+        
+    PRIVATE
+        Qt6::Core
+
+        rolecompiler
+)
+
+target_include_directories(mediasequences
+    PUBLIC
+        src/presenters/sequences # to make qmltyperegistrar happy
 )
 
 # What has played, what is playing and what is to be played
