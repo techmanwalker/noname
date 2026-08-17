@@ -22,7 +22,8 @@ class PlayQueue : public QIdentityProxyModel {
     QML_ELEMENT
     QML_SINGLETON
 
-    Q_PROPERTY(QModelIndex playhead READ playhead WRITE qml_switch_to NOTIFY trackChanged)
+    Q_PROPERTY(QModelIndex playhead READ playhead  WRITE qml_switch_to NOTIFY trackChanged)
+    Q_PROPERTY(qsizetype   count    READ itemCount NOTIFY countChanged)
 
 public:
     // disable copy and assignment for single instance
