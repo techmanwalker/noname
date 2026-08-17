@@ -55,6 +55,8 @@ public:
     void process_track_boundary();
     void process_playlist_finished();
 
+    void teardown (); // called by its governor &Q*Application::abouToQuit to safely destroy the impl
+
 signals:
     void seek_finished();
     void duration_changed();

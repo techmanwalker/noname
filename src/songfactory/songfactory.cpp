@@ -25,9 +25,9 @@ batch_extract (const QList<QUrl> &sources, attributes a)
     return song_factory_impl::batch_extract(sources, a);
 }
 
-void shutdown ()
+void teardown ()
 {
-    return song_factory_impl::shutdown();
+    return song_factory_impl::teardown();
 }
 
 }
