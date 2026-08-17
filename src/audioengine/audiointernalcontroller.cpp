@@ -23,8 +23,13 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
     m_outstream->userdata = m_decoder_worker->get_ring_buffer();
     m_outstream->write_callback = write_callback;
 
+    m_outstream->error_callback = error_callback;
+
+    m_outstream->underflow_callback = underflow_callback;
+
     execute_soundio(soundio_outstream_open, m_outstream);
     execute_soundio(soundio_outstream_start, m_outstream);
+
     m_decoder_worker->get_ring_buffer()->is_paused.store(true);
 
     m_decoder_worker->moveToThread(m_audio_decoding_thread);

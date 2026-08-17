@@ -116,3 +116,16 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
         frames_left -= frame_count;
     }
 }
+
+
+// Error handling
+
+void error_callback(struct SoundIoOutStream *outstream, int err)
+{
+    qCWarning(l_soundio) << "SoundIo outstream error:" << soundio_strerror(err);
+}
+
+void underflow_callback (struct SoundIoOutStream *outstream)
+{
+    qCWarning(l_soundio) << "SoundIo outstream underflow";
+};

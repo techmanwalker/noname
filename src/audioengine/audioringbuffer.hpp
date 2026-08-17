@@ -8,6 +8,10 @@
 // sndio
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);
 
+void error_callback(struct SoundIoOutStream *outstream, int err);
+
+void underflow_callback (struct SoundIoOutStream *outstream);
+
 class audio_ring_buffer
 {
     friend class audio_decode_worker;
