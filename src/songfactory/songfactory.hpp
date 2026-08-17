@@ -43,7 +43,7 @@ progressive_extract (const QList<QUrl> &sources, attributes a);
 QFuture<QList<Types::Song>>
 batch_extract (const QList<QUrl> &sources, attributes a);
 
-void shutdown ();
+void teardown ();
 
 }
 

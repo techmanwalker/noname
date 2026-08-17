@@ -26,7 +26,7 @@ public:
     // crop_and_resize: memory saving, crop the center square of the cover and rescale so width and height matches.
     // e.g. crop_and_resize = 256: crop the center of the cover and rescale to 256x256
 
-    static void shutdown ();
+    static void teardown ();
 
     static
     QList<QFuture<Types::Song>>

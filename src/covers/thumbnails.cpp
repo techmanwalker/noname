@@ -290,7 +290,7 @@ write_thumbnail (const CoverRef &ref, QImage thumbnail)
 }
 
 void
-shutdown ()
+teardown ()
 {
     QThreadPool *pool = thumbnail_pool();
     pool->clear();          // drop anything queued but not yet started

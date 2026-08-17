@@ -1,3 +1,4 @@
+#include "audioengine/audioengine.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
 #include "locallibrary.hpp"
@@ -39,6 +40,7 @@ main (int argc, char ** argv)
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
+    auto &ae = audio_engine::instance(); // to bind its destruction
     auto &ll = LocalLibrary::instance();
     auto &pq = PlayQueue::instance();
     auto &sl = ShortcutsList::instance();
@@ -75,11 +77,12 @@ main (int argc, char ** argv)
     engine.loadFromModule("Player.App", "Main");
 
     if (engine.rootObjects().isEmpty()) {
-        song_factory::shutdown();
+        song_factory::teardown();
         return -1;
     }
 
     const int exitcode = app.exec();
-    song_factory::shutdown();
+    song_factory::teardown();
+    ae.teardown();
     return exitcode;
 }

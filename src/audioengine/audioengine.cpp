@@ -30,6 +30,11 @@ audio_engine::audio_engine(QObject *parent)
             this, &audio_engine::handle_track_changed);
 }
 
+void audio_engine::teardown ()
+{
+    m_internal.reset();
+}
+
 void audio_engine::play() {
     m_internal->set_transport_paused(false);
     emit playback_state_changed();

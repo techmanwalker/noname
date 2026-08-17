@@ -490,6 +490,7 @@ qt_add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
+        audioengine # to safely tear it down
         covers # every executable that features its own cover storage will feature this
         locallibrary # your entire collection
         mainwindow # window decorations and such
