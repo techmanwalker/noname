@@ -4,199 +4,218 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
-#include <libavutil/pixfmt.h>
+#include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 }
 
 #include <QImage>
 
+#include <algorithm>
+#include <cstring>
+#include <memory>
+
 #include "pixelformats.hpp"
 
 namespace covers::decode {
-
-/* `square` must already be width == height. Returns a null QImage on
-   swscale context failure (e.g. unsupported CPU path — practically never
-   happens, but don't crash on it). */
-QImage
-lanczos_resize_square(const QImage &square, int target_size)
-{
-    const QImage src = square.convertToFormat(pixelformat_qimage);
-
-    // qCDebug (song_factory::l_songfactory()) << "Attempting to rescale a cover. Source size: " << src.width() << "x" << src.height();
-
-    SwsContext *sws = sws_getContext(
-        src.width(), src.height(), pixelformat_ffmpeg,
-        target_size, target_size, pixelformat_ffmpeg,
-        SWS_LANCZOS, nullptr, nullptr, nullptr);
-    if (!sws) {
-        return QImage();
-    }
-
-    QImage dst(target_size, target_size, pixelformat_qimage);
-
-    const uint8_t *src_slices[1] = { src.constBits() };
-    int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
-    uint8_t *dst_slices[1] = { dst.bits() };
-    int dst_strides[1] = { static_cast<int>(dst.bytesPerLine()) };
-
-    sws_scale(sws, src_slices, src_strides, 0, src.height(), dst_slices, dst_strides);
-    sws_freeContext(sws);
-
-    /* qCDebug (song_factory::l_songfactory()) << "Rescaling completed. Source size: " << src.width() << "x" << src.height()
-        << "; destination size: " << dst.width() << "x" << dst.height();*/
-
-    return dst;
-}
-
-// FFmpeg decoding covers
 
 struct BufferData {
     const uint8_t *ptr;
     size_t size;
 };
 
-// Custom IO callback for FFmpeg to read from the TagLib::ByteVector memory
 int read_packet(void *opaque, uint8_t *buf, int buf_size)
 {
-    BufferData *bd = static_cast<BufferData *>(opaque);
-    buf_size = std::min(static_cast<size_t>(buf_size), bd->size);
-
-    if (buf_size <= 0) {
+    auto *bd = static_cast<BufferData *>(opaque);
+    const size_t n = std::min(static_cast<size_t>(buf_size), bd->size);
+    if (n == 0)
         return AVERROR_EOF;
+    std::memcpy(buf, bd->ptr, n);
+    bd->ptr  += n;
+    bd->size -= n;
+    return static_cast<int>(n);
+}
+
+namespace {
+
+struct AVIOCtxDeleter {
+    void operator()(AVIOContext *ctx) const {
+        if (ctx) { av_freep(&ctx->buffer); avio_context_free(&ctx); }
+    }
+};
+struct AVFormatCtxDeleter {
+    void operator()(AVFormatContext *ctx) const {
+        if (ctx) avformat_close_input(&ctx);   // leaves our custom pb alone
+    }
+};
+struct AVCodecCtxDeleter {
+    void operator()(AVCodecContext *ctx) const {
+        if (ctx) avcodec_free_context(&ctx);
+    }
+};
+struct AVFrameDeleter  { void operator()(AVFrame  *f) const { if (f) av_frame_free(&f);  } };
+struct AVPacketDeleter { void operator()(AVPacket *p) const { if (p) av_packet_free(&p); } };
+
+/* Runs sws_scale without ever letting swscale touch the QImage allocation.
+   Output goes into an FFmpeg-owned, aligned, padded buffer, then is copied
+   row by row into the QImage. */
+QImage sws_convert_to_qimage(const uint8_t *const *src_data, const int *src_linesize,
+                             int src_w, int src_h, AVPixelFormat src_fmt,
+                             int dst_w, int dst_h, int flags,
+                             AVPixelFormat dst_fmt, QImage::Format out_format)
+{
+    if (src_w <= 0 || src_h <= 0 || dst_w <= 0 || dst_h <= 0)
+        return {};
+    if (src_w > 16384 || src_h > 16384)      // corrupt-header guard
+        return {};
+
+    SwsContext *sws = sws_getContext(src_w, src_h, src_fmt,
+                                     dst_w, dst_h, dst_fmt,
+                                     flags, nullptr, nullptr, nullptr);
+    if (!sws)
+        return {};
+
+    // JPEG/MJPEG is full-range YUV; the decoder doesn't always report the
+    // yuvj* formats, so force the range to avoid washed-out colors.
+    sws_setColorspaceDetails(sws,
+                             sws_getCoefficients(SWS_CS_ITU601), 1,
+                             sws_getCoefficients(SWS_CS_ITU709), 0,
+                             0, 1 << 16, 1 << 16);
+
+    uint8_t *dst_data[4]     = {};
+    int      dst_linesize[4] = {};
+    if (av_image_alloc(dst_data, dst_linesize, dst_w, dst_h, dst_fmt, 32) < 0) {
+        sws_freeContext(sws);
+        return {};
     }
 
-    std::memcpy(buf, bd->ptr, buf_size);
-    bd->ptr  += buf_size;
-    bd->size -= buf_size;
+    sws_scale(sws, src_data, src_linesize, 0, src_h, dst_data, dst_linesize);
+    sws_freeContext(sws);
 
-    return buf_size;
+    QImage img(dst_w, dst_h, out_format);
+    if (img.isNull()) {
+        av_freep(&dst_data[0]);
+        return {};
+    }
+    const size_t row = std::min<size_t>(img.bytesPerLine(), dst_linesize[0]);
+    for (int y = 0; y < dst_h; ++y)
+        std::memcpy(img.scanLine(y),
+                    dst_data[0] + static_cast<ptrdiff_t>(y) * dst_linesize[0],
+                    row);
+    av_freep(&dst_data[0]);
+    return img;
+}
+
+} // namespace
+
+QImage lanczos_resize_square(const QImage &square, int target_size)
+{
+    const QImage src = square.convertToFormat(pixelformat_qimage);
+    const uint8_t *src_slices[1] = { src.constBits() };
+    int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
+
+    return sws_convert_to_qimage(src_slices, src_strides,
+                                 src.width(), src.height(), av_format_for_qimage(pixelformat_qimage),
+                                 target_size, target_size, SWS_LANCZOS,
+                                 av_format_for_qimage(pixelformat_qimage), pixelformat_qimage);
 }
 
 QImage decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
 {
-    if (!data || size == 0) {
+    if (!data || size == 0)
         return {};
-    }
 
-    // Cast the uchar pointer directly for FFmpeg's consumption
-    BufferData bd = { reinterpret_cast<const uint8_t*>(data), size };
+    const AVPixelFormat dst_fmt = av_format_for_qimage(out_format);
+    if (dst_fmt == AV_PIX_FMT_NONE)
+        return {};   // never write a layout the QImage wasn't sized for
+
+    BufferData bd{ reinterpret_cast<const uint8_t *>(data), size };
 
     constexpr int avio_ctx_buffer_size = 4096;
-    uint8_t *avio_buffer = static_cast<uint8_t*>(av_malloc(avio_ctx_buffer_size));
-    if (!avio_buffer) {
+    uint8_t *avio_buffer = static_cast<uint8_t *>(av_malloc(avio_ctx_buffer_size));
+    if (!avio_buffer)
         return {};
-    }
 
-    AVIOContext *avio_ctx = avio_alloc_context(avio_buffer, avio_ctx_buffer_size, 0, &bd, &read_packet, nullptr, nullptr);
+    std::unique_ptr<AVIOContext, AVIOCtxDeleter> avio_ctx(
+        avio_alloc_context(avio_buffer, avio_ctx_buffer_size, 0,
+                           &bd, read_packet, nullptr, nullptr));
     if (!avio_ctx) {
-        av_freep(&avio_buffer);
+        av_free(avio_buffer);
         return {};
     }
 
-    AVFormatContext *fmt_ctx = avformat_alloc_context();
-    fmt_ctx->pb = avio_ctx;
-
-    // Open the memory buffer as a media file
-    if (avformat_open_input(&fmt_ctx, nullptr, nullptr, nullptr) < 0) {
-        av_freep(&avio_ctx->buffer);
-        avio_context_free(&avio_ctx);
-        avformat_free_context(fmt_ctx);
+    std::unique_ptr<AVFormatContext, AVFormatCtxDeleter> fmt_ctx(avformat_alloc_context());
+    if (!fmt_ctx)
         return {};
-    }
+    fmt_ctx->pb = avio_ctx.get();
 
-    if (avformat_find_stream_info(fmt_ctx, nullptr) < 0) {
-        avformat_close_input(&fmt_ctx);
-        if (avio_ctx) {
-            av_freep(&avio_ctx->buffer);
-            avio_context_free(&avio_ctx);
+    // avformat_open_input takes ownership and frees the context on failure.
+    // Relinquish ownership explicitly beforehand.
+    AVFormatContext *raw_fmt = fmt_ctx.release();
+    
+    if (avformat_open_input(&raw_fmt, nullptr, nullptr, nullptr) < 0) {
+        if (raw_fmt) {                   // very old FFmpeg kept it allocated
+            avformat_free_context(raw_fmt);
         }
         return {};
     }
+    
+    // Re-acquire ownership on success so AVFormatCtxDeleter manages it safely
+    fmt_ctx.reset(raw_fmt);
+
+    if (avformat_find_stream_info(fmt_ctx.get(), nullptr) < 0)
+        return {};
 
     int video_stream_index = -1;
     const AVCodec *codec = nullptr;
-    
-    // Locate the first available video stream (the cover art)
-    for (unsigned int i = 0; i < fmt_ctx->nb_streams; i++) {
+    for (unsigned i = 0; i < fmt_ctx->nb_streams; ++i) {
         if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             video_stream_index = static_cast<int>(i);
             codec = avcodec_find_decoder(fmt_ctx->streams[i]->codecpar->codec_id);
             break;
         }
     }
-
-    if (video_stream_index == -1 || !codec) {
-        avformat_close_input(&fmt_ctx);
-        if (avio_ctx) {
-            av_freep(&avio_ctx->buffer);
-            avio_context_free(&avio_ctx);
-        }
+    if (video_stream_index < 0 || !codec)
         return {};
-    }
 
-    AVCodecContext *codec_ctx = avcodec_alloc_context3(codec);
-    avcodec_parameters_to_context(codec_ctx, fmt_ctx->streams[video_stream_index]->codecpar);
-
-    if (avcodec_open2(codec_ctx, codec, nullptr) < 0) {
-        avcodec_free_context(&codec_ctx);
-        avformat_close_input(&fmt_ctx);
-        if (avio_ctx) {
-            av_freep(&avio_ctx->buffer);
-            avio_context_free(&avio_ctx);
-        }
+    std::unique_ptr<AVCodecContext, AVCodecCtxDeleter> codec_ctx(avcodec_alloc_context3(codec));
+    if (!codec_ctx)
         return {};
-    }
+    if (avcodec_parameters_to_context(codec_ctx.get(),
+                                      fmt_ctx->streams[video_stream_index]->codecpar) < 0)
+        return {};
+    if (avcodec_open2(codec_ctx.get(), codec, nullptr) < 0)
+        return {};
 
-    AVFrame *frame = av_frame_alloc();
-    AVPacket *pkt = av_packet_alloc();
-    QImage result;
+    std::unique_ptr<AVFrame,  AVFrameDeleter>  frame(av_frame_alloc());
+    std::unique_ptr<AVPacket, AVPacketDeleter> pkt(av_packet_alloc());
+    if (!frame || !pkt)
+        return {};
 
-    while (av_read_frame(fmt_ctx, pkt) >= 0) {
-        if (pkt->stream_index == video_stream_index) {
-            if (avcodec_send_packet(codec_ctx, pkt) == 0) {
-                if (avcodec_receive_frame(codec_ctx, frame) == 0) {
-                    
-                    // Allocate the Qt image buffer
-                    result = QImage(frame->width, frame->height, out_format);
-                    
-                    // Use SWS_POINT for pure colorspace conversion without scaling overhead
-                    SwsContext *sws = sws_getContext(
-                        frame->width, frame->height, codec_ctx->pix_fmt,
-                        frame->width, frame->height, pixelformat_ffmpeg, // Unifies to AV_PIX_FMT_RGBA[cite: 16]
-                        SWS_POINT, nullptr, nullptr, nullptr
-                    );
+    while (av_read_frame(fmt_ctx.get(), pkt.get()) >= 0) {
+        QImage result;
+        bool got_frame = false;
 
-                    if (sws) {
-                        uint8_t *dest_slices[1] = { result.bits() };
-                        int dest_strides[1] = { static_cast<int>(result.bytesPerLine()) };
-                        
-                        // Map the raw decoded frame directly into the QImage memory
-                        sws_scale(sws, frame->data, frame->linesize, 0, frame->height, dest_slices, dest_strides);
-                        sws_freeContext(sws);
-                    } else {
-                        result = QImage();
-                    }
-                    
-                    av_packet_unref(pkt);
-                    break; // The cover is extracted, stop reading further frames
+        if (pkt->stream_index == video_stream_index &&
+            avcodec_send_packet(codec_ctx.get(), pkt.get()) == 0) {
+            if (avcodec_receive_frame(codec_ctx.get(), frame.get()) == 0) {
+                got_frame = true;
+                if (frame->format != AV_PIX_FMT_NONE) {
+                    // Ground truth is frame->format, not codec_ctx->pix_fmt.
+                    result = sws_convert_to_qimage(frame->data, frame->linesize,
+                                                   frame->width, frame->height,
+                                                   static_cast<AVPixelFormat>(frame->format),
+                                                   frame->width, frame->height, SWS_POINT,
+                                                   dst_fmt, out_format);
                 }
+                av_frame_unref(frame.get());
             }
         }
-        av_packet_unref(pkt);
+        av_packet_unref(pkt.get());
+        if (got_frame)
+            return result;               // possibly null if conversion failed
     }
 
-    // Cleanup resources
-    av_packet_free(&pkt);
-    av_frame_free(&frame);
-    avcodec_free_context(&codec_ctx);
-    
-    avformat_close_input(&fmt_ctx);
-    if (avio_ctx) {
-        av_freep(&avio_ctx->buffer);
-        avio_context_free(&avio_ctx);
-    }
-
-    return result;
+    return {};
 }
 
-} // namespace
+} // namespace covers::decode
