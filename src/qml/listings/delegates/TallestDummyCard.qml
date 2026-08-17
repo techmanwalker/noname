@@ -6,11 +6,10 @@ Song {
     title: `two
     line`
 
-    artist: `guaranteed to be`
-    album: `at least
+    metadata: `guaranteed to be at least
     two lines`
 
-    duration: 10000
+    duration: "0:00"
 
     selected: false
 }

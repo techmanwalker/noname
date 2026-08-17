@@ -37,10 +37,9 @@ GridView {
         card: true
 
         title: model.title
-        album: model.album
-        artist: model.artist
-        duration: model.duration
+        metadata: model.printable_joint_metadata
         cover: model.cover
+        duration: model.duration_mmss
 
         coverWidth: root.songCoverWidth
         coverHeight: root.songCoverHeight

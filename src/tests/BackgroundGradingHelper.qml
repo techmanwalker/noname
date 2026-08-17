@@ -34,8 +34,8 @@ ApplicationWindow {
         onTapped: {
             if (root.modeCounter >= 3) root.modeCounter = 0; else root.modeCounter++;
 
-            bg.blur = root.modeCounter == 1 || root.modeCounter == 3
-            bg.darken = root.modeCounter == 2 || root.modeCounter == 3
+            bg.blur = root.modeCounter === 1 || root.modeCounter === 3
+            bg.darken = root.modeCounter === 2 || root.modeCounter === 3
             
         }
     }

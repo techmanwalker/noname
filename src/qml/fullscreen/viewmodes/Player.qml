@@ -85,7 +85,7 @@ Item {
 
             onClicked: {
                 // if it is in the lyrics view
-                if (stack.currentIndex == 1) {
+                if (stack.currentIndex === 1) {
                     stack.currentIndex = 0;
                 } else {
                     root.switchView()

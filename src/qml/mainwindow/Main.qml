@@ -27,7 +27,7 @@ ApplicationWindow {
     }
 
     Background {
-        source: activeView.currentIndex == 1 ? PlayerPresenter.cover : ""
+        source: activeView.currentIndex === 1 ? PlayerPresenter.cover : ""
         anchors.fill: parent
 
         // Math.max(1, root.width) prevents zero-division errors during

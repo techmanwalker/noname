@@ -282,7 +282,6 @@ qt_add_qml_module(uiprimitives
     URI Player.Primitives
     QML_FILES
         ${UIPRIMITIVES_QMLS}
-        src/qml/primitives/Formatters.mjs
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Primitives"
 )
