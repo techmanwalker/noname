@@ -16,6 +16,12 @@ class CoverRef;
 namespace covers {
 namespace live {
 
+// cache structured like this to allow multiple responses at once to qml
+struct cache_shard {
+    QMutex lock;
+    QCache<QString, QImage> cache;
+};
+
 // Enables loading embedded thumbnails to memory.
 class cover_storage : public QQuickAsyncImageProvider
 {
@@ -43,12 +49,8 @@ public:
 
 private:
 
-    QCache<QString, QImage> m_cache;
-
-    /*  guards ALL cache access, not just insertion — QCache can evict (delete)
-        an entry from any thread during insert(), so unlocked reads are no longer
-        safe like they were with QHash */
-    QMutex m_cache_lock;
+    static constexpr size_t SHARD_COUNT = 16;
+    std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;
 
     QList<CoverRef> m_refs;
     QReadWriteLock m_sources_lock; // separate lock from m_spin_lock: writes come in bursts during a scan, reads can come from many concurrent decode jobs at once

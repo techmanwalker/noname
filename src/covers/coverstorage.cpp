@@ -11,16 +11,21 @@ namespace covers {
 namespace live {
 
 
-cover_storage::cover_storage ()
+cover_storage::cover_storage()
     : QQuickAsyncImageProvider()
 {
-    /*  Budget: 256 thumbnails' worth of a 256x256 RGBA8888 image (~64 MiB).
-        or a little list when full res covers take up space for ~1 MiB each one. */
+    // You MUST increase this total budget. 96 is not enough to prevent 
+    // thrashing during scrolling. Let's allocate enough for ~1000 thumbnails.
     static const qsizetype thumbnail_cost = QImage(256, 256, pixelformat_qimage).sizeInBytes();
-    m_cache.setMaxCost(96 * thumbnail_cost);
+    const qsizetype total_budget = 1024 * thumbnail_cost;
+    const qsizetype budget_per_shard = total_budget / SHARD_COUNT;
 
-    // all response calls here
-    m_response_pool.setMaxThreadCount(std::max(2, QThread::idealThreadCount() / 2));
+    for (auto& shard : m_shards) {
+        shard = std::make_unique<cache_shard>();
+        shard->cache.setMaxCost(budget_per_shard);
+    }
+
+    m_response_pool.setMaxThreadCount(QThread::idealThreadCount());
 }
 
 cover_storage::~cover_storage ()
@@ -57,17 +62,21 @@ cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, b
 
     const qsizetype cost = img.sizeInBytes();
 
+    // calculate deterministic shard destination
+    const size_t shard_idx = qHash(ref.hash()) % SHARD_COUNT;
+    auto &shard = m_shards[shard_idx];
+
     {
-        QMutexLocker locker(&m_cache_lock);
-        const bool cached = m_cache.insert(ref.hash(), new QImage(img), cost);
+        // lock only this specific shard
+        QMutexLocker locker(&shard->lock);
+        const bool cached = shard->cache.insert(ref.hash(), new QImage(img), cost);
         if (!cached) {
-            qCWarning(l_coverprovider) << "Cover for" << ref.hash() << "exceeds the cache's max cost; not kept in memory.";
+            qCWarning(l_coverprovider) << "Cover for" << ref.hash() 
+                                       << "exceeds shard max cost; not kept in memory.";
         }
-    } // lock safely released
+    } // shard lock released immediately
 
     if (!ref.thumbnail_file_exists() && save_to_disk_cache) {
-
-        // async, won't block
         covers::disk::write_thumbnail(ref, img);
     }
 
@@ -109,16 +118,16 @@ cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
     Q_UNUSED(requestedSize);
 
     // Get from hot cache first
-    QImage img = QImage();
+    // route to the correct shard based on the ID hash
+    const size_t shard_idx = qHash(ref.hash()) % SHARD_COUNT;
+    auto& shard = m_shards[shard_idx];
 
+    QImage img;
+
+    // lock ONLY this specific shard
     {
-        QMutexLocker locker (&m_cache_lock);
-
-        QImage *cached_ptr = m_cache.object(ref.hash());
-        // Copy while still locked: QImage is implicitly shared, so this copy is
-        // just a refcount bump, but it's what keeps the pixel buffer alive if
-        // another thread's insert() evicts (deletes) this entry right after we unlock.
-
+        QMutexLocker locker(&shard->lock);
+        QImage *cached_ptr = shard->cache.object(ref.hash());
         if (cached_ptr) {
             img = *cached_ptr;
         }
@@ -176,12 +185,14 @@ cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
 }
 
 bool
-cover_storage::is_cached (const CoverRef &ref)
+cover_storage::is_cached(const CoverRef &ref)
 {
-    {
-        QMutexLocker locker (&m_cache_lock);
-        return m_cache.contains(ref.hash());
-    }
+    // Route directly to the same shard
+    const size_t shard_idx = qHash(ref.hash()) % SHARD_COUNT;
+    auto &shard = m_shards[shard_idx];
+
+    QMutexLocker locker(&shard->lock);
+    return shard->cache.contains(ref.hash());
 }
 
 }
