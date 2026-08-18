@@ -1,43 +1,25 @@
 import QtQuick
 
-Item {
+Image {
     id: root
 
-    property color fill: "#fff"
-    property url source: ""  // URI string or QUrl
-    property int fillMode: Image.PreserveAspectCrop  // or PreserveAspectFit, Stretch, etc.
+    // source: ""  // URI string or QUrl
+    fillMode: Image.PreserveAspectCrop  // or PreserveAspectFit, Stretch, etc.
 
     height: width
 
-    Rectangle {
-        color: root.fill
+    asynchronous: true
     
-        anchors.fill: root
-        visible: image.status !== Image.Ready
-    }
+    // Smooth scaling for better quality
+    smooth: true
+    mipmap: false
 
-    Image {
-        id: image
-        anchors.fill: root
-        fillMode: root.fillMode
-        source: root.source
-
-        asynchronous: true
-        
-        // Smooth scaling for better quality
-        smooth: true
-        mipmap: false
-        
-        // show nothing if source is empty (shows root.fill color instead)
-        visible: status === Image.Ready
-
-        // imperative mipmap toggling
-        onStatusChanged: {
-            if (status === Image.Ready) {
-                mipmap = true;
-            } else if (status === Image.Null || status === Image.Error) {
-                mipmap = false;
-            }
+    // imperative mipmap toggling
+    onStatusChanged: {
+        if (status === Image.Ready) {
+            mipmap = true;
+        } else if (status === Image.Null || status === Image.Error) {
+            mipmap = false;
         }
     }
 }
