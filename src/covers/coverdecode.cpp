@@ -107,14 +107,27 @@ QImage sws_convert_to_qimage(const uint8_t *const *src_data, const int *src_line
 
 } // namespace
 
-QImage lanczos_resize_square(const QImage &square, int target_size)
+QImage lanczos_resize_square(const QImage &image, int target_size)
 {
-    const QImage src = square.convertToFormat(pixelformat_qimage);
-    const uint8_t *src_slices[1] = { src.constBits() };
+    const QImage src = image.convertToFormat(pixelformat_qimage);
+    
+    // Calculate the largest possible centered square
+    const int crop_size = std::min(src.width(), src.height());
+    const int crop_x = (src.width() - crop_size) / 2;
+    const int crop_y = (src.height() - crop_size) / 2;
+    
+    // Find the exact byte where the crop region starts
+    const int bytes_per_pixel = src.depth() / 8;
+    const uint8_t *src_slices[1] = { 
+        src.constScanLine(crop_y) + (crop_x * bytes_per_pixel) 
+    };
+    
+    // Keep the original QImage stride so swscale correctly skips the margins
     int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
 
+    // Feed crop_size as the input dimensions
     return sws_convert_to_qimage(src_slices, src_strides,
-                                 src.width(), src.height(), av_format_for_qimage(pixelformat_qimage),
+                                 crop_size, crop_size, av_format_for_qimage(pixelformat_qimage),
                                  target_size, target_size, SWS_LANCZOS,
                                  av_format_for_qimage(pixelformat_qimage), pixelformat_qimage);
 }
