@@ -1,6 +1,5 @@
 #include "basicdiskio.hpp"
 #include "configuration.hpp"
-#include "coverprovider.hpp" // IWYU pragma: keep
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
