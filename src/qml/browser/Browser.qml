@@ -7,37 +7,93 @@ import Player.Browser
 import Player.Fullscreen
 import Player.Primitives
 
-Item {
+GridLayout {
+    columns: 2
+    columnSpacing: 20
+
     id: root
 
     property Window parentWindow // to inset window decorations
 
     signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
 
-    ColumnLayout {
-        id: leftCol
+    // Empty space ftm, window handle
+    Item {
+        id: leftColHandle
 
-        width: Math.max(implicitWidth, parent.width / 6 - searchBar.leftPadding) // create an alignment on the left limits of the elements
-        
-        anchors.top:    parent.top
-        anchors.left:   parent.left
-        anchors.bottom: parent.bottom
+        Layout.preferredWidth: leftCol.width
+        Layout.preferredHeight: windexRow.height
 
-        Item {
-            id: leftColHandle
-            Layout.fillWidth: true
-            Layout.preferredHeight: searchBar.y + searchBar.height // todo: align with the search bar
 
-            DragHandler {
-                target: null
-                
-                onActiveChanged: {
-                    if (active) {
-                        root.parentWindow.startSystemMove();
-                    }
+        DragHandler {
+            target: null
+            
+            onActiveChanged: {
+                if (active) {
+                    root.parentWindow.startSystemMove();
                 }
             }
         }
+    }
+
+    // Search bar and window decorations for desktop
+    RowLayout {
+        id: windexRow
+
+        Layout.fillWidth: true
+
+        DragHandler {
+            target: null
+            
+            onActiveChanged: {
+                if (active) {
+                    root.parentWindow.startSystemMove();
+                }
+            }
+        }
+
+        SearchBar {
+            id: searchBar
+
+            Layout.preferredWidth: width
+            Layout.preferredHeight: height
+
+            Layout.alignment: Qt.AlignVCenter
+
+            onTextEdited: activeView.currentIndex = vtabs.tracksIndex
+        }
+
+        ResizableButton {
+            text: qsTr("Clear")
+            onClicked: {
+                searchBar.text = ""
+                searchBar.textEdited()
+            }
+
+            leftPadding: searchBar.leftPadding / 2
+            rightPadding: searchBar.rightPadding / 2
+
+            visible: searchBar.text !== ""
+
+            Layout.preferredHeight: searchBar.height
+        }
+
+        WindowDecorations {
+            id: windex
+
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+
+            window: root.parentWindow
+        }
+    }
+
+    // Vertical tabs switch and window decorations for bigscreen
+    ColumnLayout {
+        id: leftCol
+
+        Layout.preferredWidth: implicitWidth // create an alignment on the left limits of the elements
+        Layout.maximumWidth: parent.width / 6 - searchBar.leftPadding
 
         ArrangementList {
             id: vtabs
@@ -79,71 +135,12 @@ Item {
         }
     }
 
+    // This page heading and browsing
     ColumnLayout {
         id: rightCol
 
-        anchors.top: parent.top
-        anchors.left: leftCol.right
-        anchors.right: parent.right
-        anchors.bottom: nowplayingbar.stateModel.isMediaLoaded ? nowplayingbar.top : parent.bottom
-
-        anchors.topMargin: 20 //  shortcutsList.shortcutCoverHeight / 8
-        anchors.bottomMargin: nowplayingbar.stateModel.isMediaLoaded ? 18 : 0
-
-        RowLayout {
-            Layout.fillWidth: true
-
-            Layout.rightMargin:Math.max(20 // VTabButton lateral padding
-                - windex.closeButtonRightPadding // inset in VTabButton padding
-                - 3 // the close icon has 6 pixels of empty space on its 24 px version
-
-                , 0 /* safety*/)
-
-            DragHandler {
-                target: null
-                
-                onActiveChanged: {
-                    if (active) {
-                        root.parentWindow.startSystemMove();
-                    }
-                }
-            }
-
-            SearchBar {
-                id: searchBar
-
-                Layout.preferredWidth: width
-                Layout.preferredHeight: height
-
-                Layout.alignment: Qt.AlignVCenter
-
-                onTextEdited: activeView.currentIndex = vtabs.tracksIndex
-            }
-
-            ResizableButton {
-                text: qsTr("Clear")
-                onClicked: {
-                    searchBar.text = ""
-                    searchBar.textEdited()
-                }
-
-                leftPadding: searchBar.leftPadding / 2
-                rightPadding: searchBar.rightPadding / 2
-
-                visible: searchBar.text !== ""
-
-                Layout.preferredHeight: searchBar.height
-            }
-
-            WindowDecorations {
-                id: windex
-
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-
-                window: root.parentWindow
-            }
-        }
+        Layout.fillWidth: true
+        Layout.fillHeight: true
 
         StackLayout {
             id: activeView
@@ -172,25 +169,20 @@ Item {
             }
         }
 
+        MinibarPlayer {
+            id: nowplayingbar
+
+            topPadding: 20
+            bottomPadding: topPadding
+
+            Layout.preferredHeight: 48
+
+            visible: stateModel.isMediaLoaded
+
+            coverToMetadataSpacing: 8
+
+            onMetadataClicked: root.switchView() // clicking cover and metadata also opens theater mode
+        }
+
     }
-
-    MinibarPlayer {
-        id: nowplayingbar
-
-        anchors.left: leftCol.right
-        anchors.bottom: parent.bottom
-
-        topPadding: 20
-        bottomPadding: topPadding
-
-        width: Math.min(rightCol.width - 20, implicitWidth)
-        height: 96
-
-        visible: stateModel.isMediaLoaded
-
-        coverToMetadataSpacing: 8
-
-        onMetadataClicked: root.switchView() // clicking cover and metadata also opens theater mode
-    }
-
 }

@@ -44,6 +44,8 @@ ColumnLayout {
         Layout.rightMargin: root.rightPadding
         Layout.bottomMargin: root.bottomPadding
 
+        Layout.preferredHeight: 48
+
         spacing: root.spacing
 
         Layout.fillWidth: true
@@ -55,13 +57,15 @@ ColumnLayout {
         RowLayout {
             spacing: root.coverToMetadataSpacing
 
-            Layout.fillWidth: true
+            Layout.preferredWidth: thiscover.width + metadata.width
 
             TapHandler {
                 onTapped: root.metadataClicked()
             }
             
             Cover {
+                id: thiscover
+
                 Layout.fillHeight: true
                 Layout.preferredWidth: height
 
@@ -71,9 +75,10 @@ ColumnLayout {
             }
 
             ColumnLayout {
+                id: metadata
+
                 Layout.alignment: Qt.AlignVCenter
 
-                Layout.fillWidth: true
                 Layout.fillHeight: true
 
                 readonly property string displayArtist: root.stateModel.artist.length > 0 ? root.stateModel.artist : root.noArtistText
@@ -108,7 +113,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
             stateModel: root.stateModel
 
-            Layout.preferredWidth: title.font.pointSize * 12
+            Layout.preferredWidth: thiscover.width * 2
         }
     }
 }
