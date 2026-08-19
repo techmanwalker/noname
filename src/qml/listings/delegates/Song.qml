@@ -130,6 +130,8 @@ Item {
                 maximumLineCount: root.maxSecondLineLines
                 elide: Text.ElideRight
                 wrapMode: Text.WordWrap
+
+                visible: root.metadata != ""
             }
         }
 

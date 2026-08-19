@@ -22,12 +22,21 @@ Column {
         color: "white"
 
         visible: root.title.length > 0
+
+        width: parent.width
+        elide: Text.ElideRight
+
+        maximumLineCount: 3
+        wrapMode: Text.WordWrap
     }
 
     Label {
         text: root.artist
 
         visible: root.artist.length > 0
+
+        width: parent.width
+        elide: Text.ElideRight
     }
 
     Label {
@@ -36,5 +45,8 @@ Column {
         visible: root.album.length > 0
 
         color: "#afafaf"
+
+        width: parent.width
+        elide: Text.ElideRight
     }
 }
