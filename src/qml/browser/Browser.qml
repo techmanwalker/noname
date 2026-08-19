@@ -75,6 +75,10 @@ GridLayout {
 
             visible: searchBar.text !== ""
 
+            filled: true
+
+            magnify: false
+
             Layout.preferredHeight: searchBar.height
         }
 
