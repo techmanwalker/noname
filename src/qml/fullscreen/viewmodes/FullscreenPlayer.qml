@@ -49,7 +49,6 @@ Item {
         spacing: root.songCoverWidth
 
         anchors.centerIn: parent
-        anchors.margins: 40
 
         // Left column: cover + controls
         ColumnLayout {
