@@ -11,19 +11,28 @@ Rectangle {
     property bool clickEnabled // bind to the button "enabled" property
     property bool clickable // set true for clickable elements like buttons
 
-    property real clickedOpacity: .7
-    property real hoveredOpacity: .3
-    property real defaultOpacity: (hoverEnabled || clickable)? 0 : .3
+    property bool filled: false
 
-    color: "#242424"
+    property real clickedOpacity: filled ? 1 : .7
+    property real hoveredOpacity: filled ? 1 : .3
+    property real defaultOpacity: filled ? 1 : ((hoverEnabled || clickable)? 0 : .3)
+
+    property color baseColor: filled ? "#dfdfdf" : "#242424"
+    property color hoveredColor: filled ? "#afafaf" : "#242424"
+    property color clickedColor: "#969696"
+
+    color: baseColor
+
     opacity: defaultOpacity
+
+    radius: root.filled ? (height / 2) : 0 // perfect round
 
     states: [
         State {
             name: "clicked"
 
             PropertyChanges {
-                root.color: "#969696"
+                root.color: root.clickedColor
                 root.opacity: root.clickedOpacity
             }
 
@@ -34,7 +43,7 @@ Rectangle {
             name: "hovered"
 
             PropertyChanges {
-                root.color: "#242424"
+                root.color: root.hoveredColor
                 root.opacity: root.hoveredOpacity
             }
 
