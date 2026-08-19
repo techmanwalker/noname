@@ -10,8 +10,11 @@ GridView {
     property real songCoverWidth: 72
     property real songCoverHeight: songCoverWidth
 
-    cellWidth: dummycard.width + (songCoverWidth / 12)
-    cellHeight: dummycard.height + (songCoverWidth / 12)
+    property real songLateralPadding: (songCoverWidth / 12)
+    property real songVerticalPadding: (songCoverWidth / 12)
+
+    cellWidth: dummycard.width + songLateralPadding
+    cellHeight: dummycard.height + songVerticalPadding
 
     signal songClicked(var song);
 
@@ -35,48 +38,60 @@ GridView {
         actions: defaultActions.concat(root.additionalMenuActions)
     }
 
-    delegate: Song {
+    delegate: Item {
         required property var model
 
-        card: true
+        width: GridView.view.cellWidth
+        height: GridView.view.cellHeight
 
-        title: model.title
-        metadata: model.printable_joint_metadata
-        cover: model.cover
-        duration: model.duration_mmss
+        Song {
+            property var model: parent.model
 
-        coverWidth: root.songCoverWidth
-        coverHeight: root.songCoverHeight
+            card: true
 
-        // to visually mark it selected
-        selected: root.selectedSources.includes(model.source)
+            anchors.fill: parent
+            anchors.leftMargin: LayoutMirroring.enabled ? root.songLateralPadding : 0
+            anchors.rightMargin: LayoutMirroring.enabled ? 0 : root.songLateralPadding
+            anchors.bottomMargin: root.songVerticalPadding
 
-        onClicked: {
-            // Standard click clears multi-selection
-            root.selectedSources = []
-            root.songClicked(model)
-        }
+            title: model.title
+            metadata: model.printable_joint_metadata
+            cover: model.cover
+            duration: model.duration_mmss
 
-        onCtrlClicked: {
-            let sources = root.selectedSources
-            let idx = sources.indexOf(model.source)
-            
-            if (idx === -1) {
-                sources.push(model.source)
-            } else {
-                sources.splice(idx, 1)
+            coverWidth: root.songCoverWidth
+            coverHeight: root.songCoverHeight
+
+            // to visually mark it selected
+            selected: root.selectedSources.includes(model.source)
+
+            onClicked: {
+                // Standard click clears multi-selection
+                root.selectedSources = []
+                root.songClicked(model)
             }
-            
-            // Reassign with slice() to guarantee the QML property binding is triggered
-            root.selectedSources = sources.slice() 
-        }
 
-        onRightClicked: {
-            // If right-clicked song isn't in current selection, select only it
-            if (!root.selectedSources.includes(model.source)) {
-                root.selectedSources = [model.source]
+            onCtrlClicked: {
+                let sources = root.selectedSources
+                let idx = sources.indexOf(model.source)
+                
+                if (idx === -1) {
+                    sources.push(model.source)
+                } else {
+                    sources.splice(idx, 1)
+                }
+                
+                // Reassign with slice() to guarantee the QML property binding is triggered
+                root.selectedSources = sources.slice() 
             }
-            songContextMenu.popup()
+
+            onRightClicked: {
+                // If right-clicked song isn't in current selection, select only it
+                if (!root.selectedSources.includes(model.source)) {
+                    root.selectedSources = [model.source]
+                }
+                songContextMenu.popup()
+            }
         }
     }
 
