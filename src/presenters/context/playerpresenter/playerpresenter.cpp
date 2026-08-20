@@ -2,7 +2,7 @@
 #include "playerpresenter.hpp"
 
 #include "configuration.hpp"
-#include "lyricsmanifest.hpp"
+#include "lyricsprojector.hpp"
 #include "mediatypes.hpp"
 #include "playqueue.hpp"
 
@@ -10,8 +10,8 @@
 #include <atomic>
 
 // meyers singleton
-PlayerPresenter &PlayerPresenter::instance(std::shared_ptr<audio_controller> controller) {
-    static PlayerPresenter s_instance (nullptr, controller);
+PlayerPresenter &PlayerPresenter::instance(std::shared_ptr<audio_controller> controller, std::shared_ptr<LyricsProjector> lyricsproj) {
+    static PlayerPresenter s_instance (nullptr, controller, lyricsproj);
 
     return s_instance;
 }
@@ -32,11 +32,11 @@ PlayerPresenter *PlayerPresenter::create(QQmlEngine *qmlEngine, QJSEngine *jsEng
 }
 
 // Private constructor
-PlayerPresenter::PlayerPresenter(QObject *parent, std::shared_ptr<audio_controller> controller)
+PlayerPresenter::PlayerPresenter(QObject *parent, std::shared_ptr<audio_controller> controller, std::shared_ptr<LyricsProjector> lyricsproj)
     : QObject(parent),
       playing(controller),
       queue(PlayQueue::instance()),
-      lm(LyricsManifest::instance())
+      lp(lyricsproj)
 {
     m_position_poll_timer->setInterval(10);
 
@@ -206,7 +206,7 @@ PlayerPresenter::handleTrackChanged()
     emit mediaLoadedChanged();
 
     // read lyrics from audio file and update
-    lm.repopulate_with_lyrics_for_file(playing->current_track().source.toLocalFile()); /*
+    lp->repopulate_with_lyrics_for_file(playing->current_track().source.toLocalFile()); /*
         .then([this] (std::vector<std::string> lrc_lines) {
 
                 // uncomment this to print the lyrics model contents

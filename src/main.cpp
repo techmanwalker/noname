@@ -3,6 +3,7 @@
 #include "coverstorage.hpp"
 #include "locallibraryldb.hpp"
 #include "playqueue.hpp"
+#include "presenters/context/lyrics/lyricsmanifest.hpp"
 #include "presenters/context/playerpresenter/playerpresenter.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
@@ -12,6 +13,7 @@
 #include <QQmlApplicationEngine>
 #include <QTranslator>
 #include <memory>
+#include <qqml.h>
 
 Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
@@ -44,13 +46,14 @@ main (int argc, char ** argv)
         a folder-separated view of all available songs */
     auto ae = std::make_shared<audio_engine>();
     auto ll = std::make_shared<LocalLibraryLDB>(nullptr, covers);
+    auto lm = std::make_shared<LyricsManifest>();
 
     auto &pq = PlayQueue::instance();
     pq.set_audio_controller(ae);
 
     auto &sl = ShortcutsList::instance();
 
-    auto &pp = PlayerPresenter::instance(ae);
+    auto &pp = PlayerPresenter::instance(ae, lm);
 
     pq.set_cover_provider(covers);
     sl.chosen_cover_provider = covers;
@@ -105,6 +108,7 @@ main (int argc, char ** argv)
 
     // do not create a second empty LocalLibrary
     qmlRegisterSingletonInstance("Player.LocalLibrary", 1, 0, "LocalLibrary", ll.get());
+    qmlRegisterSingletonInstance("Player.LyricsManifest", 1, 0, "LyricsManifest", lm.get());
 
 
     // load qml module for noname

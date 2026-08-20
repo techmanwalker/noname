@@ -318,7 +318,7 @@ qt_add_qml_module(playerpresenter
 target_link_libraries(playerpresenter
     PRIVATE
         audiocontroller-iface # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
-        lyricsmanifest
+        lyricsprojector-iface
         configuration # load last volume from its save file
         mediatypes
         playqueue
@@ -393,6 +393,9 @@ qt_add_qml_module(lyricsmanifest
 )
 
 target_link_libraries(lyricsmanifest
+    PUBLIC 
+        lyricsprojector-iface
+
     PRIVATE
         Qt6::Core
 
@@ -407,6 +410,10 @@ target_include_directories(lyricsmanifest
     PUBLIC
         src/presenters/context/lyrics
 )
+
+add_library(lyricsprojector-iface INTERFACE)
+target_include_directories(lyricsprojector-iface INTERFACE src/interfaces/lyricsprojector)
+target_link_libraries(lyricsprojector-iface INTERFACE Qt6::Core)
 
 
 # The Player module
@@ -507,6 +514,7 @@ target_link_libraries(${PROJECT_NAME}
         audioengine # to safely tear it down
         covers # every executable that features its own cover storage will feature this
         locallibraryldb # your entire collection
+        lyricsmanifest
         mainwindow # window decorations and such
         playqueue
 
