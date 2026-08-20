@@ -1,5 +1,7 @@
 #pragma once
 
+#include "audiocontroller.hpp"
+
 #include <QLoggingCategory>
 #include <QObject>
 #include <QTimer>
@@ -9,12 +11,12 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 
 #include <atomic>
+#include <memory>
 
 // forward declarations
 class QQmlEngine;
 class QJSEngine;
 
-class audio_engine;
 class LyricsManifest;
 class PlayQueue;
 
@@ -79,7 +81,7 @@ public:
     PlayerPresenter &operator=(const PlayerPresenter&) = delete;
     
     // singleton instantiation
-    static PlayerPresenter &instance();
+    static PlayerPresenter &instance(std::shared_ptr<audio_controller> controller = nullptr);
     static PlayerPresenter *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // Getters
@@ -112,6 +114,8 @@ public:
 
     // save volume level to disk on demand
     Q_INVOKABLE void saveVolume () const;
+
+    void set_audio_controller (std::shared_ptr<audio_controller> controller);
     
 signals:
     // Needed signals for QML to be reactive
@@ -135,9 +139,10 @@ public slots:
 
 private:
     // Private constructor
-    explicit PlayerPresenter(QObject *parent = nullptr);
+    explicit PlayerPresenter(QObject *parent = nullptr, std::shared_ptr<audio_controller> controller = nullptr);
 
-    audio_engine &playing;
+    std::shared_ptr<audio_controller> playing; // controller
+
     PlayQueue &queue;
     LyricsManifest &lm;
 
