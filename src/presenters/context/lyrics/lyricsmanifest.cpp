@@ -62,29 +62,6 @@ public:
     }
 };
 
-// Meyers singleton implementation
-LyricsManifest &
-LyricsManifest::instance()
-{
-    static LyricsManifest s_instance;
-    return s_instance;
-}
-
-// qml factory
-LyricsManifest *
-LyricsManifest::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
-{
-    Q_UNUSED(qmlEngine);
-    Q_UNUSED(jsEngine);
-    
-    LyricsManifest *inst = &instance();
-
-    // prevent qml from freeing singleton memory on closure
-    QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
-
-    return inst;
-}
-
 // private constructor utilizing unique_ptr standard setup
 LyricsManifest::LyricsManifest(QObject *parent)
     : QAbstractListModel(parent),

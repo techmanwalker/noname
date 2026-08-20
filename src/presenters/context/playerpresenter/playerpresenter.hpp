@@ -1,6 +1,7 @@
 #pragma once
 
 #include "audiocontroller.hpp"
+#include "lyricsprojector.hpp"
 
 #include <QLoggingCategory>
 #include <QObject>
@@ -81,7 +82,7 @@ public:
     PlayerPresenter &operator=(const PlayerPresenter&) = delete;
     
     // singleton instantiation
-    static PlayerPresenter &instance(std::shared_ptr<audio_controller> controller = nullptr);
+    static PlayerPresenter &instance(std::shared_ptr<audio_controller> controller = nullptr, std::shared_ptr<LyricsProjector> lyricsproj = nullptr);
     static PlayerPresenter *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
     // Getters
@@ -139,12 +140,12 @@ public slots:
 
 private:
     // Private constructor
-    explicit PlayerPresenter(QObject *parent = nullptr, std::shared_ptr<audio_controller> controller = nullptr);
+    explicit PlayerPresenter(QObject *parent = nullptr, std::shared_ptr<audio_controller> controller = nullptr, std::shared_ptr<LyricsProjector> lyricsproj = nullptr);
 
     std::shared_ptr<audio_controller> playing; // controller
 
     PlayQueue &queue;
-    LyricsManifest &lm;
+    std::shared_ptr<LyricsProjector> lp;
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 
