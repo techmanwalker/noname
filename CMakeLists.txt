@@ -388,6 +388,7 @@ qt_add_qml_module(lyricsmanifest
     STATIC
     URI Player.LyricsManifest
     SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsprojector/lyricsprojectorproxy.hpp"
         ${LYRICSMANIFEST_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
