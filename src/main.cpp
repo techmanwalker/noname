@@ -1,7 +1,7 @@
 #include "audioengine.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
-#include "locallibrary.hpp"
+#include "locallibraryldb.hpp"
 #include "playqueue.hpp"
 #include "presenters/context/playerpresenter/playerpresenter.hpp"
 #include "shortcutslist.hpp"
@@ -12,7 +12,6 @@
 #include <QQmlApplicationEngine>
 #include <QTranslator>
 #include <memory>
-#include <qobject.h>
 
 Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
@@ -44,7 +43,7 @@ main (int argc, char ** argv)
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
     auto ae = std::make_shared<audio_engine>();
-    auto &ll = LocalLibrary::instance();
+    auto ll = std::make_shared<LocalLibraryLDB>(nullptr, covers);
 
     auto &pq = PlayQueue::instance();
     pq.set_audio_controller(ae);
@@ -53,13 +52,11 @@ main (int argc, char ** argv)
 
     auto &pp = PlayerPresenter::instance(ae);
 
-    // load the same cover provider in all relevant places
-    ll.chosen_cover_provider = covers;
     pq.set_cover_provider(covers);
     sl.chosen_cover_provider = covers;
 
     // trigger first refresh
-    ll.snapshot_known_directories();
+    ll->snapshot_known_directories();
 
     // load shortcuts
     sl.read_conf_and_load();
@@ -105,6 +102,9 @@ main (int argc, char ** argv)
     // It will safely invoke 'delete' on this proxy without corrupting the heap
     // or interfering with the 'covers' shared_ptr used by the C++ models.
     engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
+
+    // do not create a second empty LocalLibrary
+    qmlRegisterSingletonInstance("Player.LocalLibrary", 1, 0, "LocalLibrary", ll.get());
 
 
     // load qml module for noname
