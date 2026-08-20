@@ -1,5 +1,6 @@
 #pragma once
 
+#include "audiocontroller.hpp"
 #include "mediatypes.hpp"
 
 #include <QIdentityProxyModel>
@@ -64,12 +65,13 @@ public:
 
     // Replaces the public property to keep the provider opaque
     void set_cover_provider(std::shared_ptr<covers::live::cover_provider> provider);
+    void set_audio_controller(std::shared_ptr<audio_controller> controller);
 
 signals:
     void trackChanged ();
     void countChanged ();
 
-private slots:
+public slots:
     void preload_next_track_whenever_possible ();
     void handle_queued_tracks_finished ();
     void handle_track_changed ();

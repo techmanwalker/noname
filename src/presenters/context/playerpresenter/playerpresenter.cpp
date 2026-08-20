@@ -1,7 +1,6 @@
 
 #include "playerpresenter.hpp"
 
-#include "audioengine.hpp"
 #include "configuration.hpp"
 #include "lyricsmanifest.hpp"
 #include "mediatypes.hpp"
@@ -11,8 +10,9 @@
 #include <atomic>
 
 // meyers singleton
-PlayerPresenter &PlayerPresenter::instance() {
-    static PlayerPresenter s_instance;
+PlayerPresenter &PlayerPresenter::instance(std::shared_ptr<audio_controller> controller) {
+    static PlayerPresenter s_instance (nullptr, controller);
+
     return s_instance;
 }
 
@@ -32,9 +32,9 @@ PlayerPresenter *PlayerPresenter::create(QQmlEngine *qmlEngine, QJSEngine *jsEng
 }
 
 // Private constructor
-PlayerPresenter::PlayerPresenter(QObject *parent)
+PlayerPresenter::PlayerPresenter(QObject *parent, std::shared_ptr<audio_controller> controller)
     : QObject(parent),
-      playing(audio_engine::instance()),
+      playing(controller),
       queue(PlayQueue::instance()),
       lm(LyricsManifest::instance())
 {
@@ -42,19 +42,6 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 
     connect(m_position_poll_timer, &QTimer::timeout, 
             this, &PlayerPresenter::positionChanged);
-
-    // Listen to the audio controller; when metadata updates, notify the QML engine
-    connect(&playing, &audio_engine::track_changed,
-            this, &PlayerPresenter::handleTrackChanged);
-
-    connect(&playing, &audio_engine::playback_state_changed,
-            this, &PlayerPresenter::handlePlaybackStateChanged);
-
-    connect(&playing, &audio_engine::seek_finished,
-            this, &PlayerPresenter::positionChanged);
-
-    connect(&playing, &audio_engine::volume_changed,
-            this, &PlayerPresenter::volumeChanged);
         
     connect(this, &PlayerPresenter::sliderPressedChanged,
             this, &PlayerPresenter::handleSliderPressedChanged);
@@ -77,21 +64,27 @@ PlayerPresenter::PlayerPresenter(QObject *parent)
 }
 
 // Getters block
-QString PlayerPresenter::title()         const { return playing.current_track().title;          }
-QString PlayerPresenter::artist()        const { return playing.current_track().artist;         }
-QString PlayerPresenter::album()         const { return playing.current_track().album;          }
-QUrl    PlayerPresenter::cover()         const { return playing.current_track().cover.uri();    }
-quint64 PlayerPresenter::duration_ms()   const { return playing.current_track().duration;       }
-quint64 PlayerPresenter::position_ms()   const { return playing.current_position_ms();          }
-quint8  PlayerPresenter::volume()        const { return playing.current_volume();               }
-bool    PlayerPresenter::isMediaLoaded() const { return playing.is_a_song_loaded();             }
+QString PlayerPresenter::title()         const { return playing->current_track().title;          }
+QString PlayerPresenter::artist()        const { return playing->current_track().artist;         }
+QString PlayerPresenter::album()         const { return playing->current_track().album;          }
+QUrl    PlayerPresenter::cover()         const { return playing->current_track().cover.uri();    }
+quint64 PlayerPresenter::duration_ms()   const { return playing->current_track().duration;       }
+quint64 PlayerPresenter::position_ms()   const { return playing->current_position_ms();          }
+quint8  PlayerPresenter::volume()        const { return playing->current_volume();               }
+bool    PlayerPresenter::isMediaLoaded() const { return playing->is_a_song_loaded();             }
+
+void
+PlayerPresenter::set_audio_controller (std::shared_ptr<audio_controller> controller)
+{
+    playing = controller;
+}
 
 PlayerPresenter::PlaybackState
 PlayerPresenter::playbackState() const
 {
-    using ae = audio_engine::playback_state;
+    using ae = audio_controller::playback_state;
 
-    switch (playing.get_playback_state()) {
+    switch (playing->get_playback_state()) {
         case ae::paused:  return PlaybackState::paused;
         case ae::playing: return PlaybackState::playing;
         case ae::stopped: return PlaybackState::stopped;
@@ -105,13 +98,13 @@ void
 PlayerPresenter::setPosition_ms(quint64 position)
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
-    playing.set_position(position);
+    playing->set_position(position);
 }
 
 void
 PlayerPresenter::setVolume(quint8 volume)
 {
-    playing.set_volume(volume);
+    playing->set_volume(volume);
 }
 
 void
@@ -135,19 +128,19 @@ PlayerPresenter::play() const {
         queue.next();
     }
 
-    playing.play();
+    playing->play();
 }
 
 void
 PlayerPresenter::pause() const
 {
-    playing.pause();
+    playing->pause();
 }
 
 void
 PlayerPresenter::stop() const
 {
-    playing.stop();
+    playing->stop();
 }
 
 void
@@ -159,8 +152,8 @@ PlayerPresenter::next() const
 void
 PlayerPresenter::prev() const
 {
-    if (playing.current_position_ms() > 5000) {
-        playing.set_position(0); // start over
+    if (playing->current_position_ms() > 5000) {
+        playing->set_position(0); // start over
         return;
     }
 
@@ -170,7 +163,7 @@ PlayerPresenter::prev() const
 void
 PlayerPresenter::load(Types::Song &song) const
 {
-    playing.load(song);
+    playing->load(song);
 }
 
 void
@@ -184,8 +177,8 @@ PlayerPresenter::notify_slider_pressed_change (bool pressed)
 void
 PlayerPresenter::gate_poll_timer ()
 {
-    using playback_state = audio_engine::playback_state;
-    switch(playing.get_playback_state()) {
+    using playback_state = audio_controller::playback_state;
+    switch(playing->get_playback_state()) {
         case playback_state::playing:
             m_position_poll_timer->start();
             break;
@@ -213,7 +206,7 @@ PlayerPresenter::handleTrackChanged()
     emit mediaLoadedChanged();
 
     // read lyrics from audio file and update
-    lm.repopulate_with_lyrics_for_file(playing.current_track().source.toLocalFile()); /*
+    lm.repopulate_with_lyrics_for_file(playing->current_track().source.toLocalFile()); /*
         .then([this] (std::vector<std::string> lrc_lines) {
 
                 // uncomment this to print the lyrics model contents
@@ -242,11 +235,6 @@ PlayerPresenter::handleSliderPressedChanged()
     if (m_slider_pressed.load(std::memory_order_relaxed)) {
         m_position_poll_timer->stop();
         return;
-    } else {
-        connect (&playing, &audio_engine::seek_finished,
-                this, [this] () {
-                    gate_poll_timer(); // can freely decide
-                });
     }
 
 }

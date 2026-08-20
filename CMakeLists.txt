@@ -117,6 +117,7 @@ add_library(audioengine STATIC
 target_link_libraries(audioengine
     PUBLIC 
         mediatypes # legibly returns its track information
+        audiocontroller-iface # its interface
 
     PRIVATE
         SoundIo::SoundIo
@@ -129,8 +130,14 @@ target_link_libraries(audioengine
 target_include_directories(audioengine
     PUBLIC
         src/audioengine # enable including its own headers como Qt6:: libraries
-
+    
+    PRIVATE
+        src/interfaces
 )
+
+add_library(audiocontroller-iface INTERFACE)
+target_include_directories(audiocontroller-iface INTERFACE src/interfaces/audiocontroller)
+target_link_libraries(audiocontroller-iface INTERFACE Qt6::Core)
 
 # Covers - where your vision lives
 add_library(covers STATIC
@@ -310,7 +317,7 @@ qt_add_qml_module(playerpresenter
 
 target_link_libraries(playerpresenter
     PRIVATE
-        audioengine # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
+        audiocontroller-iface # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
         lyricsmanifest
         configuration # load last volume from its save file
         mediatypes
@@ -358,7 +365,7 @@ qt_add_qml_module(playqueue
 
 target_link_libraries(playqueue
     PRIVATE
-        audioengine # coordinates the progression and flow of the batch that's currently playing, controls what will play
+        audiocontroller-iface # coordinates the progression and flow of the batch that's currently playing, controls what will play
 
         # since the songfactory/covers separation, every song_factory caller must register the cover on their own; there
         # will always be a dependency to a cover provider as this is a mandatory requirement for QQuickAsyncImageProvider

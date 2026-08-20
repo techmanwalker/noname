@@ -10,14 +10,6 @@
 
 Q_LOGGING_CATEGORY(l_audioengine, "noname.audioengine");
 
-// Meyers singleton implementation
-audio_engine &
-audio_engine::instance()
-{
-    static audio_engine s_instance;
-    return s_instance;
-}
-
 // Private constructor
 audio_engine::audio_engine(QObject *parent)
     : QObject(parent),

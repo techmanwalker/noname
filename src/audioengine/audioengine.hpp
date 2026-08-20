@@ -2,9 +2,12 @@
 
 #include "mediatypes.hpp"
 
+#include "audiocontroller.hpp"
+
 #include "audiointernalcontroller.hpp"
 
 #include <QLoggingCategory>
+#include <qobject.h>
 
 Q_DECLARE_LOGGING_CATEGORY(l_audioengine) // errors in audioengine itself
 Q_DECLARE_LOGGING_CATEGORY(l_soundio) // soundio specific errors
@@ -20,37 +23,29 @@ Q_DECLARE_LOGGING_CATEGORY(l_ffmpeg) // errors in ffmpeg decoding
 /**
     @brief Playback controller proxy.
 */
-class audio_engine : public QObject
+class audio_engine : public QObject, public audio_controller
 {
     Q_OBJECT
+    Q_INTERFACES (audio_controller)
 public:
-    enum class playback_state {
-        paused,
-        playing,
-        stopped
-    };
+    explicit audio_engine (QObject *parent = nullptr);
 
-    audio_engine(const audio_engine&) = delete;
-    audio_engine &operator=(const audio_engine&) = delete;
+    void play() override;
+    void pause() override;
+    void stop() override;
+    void unload() override;
+    void set_position(const quint64 position_ms) override;
+    void set_volume(quint8 volume_percent) override;
+    void load(const Types::Song &song) override;
+    void prepare_next_track(const Types::Song &song) override;
+    void undo_prepare_next_track() override;
 
-    static audio_engine &instance();
-
-    void play();
-    void pause();
-    void stop();
-    void unload();
-    void set_position(const quint64 position_ms);
-    void set_volume(quint8 volume_percent);
-    void load(const Types::Song &song);
-    void prepare_next_track(const Types::Song &song);
-    void undo_prepare_next_track();
-
-    const Types::Song & current_track()       const;
-    const Types::Song & next_track_prepared() const;
-    quint64     current_position_ms() const;
-    quint8      current_volume()      const;
-    playback_state get_playback_state() const;
-    bool is_a_song_loaded() const;
+    const Types::Song & current_track()       const override;
+    const Types::Song & next_track_prepared() const override;
+    quint64     current_position_ms() const override;
+    quint8      current_volume()      const override;
+    playback_state get_playback_state() const override;
+    bool is_a_song_loaded() const override;
 
     void process_track_boundary();
     void process_playlist_finished();
@@ -69,9 +64,6 @@ public slots:
     void handle_track_changed();
 
 private:
-    explicit audio_engine(QObject *parent = nullptr);
-    ~audio_engine() override = default;
-
     std::unique_ptr<audio_internal_controller> m_internal;
 
     Types::Song m_current_track;
@@ -80,7 +72,6 @@ private:
     double m_log_volume = 0;
     uint64_t m_current_transaction_id = 0;
 };
-
 
 
 #include "prettyerrors.tpp" // IWYU pragma: keep

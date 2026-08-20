@@ -1,8 +1,9 @@
-#include "audioengine/audioengine.hpp"
+#include "audioengine.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
 #include "locallibrary.hpp"
 #include "playqueue.hpp"
+#include "presenters/context/playerpresenter/playerpresenter.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
 
@@ -10,6 +11,8 @@
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
 #include <QTranslator>
+#include <memory>
+#include <qobject.h>
 
 Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
@@ -40,10 +43,15 @@ main (int argc, char ** argv)
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
-    auto &ae = audio_engine::instance(); // to bind its destruction
+    auto ae = std::make_shared<audio_engine>();
     auto &ll = LocalLibrary::instance();
+
     auto &pq = PlayQueue::instance();
+    pq.set_audio_controller(ae);
+
     auto &sl = ShortcutsList::instance();
+
+    auto &pp = PlayerPresenter::instance(ae);
 
     // load the same cover provider in all relevant places
     ll.chosen_cover_provider = covers;
@@ -55,6 +63,35 @@ main (int argc, char ** argv)
 
     // load shortcuts
     sl.read_conf_and_load();
+
+
+
+
+
+    // bind signals
+    QObject::connect (ae.get(), &audio_engine::track_changed,
+        &pq, &PlayQueue::handle_track_changed);
+
+    QObject::connect(ae.get(), &audio_engine::queued_tracks_finished,
+            &pq, &PlayQueue::handle_queued_tracks_finished);
+
+        // Listen to the audio controller; when metadata updates, notify the QML engine
+    QObject::connect(ae.get(), &audio_engine::track_changed,
+            &pp, &PlayerPresenter::handleTrackChanged);
+
+    QObject::connect(ae.get(), &audio_engine::playback_state_changed,
+            &pp, &PlayerPresenter::handlePlaybackStateChanged);
+
+    QObject::connect(ae.get(), &audio_engine::seek_finished,
+            &pp, &PlayerPresenter::positionChanged);
+
+    QObject::connect(ae.get(), &audio_engine::volume_changed,
+            &pp, &PlayerPresenter::volumeChanged);
+
+    QObject::connect (ae.get(), &audio_engine::seek_finished,
+                &pp, &PlayerPresenter::gate_poll_timer);
+
+
 
     QTranslator translator;
     if (translator.load(QLocale::system(), "noname", "_", ":/i18n")) {
@@ -83,6 +120,6 @@ main (int argc, char ** argv)
 
     const int exitcode = app.exec();
     song_factory::teardown();
-    ae.teardown();
+    ae->teardown();
     return exitcode;
 }
