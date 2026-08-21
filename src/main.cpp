@@ -2,6 +2,7 @@
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
 #include "locallibraryldb.hpp"
+#include "locallibraryproxy.hpp"
 #include "lyricsprojectorproxy.hpp"
 #include "playqueue.hpp"
 #include "presenters/context/lyrics/lyricsmanifest.hpp"
@@ -65,9 +66,10 @@ main (int argc, char ** argv)
     // load shortcuts
     sl.read_conf_and_load();
 
+    
     // Initialize QML proxies
-
     LyricsProjectorProxy::inject(lm);
+    LocalLibraryProxy::inject(ll);
 
     // bind signals
     QObject::connect (ae.get(), &audio_engine::track_changed,
@@ -107,8 +109,7 @@ main (int argc, char ** argv)
     // or interfering with the 'covers' shared_ptr used by the C++ models.
     engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
 
-    // do not create a second empty LocalLibrary
-    qmlRegisterSingletonInstance("Player.LocalLibrary", 1, 0, "LocalLibrary", ll.get());
+    // qml singleton proxies now register the singletons
 
 
     // load qml module for noname

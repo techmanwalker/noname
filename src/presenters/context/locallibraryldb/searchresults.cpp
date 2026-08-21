@@ -2,6 +2,7 @@
 #include "locallibrary.hpp"
 #include "prettifiers.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
+#include <QIdentityProxyModel>
 #include <QList>
 
 #include <QJSEngine>
@@ -42,6 +43,12 @@ void
 SearchResults::performSearch(const QString &query, QObject *sourceModel)
 {
     QList<Types::Song> all_songs;
+
+    // Interface-backed QML singletons (LocalLibrary, and any future ones) are now
+    // exposed through a QIdentityProxyModel, not the real object — unwrap first.
+    if (auto *proxy = qobject_cast<QIdentityProxyModel*>(sourceModel)) {
+        sourceModel = proxy->sourceModel();
+    }
 
     // Check if the passed object is our LocalLibrary singleton
     if (auto *localLib = qobject_cast<LocalLibrary*>(sourceModel)) {
