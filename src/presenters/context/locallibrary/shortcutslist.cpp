@@ -2,15 +2,15 @@
 #include "configuration.hpp"
 #include "defaultroles.hpp"
 #include "songfactory.hpp" // IWYU pragma: keep
-#include "shortcutslistimpl.hpp"
+#include "shortcutslist.hpp"
 
-LI_ShortcutsList::LI_ShortcutsList(QObject *parent, std::shared_ptr<covers::live::cover_provider> provider)
+ShortcutsListLI::ShortcutsListLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> provider)
     : AbstractMediaSequence(parent, container_roles),
       chosen_cover_provider(provider)
 {}
 
 QFuture<void>
-LI_ShortcutsList::read_conf_and_load ()
+ShortcutsListLI::read_conf_and_load ()
 {
     auto &conf = configuration::manager::instance();
     using configuration::conf_file_type::shortcuts;
@@ -28,7 +28,7 @@ LI_ShortcutsList::read_conf_and_load ()
 }
 
 // a shortcut could be actually anything, just not now
-void LI_ShortcutsList::append(const Types::Song &shortcut)                { AbstractMediaSequence::append(shortcut); }
-void LI_ShortcutsList::batch_append (const QList<Types::Song> &shortcuts) { AbstractMediaSequence::batch_append(shortcuts); }
-void LI_ShortcutsList::remove(size_t index)                                 { AbstractMediaSequence::remove(index); }
-void LI_ShortcutsList::clear()                                           { AbstractMediaSequence::clear(); }
+void ShortcutsListLI::append(const Types::Song &shortcut)                { AbstractMediaSequence::append(shortcut); }
+void ShortcutsListLI::batch_append (const QList<Types::Song> &shortcuts) { AbstractMediaSequence::batch_append(shortcuts); }
+void ShortcutsListLI::remove(size_t index)                                 { AbstractMediaSequence::remove(index); }
+void ShortcutsListLI::clear()                                           { AbstractMediaSequence::clear(); }
