@@ -40,7 +40,7 @@ public:
         : QObject(parent),
           m_presenter(s_injectedPresenter) // Copies shared_ptr, incrementing ref count
     {
-        // Opposite direction from the LyricsProjector/LocalLibrary proxies:
+        // Opposite direction from the LyricsManifest/LocalLibrary proxies:
         // going interface* -> QObject*, which qobject_cast cannot do (it only
         // casts FROM a QObject). This is a genuine cross-cast between sibling
         // bases of the same PlayerNode object, hence dynamic_cast here.

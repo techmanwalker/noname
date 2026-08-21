@@ -3,7 +3,7 @@
 #include "coverstorage.hpp"
 #include "locallibrary.hpp"
 #include "locallibraryproxy.hpp"
-#include "lyricsprojectorproxy.hpp"
+#include "lyricsmanifestproxy.hpp"
 #include "playerpresenterproxy.hpp"
 #include "playernode.hpp"
 #include "lyricsmanifest.hpp"
@@ -51,7 +51,7 @@ main (int argc, char ** argv)
         a folder-separated view of all available songs */
     auto ae = std::make_shared<audio_engineLI>(nullptr);
     auto ll = std::make_shared<LocalLibraryLI>(nullptr, covers);
-    auto lm = std::make_shared<LyricsManifest>(nullptr);
+    auto lm = std::make_shared<LyricsManifestLI>(nullptr);
     auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
     auto pn = std::make_shared<PlayerNode>(nullptr, ae, pq, lm);
     auto sl = std::make_shared<LI_ShortcutsList>(nullptr, covers);
@@ -63,7 +63,7 @@ main (int argc, char ** argv)
     sl->read_conf_and_load();
 
     // Initialize QML proxies
-    LyricsProjectorProxy::inject(lm);
+    LyricsManifestProxy::inject(lm);
     LocalLibraryProxy::inject(ll);
     PlayerPresenterProxy::inject(pn);
     PlayQueueProxy::inject(pq);

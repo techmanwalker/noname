@@ -42,7 +42,7 @@ public:
         return 0;
     }
 
-    // Same QObject* -> interface* direction as LocalLibrary/LyricsProjector — qobject_cast
+    // Same QObject* -> interface* direction as LocalLibrary/LyricsManifest — qobject_cast
     // works fine here (unlike PlayerPresenterProxy, which needed the reverse direction).
     QPersistentModelIndex playhead() const {
         if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) {

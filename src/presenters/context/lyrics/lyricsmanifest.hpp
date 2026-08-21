@@ -10,7 +10,7 @@
 
 #include <QtQmlIntegration/qqmlintegration.h>
 
-#include "lyricsprojector.hpp"
+#include "lyricsmanifest-in.hpp"
 
 Q_DECLARE_LOGGING_CATEGORY(l_lyricsmanifest);
 
@@ -21,14 +21,14 @@ class QJSEngine;
 class LyricsManifestPrivate;
 
 // The lyrics of the current playing song, accessible from within the entire player.
-class LyricsManifest : public QAbstractListModel, public LyricsProjector
+class LyricsManifestLI : public QAbstractListModel, public LyricsManifest
 {
     Q_OBJECT
-    Q_INTERFACES(LyricsProjector)
+    Q_INTERFACES(LyricsManifest)
 
 public:
-    explicit LyricsManifest(QObject *parent);
-    ~LyricsManifest() override; // explicitly required for std::unique_ptr with incomplete types
+    explicit LyricsManifestLI(QObject *parent);
+    ~LyricsManifestLI() override; // explicitly required for std::unique_ptr with incomplete types
 
     QFuture<void> repopulate_with_lyrics_for_file(const QString &source) override;
 
