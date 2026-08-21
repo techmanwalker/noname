@@ -5,12 +5,7 @@
 
 namespace song_factory {
 
-template <typename Container>
-requires
-std::ranges::forward_range<Container>
-&&  (
-        std::is_same_v<typename Container::value_type, QString>
-    ||  std::is_same_v<typename Container::value_type, QUrl>)
+template <Container_T Container>
 QList<QFuture<Types::Song>>
 progressive_extract (const Container &sources, attributes a)
 {
@@ -29,12 +24,7 @@ progressive_extract (const Container &sources, attributes a)
     return progressive_extract(sources_to_read, a);
 }
 
-template <typename Container>
-requires
-std::ranges::forward_range<Container> // Any type of list
-&&  (
-        std::is_same_v<typename Container::value_type, QString> // any uri or path
-    ||  std::is_same_v<typename Container::value_type, QUrl>)
+template <Container_T Container>
 QFuture<QList<Types::Song>>
 batch_extract (const Container &sources, attributes a)
 {
