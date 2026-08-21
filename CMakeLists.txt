@@ -490,7 +490,7 @@ qt_add_qml_module(locallibrary_li
 target_link_libraries (locallibrary_li
     PUBLIC
         locallibrary_in
-        shortcutslist-iface
+        shortcutslist_in
         
         mediasequences
         
@@ -514,9 +514,9 @@ add_library(locallibrary_in INTERFACE)
 target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
 target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
 
-add_library(shortcutslist-iface INTERFACE)
-target_include_directories(shortcutslist-iface INTERFACE src/interfaces/shortcutslist)
-target_link_libraries(shortcutslist-iface INTERFACE Qt6::Core mediatypes)
+add_library(shortcutslist_in INTERFACE)
+target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)
+target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes)
 
 ### General excecutable linking definitions
 

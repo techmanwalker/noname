@@ -9,7 +9,7 @@
 #include "lyricsmanifest.hpp"
 #include "playqueue.hpp"
 #include "playqueueproxy.hpp"
-#include "shortcutslistimpl.hpp"
+#include "shortcutslist.hpp"
 #include "shortcutslistproxy.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
 
@@ -49,12 +49,12 @@ main (int argc, char ** argv)
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
-    auto ae = std::make_shared<audio_engineLI>(nullptr);
-    auto ll = std::make_shared<LocalLibraryLI>(nullptr, covers);
-    auto lm = std::make_shared<LyricsManifestLI>(nullptr);
-    auto pq = std::make_shared<PlayQueueLI>(nullptr, covers, ae);
-    auto pn = std::make_shared<PlayerPresenterLI>(nullptr, ae, pq, lm);
-    auto sl = std::make_shared<LI_ShortcutsList>(nullptr, covers);
+    auto ae = std::make_shared<audio_engineLI>    (nullptr);
+    auto ll = std::make_shared<LocalLibraryLI>    (nullptr, covers);
+    auto lm = std::make_shared<LyricsManifestLI>  (nullptr);
+    auto pq = std::make_shared<PlayQueueLI>       (nullptr, covers, ae);
+    auto pn = std::make_shared<PlayerPresenterLI> (nullptr, ae, pq, lm);
+    auto sl = std::make_shared<ShortcutsListLI>   (nullptr, covers);
 
     // trigger first refresh
     ll->snapshot_known_directories();
