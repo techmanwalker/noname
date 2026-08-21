@@ -1,6 +1,6 @@
 #pragma once
 
-#include "playerpresenter.hpp"
+#include "playerpresenter-in.hpp"
 
 #include <QObject>
 #include <QString>
@@ -15,8 +15,8 @@ class PlayerPresenterProxy : public QObject {
     QML_SINGLETON
 
 public:
-    // Mirrors PlayerPresenter::PlaybackState — redeclared rather than reused,
-    // same approach PlayerNode already takes for audio_controller::playback_state:
+    // Mirrors PlayerPresenterLI::PlaybackState — redeclared rather than reused,
+    // same approach PlayerPresenter already takes for audio_controller::playback_state:
     // this proxy doesn't inherit PlayerPresenter (it only holds one), so there's
     // no base-class relationship for moc to walk to find the original enum.
     enum class PlaybackState {
@@ -43,7 +43,7 @@ public:
         // Opposite direction from the LyricsManifest/LocalLibrary proxies:
         // going interface* -> QObject*, which qobject_cast cannot do (it only
         // casts FROM a QObject). This is a genuine cross-cast between sibling
-        // bases of the same PlayerNode object, hence dynamic_cast here.
+        // bases of the same PlayerPresenterLI object, hence dynamic_cast here.
         if (auto *concrete = dynamic_cast<QObject*>(m_presenter.get())) {
             connect(concrete, SIGNAL(titleChanged()),         this, SIGNAL(titleChanged()));
             connect(concrete, SIGNAL(artistChanged()),        this, SIGNAL(artistChanged()));

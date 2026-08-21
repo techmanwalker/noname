@@ -3,7 +3,7 @@
 #include "audioengine-in.hpp"
 
 #include "lyricsmanifest-in.hpp"
-#include "playerpresenter.hpp"
+#include "playerpresenter-in.hpp"
 
 #include <QLoggingCategory>
 #include <QObject>
@@ -24,7 +24,7 @@ namespace Types {
 }
 
 /**
-    @class PlayerNode
+    @class PlayerPresenterLI
     @brief Declarative and reactive representation of the playback state for the user interface.
 
     This class acts as the view model within the application architecture,
@@ -46,7 +46,7 @@ namespace Types {
     read-only properties for static metadata, ensuring that the interface cannot corrupt 
     the current media state directly.
 */
-class PlayerNode : public QObject, public PlayerPresenter
+class PlayerPresenterLI : public QObject, public PlayerPresenter
 {
     Q_OBJECT
     Q_INTERFACES(PlayerPresenter)
@@ -54,7 +54,7 @@ class PlayerNode : public QObject, public PlayerPresenter
     // and lyricmanifest already injected
 
 public:
-    explicit PlayerNode(
+    explicit PlayerPresenterLI(
         QObject *parent,
         std::shared_ptr<audio_engine> controller,
         std::shared_ptr<PlayQueue> pqueue,

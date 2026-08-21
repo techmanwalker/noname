@@ -5,7 +5,7 @@
 #include "locallibraryproxy.hpp"
 #include "lyricsmanifestproxy.hpp"
 #include "playerpresenterproxy.hpp"
-#include "playernode.hpp"
+#include "playerpresenter.hpp"
 #include "lyricsmanifest.hpp"
 #include "playqueueimpl.hpp"
 #include "playqueueproxy.hpp"
@@ -53,7 +53,7 @@ main (int argc, char ** argv)
     auto ll = std::make_shared<LocalLibraryLI>(nullptr, covers);
     auto lm = std::make_shared<LyricsManifestLI>(nullptr);
     auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
-    auto pn = std::make_shared<PlayerNode>(nullptr, ae, pq, lm);
+    auto pn = std::make_shared<PlayerPresenterLI>(nullptr, ae, pq, lm);
     auto sl = std::make_shared<LI_ShortcutsList>(nullptr, covers);
 
     // trigger first refresh
@@ -80,19 +80,19 @@ main (int argc, char ** argv)
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and
     // main.cpp is the one place allowed to wire concrete-to-concrete connections.
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
-            pn.get(), &PlayerNode::handleTrackChanged);
+            pn.get(), &PlayerPresenterLI::handleTrackChanged);
 
     QObject::connect(ae.get(), &audio_engineLI::playback_state_changed,
-            pn.get(), &PlayerNode::handlePlaybackStateChanged);
+            pn.get(), &PlayerPresenterLI::handlePlaybackStateChanged);
 
     QObject::connect(ae.get(), &audio_engineLI::seek_finished,
-            pn.get(), &PlayerNode::positionChanged);
+            pn.get(), &PlayerPresenterLI::positionChanged);
 
     QObject::connect(ae.get(), &audio_engineLI::volume_changed,
-            pn.get(), &PlayerNode::volumeChanged);
+            pn.get(), &PlayerPresenterLI::volumeChanged);
 
     QObject::connect (ae.get(), &audio_engineLI::seek_finished,
-            pn.get(), &PlayerNode::gate_poll_timer);
+            pn.get(), &PlayerPresenterLI::gate_poll_timer);
 
 
 
