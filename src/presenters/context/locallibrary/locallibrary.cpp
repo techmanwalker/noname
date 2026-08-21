@@ -2,13 +2,13 @@
 #include "configuration.hpp"
 #include "coverprovider.hpp"
 #include "defaultroles.hpp"
-#include "locallibraryldb.hpp"
+#include "locallibrary.hpp"
 #include "mediatypes.hpp"
 #include "songfactory.hpp"
 #include <memory>
 
 QList<Types::Song>
-LocalLibraryLDB::flattened () const
+LocalLibraryLI::flattened () const
 {
     QList<Types::Song> flattened_directories_songs;
 
@@ -20,13 +20,13 @@ LocalLibraryLDB::flattened () const
 }
 
 QStringList
-LocalLibraryLDB::flattened_sources () const
+LocalLibraryLI::flattened_sources () const
 {
     return AbstractMediaSequence::sources<QList<Types::Song>>(flattened());
 }
 
 QFuture<void>
-LocalLibraryLDB::take_snapshot (const QString &dir_path)
+LocalLibraryLI::take_snapshot (const QString &dir_path)
 {
 
     // Try to search if the directory already has a snapshot
@@ -49,7 +49,7 @@ LocalLibraryLDB::take_snapshot (const QString &dir_path)
 
     if (!dir_index_to_refresh.isValid() || !dir_index_opt.has_value()) {
 
-        qCFatal (l_mediasequences) << "Could not create a simple empty directory snapshot on LocalLibraryLDB queue. "
+        qCFatal (l_mediasequences) << "Could not create a simple empty directory snapshot on LocalLibraryLI queue. "
             << "This is a fatal error. Aborting noname.";
     }
 
@@ -138,7 +138,7 @@ LocalLibraryLDB::take_snapshot (const QString &dir_path)
 }
 
 QFuture<void>
-LocalLibraryLDB::take_snapshots (const QStringList &paths)
+LocalLibraryLI::take_snapshots (const QStringList &paths)
 {
     QList<QFuture<void>> snapshot_futures;
 
@@ -152,7 +152,7 @@ LocalLibraryLDB::take_snapshots (const QStringList &paths)
 }
 
 QFuture<void>
-LocalLibraryLDB::retake_all_snapshots ()
+LocalLibraryLI::retake_all_snapshots ()
 {
     return take_snapshots(paths())
     .then(this, [this]() {
@@ -161,7 +161,7 @@ LocalLibraryLDB::retake_all_snapshots ()
 }
 
 QFuture<void>
-LocalLibraryLDB::snapshot_known_directories ()
+LocalLibraryLI::snapshot_known_directories ()
 {
     // This is a full refresh.
 
@@ -178,19 +178,19 @@ LocalLibraryLDB::snapshot_known_directories ()
 }
 
 QList<Types::Directory>
-LocalLibraryLDB::items () const
+LocalLibraryLI::items () const
 {
     return AbstractMediaSequence::items<Types::Directory>();
 }
 
 QStringList
-LocalLibraryLDB::paths ()
+LocalLibraryLI::paths ()
 {
     // .path of all items that are Types::Directory
     return sources<Types::Directory>();
 }
 
-LocalLibraryLDB::LocalLibraryLDB(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider)
+LocalLibraryLI::LocalLibraryLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider)
     : AbstractMediaSequence (parent, container_roles),
       chosen_cover_provider (cover_provider)
 {

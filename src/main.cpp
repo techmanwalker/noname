@@ -1,7 +1,7 @@
 #include "audioengine.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
-#include "locallibraryldb.hpp"
+#include "locallibrary.hpp"
 #include "locallibraryproxy.hpp"
 #include "lyricsprojectorproxy.hpp"
 #include "playerpresenterproxy.hpp"
@@ -50,7 +50,7 @@ main (int argc, char ** argv)
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
     auto ae = std::make_shared<audio_engineLI>(nullptr);
-    auto ll = std::make_shared<LocalLibraryLDB>(nullptr, covers);
+    auto ll = std::make_shared<LocalLibraryLI>(nullptr, covers);
     auto lm = std::make_shared<LyricsManifest>(nullptr);
     auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
     auto pn = std::make_shared<PlayerNode>(nullptr, ae, pq, lm);
