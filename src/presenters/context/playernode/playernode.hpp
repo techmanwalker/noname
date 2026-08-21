@@ -60,25 +60,13 @@ public:
     explicit PlayerNode(
         QObject *parent = nullptr,
         std::shared_ptr<audio_controller> controller = nullptr,
+        std::shared_ptr<PlayQueue> pqueue = nullptr,
         std::shared_ptr<LyricsProjector> lyricsproj = nullptr
     );
     
     using PlayerPresenter::PlaybackState;
     Q_ENUM(PlaybackState)
-
-    // Q_PROPERTY defines the magic variables that QML can read and listen
-    Q_PROPERTY(QString title       READ title       NOTIFY titleChanged)
-    Q_PROPERTY(QString artist      READ artist      NOTIFY artistChanged)
-    Q_PROPERTY(QString album       READ album       NOTIFY albumChanged)
-    Q_PROPERTY(QUrl    cover       READ cover       NOTIFY coverChanged)
-    Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY durationChanged)
-    Q_PROPERTY(quint64 position_ms READ position_ms WRITE setPosition_ms    NOTIFY positionChanged)
-    Q_PROPERTY(quint8  volume      READ volume      WRITE setVolume         NOTIFY volumeChanged)
-
-    Q_PROPERTY(bool isMediaLoaded READ isMediaLoaded NOTIFY mediaLoadedChanged)
-
-    Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
-
+    
     // Getters
     QString title() const override;
     QString artist() const override;
@@ -133,7 +121,7 @@ public slots:
 private:
     std::shared_ptr<audio_controller> playing; // controller
 
-    PlayQueue &queue;
+    std::shared_ptr<PlayQueue> queue;
     std::shared_ptr<LyricsProjector> lp;
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
