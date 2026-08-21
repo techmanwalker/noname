@@ -9,7 +9,8 @@
 #include "lyricsmanifest.hpp"
 #include "playqueueimpl.hpp"
 #include "playqueueproxy.hpp"
-#include "shortcutslist.hpp"
+#include "shortcutslistimpl.hpp"
+#include "shortcutslistproxy.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
 
 #include <QGuiApplication>
@@ -53,22 +54,20 @@ main (int argc, char ** argv)
     auto lm = std::make_shared<LyricsManifest>(nullptr);
     auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
     auto pn = std::make_shared<PlayerNode>(nullptr, ae, pq, lm);
-
-
-    auto &sl = ShortcutsList::instance();
-    sl.chosen_cover_provider = covers;
+    auto sl = std::make_shared<LI_ShortcutsList>(nullptr, covers);
 
     // trigger first refresh
     ll->snapshot_known_directories();
 
     // load shortcuts
-    sl.read_conf_and_load();
+    sl->read_conf_and_load();
 
     // Initialize QML proxies
     LyricsProjectorProxy::inject(lm);
     LocalLibraryProxy::inject(ll);
     PlayerPresenterProxy::inject(pn);
     PlayQueueProxy::inject(pq);
+    ShortcutsListProxy::inject(sl);
 
     // bind signals
     QObject::connect (ae.get(), &audio_engine::track_changed,

@@ -482,6 +482,7 @@ qt_add_qml_module(locallibraryldb
     URI Player.LocalLibrary
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
         ${LOCALLIBRARYLDB_SOURCES}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
@@ -490,6 +491,8 @@ qt_add_qml_module(locallibraryldb
 target_link_libraries (locallibraryldb
     PUBLIC
         locallibrary-iface
+        shortcutslist-iface
+        
         mediasequences
         
     PRIVATE
@@ -512,6 +515,9 @@ add_library(locallibrary-iface INTERFACE)
 target_include_directories(locallibrary-iface INTERFACE src/interfaces/locallibrary)
 target_link_libraries(locallibrary-iface INTERFACE Qt6::Core mediatypes)
 
+add_library(shortcutslist-iface INTERFACE)
+target_include_directories(shortcutslist-iface INTERFACE src/interfaces/shortcutslist)
+target_link_libraries(shortcutslist-iface INTERFACE Qt6::Core mediatypes)
 
 ### General excecutable linking definitions
 

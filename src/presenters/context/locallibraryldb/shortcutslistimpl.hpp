@@ -2,25 +2,22 @@
 
 #include "abstractmediasequence.hpp"
 #include "coverprovider.hpp"
+#include "shortcutslist.hpp"
 
 #include <QtQmlIntegration/qqmlintegration.h>
 
-// forward declarations
-class QQmlEngine;
-class QJSEngine;
-
 // Intended to end up showing in the Start page showing shortcuts to your favorite music.
-class ShortcutsList : public AbstractMediaSequence {
+class LI_ShortcutsList : public AbstractMediaSequence, public ShortcutsList
+{
     Q_OBJECT
-    QML_ELEMENT
-    QML_SINGLETON
-public:
-    // must not copy nor reassign
-    ShortcutsList(const ShortcutsList&) = delete;
-    ShortcutsList& operator=(const ShortcutsList&) = delete;
+    Q_INTERFACES(ShortcutsList)
 
-    static ShortcutsList &instance();
-    static ShortcutsList *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+public:
+    explicit LI_ShortcutsList(QObject *parent, std::shared_ptr<covers::live::cover_provider> provider);
+
+    // must not copy nor reassign
+    LI_ShortcutsList(const LI_ShortcutsList&) = delete;
+    LI_ShortcutsList& operator=(const LI_ShortcutsList&) = delete;
 
     // Intended to any type of item to be shown on shortcuts
     // but noname currently only supports raw songs, will be undone later when
@@ -33,9 +30,7 @@ public:
     // shorthand
     QFuture<void> read_conf_and_load ();
 
-    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
-
 private:
-    // hidden constructor
-    explicit ShortcutsList(QObject *parent = nullptr);
+
+    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 };
