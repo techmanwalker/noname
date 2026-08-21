@@ -1,6 +1,6 @@
 #include "basicdiskio.hpp"
 #include "configuration.hpp"
-#include "coverprovider.hpp"
+#include "coverprovider-in.hpp"
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"

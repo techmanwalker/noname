@@ -6,6 +6,8 @@
 #include <QVariant>
 #include <memory>
 
+#include "coverprovider-in.hpp"
+
 class CoverRef;
 
 // Forward declare the implementation to hide it from the rest of the application
@@ -15,15 +17,17 @@ namespace covers::live {
 
 namespace covers::live {
 
-class cover_provider : public QQuickAsyncImageProvider {
+class cover_providerLI : public QQuickAsyncImageProvider, public cover_provider
+{
+
 public:
-    explicit cover_provider(std::shared_ptr<covers::live::cover_storage> realProvider);
+    explicit cover_providerLI(std::shared_ptr<covers::live::cover_storage> realProvider);
 
     // QQuickAsyncImageProvider interface
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
 
     // Exposed forwarding calls
-    void register_cover_reference(const CoverRef &ref);
+    void register_cover_reference(const CoverRef &ref) override;
     bool store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
 private:

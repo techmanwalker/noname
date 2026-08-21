@@ -45,7 +45,7 @@ main (int argc, char ** argv)
         decrement the reference counter safely without prematurely freeing the
         displaced memory block where the qml engine thinks the cover_provider is.
     */
-    std::shared_ptr<covers::live::cover_provider> covers = std::make_shared<covers::live::cover_provider>(cover_private_storage);
+    std::shared_ptr<covers::live::cover_providerLI> covers = std::make_shared<covers::live::cover_providerLI>(cover_private_storage);
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
@@ -104,10 +104,14 @@ main (int argc, char ** argv)
     // create base engine
     QQmlApplicationEngine engine;
 
-    // Give the QML engine its own proxy instance allocated with 'new'.
-    // It will safely invoke 'delete' on this proxy without corrupting the heap
-    // or interfering with the 'covers' shared_ptr used by the C++ models.
-    engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
+    /* Give the QML engine its own proxy instance allocating a secondary wrapper.
+        It will safely invoke 'delete' on this proxy without corrupting the heap
+        or interfering with the 'covers' shared_ptr used by the C++ models.
+
+        cover_providerLI is fine here because the engine only care about resolving image://covers...
+        and doing this does not break DIP linking in CMakeLists.txt
+    */
+    engine.addImageProvider("covers", new covers::live::cover_providerLI(cover_private_storage));
 
     // qml singleton proxies now register the singletons
 

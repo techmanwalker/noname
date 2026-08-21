@@ -135,12 +135,13 @@ target_include_directories(audioengine_in INTERFACE src/interfaces/audioengine)
 target_link_libraries(audioengine_in INTERFACE Qt6::Core)
 
 # Covers - where your vision lives
-add_library(covers STATIC
+add_library(covers_li STATIC
     ${COVERS_SOURCES}
 )
 
-target_link_libraries(covers
+target_link_libraries(covers_li
     PUBLIC
+        covers_in
         Qt6::Quick
 
     PRIVATE
@@ -157,10 +158,14 @@ target_link_libraries(covers
         # songfactory...
 )
 
-target_include_directories(covers
+target_include_directories(covers_li
     PUBLIC
         src/covers
 )
+
+add_library(covers_in INTERFACE)
+target_include_directories(covers_in INTERFACE src/interfaces/covers)
+
 
 # The Song factory - enables extracting metadata, media and covers from songs themselves
 add_library(songfactory STATIC
@@ -379,7 +384,7 @@ target_link_libraries(playqueue_li
         # will always be a dependency to a cover provider as this is a mandatory requirement for QQuickAsyncImageProvider
         # bidirectional hash<->source conversion... unless something like base64 or other non destructive encoder/decoder
         # is used in the future to get rid of this
-        covers
+        covers_in
 
         mediasequences
         songfactory # qml can drop songs to the play queue graphically, needs to read them
@@ -492,7 +497,8 @@ target_link_libraries (locallibrary_li
         mediasequences
         
     PRIVATE
-        covers
+        covers_in
+
         diskio
         configuration
         mediatypes
@@ -538,7 +544,8 @@ target_link_libraries(${PROJECT_NAME}
         playerpresenter_li
         playqueue_li
 
-        covers # every executable that features its own cover storage will feature this
+        covers_li # every executable that features its own cover storage will feature this
+
         mainwindow # window decorations and such
 
         songfactory # MUST be able to shut down its thread pool if something goes wrong
@@ -586,7 +593,7 @@ if(NONAME_BUILD_TESTS)
     target_link_libraries(mockupv2
         PUBLIC
             audioengine
-            covers
+            covers_li
             fullscreenplayer
             mediasequences
             mediatypes
@@ -617,7 +624,7 @@ if(NONAME_BUILD_TESTS)
         PUBLIC
             audioengine
             browser
-            covers
+            covers_li
             debugtools
             fullscreenplayer
             songfactory
@@ -635,7 +642,7 @@ if(NONAME_BUILD_TESTS)
 
     target_link_libraries(refreshlisttest
         PUBLIC
-            covers
+            covers_li
             debugtools
             locallibrary_li
             mediatypes
