@@ -11,7 +11,6 @@
 #include <QQmlEngine>
 #include <QUrl>
 #include <memory>
-#include <qtmetamacros.h>
 
 // Snapshots of directories built from the songs of all known directories and other music sources, if ever supported
 // Local Library Logical Database

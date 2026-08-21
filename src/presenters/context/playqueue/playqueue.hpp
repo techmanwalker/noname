@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mediatypes.hpp"
-#include "playqueue.hpp"
+#include "playqueue-in.hpp"
 
 #include <QIdentityProxyModel>
 #include <QFuture>
@@ -12,24 +12,24 @@ namespace covers::live {
     class cover_provider;
 }
 
-struct LI_PlayQueuePrivate;
+struct PlayQueueLIPrivate;
 class audio_engine;
 
 // Media that will play up next.
-class LI_PlayQueue : public QIdentityProxyModel, public PlayQueue
+class PlayQueueLI : public QIdentityProxyModel, public PlayQueue
 {
     Q_OBJECT
     Q_INTERFACES(PlayQueue)
 
 public:
-    explicit LI_PlayQueue(
+    explicit PlayQueueLI(
         QObject *parent,
         std::shared_ptr<covers::live::cover_provider> provider,
         std::shared_ptr<audio_engine> controller);
 
 
     // Required in the header for std::unique_ptr to destroy the incomplete type
-    ~LI_PlayQueue() override;
+    ~PlayQueueLI() override;
 
     // getters
     QPersistentModelIndex playhead() override;
@@ -67,5 +67,5 @@ public slots:
 
 private:
 
-    std::unique_ptr<LI_PlayQueuePrivate> m_d;
+    std::unique_ptr<PlayQueueLIPrivate> m_d;
 };

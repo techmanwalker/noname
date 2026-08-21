@@ -7,7 +7,7 @@
 #include "playerpresenterproxy.hpp"
 #include "playerpresenter.hpp"
 #include "lyricsmanifest.hpp"
-#include "playqueueimpl.hpp"
+#include "playqueue.hpp"
 #include "playqueueproxy.hpp"
 #include "shortcutslistimpl.hpp"
 #include "shortcutslistproxy.hpp"
@@ -52,7 +52,7 @@ main (int argc, char ** argv)
     auto ae = std::make_shared<audio_engineLI>(nullptr);
     auto ll = std::make_shared<LocalLibraryLI>(nullptr, covers);
     auto lm = std::make_shared<LyricsManifestLI>(nullptr);
-    auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
+    auto pq = std::make_shared<PlayQueueLI>(nullptr, covers, ae);
     auto pn = std::make_shared<PlayerPresenterLI>(nullptr, ae, pq, lm);
     auto sl = std::make_shared<LI_ShortcutsList>(nullptr, covers);
 
@@ -71,10 +71,10 @@ main (int argc, char ** argv)
 
     // bind signals
     QObject::connect (ae.get(), &audio_engineLI::track_changed,
-        pq.get(), &LI_PlayQueue::handle_track_changed);
+        pq.get(), &PlayQueueLI::handle_track_changed);
 
     QObject::connect(ae.get(), &audio_engineLI::queued_tracks_finished,
-            pq.get(), &LI_PlayQueue::handle_queued_tracks_finished);
+            pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
 
     // Listen to the audio controller; when metadata updates, notify the UI's data.
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and

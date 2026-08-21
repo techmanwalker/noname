@@ -1,6 +1,6 @@
 #pragma once
 
-#include "playqueue.hpp"
+#include "playqueue-in.hpp"
 
 #include <QFuture>
 #include <QIdentityProxyModel>
@@ -30,7 +30,7 @@ public:
         }
     }
 
-    // LI_PlayQueue is itself a QIdentityProxyModel, not a flat QAbstractListModel like
+    // PlayQueueLI is itself a QIdentityProxyModel, not a flat QAbstractListModel like
     // LyricsManifest/LocalLibraryLDB — so this has to be typed at the common
     // QAbstractItemModel base, or setSourceModel() below wouldn't even compile.
     static void inject(const std::shared_ptr<QAbstractItemModel> &queue) {
@@ -46,7 +46,7 @@ public:
     // works fine here (unlike PlayerPresenterProxy, which needed the reverse direction).
     QPersistentModelIndex playhead() const {
         if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) {
-            QPersistentModelIndex src_idx = q->playhead();        // LI_PlayQueue's own space
+            QPersistentModelIndex src_idx = q->playhead();        // PlayQueue's own space
             if (!src_idx.isValid()) return {};
             return QPersistentModelIndex(mapFromSource(src_idx)); // -> this proxy's space
         }
