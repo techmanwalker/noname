@@ -7,11 +7,6 @@
 #include "audiointernalcontroller.hpp"
 
 #include <QLoggingCategory>
-#include <qobject.h>
-
-Q_DECLARE_LOGGING_CATEGORY(l_audioengine) // errors in audioengine itself
-Q_DECLARE_LOGGING_CATEGORY(l_soundio) // soundio specific errors
-Q_DECLARE_LOGGING_CATEGORY(l_ffmpeg) // errors in ffmpeg decoding
 
 /**
     @brief Playback controller proxy for whatever audio framework hides behind the scenes.
@@ -72,6 +67,3 @@ private:
     double m_log_volume = 0;
     uint64_t m_current_transaction_id = 0;
 };
-
-
-#include "prettyerrors.tpp" // IWYU pragma: keep

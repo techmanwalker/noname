@@ -1,4 +1,4 @@
-#include "audioengine.hpp"
+#include "l_audioengine.hpp" // logging categories only
 #include "audiointernalcontroller.hpp"
 #include "audioringbuffer.hpp"
 
@@ -68,11 +68,10 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
             if (floats_read < floats_to_read && ring_buf->eof_decoded.load(std::memory_order_acquire)) {
                 if (!ring_buf->eof_played.exchange(true)) {
                     ring_buf->is_paused.store(true, std::memory_order_release);
-                    /* TODO: reenable when interface split is finished
-                    QMetaObject::invokeMethod(&audio_engine::instance(), 
-                                            &audio_engine::process_playlist_finished, 
-                                            Qt::QueuedConnection);
-                    */
+                    
+                    if (ring_buf->rt_notify_target) {
+                        emit ring_buf->rt_notify_target->playlist_finished();
+                    }
                 }
             }
             
@@ -106,12 +105,9 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
                 // Disarm target so it fires only once
                 ring_buf->next_boundary_frame.store(UINT64_MAX, std::memory_order_release);
 
-                /* TODO: reenable when the interface split is finished
-                // Notify main thread reactively
-                QMetaObject::invokeMethod(&audio_engine::instance(), 
-                                        &audio_engine::process_track_boundary, 
-                                        Qt::QueuedConnection);
-                */
+                if (ring_buf->rt_notify_target) {
+                    emit ring_buf->rt_notify_target->track_boundary_crossed();
+                }
             }
 
         }

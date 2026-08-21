@@ -8,8 +8,6 @@
 
 // Logs are fundamental for this program not to blindly fall apart
 
-Q_LOGGING_CATEGORY(l_audioengine, "noname.audioengine");
-
 // Private constructor
 audio_engine::audio_engine(QObject *parent)
     : QObject(parent),
@@ -18,6 +16,19 @@ audio_engine::audio_engine(QObject *parent)
     connect(m_internal.get(), &audio_internal_controller::seeked,
             this, &audio_engine::seek_finished);
             
+    /*  Explicit Qt::QueuedConnection, not AutoConnection: both m_internal and `this`
+        nominally live on the main thread, so AutoConnection would resolve to a Direct
+        connection — but these two signals are actually emitted from write_callback,
+        running on libsoundio's own RT thread, which has no Qt thread affinity at all.
+        Direct-connection semantics run the slot synchronously on whichever thread
+        called emit, so without forcing Queued here, process_track_boundary()/
+        process_playlist_finished() would execute ON the audio callback thread. */
+    connect(m_internal.get(), &audio_internal_controller::track_boundary_crossed,
+            this, &audio_engine::process_track_boundary, Qt::QueuedConnection);
+
+    connect(m_internal.get(), &audio_internal_controller::playlist_finished,
+            this, &audio_engine::process_playlist_finished, Qt::QueuedConnection);
+
     connect(this, &audio_engine::track_changed,
             this, &audio_engine::handle_track_changed);
 }

@@ -5,6 +5,8 @@
 #include <optional>
 #include <vector>
 
+class audio_internal_controller;
+
 // sndio
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);
 
@@ -98,6 +100,11 @@ public:
 
     // Target frame count for the next upcoming track boundary (UINT64_MAX when none)
     std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
+
+    // Non-owning. Set once by audio_internal_controller's constructor, before
+    // soundio_outstream_start() — same "set-once, then read-only on the RT thread"
+    // contract as sample_rate/capacity above, so no atomic needed here either.
+    audio_internal_controller *rt_notify_target = nullptr;
 
     bool check_for_boundary_and_advance();
 };

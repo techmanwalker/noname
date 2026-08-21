@@ -1,5 +1,6 @@
 #include "audiodecodeworker.hpp"
 #include "audioringbuffer.hpp"
+#include "l_audioengine.hpp"
 
 #include <QLoggingCategory>
 #include <QThread>
@@ -7,9 +8,6 @@
 extern "C" {
 #include <libavutil/frame.h>
 }
-
-Q_LOGGING_CATEGORY(l_soundio, "noname.soundio");
-Q_LOGGING_CATEGORY(l_ffmpeg, "noname.ffmpeg");
 
 // The Decoding workhorse
 
