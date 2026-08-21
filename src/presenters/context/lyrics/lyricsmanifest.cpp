@@ -63,17 +63,17 @@ public:
 };
 
 // private constructor utilizing unique_ptr standard setup
-LyricsManifest::LyricsManifest(QObject *parent)
+LyricsManifestLI::LyricsManifestLI(QObject *parent)
     : QAbstractListModel(parent),
       m_d(std::make_unique<LyricsManifestPrivate>())
 {
 }
 
 // explicit definition handles incomplete types gracefully across object borders
-LyricsManifest::~LyricsManifest() = default;
+LyricsManifestLI::~LyricsManifestLI() = default;
 
 int
-LyricsManifest::rowCount(const QModelIndex &parent) const
+LyricsManifestLI::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
@@ -82,7 +82,7 @@ LyricsManifest::rowCount(const QModelIndex &parent) const
 }
 
 QVariant
-LyricsManifest::data(const QModelIndex &index, int role) const
+LyricsManifestLI::data(const QModelIndex &index, int role) const
 {
     QReadLocker locker(&m_d->m_lock);
 
@@ -94,13 +94,13 @@ LyricsManifest::data(const QModelIndex &index, int role) const
 }
 
 QHash<int, QByteArray>
-LyricsManifest::roleNames() const
+LyricsManifestLI::roleNames() const
 {
     return m_d->m_roles.roleNames();
 }
 
 std::vector<std::string>
-LyricsManifest::current_lines() const
+LyricsManifestLI::current_lines() const
 {
     QReadLocker locker(&m_d->m_lock);
     std::vector<std::string> lrc_lines;
@@ -117,7 +117,7 @@ LyricsManifest::current_lines() const
 }
 
 QFuture<void>
-LyricsManifest::repopulate_with_lyrics_for_file(const QString &source)
+LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 {
     return m_d->read_from_metadata_tag(source).then(
         [](filelines lines) {
@@ -161,7 +161,7 @@ LyricsManifest::repopulate_with_lyrics_for_file(const QString &source)
 }
 
 void
-LyricsManifest::clear()
+LyricsManifestLI::clear()
 {
     if (m_d->m_lyrics.empty())
         return;

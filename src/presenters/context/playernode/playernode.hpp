@@ -2,7 +2,7 @@
 
 #include "audioengine-in.hpp"
 
-#include "lyricsprojector.hpp"
+#include "lyricsmanifest-in.hpp"
 #include "playerpresenter.hpp"
 
 #include <QLoggingCategory>
@@ -51,14 +51,14 @@ class PlayerNode : public QObject, public PlayerPresenter
     Q_OBJECT
     Q_INTERFACES(PlayerPresenter)
     // its qml proxy is located in its interfaces subfolder and needs audio_controller
-    // and lyricsprojector already injected
+    // and lyricmanifest already injected
 
 public:
     explicit PlayerNode(
         QObject *parent,
         std::shared_ptr<audio_engine> controller,
         std::shared_ptr<PlayQueue> pqueue,
-        std::shared_ptr<LyricsProjector> lyricsproj
+        std::shared_ptr<LyricsManifest> lyricsproj
     );
     
     using PlayerPresenter::PlaybackState;
@@ -119,7 +119,7 @@ private:
     std::shared_ptr<audio_engine> playing; // controller
 
     std::shared_ptr<PlayQueue> queue;
-    std::shared_ptr<LyricsProjector> lp;
+    std::shared_ptr<LyricsManifest> lm;
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 

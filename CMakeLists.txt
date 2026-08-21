@@ -320,7 +320,7 @@ target_link_libraries(playernode
 
     PRIVATE
         audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
-        lyricsprojector-iface
+        lyricsmanifest_in
         configuration # load last volume from its save file
         mediatypes
         playqueue-iface
@@ -399,18 +399,18 @@ target_link_libraries(playqueue-iface INTERFACE Qt6::Core)
 
 # Lyrics manifest - access the lyrics from your playing song anywhere
 
-qt_add_qml_module(lyricsmanifest
+qt_add_qml_module(lyricsmanifest_li
     STATIC
     URI Player.LyricsManifest
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsprojector/lyricsprojectorproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsmanifest/lyricsmanifestproxy.hpp"
         ${LYRICSMANIFEST_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
 
-target_link_libraries(lyricsmanifest
+target_link_libraries(lyricsmanifest_li
     PUBLIC 
-        lyricsprojector-iface
+        lyricsmanifest_in
 
     PRIVATE
         Qt6::Core
@@ -422,14 +422,14 @@ target_link_libraries(lyricsmanifest
         audio
 )
 
-target_include_directories(lyricsmanifest
+target_include_directories(lyricsmanifest_li
     PUBLIC
         src/presenters/context/lyrics
 )
 
-add_library(lyricsprojector-iface INTERFACE)
-target_include_directories(lyricsprojector-iface INTERFACE src/interfaces/lyricsprojector)
-target_link_libraries(lyricsprojector-iface INTERFACE Qt6::Core)
+add_library(lyricsmanifest_in INTERFACE)
+target_include_directories(lyricsmanifest_in INTERFACE src/interfaces/lyricsmanifest)
+target_link_libraries(lyricsmanifest_in INTERFACE Qt6::Core)
 
 
 # The Player module
@@ -535,9 +535,10 @@ qt_add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         audioengine_li # to safely tear it down
-        covers # every executable that features its own cover storage will feature this
         locallibrary_li # your entire collection
-        lyricsmanifest
+        lyricsmanifest_li
+
+        covers # every executable that features its own cover storage will feature this
         mainwindow # window decorations and such
         playernode
         playqueueimpl

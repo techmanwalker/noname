@@ -1,17 +1,17 @@
 #pragma once
 
-#include "lyricsprojector.hpp"
+#include "lyricsmanifest-in.hpp"
 #include <QIdentityProxyModel>
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <memory>
 
-class LyricsProjectorProxy : public QIdentityProxyModel {
+class LyricsManifestProxy : public QIdentityProxyModel {
     Q_OBJECT
     QML_NAMED_ELEMENT(LyricsManifest)
     QML_SINGLETON
 
 public:
-    explicit LyricsProjectorProxy(QObject *parent = nullptr)
+    explicit LyricsManifestProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
           m_manifest(s_injectedManifest) // Copies shared_ptr, incrementing ref count
     {
@@ -27,7 +27,7 @@ public:
 
     // Respect and expose the public Q_INVOKABLE interface using the abstraction
     Q_INVOKABLE void clear() {
-        if (auto projector = qobject_cast<LyricsProjector*>(sourceModel())) {
+        if (auto projector = qobject_cast<LyricsManifest*>(sourceModel())) {
             projector->clear();
         }
     }

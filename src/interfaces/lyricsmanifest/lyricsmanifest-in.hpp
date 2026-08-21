@@ -2,10 +2,10 @@
 
 #include <QFuture>
 
-class LyricsProjector {
+class LyricsManifest {
 
 public:
-    virtual ~LyricsProjector () = default;
+    virtual ~LyricsManifest () = default;
 
     virtual QFuture<void> repopulate_with_lyrics_for_file(const QString &source) = 0;
 
@@ -13,4 +13,4 @@ public:
 
 };
 
-Q_DECLARE_INTERFACE(LyricsProjector, "com.noname.LyricsProjector");
+Q_DECLARE_INTERFACE(LyricsManifest, "com.noname.LyricsManifest");

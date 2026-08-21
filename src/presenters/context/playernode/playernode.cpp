@@ -2,9 +2,9 @@
 #include "playernode.hpp"
 
 #include "audioengine-in.hpp"
+#include "lyricsmanifest-in.hpp"
 
 #include "configuration.hpp"
-#include "lyricsprojector.hpp"
 #include "mediatypes.hpp"
 #include "playqueue.hpp"
 
@@ -16,12 +16,12 @@ PlayerNode::PlayerNode(
     QObject *parent, 
     std::shared_ptr<audio_engine> controller,
     std::shared_ptr<PlayQueue> pqueue ,
-    std::shared_ptr<LyricsProjector> lyricsproj
+    std::shared_ptr<LyricsManifest> lyricsproj
 )
     : QObject(parent),
       playing(controller),
       queue(pqueue),
-      lp(lyricsproj)
+      lm(lyricsproj)
 {
     m_position_poll_timer->setInterval(10);
 
@@ -185,7 +185,7 @@ PlayerNode::handleTrackChanged()
     emit mediaLoadedChanged();
 
     // read lyrics from audio file and update
-    lp->repopulate_with_lyrics_for_file(playing->current_track().source.toLocalFile()); /*
+    lm->repopulate_with_lyrics_for_file(playing->current_track().source.toLocalFile()); /*
         .then([this] (std::vector<std::string> lrc_lines) {
 
                 // uncomment this to print the lyrics model contents
