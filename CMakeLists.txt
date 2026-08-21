@@ -69,9 +69,9 @@ module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
 module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
-module_sources(PLAYQUEUEIMPL_SOURCES    "src/presenters/context/playqueueimpl/*.cpp")
+module_sources(PLAYQUEUE_SOURCES        "src/presenters/context/playqueue/*.cpp")
 module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
-module_sources(LOCALLIBRARY_SOURCES  "src/presenters/context/locallibrary/*.cpp")
+module_sources(LOCALLIBRARY_SOURCES     "src/presenters/context/locallibrary/*.cpp")
 module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp" "src/audioengine/*.hpp")
 module_sources(COVERS_SOURCES           "src/covers/*.cpp")
 module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
@@ -321,9 +321,10 @@ target_link_libraries(playerpresenter_li
     PRIVATE
         audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
         lyricsmanifest_in
+        playqueue_in
+
         configuration # load last volume from its save file
         mediatypes
-        playqueue-iface
 )
 
 target_include_directories(playerpresenter_li
@@ -361,18 +362,18 @@ target_include_directories(mediasequences
 
 # What has played, what is playing and what is to be played
 
-qt_add_qml_module(playqueueimpl
+qt_add_qml_module(playqueue_li
     STATIC
     URI Player.PlayQueue
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playqueue/playqueueproxy.hpp"
-        ${PLAYQUEUEIMPL_SOURCES}
+        ${PLAYQUEUE_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayQueue"
 )
 
-target_link_libraries(playqueueimpl
+target_link_libraries(playqueue_li
     PUBLIC
-        playqueue-iface
+        playqueue_in
         
     PRIVATE
         audioengine_in # coordinates the progression and flow of the batch that's currently playing, controls what will play
@@ -387,14 +388,14 @@ target_link_libraries(playqueueimpl
         songfactory # qml can drop songs to the play queue graphically, needs to read them
 )
 
-target_include_directories(playqueueimpl
+target_include_directories(playqueue_li
     PUBLIC
-        src/presenters/context/playqueueimpl
+        src/presenters/context/playqueue
 )
 
-add_library(playqueue-iface INTERFACE)
-target_include_directories(playqueue-iface INTERFACE src/interfaces/playqueue)
-target_link_libraries(playqueue-iface INTERFACE Qt6::Core)
+add_library(playqueue_in INTERFACE)
+target_include_directories(playqueue_in INTERFACE src/interfaces/playqueue)
+target_link_libraries(playqueue_in INTERFACE Qt6::Core)
 
 
 # Lyrics manifest - access the lyrics from your playing song anywhere
@@ -497,7 +498,7 @@ target_link_libraries (locallibrary_li
         covers
         diskio
         configuration
-        mediasequences
+        mediatypes
         rolecompiler
         songfactory # local library interface, needs to load the songs metadata
 
@@ -538,10 +539,10 @@ target_link_libraries(${PROJECT_NAME}
         locallibrary_li # your entire collection
         lyricsmanifest_li
         playerpresenter_li
+        playqueue_li
 
         covers # every executable that features its own cover storage will feature this
         mainwindow # window decorations and such
-        playqueueimpl
 
         songfactory # MUST be able to shut down its thread pool if something goes wrong
 )
@@ -594,7 +595,7 @@ if(NONAME_BUILD_TESTS)
             mediatypes
             configuration
             songfactory
-            playqueue
+            playqueue_li
     )
 
     target_include_directories(mockupv2
