@@ -2,6 +2,7 @@
 
 #include "audiocontroller.hpp"
 #include "lyricsprojector.hpp"
+#include "playerpresenter.hpp"
 
 #include <QLoggingCategory>
 #include <QObject>
@@ -26,7 +27,7 @@ namespace Types {
 }
 
 /**
-    @class PlayerPresenter
+    @class PlayerNode
     @brief Declarative and reactive representation of the playback state for the user interface.
 
     This class acts as the view model within the application architecture,
@@ -48,20 +49,21 @@ namespace Types {
     read-only properties for static metadata, ensuring that the interface cannot corrupt 
     the current media state directly.
 */
-class PlayerPresenter : public QObject
+class PlayerNode : public QObject, public PlayerPresenter
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_SINGLETON
+    Q_INTERFACES(PlayerPresenter)
+    // its qml proxy is located in its interfaces subfolder and needs audio_controller
+    // and lyricsprojector already injected
 
 public:
-    // direct mirror of audio_engine::playback_state
-    enum class PlaybackState {
-        paused,
-        playing,
-        stopped
-    };
+    explicit PlayerNode(
+        QObject *parent = nullptr,
+        std::shared_ptr<audio_controller> controller = nullptr,
+        std::shared_ptr<LyricsProjector> lyricsproj = nullptr
+    );
     
+    using PlayerPresenter::PlaybackState;
     Q_ENUM(PlaybackState)
 
     // Q_PROPERTY defines the magic variables that QML can read and listen
@@ -77,46 +79,36 @@ public:
 
     Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
 
-    // disable copy and reassignment
-    PlayerPresenter(const PlayerPresenter&) = delete;
-    PlayerPresenter &operator=(const PlayerPresenter&) = delete;
-    
-    // singleton instantiation
-    static PlayerPresenter &instance(std::shared_ptr<audio_controller> controller = nullptr, std::shared_ptr<LyricsProjector> lyricsproj = nullptr);
-    static PlayerPresenter *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
-
     // Getters
-    QString title() const;
-    QString artist() const;
-    QString album() const;
-    QUrl   cover() const;
-    quint64 duration_ms() const;
-    quint64 position_ms() const;
-    quint8 volume() const;
-    PlaybackState playbackState() const;
-    bool isMediaLoaded() const;
+    QString title() const override;
+    QString artist() const override;
+    QString album() const override;
+    QUrl   cover() const override;
+    quint64 duration_ms() const override;
+    quint64 position_ms() const override;
+    quint8 volume() const override;
+    PlaybackState playbackState() const override;
+    bool isMediaLoaded() const override;
 
     // Setters (normally called from C++ logic when time or song changes)
-    void setPosition_ms(quint64 position);
-    void setVolume (quint8 volume);
+    void setPosition_ms(quint64 position) override;
+    void setVolume (quint8 volume) override;
 
     // Call forwardings
-    void load(Types::Song &song) const;
+    void load(Types::Song &song) const override;
 
     // Playback controls
-    Q_INVOKABLE void play()  const;
-    Q_INVOKABLE void pause() const;
-    Q_INVOKABLE void stop()  const;
-    Q_INVOKABLE void next()  const;
-    Q_INVOKABLE void prev()  const;
+    Q_INVOKABLE void play()  const override;
+    Q_INVOKABLE void pause() const override;
+    Q_INVOKABLE void stop()  const override;
+    Q_INVOKABLE void next()  const override;
+    Q_INVOKABLE void prev()  const override;
 
     // to stop the poll timer while scrubbing
-    Q_INVOKABLE void notify_slider_pressed_change (bool pressed);
+    Q_INVOKABLE void notify_slider_pressed_change (bool pressed) override;
 
     // save volume level to disk on demand
-    Q_INVOKABLE void saveVolume () const;
-
-    void set_audio_controller (std::shared_ptr<audio_controller> controller);
+    Q_INVOKABLE void saveVolume () const override;
     
 signals:
     // Needed signals for QML to be reactive
@@ -139,9 +131,6 @@ public slots:
     void gate_poll_timer();
 
 private:
-    // Private constructor
-    explicit PlayerPresenter(QObject *parent = nullptr, std::shared_ptr<audio_controller> controller = nullptr, std::shared_ptr<LyricsProjector> lyricsproj = nullptr);
-
     std::shared_ptr<audio_controller> playing; // controller
 
     PlayQueue &queue;

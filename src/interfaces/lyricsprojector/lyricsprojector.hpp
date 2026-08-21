@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QFuture>
-#include <qobject.h>
 
 class LyricsProjector {
 

@@ -68,7 +68,7 @@ set_source_files_properties("src/qml/primitives/MediaTypes.qml"
 module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
-module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
+module_sources(PLAYERNODE_SOURCES       "src/presenters/context/playernode/*.cpp")
 module_sources(PLAYQUEUE_SOURCES        "src/presenters/context/playqueue/*.cpp")
 module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
 module_sources(LOCALLIBRARYLDB_SOURCES  "src/presenters/context/locallibraryldb/*.cpp")
@@ -307,15 +307,19 @@ target_link_libraries(listings
 
 # Playback presentation - everything that the C++ side exposes for your control and view
 
-qt_add_qml_module(playerpresenter
+qt_add_qml_module(playernode
     STATIC
     URI Player.PlayerPresenter
     SOURCES
-        ${PLAYERPRESENTER_SOURCES}
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playerpresenter/playerpresenterproxy.hpp"
+        ${PLAYERNODE_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
 )
 
-target_link_libraries(playerpresenter
+target_link_libraries(playernode
+    PUBLIC
+        playerpresenter-iface
+
     PRIVATE
         audiocontroller-iface # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
         lyricsprojector-iface
@@ -324,10 +328,14 @@ target_link_libraries(playerpresenter
         playqueue
 )
 
-target_include_directories(playerpresenter
+target_include_directories(playernode
     PUBLIC
-        src/presenters/context/playerpresenter
+        src/presenters/context/playernode
 )
+
+add_library(playerpresenter-iface INTERFACE)
+target_include_directories(playerpresenter-iface INTERFACE src/interfaces/playerpresenter)
+target_link_libraries(playerpresenter-iface INTERFACE Qt6::Core)
 
 
 qt_add_qml_module(mediasequences
@@ -429,7 +437,7 @@ qt_add_qml_module(fullscreenplayer
 
 target_link_libraries(fullscreenplayer
     PUBLIC
-        playerpresenter
+        playerpresenter-iface
         uiprimitives
 
     PRIVATE
@@ -518,6 +526,7 @@ target_link_libraries(${PROJECT_NAME}
         locallibraryldb # your entire collection
         lyricsmanifest
         mainwindow # window decorations and such
+        playernode
         playqueue
 
         songfactory # MUST be able to shut down its thread pool if something goes wrong
