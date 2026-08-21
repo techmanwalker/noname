@@ -76,7 +76,7 @@ cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, b
         }
     } // shard lock released immediately
 
-    if (!ref.thumbnail_file_exists() && save_to_disk_cache) {
+    if (!disk::thumbnail_file_exists(ref) && save_to_disk_cache) {
         covers::disk::write_thumbnail(ref, img);
     }
 

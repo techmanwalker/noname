@@ -88,9 +88,6 @@ add_library(mediatypes STATIC
 target_link_libraries(mediatypes
     PUBLIC
         Qt6::Core
-
-    PRIVATE
-        diskio
 )
 
 target_include_directories(mediatypes

@@ -1,6 +1,5 @@
 #include "mediatypes.hpp"
 #include "coveruris.hpp"
-#include "standardpaths.hpp"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -94,23 +93,6 @@ size_t
 CoverRef::size() const
 {
     return m_square_size;
-}
-
-QString
-CoverRef::thumbnail_file_path  () const
-{
-    // temporary ref, no thumnbail
-    if (hash().isEmpty()) return QString();
-
-    QDir thumb_dir (dir(standardpaths::standard_dirs::thumbnails));
-    thumb_dir.mkpath(".");
-    return thumb_dir.absoluteFilePath(hash() + QStringLiteral(".jxl"));
-}
-
-bool
-CoverRef::thumbnail_file_exists () const
-{
-    return QFile::exists(thumbnail_file_path());
 }
 
 QUrl

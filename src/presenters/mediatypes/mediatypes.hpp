@@ -22,12 +22,6 @@ struct CoverRef {
     QString hash () const;
     size_t size () const;
 
-    // path on disk where the thumbnail is stored and retrieved
-    QString thumbnail_file_path () const;
-
-    // whether the file in disk actually exists
-    bool thumbnail_file_exists () const;
-
     QUrl uri () const;
 
     bool operator==(const CoverRef &) const = default;
