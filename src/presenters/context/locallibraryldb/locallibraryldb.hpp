@@ -21,7 +21,7 @@ class LocalLibraryLDB : public AbstractMediaSequence, public LocalLibrary
     Q_INTERFACES(LocalLibrary)
 
 public:
-    explicit LocalLibraryLDB(QObject *parent = nullptr, std::shared_ptr<covers::live::cover_provider> cover_provider = nullptr);
+    explicit LocalLibraryLDB(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider);
 
     // Take a snapshot of the songs metadata in given directory path
     QFuture<void> take_snapshot (const QString &dir_path);

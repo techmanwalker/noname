@@ -58,15 +58,15 @@ class PlayerNode : public QObject, public PlayerPresenter
 
 public:
     explicit PlayerNode(
-        QObject *parent = nullptr,
-        std::shared_ptr<audio_controller> controller = nullptr,
-        std::shared_ptr<PlayQueue> pqueue = nullptr,
-        std::shared_ptr<LyricsProjector> lyricsproj = nullptr
+        QObject *parent,
+        std::shared_ptr<audio_controller> controller,
+        std::shared_ptr<PlayQueue> pqueue,
+        std::shared_ptr<LyricsProjector> lyricsproj
     );
     
     using PlayerPresenter::PlaybackState;
     Q_ENUM(PlaybackState)
-    
+
     // Getters
     QString title() const override;
     QString artist() const override;
