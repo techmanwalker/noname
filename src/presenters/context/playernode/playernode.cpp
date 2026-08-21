@@ -10,10 +10,15 @@
 #include <atomic>
 
 // Private constructor
-PlayerNode::PlayerNode(QObject *parent, std::shared_ptr<audio_controller> controller, std::shared_ptr<LyricsProjector> lyricsproj)
+PlayerNode::PlayerNode(
+    QObject *parent, 
+    std::shared_ptr<audio_controller> controller,
+    std::shared_ptr<PlayQueue> pqueue ,
+    std::shared_ptr<LyricsProjector> lyricsproj
+)
     : QObject(parent),
       playing(controller),
-      queue(PlayQueue::instance()),
+      queue(pqueue),
       lp(lyricsproj)
 {
     m_position_poll_timer->setInterval(10);
@@ -95,9 +100,9 @@ PlayerNode::saveVolume () const
 // Proxies for QML to be able to perform play, pause and more actions
 void
 PlayerNode::play() const {
-    if (!queue.playhead().isValid() && queue.itemCount() > 0) {
+    if (!queue->playhead().isValid() && queue->itemCount() > 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
-        queue.next();
+        queue->next();
     }
 
     playing->play();
@@ -118,7 +123,7 @@ PlayerNode::stop() const
 void
 PlayerNode::next() const
 {
-    queue.next();
+    queue->next();
 }
 
 void
@@ -129,7 +134,7 @@ PlayerNode::prev() const
         return;
     }
 
-    queue.prev();
+    queue->prev();
 }
 
 void

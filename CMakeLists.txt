@@ -69,7 +69,7 @@ module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
 module_sources(PLAYERNODE_SOURCES       "src/presenters/context/playernode/*.cpp")
-module_sources(PLAYQUEUE_SOURCES        "src/presenters/context/playqueue/*.cpp")
+module_sources(PLAYQUEUEIMPL_SOURCES    "src/presenters/context/playqueueimpl/*.cpp")
 module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
 module_sources(LOCALLIBRARYLDB_SOURCES  "src/presenters/context/locallibraryldb/*.cpp")
 module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp" "src/audioengine/*.hpp")
@@ -325,7 +325,7 @@ target_link_libraries(playernode
         lyricsprojector-iface
         configuration # load last volume from its save file
         mediatypes
-        playqueue
+        playqueue-iface
 )
 
 target_include_directories(playernode
@@ -363,15 +363,19 @@ target_include_directories(mediasequences
 
 # What has played, what is playing and what is to be played
 
-qt_add_qml_module(playqueue
+qt_add_qml_module(playqueueimpl
     STATIC
     URI Player.PlayQueue
     SOURCES
-        ${PLAYQUEUE_SOURCES}
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playqueue/playqueueproxy.hpp"
+        ${PLAYQUEUEIMPL_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayQueue"
 )
 
-target_link_libraries(playqueue
+target_link_libraries(playqueueimpl
+    PUBLIC
+        playqueue-iface
+        
     PRIVATE
         audiocontroller-iface # coordinates the progression and flow of the batch that's currently playing, controls what will play
 
@@ -385,10 +389,15 @@ target_link_libraries(playqueue
         songfactory # qml can drop songs to the play queue graphically, needs to read them
 )
 
-target_include_directories(playqueue
+target_include_directories(playqueueimpl
     PUBLIC
-        src/presenters/context/playqueue
+        src/presenters/context/playqueueimpl
 )
+
+add_library(playqueue-iface INTERFACE)
+target_include_directories(playqueue-iface INTERFACE src/interfaces/playqueue)
+target_link_libraries(playqueue-iface INTERFACE Qt6::Core)
+
 
 # Lyrics manifest - access the lyrics from your playing song anywhere
 
@@ -527,7 +536,7 @@ target_link_libraries(${PROJECT_NAME}
         lyricsmanifest
         mainwindow # window decorations and such
         playernode
-        playqueue
+        playqueueimpl
 
         songfactory # MUST be able to shut down its thread pool if something goes wrong
 )

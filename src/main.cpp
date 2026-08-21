@@ -6,8 +6,9 @@
 #include "lyricsprojectorproxy.hpp"
 #include "playerpresenterproxy.hpp"
 #include "playernode.hpp"
-#include "playqueue.hpp"
 #include "lyricsmanifest.hpp"
+#include "playqueueimpl.hpp"
+#include "playqueueproxy.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
 
@@ -50,16 +51,11 @@ main (int argc, char ** argv)
     auto ae = std::make_shared<audio_engine>();
     auto ll = std::make_shared<LocalLibraryLDB>(nullptr, covers);
     auto lm = std::make_shared<LyricsManifest>();
-    auto pn = std::make_shared<PlayerNode>(nullptr, ae, lm);
+    auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
+    auto pn = std::make_shared<PlayerNode>(nullptr, ae, pq, lm);
 
-    auto &pq = PlayQueue::instance();
-    pq.set_audio_controller(ae);
 
     auto &sl = ShortcutsList::instance();
-
-    
-
-    pq.set_cover_provider(covers);
     sl.chosen_cover_provider = covers;
 
     // trigger first refresh
@@ -72,13 +68,14 @@ main (int argc, char ** argv)
     LyricsProjectorProxy::inject(lm);
     LocalLibraryProxy::inject(ll);
     PlayerPresenterProxy::inject(pn);
+    PlayQueueProxy::inject(pq);
 
     // bind signals
     QObject::connect (ae.get(), &audio_engine::track_changed,
-        &pq, &PlayQueue::handle_track_changed);
+        pq.get(), &LI_PlayQueue::handle_track_changed);
 
     QObject::connect(ae.get(), &audio_engine::queued_tracks_finished,
-            &pq, &PlayQueue::handle_queued_tracks_finished);
+            pq.get(), &LI_PlayQueue::handle_queued_tracks_finished);
 
     // Listen to the audio controller; when metadata updates, notify the UI's data.
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and
