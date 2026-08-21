@@ -584,29 +584,6 @@ qt_add_translations(${PROJECT_NAME}
 # Executable tests per module - filled with dummy data for easy development
 
 if(NONAME_BUILD_TESTS)
-    # These tests are full fledged subsets of the main executable. You'll see basic deps repeated here.
-
-    qt_add_executable(mockupv2
-        src/tests/mockupv2.cpp
-    )
-
-    target_link_libraries(mockupv2
-        PUBLIC
-            audioengine
-            covers_li
-            fullscreenplayer
-            mediasequences
-            mediatypes
-            configuration
-            songfactory
-            playqueue_li
-    )
-
-    target_include_directories(mockupv2
-        PRIVATE
-            ${PLAYER_INCLUDE_DIRECTORIES}
-    )
-
     qt_add_executable(backgroundgradinghelper
         src/tests/backgroundgradinghelper.cpp
     )
@@ -615,46 +592,6 @@ if(NONAME_BUILD_TESTS)
         PUBLIC
             fullscreenplayer
     )
-
-    qt_add_executable(startpagetest
-        src/tests/startpage.cpp
-    )
-
-    target_link_libraries(startpagetest
-        PUBLIC
-            audioengine
-            browser
-            covers_li
-            debugtools
-            fullscreenplayer
-            songfactory
-            locallibrary_li
-    )
-
-    target_include_directories(startpagetest
-        PRIVATE
-            ${PLAYER_INCLUDE_DIRECTORIES}
-    )
-
-    qt_add_executable (refreshlisttest
-        src/tests/refreshlist.cpp
-    )
-
-    target_link_libraries(refreshlisttest
-        PUBLIC
-            covers_li
-            debugtools
-            locallibrary_li
-            mediatypes
-            mediasequences
-            configuration
-    )
-
-    target_include_directories(refreshlisttest
-        PRIVATE
-            ${PLAYER_INCLUDE_DIRECTORIES}
-    )
-
 endif()
 
 option(NONAME_ENABLE_QML_PROFILING "Enable QML debugging and profiling globally" OFF)
