@@ -4,9 +4,10 @@
 #include "locallibraryldb.hpp"
 #include "locallibraryproxy.hpp"
 #include "lyricsprojectorproxy.hpp"
+#include "playerpresenterproxy.hpp"
+#include "playernode.hpp"
 #include "playqueue.hpp"
-#include "presenters/context/lyrics/lyricsmanifest.hpp"
-#include "presenters/context/playerpresenter/playerpresenter.hpp"
+#include "lyricsmanifest.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
 
@@ -49,13 +50,14 @@ main (int argc, char ** argv)
     auto ae = std::make_shared<audio_engine>();
     auto ll = std::make_shared<LocalLibraryLDB>(nullptr, covers);
     auto lm = std::make_shared<LyricsManifest>();
+    auto pn = std::make_shared<PlayerNode>(nullptr, ae, lm);
 
     auto &pq = PlayQueue::instance();
     pq.set_audio_controller(ae);
 
     auto &sl = ShortcutsList::instance();
 
-    auto &pp = PlayerPresenter::instance(ae, lm);
+    
 
     pq.set_cover_provider(covers);
     sl.chosen_cover_provider = covers;
@@ -66,10 +68,10 @@ main (int argc, char ** argv)
     // load shortcuts
     sl.read_conf_and_load();
 
-    
     // Initialize QML proxies
     LyricsProjectorProxy::inject(lm);
     LocalLibraryProxy::inject(ll);
+    PlayerPresenterProxy::inject(pn);
 
     // bind signals
     QObject::connect (ae.get(), &audio_engine::track_changed,
@@ -78,21 +80,23 @@ main (int argc, char ** argv)
     QObject::connect(ae.get(), &audio_engine::queued_tracks_finished,
             &pq, &PlayQueue::handle_queued_tracks_finished);
 
-        // Listen to the audio controller; when metadata updates, notify the QML engine
+    // Listen to the audio controller; when metadata updates, notify the UI's data.
+    // These stay here, not in the proxy: both ae and pn are concrete pointers, and
+    // main.cpp is the one place allowed to wire concrete-to-concrete connections.
     QObject::connect(ae.get(), &audio_engine::track_changed,
-            &pp, &PlayerPresenter::handleTrackChanged);
+            pn.get(), &PlayerNode::handleTrackChanged);
 
     QObject::connect(ae.get(), &audio_engine::playback_state_changed,
-            &pp, &PlayerPresenter::handlePlaybackStateChanged);
+            pn.get(), &PlayerNode::handlePlaybackStateChanged);
 
     QObject::connect(ae.get(), &audio_engine::seek_finished,
-            &pp, &PlayerPresenter::positionChanged);
+            pn.get(), &PlayerNode::positionChanged);
 
     QObject::connect(ae.get(), &audio_engine::volume_changed,
-            &pp, &PlayerPresenter::volumeChanged);
+            pn.get(), &PlayerNode::volumeChanged);
 
     QObject::connect (ae.get(), &audio_engine::seek_finished,
-                &pp, &PlayerPresenter::gate_poll_timer);
+            pn.get(), &PlayerNode::gate_poll_timer);
 
 
 

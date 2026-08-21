@@ -1,5 +1,5 @@
 
-#include "playerpresenter.hpp"
+#include "playernode.hpp"
 
 #include "configuration.hpp"
 #include "lyricsprojector.hpp"
@@ -9,30 +9,8 @@
 #include <QQmlEngine>
 #include <atomic>
 
-// meyers singleton
-PlayerPresenter &PlayerPresenter::instance(std::shared_ptr<audio_controller> controller, std::shared_ptr<LyricsProjector> lyricsproj) {
-    static PlayerPresenter s_instance (nullptr, controller, lyricsproj);
-
-    return s_instance;
-}
-
-// qml factory
-PlayerPresenter *PlayerPresenter::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
-    Q_UNUSED(jsEngine);
-
-    PlayerPresenter *inst = &instance();
-    
-    // Transfer ownership to C++; don't you dare to destroy these either.
-    QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
-
-    // no need to use the CppOwnership sentence for the m_cover_provider because it's a shared_ptr
-    // and qml can't destroy it anyway
-    
-    return inst;
-}
-
 // Private constructor
-PlayerPresenter::PlayerPresenter(QObject *parent, std::shared_ptr<audio_controller> controller, std::shared_ptr<LyricsProjector> lyricsproj)
+PlayerNode::PlayerNode(QObject *parent, std::shared_ptr<audio_controller> controller, std::shared_ptr<LyricsProjector> lyricsproj)
     : QObject(parent),
       playing(controller),
       queue(PlayQueue::instance()),
@@ -41,10 +19,10 @@ PlayerPresenter::PlayerPresenter(QObject *parent, std::shared_ptr<audio_controll
     m_position_poll_timer->setInterval(10);
 
     connect(m_position_poll_timer, &QTimer::timeout, 
-            this, &PlayerPresenter::positionChanged);
+            this, &PlayerNode::positionChanged);
         
-    connect(this, &PlayerPresenter::sliderPressedChanged,
-            this, &PlayerPresenter::handleSliderPressedChanged);
+    connect(this, &PlayerNode::sliderPressedChanged,
+            this, &PlayerNode::handleSliderPressedChanged);
 
     // load volume from conf file
     auto &conf = configuration::manager::instance();
@@ -64,23 +42,17 @@ PlayerPresenter::PlayerPresenter(QObject *parent, std::shared_ptr<audio_controll
 }
 
 // Getters block
-QString PlayerPresenter::title()         const { return playing->current_track().title;          }
-QString PlayerPresenter::artist()        const { return playing->current_track().artist;         }
-QString PlayerPresenter::album()         const { return playing->current_track().album;          }
-QUrl    PlayerPresenter::cover()         const { return playing->current_track().cover.uri();    }
-quint64 PlayerPresenter::duration_ms()   const { return playing->current_track().duration;       }
-quint64 PlayerPresenter::position_ms()   const { return playing->current_position_ms();          }
-quint8  PlayerPresenter::volume()        const { return playing->current_volume();               }
-bool    PlayerPresenter::isMediaLoaded() const { return playing->is_a_song_loaded();             }
+QString PlayerNode::title()         const { return playing->current_track().title;          }
+QString PlayerNode::artist()        const { return playing->current_track().artist;         }
+QString PlayerNode::album()         const { return playing->current_track().album;          }
+QUrl    PlayerNode::cover()         const { return playing->current_track().cover.uri();    }
+quint64 PlayerNode::duration_ms()   const { return playing->current_track().duration;       }
+quint64 PlayerNode::position_ms()   const { return playing->current_position_ms();          }
+quint8  PlayerNode::volume()        const { return playing->current_volume();               }
+bool    PlayerNode::isMediaLoaded() const { return playing->is_a_song_loaded();             }
 
-void
-PlayerPresenter::set_audio_controller (std::shared_ptr<audio_controller> controller)
-{
-    playing = controller;
-}
-
-PlayerPresenter::PlaybackState
-PlayerPresenter::playbackState() const
+PlayerNode::PlaybackState
+PlayerNode::playbackState() const
 {
     using ae = audio_controller::playback_state;
 
@@ -95,20 +67,20 @@ PlayerPresenter::playbackState() const
 
 
 void
-PlayerPresenter::setPosition_ms(quint64 position)
+PlayerNode::setPosition_ms(quint64 position)
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
     playing->set_position(position);
 }
 
 void
-PlayerPresenter::setVolume(quint8 volume)
+PlayerNode::setVolume(quint8 volume)
 {
     playing->set_volume(volume);
 }
 
 void
-PlayerPresenter::saveVolume () const
+PlayerNode::saveVolume () const
 {
     
     configuration::manager::instance().write_lines(
@@ -122,7 +94,7 @@ PlayerPresenter::saveVolume () const
 
 // Proxies for QML to be able to perform play, pause and more actions
 void
-PlayerPresenter::play() const {
+PlayerNode::play() const {
     if (!queue.playhead().isValid() && queue.itemCount() > 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
         queue.next();
@@ -132,25 +104,25 @@ PlayerPresenter::play() const {
 }
 
 void
-PlayerPresenter::pause() const
+PlayerNode::pause() const
 {
     playing->pause();
 }
 
 void
-PlayerPresenter::stop() const
+PlayerNode::stop() const
 {
     playing->stop();
 }
 
 void
-PlayerPresenter::next() const
+PlayerNode::next() const
 {
     queue.next();
 }
 
 void
-PlayerPresenter::prev() const
+PlayerNode::prev() const
 {
     if (playing->current_position_ms() > 5000) {
         playing->set_position(0); // start over
@@ -161,13 +133,13 @@ PlayerPresenter::prev() const
 }
 
 void
-PlayerPresenter::load(Types::Song &song) const
+PlayerNode::load(Types::Song &song) const
 {
     playing->load(song);
 }
 
 void
-PlayerPresenter::notify_slider_pressed_change (bool pressed)
+PlayerNode::notify_slider_pressed_change (bool pressed)
 {
     m_slider_pressed.store(pressed);
 
@@ -175,7 +147,7 @@ PlayerPresenter::notify_slider_pressed_change (bool pressed)
 }
 
 void
-PlayerPresenter::gate_poll_timer ()
+PlayerNode::gate_poll_timer ()
 {
     using playback_state = audio_controller::playback_state;
     switch(playing->get_playback_state()) {
@@ -192,7 +164,7 @@ PlayerPresenter::gate_poll_timer ()
 // --- Signal handlers
 
 void
-PlayerPresenter::handleTrackChanged()
+PlayerNode::handleTrackChanged()
 {
     // note: only to update the ui
     
@@ -217,7 +189,7 @@ PlayerPresenter::handleTrackChanged()
 }
 
 void
-PlayerPresenter::handlePlaybackStateChanged()
+PlayerNode::handlePlaybackStateChanged()
 {
     emit playbackStateChanged();
 
@@ -225,7 +197,7 @@ PlayerPresenter::handlePlaybackStateChanged()
 }
 
 void
-PlayerPresenter::handleSliderPressedChanged()
+PlayerNode::handleSliderPressedChanged()
 {
     // write only from qml so no need to emit signal here
 
