@@ -110,14 +110,15 @@ target_include_directories(rolecompiler
 )
 
 # The Playback controller
-add_library(audioengine STATIC
+add_library(audioengine_li STATIC
     ${AUDIOENGINE_SOURCES}
 )
 
-target_link_libraries(audioengine
+target_link_libraries(audioengine_li
     PUBLIC 
+        audioengine_in # its interface
+
         mediatypes # legibly returns its track information
-        audiocontroller-iface # its interface
 
     PRIVATE
         SoundIo::SoundIo
@@ -127,17 +128,14 @@ target_link_libraries(audioengine
         FFmpeg::swresample
 )
 
-target_include_directories(audioengine
+target_include_directories(audioengine_li
     PUBLIC
         src/audioengine # enable including its own headers como Qt6:: libraries
-    
-    PRIVATE
-        src/interfaces
 )
 
-add_library(audiocontroller-iface INTERFACE)
-target_include_directories(audiocontroller-iface INTERFACE src/interfaces/audiocontroller)
-target_link_libraries(audiocontroller-iface INTERFACE Qt6::Core)
+add_library(audioengine_in INTERFACE)
+target_include_directories(audioengine_in INTERFACE src/interfaces/audioengine)
+target_link_libraries(audioengine_in INTERFACE Qt6::Core)
 
 # Covers - where your vision lives
 add_library(covers STATIC
@@ -321,7 +319,7 @@ target_link_libraries(playernode
         playerpresenter-iface
 
     PRIVATE
-        audiocontroller-iface # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
+        audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
         lyricsprojector-iface
         configuration # load last volume from its save file
         mediatypes
@@ -377,7 +375,7 @@ target_link_libraries(playqueueimpl
         playqueue-iface
         
     PRIVATE
-        audiocontroller-iface # coordinates the progression and flow of the batch that's currently playing, controls what will play
+        audioengine_in # coordinates the progression and flow of the batch that's currently playing, controls what will play
 
         # since the songfactory/covers separation, every song_factory caller must register the cover on their own; there
         # will always be a dependency to a cover provider as this is a mandatory requirement for QQuickAsyncImageProvider
@@ -536,7 +534,7 @@ qt_add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        audioengine # to safely tear it down
+        audioengine_li # to safely tear it down
         covers # every executable that features its own cover storage will feature this
         locallibraryldb # your entire collection
         lyricsmanifest

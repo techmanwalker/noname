@@ -2,7 +2,7 @@
 
 #include "mediatypes.hpp"
 
-#include "audiocontroller.hpp"
+#include "audioengine-in.hpp"
 
 #include "audiointernalcontroller.hpp"
 
@@ -18,12 +18,12 @@
 /**
     @brief Playback controller proxy.
 */
-class audio_engine : public QObject, public audio_controller
+class audio_engineLI : public QObject, public audio_engine
 {
     Q_OBJECT
-    Q_INTERFACES (audio_controller)
+    Q_INTERFACES (audio_engine)
 public:
-    explicit audio_engine (QObject *parent);
+    explicit audio_engineLI (QObject *parent);
 
     void play() override;
     void pause() override;

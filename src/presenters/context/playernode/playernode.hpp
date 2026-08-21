@@ -1,6 +1,7 @@
 #pragma once
 
-#include "audiocontroller.hpp"
+#include "audioengine-in.hpp"
+
 #include "lyricsprojector.hpp"
 #include "playerpresenter.hpp"
 
@@ -14,10 +15,6 @@
 
 #include <atomic>
 #include <memory>
-
-// forward declarations
-class QQmlEngine;
-class QJSEngine;
 
 class LyricsManifest;
 class PlayQueue;
@@ -59,7 +56,7 @@ class PlayerNode : public QObject, public PlayerPresenter
 public:
     explicit PlayerNode(
         QObject *parent,
-        std::shared_ptr<audio_controller> controller,
+        std::shared_ptr<audio_engine> controller,
         std::shared_ptr<PlayQueue> pqueue,
         std::shared_ptr<LyricsProjector> lyricsproj
     );
@@ -119,7 +116,7 @@ public slots:
     void gate_poll_timer();
 
 private:
-    std::shared_ptr<audio_controller> playing; // controller
+    std::shared_ptr<audio_engine> playing; // controller
 
     std::shared_ptr<PlayQueue> queue;
     std::shared_ptr<LyricsProjector> lp;
