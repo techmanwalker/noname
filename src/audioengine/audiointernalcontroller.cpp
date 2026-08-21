@@ -1,7 +1,10 @@
+#include "audiointernalcontroller.hpp"
 #include "audiodecodeworker.hpp"
-#include "audioengine.hpp"
+#include "l_audioengine.hpp" // logging categories
 
 #include <QThread>
+
+#include <soundio/soundio.h>
 
 audio_internal_controller::audio_internal_controller(QObject *parent)
     : QObject(parent),
@@ -21,6 +24,7 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
     m_outstream->software_latency = 0.15;
 
     m_outstream->userdata = m_decoder_worker->get_ring_buffer();
+    m_decoder_worker->get_ring_buffer()->rt_notify_target = this; // reachable from write_callback via userdata
     m_outstream->write_callback = write_callback;
 
     m_outstream->error_callback = error_callback;

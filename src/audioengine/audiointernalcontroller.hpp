@@ -39,6 +39,8 @@ public:
 
 signals:
     void seeked();
+    void track_boundary_crossed(); // relayed (queued) from the RT audio thread on a track boundary
+    void playlist_finished();      // relayed (queued) from the RT audio thread when the queue drains
 
 private:
     QThread *m_audio_decoding_thread = nullptr;
@@ -48,3 +50,5 @@ private:
     struct SoundIoDevice *m_device = nullptr;
     struct SoundIoOutStream *m_outstream = nullptr;
 };
+
+#include "prettyerrors.tpp" // IWYU pragma: keep
