@@ -17,21 +17,21 @@ public:
     std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
     PlayQueueLIPrivate(
-        std::shared_ptr<covers::live::cover_provider> provider,
+        std::shared_ptr<covers::live::cover_provider> cover_provider,
         std::shared_ptr<audio_engine> controller
     ) :
-        chosen_cover_provider(provider),
+        chosen_cover_provider(cover_provider),
         playing(controller)
     {}
 };
 
 PlayQueueLI::PlayQueueLI (
     QObject *parent,
-    std::shared_ptr<covers::live::cover_provider> provider,
+    std::shared_ptr<covers::live::cover_provider> cover_provider,
     std::shared_ptr<audio_engine> controller
 )
     : QIdentityProxyModel(parent),
-      m_d(std::make_unique<PlayQueueLIPrivate>(provider, controller))
+      m_d(std::make_unique<PlayQueueLIPrivate>(cover_provider, controller))
 {
     // Binds the hidden sequence so QIdentityProxyModel automatically forwards model data
     setSourceModel(&m_d->sequence);

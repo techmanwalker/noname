@@ -14,7 +14,7 @@ class ShortcutsListLI : public AbstractMediaSequence, public ShortcutsList
     Q_INTERFACES(ShortcutsList)
 
 public:
-    explicit ShortcutsListLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> provider);
+    explicit ShortcutsListLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider);
 
     // must not copy nor reassign
     ShortcutsListLI(const ShortcutsListLI&) = delete;

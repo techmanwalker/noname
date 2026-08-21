@@ -68,7 +68,7 @@ private:
 class cover_image_response : public QQuickImageResponse, public QRunnable
 {
 public:
-    cover_image_response(covers::live::cover_storage *provider, const QString &id, const QSize &requestedSize);
+    cover_image_response(covers::live::cover_storage *cover_provider, const QString &id, const QSize &requestedSize);
 
     QQuickTextureFactory *textureFactory() const override;
 
