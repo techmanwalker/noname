@@ -48,9 +48,9 @@ main (int argc, char ** argv)
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
-    auto ae = std::make_shared<audio_engine>();
+    auto ae = std::make_shared<audio_engine>(nullptr);
     auto ll = std::make_shared<LocalLibraryLDB>(nullptr, covers);
-    auto lm = std::make_shared<LyricsManifest>();
+    auto lm = std::make_shared<LyricsManifest>(nullptr);
     auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
     auto pn = std::make_shared<PlayerNode>(nullptr, ae, pq, lm);
 

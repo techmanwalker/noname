@@ -27,7 +27,7 @@ class LyricsManifest : public QAbstractListModel, public LyricsProjector
     Q_INTERFACES(LyricsProjector)
 
 public:
-    explicit LyricsManifest(QObject *parent = nullptr);
+    explicit LyricsManifest(QObject *parent);
     ~LyricsManifest() override; // explicitly required for std::unique_ptr with incomplete types
 
     QFuture<void> repopulate_with_lyrics_for_file(const QString &source) override;

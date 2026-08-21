@@ -23,7 +23,7 @@ class audio_engine : public QObject, public audio_controller
     Q_OBJECT
     Q_INTERFACES (audio_controller)
 public:
-    explicit audio_engine (QObject *parent = nullptr);
+    explicit audio_engine (QObject *parent);
 
     void play() override;
     void pause() override;
