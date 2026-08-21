@@ -68,7 +68,7 @@ set_source_files_properties("src/qml/primitives/MediaTypes.qml"
 module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
-module_sources(PLAYERNODE_SOURCES       "src/presenters/context/playernode/*.cpp")
+module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
 module_sources(PLAYQUEUEIMPL_SOURCES    "src/presenters/context/playqueueimpl/*.cpp")
 module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
 module_sources(LOCALLIBRARY_SOURCES  "src/presenters/context/locallibrary/*.cpp")
@@ -305,18 +305,18 @@ target_link_libraries(listings
 
 # Playback presentation - everything that the C++ side exposes for your control and view
 
-qt_add_qml_module(playernode
+qt_add_qml_module(playerpresenter_li
     STATIC
     URI Player.PlayerPresenter
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playerpresenter/playerpresenterproxy.hpp"
-        ${PLAYERNODE_SOURCES}
+        ${PLAYERPRESENTER_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
 )
 
-target_link_libraries(playernode
+target_link_libraries(playerpresenter_li
     PUBLIC
-        playerpresenter-iface
+        playerpresenter_in
 
     PRIVATE
         audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
@@ -326,14 +326,14 @@ target_link_libraries(playernode
         playqueue-iface
 )
 
-target_include_directories(playernode
+target_include_directories(playerpresenter_li
     PUBLIC
-        src/presenters/context/playernode
+        src/presenters/context/playerpresenter
 )
 
-add_library(playerpresenter-iface INTERFACE)
-target_include_directories(playerpresenter-iface INTERFACE src/interfaces/playerpresenter)
-target_link_libraries(playerpresenter-iface INTERFACE Qt6::Core)
+add_library(playerpresenter_in INTERFACE)
+target_include_directories(playerpresenter_in INTERFACE src/interfaces/playerpresenter)
+target_link_libraries(playerpresenter_in INTERFACE Qt6::Core)
 
 
 qt_add_qml_module(mediasequences
@@ -444,7 +444,7 @@ qt_add_qml_module(fullscreenplayer
 
 target_link_libraries(fullscreenplayer
     PUBLIC
-        playerpresenter-iface
+        playerpresenter_in
         uiprimitives
 
     PRIVATE
@@ -537,10 +537,10 @@ target_link_libraries(${PROJECT_NAME}
         audioengine_li # to safely tear it down
         locallibrary_li # your entire collection
         lyricsmanifest_li
+        playerpresenter_li
 
         covers # every executable that features its own cover storage will feature this
         mainwindow # window decorations and such
-        playernode
         playqueueimpl
 
         songfactory # MUST be able to shut down its thread pool if something goes wrong

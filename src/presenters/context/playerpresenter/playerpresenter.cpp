@@ -1,5 +1,5 @@
 
-#include "playernode.hpp"
+#include "playerpresenter.hpp"
 
 #include "audioengine-in.hpp"
 #include "lyricsmanifest-in.hpp"
@@ -12,7 +12,7 @@
 #include <atomic>
 
 // Private constructor
-PlayerNode::PlayerNode(
+PlayerPresenterLI::PlayerPresenterLI(
     QObject *parent, 
     std::shared_ptr<audio_engine> controller,
     std::shared_ptr<PlayQueue> pqueue ,
@@ -26,10 +26,10 @@ PlayerNode::PlayerNode(
     m_position_poll_timer->setInterval(10);
 
     connect(m_position_poll_timer, &QTimer::timeout, 
-            this, &PlayerNode::positionChanged);
+            this, &PlayerPresenterLI::positionChanged);
         
-    connect(this, &PlayerNode::sliderPressedChanged,
-            this, &PlayerNode::handleSliderPressedChanged);
+    connect(this, &PlayerPresenterLI::sliderPressedChanged,
+            this, &PlayerPresenterLI::handleSliderPressedChanged);
 
     // load volume from conf file
     auto &conf = configuration::manager::instance();
@@ -49,17 +49,17 @@ PlayerNode::PlayerNode(
 }
 
 // Getters block
-QString PlayerNode::title()         const { return playing->current_track().title;          }
-QString PlayerNode::artist()        const { return playing->current_track().artist;         }
-QString PlayerNode::album()         const { return playing->current_track().album;          }
-QUrl    PlayerNode::cover()         const { return playing->current_track().cover.uri();    }
-quint64 PlayerNode::duration_ms()   const { return playing->current_track().duration;       }
-quint64 PlayerNode::position_ms()   const { return playing->current_position_ms();          }
-quint8  PlayerNode::volume()        const { return playing->current_volume();               }
-bool    PlayerNode::isMediaLoaded() const { return playing->is_a_song_loaded();             }
+QString PlayerPresenterLI::title()         const { return playing->current_track().title;          }
+QString PlayerPresenterLI::artist()        const { return playing->current_track().artist;         }
+QString PlayerPresenterLI::album()         const { return playing->current_track().album;          }
+QUrl    PlayerPresenterLI::cover()         const { return playing->current_track().cover.uri();    }
+quint64 PlayerPresenterLI::duration_ms()   const { return playing->current_track().duration;       }
+quint64 PlayerPresenterLI::position_ms()   const { return playing->current_position_ms();          }
+quint8  PlayerPresenterLI::volume()        const { return playing->current_volume();               }
+bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loaded();             }
 
-PlayerNode::PlaybackState
-PlayerNode::playbackState() const
+PlayerPresenterLI::PlaybackState
+PlayerPresenterLI::playbackState() const
 {
     using ae = audio_engine::playback_state;
 
@@ -74,20 +74,20 @@ PlayerNode::playbackState() const
 
 
 void
-PlayerNode::setPosition_ms(quint64 position)
+PlayerPresenterLI::setPosition_ms(quint64 position)
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
     playing->set_position(position);
 }
 
 void
-PlayerNode::setVolume(quint8 volume)
+PlayerPresenterLI::setVolume(quint8 volume)
 {
     playing->set_volume(volume);
 }
 
 void
-PlayerNode::saveVolume () const
+PlayerPresenterLI::saveVolume () const
 {
     
     configuration::manager::instance().write_lines(
@@ -101,7 +101,7 @@ PlayerNode::saveVolume () const
 
 // Proxies for QML to be able to perform play, pause and more actions
 void
-PlayerNode::play() const {
+PlayerPresenterLI::play() const {
     if (!queue->playhead().isValid() && queue->itemCount() > 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
         queue->next();
@@ -111,25 +111,25 @@ PlayerNode::play() const {
 }
 
 void
-PlayerNode::pause() const
+PlayerPresenterLI::pause() const
 {
     playing->pause();
 }
 
 void
-PlayerNode::stop() const
+PlayerPresenterLI::stop() const
 {
     playing->stop();
 }
 
 void
-PlayerNode::next() const
+PlayerPresenterLI::next() const
 {
     queue->next();
 }
 
 void
-PlayerNode::prev() const
+PlayerPresenterLI::prev() const
 {
     if (playing->current_position_ms() > 5000) {
         playing->set_position(0); // start over
@@ -140,13 +140,13 @@ PlayerNode::prev() const
 }
 
 void
-PlayerNode::load(Types::Song &song) const
+PlayerPresenterLI::load(Types::Song &song) const
 {
     playing->load(song);
 }
 
 void
-PlayerNode::notify_slider_pressed_change (bool pressed)
+PlayerPresenterLI::notify_slider_pressed_change (bool pressed)
 {
     m_slider_pressed.store(pressed);
 
@@ -154,7 +154,7 @@ PlayerNode::notify_slider_pressed_change (bool pressed)
 }
 
 void
-PlayerNode::gate_poll_timer ()
+PlayerPresenterLI::gate_poll_timer ()
 {
     using playback_state = audio_engine::playback_state;
     switch(playing->get_playback_state()) {
@@ -171,7 +171,7 @@ PlayerNode::gate_poll_timer ()
 // --- Signal handlers
 
 void
-PlayerNode::handleTrackChanged()
+PlayerPresenterLI::handleTrackChanged()
 {
     // note: only to update the ui
     
@@ -196,7 +196,7 @@ PlayerNode::handleTrackChanged()
 }
 
 void
-PlayerNode::handlePlaybackStateChanged()
+PlayerPresenterLI::handlePlaybackStateChanged()
 {
     emit playbackStateChanged();
 
@@ -204,7 +204,7 @@ PlayerNode::handlePlaybackStateChanged()
 }
 
 void
-PlayerNode::handleSliderPressedChanged()
+PlayerPresenterLI::handleSliderPressedChanged()
 {
     // write only from qml so no need to emit signal here
 
