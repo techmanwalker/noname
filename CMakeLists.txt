@@ -49,20 +49,6 @@ endfunction()
 
 ### Base build file listing
 
-## QML files
-
-module_sources(PLAYER_QMLS      "src/qml/fullscreen/*.qml")
-module_sources(BROWSER_QMLS     "src/qml/browser/*.qml")
-module_sources(UIPRIMITIVES_QMLS  "src/qml/primitives/*.qml")
-module_sources(EFFECTS_QMLS     "src/qml/effects/*.qml")
-module_sources(LISTINGS_QMLS    "src/qml/listings/*.qml")
-module_sources(MAINWINDOW_QMLS  "src/qml/mainwindow/*.qml")
-
-# otherwise Qt gets grumpy
-set_source_files_properties("src/qml/primitives/MediaTypes.qml"
-    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
-)
-
 
 ## C++ sources
 module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
@@ -79,7 +65,26 @@ module_sources(CONFIGURATION_SOURCES    "src/configuration/*.cpp")
 module_sources(DISKIO_SOURCES           "src/diskio/*.cpp")
 module_sources(SONGFACTORY_SOURCES      "src/songfactory/*.cpp")
 
+## QML files
+
+module_sources(PLAYER_QMLS      "src/qml/fullscreen/*.qml")
+module_sources(BROWSER_QMLS     "src/qml/browser/*.qml")
+module_sources(UIPRIMITIVES_QMLS  "src/qml/primitives/*.qml")
+module_sources(EFFECTS_QMLS     "src/qml/effects/*.qml")
+module_sources(LISTINGS_QMLS    "src/qml/listings/*.qml")
+module_sources(MAINWINDOW_QMLS  "src/qml/mainwindow/*.qml")
+
+# otherwise Qt gets grumpy
+set_source_files_properties("src/qml/primitives/MediaTypes.qml"
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
+)
+
+
+
+
 ### C++ Modules
+
+## --- Core domain and basic data structures
 
 add_library(mediatypes STATIC
     ${MEDIATYPES_SOURCES}
@@ -96,6 +101,110 @@ target_include_directories(mediatypes
         src/presenters/mediatypes
 )
 
+# Concatenation and natural cumulation and flow of basic mediatypes
+# qml naturally deals with sequences to keep track, hence qt_add_qml_module
+qt_add_qml_module(mediasequences
+    STATIC
+    URI Player.MediaSequences
+    SOURCES
+        ${MEDIASEQUENCES_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
+)
+
+target_link_libraries(mediasequences
+    PUBLIC
+        mediatypes
+        
+    PRIVATE
+        Qt6::Core
+
+        rolecompiler
+)
+
+target_include_directories(mediasequences
+    PUBLIC
+        src/presenters/sequences # to make qmltyperegistrar happy
+)
+
+# --- Pure I/O Tooling
+
+# Basic misc disk operations - operates with text files and defining standard path schemes
+
+add_library(diskio STATIC
+    ${DISKIO_SOURCES}
+)
+
+target_link_libraries(diskio
+    PRIVATE
+        Qt6::Core
+)
+
+target_include_directories(diskio
+    PUBLIC
+        src/diskio
+)
+
+# Configuration, caching and all settings the player needs to remember from boot time
+add_library(configuration STATIC
+    ${CONFIGURATION_SOURCES}
+)
+
+target_link_libraries(configuration
+    PRIVATE
+        Qt6::Core
+
+        diskio
+)
+
+target_include_directories(configuration
+    PUBLIC
+        src/configuration
+)
+
+
+# The Song factory - enables extracting metadata, media and covers from songs themselves
+# performs direct I/O with audio files
+
+add_library(songfactory STATIC
+    ${SONGFACTORY_SOURCES}
+)
+
+target_link_libraries(songfactory
+    PRIVATE
+        FFmpeg::avcodec
+        FFmpeg::avformat
+        FFmpeg::avutil
+        FFmpeg::swscale
+        TagLib::tag
+
+        mediatypes
+)
+
+target_include_directories(songfactory
+    PUBLIC
+        src/songfactory
+)
+
+
+# --- Tooling - serialization and boilerplate reduction
+
+# The debugging tools - mostly type serialization to console
+
+add_library(debugtools STATIC
+    ${DEBUGTOOLS_SOURCES}
+)
+
+target_link_libraries(debugtools
+    PRIVATE
+        mediatypes
+)
+
+target_include_directories(debugtools
+    PUBLIC
+        src/debug
+)
+
+
 # List model role compiler - easy declaration of qml roles with header only files
 
 add_library(rolecompiler INTERFACE)
@@ -106,7 +215,10 @@ target_include_directories(rolecompiler
 
 )
 
-# The Playback controller
+
+
+## --- Sound I/O
+
 add_library(audioengine_li STATIC
     ${AUDIOENGINE_SOURCES}
 )
@@ -134,7 +246,55 @@ add_library(audioengine_in INTERFACE)
 target_include_directories(audioengine_in INTERFACE src/interfaces/audioengine)
 target_link_libraries(audioengine_in INTERFACE Qt6::Core)
 
-# Covers - where your vision lives
+
+
+## --- Local live storage modules - alive in memory ready to consume
+
+# All of your collection of tracks noname has currently knowledge of
+qt_add_qml_module(locallibrary_li
+    STATIC
+    URI Player.LocalLibrary
+    SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
+        ${LOCALLIBRARY_SOURCES}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
+)
+
+target_link_libraries (locallibrary_li
+    PUBLIC
+        locallibrary_in
+        shortcutslist_in
+        
+        mediasequences
+        
+    PRIVATE
+        covers_in
+
+        diskio
+        configuration
+        mediatypes
+        rolecompiler
+        songfactory # local library interface, needs to load the songs metadata
+
+        rapidfuzz::rapidfuzz
+)
+
+target_include_directories(locallibrary_li
+    PUBLIC
+        src/presenters/context/locallibrary
+)
+
+add_library(locallibrary_in INTERFACE)
+target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
+target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
+
+add_library(shortcutslist_in INTERFACE)
+target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)
+target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes)
+
+# Covers - where your vision lives, use the interface to register your cover on memory cache to display on any QML
 add_library(covers_li STATIC
     ${COVERS_SOURCES}
 )
@@ -153,9 +313,10 @@ target_link_libraries(covers_li
 
         libjxl::libjxl
 
-        # ACTUALLY this uses FFmpeg for cover decoding, I'm astonished this even works without explicitly declaring
-        # though it wouldn't really surprise me if this was because FFmpeg gets resolved at link time together with
-        # songfactory...
+        FFmpeg::avcodec
+        FFmpeg::avformat
+        FFmpeg::avutil
+        FFmpeg::swscale
 )
 
 target_include_directories(covers_li
@@ -167,76 +328,118 @@ add_library(covers_in INTERFACE)
 target_include_directories(covers_in INTERFACE src/interfaces/covers)
 
 
-# The Song factory - enables extracting metadata, media and covers from songs themselves
-add_library(songfactory STATIC
-    ${SONGFACTORY_SOURCES}
+## --- Context presenters: everything the GUI can control and needs to watch on real time
+
+# Lyrics manifest - access the lyrics from your playing song anywhere
+
+qt_add_qml_module(lyricsmanifest_li
+    STATIC
+    URI Player.LyricsManifest
+    SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsmanifest/lyricsmanifestproxy.hpp"
+        ${LYRICSMANIFEST_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
 
-target_link_libraries(songfactory
-    PRIVATE
-        FFmpeg::avcodec
-        FFmpeg::avformat
-        FFmpeg::avutil
-        FFmpeg::swscale
-        TagLib::tag
+target_link_libraries(lyricsmanifest_li
+    PUBLIC 
+        lyricsmanifest_in
 
-        mediatypes
-)
-
-target_include_directories(songfactory
-    PUBLIC
-        src/songfactory
-)
-
-# The debugging tools - mostly type serialization
-
-add_library(debugtools STATIC
-    ${DEBUGTOOLS_SOURCES}
-)
-
-target_link_libraries(debugtools
-    PRIVATE
-        mediatypes
-)
-
-target_include_directories(debugtools
-    PUBLIC
-        src/debug
-)
-
-# Configuration, caching and all data the player needs to remember
-add_library(configuration STATIC
-    ${CONFIGURATION_SOURCES}
-)
-
-target_link_libraries(configuration
     PRIVATE
         Qt6::Core
 
-        diskio
+        rolecompiler
+
+        # from syrinc
+        lrc-core
+        audio
 )
 
-target_include_directories(configuration
+target_include_directories(lyricsmanifest_li
     PUBLIC
-        src/configuration
+        src/presenters/context/lyrics
 )
 
-# Basic misc disk operations
-add_library(diskio STATIC
-    ${DISKIO_SOURCES}
+add_library(lyricsmanifest_in INTERFACE)
+target_include_directories(lyricsmanifest_in INTERFACE src/interfaces/lyricsmanifest)
+target_link_libraries(lyricsmanifest_in INTERFACE Qt6::Core)
+
+
+# What has played, what is playing and what is to be played
+
+qt_add_qml_module(playqueue_li
+    STATIC
+    URI Player.PlayQueue
+    SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playqueue/playqueueproxy.hpp"
+        ${PLAYQUEUE_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayQueue"
 )
 
-target_link_libraries(diskio
+target_link_libraries(playqueue_li
+    PUBLIC
+        playqueue_in
+        
     PRIVATE
-        Qt6::Core
+        audioengine_in # coordinates the progression and flow of the batch that's currently playing, controls what will play
+
+        # since the songfactory/covers separation, every song_factory caller must register the cover on their own; there
+        # will always be a dependency to a cover provider as this is a mandatory requirement for QQuickAsyncImageProvider
+        # bidirectional hash<->source conversion... unless something like base64 or other non destructive encoder/decoder
+        # is used in the future to get rid of this
+        covers_in
+
+        mediasequences
+        songfactory # qml can drop songs to the play queue graphically, needs to read them
 )
 
-target_include_directories(diskio
+target_include_directories(playqueue_li
     PUBLIC
-        src/diskio
+        src/presenters/context/playqueue
 )
 
-### Inter-module communication
+add_library(playqueue_in INTERFACE)
+target_include_directories(playqueue_in INTERFACE src/interfaces/playqueue)
+target_link_libraries(playqueue_in INTERFACE Qt6::Core)
+
+
+# Playback presentation - playback control through simple button and indicator bindings
+
+qt_add_qml_module(playerpresenter_li
+    STATIC
+    URI Player.PlayerPresenter
+    SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playerpresenter/playerpresenterproxy.hpp"
+        ${PLAYERPRESENTER_SOURCES}
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
+)
+
+target_link_libraries(playerpresenter_li
+    PUBLIC
+        playerpresenter_in
+
+    PRIVATE
+        audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
+        lyricsmanifest_in
+        playqueue_in
+
+        configuration # load last volume from its save file
+        mediatypes
+)
+
+target_include_directories(playerpresenter_li
+    PUBLIC
+        src/presenters/context/playerpresenter
+)
+
+
+add_library(playerpresenter_in INTERFACE)
+target_include_directories(playerpresenter_in INTERFACE src/interfaces/playerpresenter)
+target_link_libraries(playerpresenter_in INTERFACE Qt6::Core)
+
+
+
+### The Graphical Interface
 
 # Effects - any module depends on these to look nice
 
@@ -305,135 +508,6 @@ target_link_libraries(listings
         uiprimitives
 )
 
-# Playback presentation - everything that the C++ side exposes for your control and view
-
-qt_add_qml_module(playerpresenter_li
-    STATIC
-    URI Player.PlayerPresenter
-    SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playerpresenter/playerpresenterproxy.hpp"
-        ${PLAYERPRESENTER_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
-)
-
-target_link_libraries(playerpresenter_li
-    PUBLIC
-        playerpresenter_in
-
-    PRIVATE
-        audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
-        lyricsmanifest_in
-        playqueue_in
-
-        configuration # load last volume from its save file
-        mediatypes
-)
-
-target_include_directories(playerpresenter_li
-    PUBLIC
-        src/presenters/context/playerpresenter
-)
-
-add_library(playerpresenter_in INTERFACE)
-target_include_directories(playerpresenter_in INTERFACE src/interfaces/playerpresenter)
-target_link_libraries(playerpresenter_in INTERFACE Qt6::Core)
-
-
-qt_add_qml_module(mediasequences
-    STATIC
-    URI Player.MediaSequences
-    SOURCES
-        ${MEDIASEQUENCES_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
-)
-
-target_link_libraries(mediasequences
-    PUBLIC
-        mediatypes
-        
-    PRIVATE
-        Qt6::Core
-
-        rolecompiler
-)
-
-target_include_directories(mediasequences
-    PUBLIC
-        src/presenters/sequences # to make qmltyperegistrar happy
-)
-
-# What has played, what is playing and what is to be played
-
-qt_add_qml_module(playqueue_li
-    STATIC
-    URI Player.PlayQueue
-    SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playqueue/playqueueproxy.hpp"
-        ${PLAYQUEUE_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayQueue"
-)
-
-target_link_libraries(playqueue_li
-    PUBLIC
-        playqueue_in
-        
-    PRIVATE
-        audioengine_in # coordinates the progression and flow of the batch that's currently playing, controls what will play
-
-        # since the songfactory/covers separation, every song_factory caller must register the cover on their own; there
-        # will always be a dependency to a cover provider as this is a mandatory requirement for QQuickAsyncImageProvider
-        # bidirectional hash<->source conversion... unless something like base64 or other non destructive encoder/decoder
-        # is used in the future to get rid of this
-        covers_in
-
-        mediasequences
-        songfactory # qml can drop songs to the play queue graphically, needs to read them
-)
-
-target_include_directories(playqueue_li
-    PUBLIC
-        src/presenters/context/playqueue
-)
-
-add_library(playqueue_in INTERFACE)
-target_include_directories(playqueue_in INTERFACE src/interfaces/playqueue)
-target_link_libraries(playqueue_in INTERFACE Qt6::Core)
-
-
-# Lyrics manifest - access the lyrics from your playing song anywhere
-
-qt_add_qml_module(lyricsmanifest_li
-    STATIC
-    URI Player.LyricsManifest
-    SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsmanifest/lyricsmanifestproxy.hpp"
-        ${LYRICSMANIFEST_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
-)
-
-target_link_libraries(lyricsmanifest_li
-    PUBLIC 
-        lyricsmanifest_in
-
-    PRIVATE
-        Qt6::Core
-
-        rolecompiler
-
-        # from syrinc
-        lrc-core
-        audio
-)
-
-target_include_directories(lyricsmanifest_li
-    PUBLIC
-        src/presenters/context/lyrics
-)
-
-add_library(lyricsmanifest_in INTERFACE)
-target_include_directories(lyricsmanifest_in INTERFACE src/interfaces/lyricsmanifest)
-target_link_libraries(lyricsmanifest_in INTERFACE Qt6::Core)
-
 
 # The Player module
 qt_add_qml_module(fullscreenplayer
@@ -477,50 +551,6 @@ target_link_libraries(browser
         Qt6::QuickControls2
 )
 
-# All of your collection of tracks noname has currently knowledge of
-qt_add_qml_module(locallibrary_li
-    STATIC
-    URI Player.LocalLibrary
-    SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
-        ${LOCALLIBRARY_SOURCES}
-    OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
-)
-
-target_link_libraries (locallibrary_li
-    PUBLIC
-        locallibrary_in
-        shortcutslist_in
-        
-        mediasequences
-        
-    PRIVATE
-        covers_in
-
-        diskio
-        configuration
-        mediatypes
-        rolecompiler
-        songfactory # local library interface, needs to load the songs metadata
-
-        rapidfuzz::rapidfuzz
-)
-
-target_include_directories(locallibrary_li
-    PUBLIC
-        src/presenters/context/locallibrary
-)
-
-add_library(locallibrary_in INTERFACE)
-target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
-target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
-
-add_library(shortcutslist_in INTERFACE)
-target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)
-target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes)
-
 ### General excecutable linking definitions
 
 set(PLAYER_INCLUDE_DIRECTORIES
@@ -528,7 +558,7 @@ set(PLAYER_INCLUDE_DIRECTORIES
 )
 
 
-### Executable building
+### Executable building - composition root
 
 # Actual main executable - the Player
 
