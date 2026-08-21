@@ -1,7 +1,7 @@
 #include "coverstorage.hpp"
 
-cover_image_response::cover_image_response(covers::live::cover_storage *provider, const QString &id, const QSize &requestedSize)
-    : m_provider(provider), m_id(id), m_requested_size(requestedSize)
+cover_image_response::cover_image_response(covers::live::cover_storage *cover_provider, const QString &id, const QSize &requestedSize)
+    : m_provider(cover_provider), m_id(id), m_requested_size(requestedSize)
 {
     // Required: QQuickImageResponse manages its own lifetime (deleteLater()
     // once finished() is emitted) — letting QThreadPool also auto-delete

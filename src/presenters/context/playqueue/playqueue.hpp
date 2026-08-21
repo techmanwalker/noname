@@ -24,7 +24,7 @@ class PlayQueueLI : public QIdentityProxyModel, public PlayQueue
 public:
     explicit PlayQueueLI(
         QObject *parent,
-        std::shared_ptr<covers::live::cover_provider> provider,
+        std::shared_ptr<covers::live::cover_provider> cover_provider,
         std::shared_ptr<audio_engine> controller);
 
 

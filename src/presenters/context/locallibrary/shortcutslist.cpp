@@ -4,9 +4,9 @@
 #include "songfactory.hpp" // IWYU pragma: keep
 #include "shortcutslist.hpp"
 
-ShortcutsListLI::ShortcutsListLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> provider)
+ShortcutsListLI::ShortcutsListLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider)
     : AbstractMediaSequence(parent, container_roles),
-      chosen_cover_provider(provider)
+      chosen_cover_provider(cover_provider)
 {}
 
 QFuture<void>
