@@ -464,6 +464,7 @@ qt_add_qml_module(locallibraryldb
     STATIC
     URI Player.LocalLibrary
     SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
         ${LOCALLIBRARYLDB_SOURCES}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
