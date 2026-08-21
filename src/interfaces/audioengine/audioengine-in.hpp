@@ -8,7 +8,7 @@ namespace Types {
 }
 
 // public interface for the audio_engine
-class audio_controller {
+class audio_engine {
 
 public: 
     enum class playback_state {
@@ -17,7 +17,7 @@ public:
         stopped
     };
 
-    virtual ~audio_controller() = default;
+    virtual ~audio_engine() = default;
 
     virtual void play() = 0;
     virtual void pause() = 0;
@@ -37,4 +37,4 @@ public:
     virtual bool is_a_song_loaded() const = 0;
 };
 
-Q_DECLARE_INTERFACE(audio_controller, "com.noname.audio_controller")
+Q_DECLARE_INTERFACE(audio_engine, "com.noname.audio_controller")

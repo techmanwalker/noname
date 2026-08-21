@@ -1,6 +1,5 @@
 #pragma once
 
-#include "audiocontroller.hpp"
 #include "mediatypes.hpp"
 #include "playqueue.hpp"
 
@@ -14,6 +13,7 @@ namespace covers::live {
 }
 
 struct LI_PlayQueuePrivate;
+class audio_engine;
 
 // Media that will play up next.
 class LI_PlayQueue : public QIdentityProxyModel, public PlayQueue
@@ -25,7 +25,7 @@ public:
     explicit LI_PlayQueue(
         QObject *parent,
         std::shared_ptr<covers::live::cover_provider> provider,
-        std::shared_ptr<audio_controller> controller);
+        std::shared_ptr<audio_engine> controller);
 
 
     // Required in the header for std::unique_ptr to destroy the incomplete type

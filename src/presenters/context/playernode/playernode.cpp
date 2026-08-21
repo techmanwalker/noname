@@ -1,6 +1,8 @@
 
 #include "playernode.hpp"
 
+#include "audioengine-in.hpp"
+
 #include "configuration.hpp"
 #include "lyricsprojector.hpp"
 #include "mediatypes.hpp"
@@ -12,7 +14,7 @@
 // Private constructor
 PlayerNode::PlayerNode(
     QObject *parent, 
-    std::shared_ptr<audio_controller> controller,
+    std::shared_ptr<audio_engine> controller,
     std::shared_ptr<PlayQueue> pqueue ,
     std::shared_ptr<LyricsProjector> lyricsproj
 )
@@ -59,7 +61,7 @@ bool    PlayerNode::isMediaLoaded() const { return playing->is_a_song_loaded(); 
 PlayerNode::PlaybackState
 PlayerNode::playbackState() const
 {
-    using ae = audio_controller::playback_state;
+    using ae = audio_engine::playback_state;
 
     switch (playing->get_playback_state()) {
         case ae::paused:  return PlaybackState::paused;
@@ -154,7 +156,7 @@ PlayerNode::notify_slider_pressed_change (bool pressed)
 void
 PlayerNode::gate_poll_timer ()
 {
-    using playback_state = audio_controller::playback_state;
+    using playback_state = audio_engine::playback_state;
     switch(playing->get_playback_state()) {
         case playback_state::playing:
             m_position_poll_timer->start();

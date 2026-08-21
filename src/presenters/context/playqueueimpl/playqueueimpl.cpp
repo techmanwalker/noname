@@ -1,3 +1,5 @@
+#include "audioengine-in.hpp"
+
 #include "playqueueimpl.hpp"
 #include "playlistsequence.hpp"
 #include "coverprovider.hpp"
@@ -11,12 +13,12 @@
 class LI_PlayQueuePrivate {
 public: 
     PlaylistSequence sequence;
-    std::shared_ptr<audio_controller> playing;
+    std::shared_ptr<audio_engine> playing;
     std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
     LI_PlayQueuePrivate(
         std::shared_ptr<covers::live::cover_provider> provider,
-        std::shared_ptr<audio_controller> controller
+        std::shared_ptr<audio_engine> controller
     ) :
         chosen_cover_provider(provider),
         playing(controller)
@@ -26,7 +28,7 @@ public:
 LI_PlayQueue::LI_PlayQueue (
     QObject *parent,
     std::shared_ptr<covers::live::cover_provider> provider,
-    std::shared_ptr<audio_controller> controller
+    std::shared_ptr<audio_engine> controller
 )
     : QIdentityProxyModel(parent),
       m_d(std::make_unique<LI_PlayQueuePrivate>(provider, controller))

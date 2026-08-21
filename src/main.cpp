@@ -49,7 +49,7 @@ main (int argc, char ** argv)
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
-    auto ae = std::make_shared<audio_engine>(nullptr);
+    auto ae = std::make_shared<audio_engineLI>(nullptr);
     auto ll = std::make_shared<LocalLibraryLDB>(nullptr, covers);
     auto lm = std::make_shared<LyricsManifest>(nullptr);
     auto pq = std::make_shared<LI_PlayQueue>(nullptr, covers, ae);
@@ -70,28 +70,28 @@ main (int argc, char ** argv)
     ShortcutsListProxy::inject(sl);
 
     // bind signals
-    QObject::connect (ae.get(), &audio_engine::track_changed,
+    QObject::connect (ae.get(), &audio_engineLI::track_changed,
         pq.get(), &LI_PlayQueue::handle_track_changed);
 
-    QObject::connect(ae.get(), &audio_engine::queued_tracks_finished,
+    QObject::connect(ae.get(), &audio_engineLI::queued_tracks_finished,
             pq.get(), &LI_PlayQueue::handle_queued_tracks_finished);
 
     // Listen to the audio controller; when metadata updates, notify the UI's data.
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and
     // main.cpp is the one place allowed to wire concrete-to-concrete connections.
-    QObject::connect(ae.get(), &audio_engine::track_changed,
+    QObject::connect(ae.get(), &audio_engineLI::track_changed,
             pn.get(), &PlayerNode::handleTrackChanged);
 
-    QObject::connect(ae.get(), &audio_engine::playback_state_changed,
+    QObject::connect(ae.get(), &audio_engineLI::playback_state_changed,
             pn.get(), &PlayerNode::handlePlaybackStateChanged);
 
-    QObject::connect(ae.get(), &audio_engine::seek_finished,
+    QObject::connect(ae.get(), &audio_engineLI::seek_finished,
             pn.get(), &PlayerNode::positionChanged);
 
-    QObject::connect(ae.get(), &audio_engine::volume_changed,
+    QObject::connect(ae.get(), &audio_engineLI::volume_changed,
             pn.get(), &PlayerNode::volumeChanged);
 
-    QObject::connect (ae.get(), &audio_engine::seek_finished,
+    QObject::connect (ae.get(), &audio_engineLI::seek_finished,
             pn.get(), &PlayerNode::gate_poll_timer);
 
 
