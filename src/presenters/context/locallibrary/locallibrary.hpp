@@ -1,7 +1,7 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
-#include "coverprovider.hpp"
+#include "coverprovider-in.hpp"
 #include "locallibrary-in.hpp" // interface header
 #include "mediatypes.hpp"
 

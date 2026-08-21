@@ -2,7 +2,7 @@
 
 #include "playqueue.hpp"
 #include "playlistsequence.hpp"
-#include "coverprovider.hpp"
+#include "coverprovider-in.hpp"
 #include "songfactory.hpp"
 
 #include <QLoggingCategory>
