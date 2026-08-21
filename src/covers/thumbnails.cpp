@@ -147,7 +147,7 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 
     compressed.resize(next_out - compressed.data());
 
-    const QString file_path = ref.thumbnail_file_path();
+    const QString file_path = thumbnail_file_path(ref);
     QFile file(file_path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qCWarning(l_standardpaths) << "failed to open thumbnail for writing" << file_path
@@ -169,13 +169,27 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 
 } // anonymous
 
+QString thumbnail_file_path (const CoverRef &ref)
+{
+    if (ref.hash().isEmpty()) return QString();
+
+    QDir thumb_dir (dir(standardpaths::standard_dirs::thumbnails));
+    thumb_dir.mkpath(".");
+    return thumb_dir.absoluteFilePath(ref.hash() + QStringLiteral(".jxl"));
+}
+
+bool thumbnail_file_exists(const CoverRef &ref)
+{
+    return QFile::exists(thumbnail_file_path(ref));
+}
+
 // Read the file ~/.local/share/noname/thumbnails/<hash>.tga and decode it
 QImage
 fetch_thumbnail (const CoverRef &ref)
 {
-    const QString file_path = ref.thumbnail_file_path();
+    const QString file_path = thumbnail_file_path(ref);
 
-    if (!ref.thumbnail_file_exists())
+    if (!thumbnail_file_exists(ref))
         return QImage();
 
     QFile file(file_path);
