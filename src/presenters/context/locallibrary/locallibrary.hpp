@@ -2,7 +2,7 @@
 
 #include "abstractmediasequence.hpp"
 #include "coverprovider.hpp"
-#include "locallibrary.hpp" // interface header
+#include "locallibrary-in.hpp" // interface header
 #include "mediatypes.hpp"
 
 #include <QFuture>
@@ -15,13 +15,13 @@
 
 // Snapshots of directories built from the songs of all known directories and other music sources, if ever supported
 // Local Library Logical Database
-class LocalLibraryLDB : public AbstractMediaSequence, public LocalLibrary
+class LocalLibraryLI : public AbstractMediaSequence, public LocalLibrary
 {
     Q_OBJECT
     Q_INTERFACES(LocalLibrary)
 
 public:
-    explicit LocalLibraryLDB(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider);
+    explicit LocalLibraryLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider);
 
     // Take a snapshot of the songs metadata in given directory path
     QFuture<void> take_snapshot (const QString &dir_path);

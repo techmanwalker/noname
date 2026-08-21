@@ -71,7 +71,7 @@ module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
 module_sources(PLAYERNODE_SOURCES       "src/presenters/context/playernode/*.cpp")
 module_sources(PLAYQUEUEIMPL_SOURCES    "src/presenters/context/playqueueimpl/*.cpp")
 module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
-module_sources(LOCALLIBRARYLDB_SOURCES  "src/presenters/context/locallibraryldb/*.cpp")
+module_sources(LOCALLIBRARY_SOURCES  "src/presenters/context/locallibrary/*.cpp")
 module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp" "src/audioengine/*.hpp")
 module_sources(COVERS_SOURCES           "src/covers/*.cpp")
 module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
@@ -466,7 +466,7 @@ qt_add_qml_module(browser
 target_link_libraries(browser
     PUBLIC
         listings
-        locallibrary-iface
+        locallibrary_in
         uiprimitives
 
     PRIVATE
@@ -475,20 +475,20 @@ target_link_libraries(browser
 )
 
 # All of your collection of tracks noname has currently knowledge of
-qt_add_qml_module(locallibraryldb
+qt_add_qml_module(locallibrary_li
     STATIC
     URI Player.LocalLibrary
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
-        ${LOCALLIBRARYLDB_SOURCES}
+        ${LOCALLIBRARY_SOURCES}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
 )
 
-target_link_libraries (locallibraryldb
+target_link_libraries (locallibrary_li
     PUBLIC
-        locallibrary-iface
+        locallibrary_in
         shortcutslist-iface
         
         mediasequences
@@ -504,14 +504,14 @@ target_link_libraries (locallibraryldb
         rapidfuzz::rapidfuzz
 )
 
-target_include_directories(locallibraryldb
+target_include_directories(locallibrary_li
     PUBLIC
-        src/presenters/context/locallibraryldb
+        src/presenters/context/locallibrary
 )
 
-add_library(locallibrary-iface INTERFACE)
-target_include_directories(locallibrary-iface INTERFACE src/interfaces/locallibrary)
-target_link_libraries(locallibrary-iface INTERFACE Qt6::Core mediatypes)
+add_library(locallibrary_in INTERFACE)
+target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
+target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
 
 add_library(shortcutslist-iface INTERFACE)
 target_include_directories(shortcutslist-iface INTERFACE src/interfaces/shortcutslist)
@@ -536,7 +536,7 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         audioengine_li # to safely tear it down
         covers # every executable that features its own cover storage will feature this
-        locallibraryldb # your entire collection
+        locallibrary_li # your entire collection
         lyricsmanifest
         mainwindow # window decorations and such
         playernode
@@ -622,7 +622,7 @@ if(NONAME_BUILD_TESTS)
             debugtools
             fullscreenplayer
             songfactory
-            locallibraryldb
+            locallibrary_li
     )
 
     target_include_directories(startpagetest
@@ -638,7 +638,7 @@ if(NONAME_BUILD_TESTS)
         PUBLIC
             covers
             debugtools
-            locallibraryldb
+            locallibrary_li
             mediatypes
             mediasequences
             configuration
