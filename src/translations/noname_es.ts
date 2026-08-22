@@ -37,12 +37,12 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="75"/>
+        <location filename="../qml/browser/Browser.qml" line="135"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="124"/>
+        <location filename="../qml/browser/Browser.qml" line="67"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
@@ -62,7 +62,7 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="225"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="224"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -71,7 +71,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="192"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="191"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -90,11 +90,21 @@
         <source>Fullscreen</source>
         <translation type="vanished">Pantalla completa</translation>
     </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/MinibarPlayer.qml" line="15"/>
+        <source>Untitled track</source>
+        <translation>Pista sin título</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/MinibarPlayer.qml" line="16"/>
+        <source>Unknown artist</source>
+        <translation>Artista desconocido</translation>
+    </message>
 </context>
 <context>
     <name>Player</name>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/Player.qml" line="80"/>
+        <location filename="../qml/fullscreen/viewmodes/Player.qml" line="77"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
