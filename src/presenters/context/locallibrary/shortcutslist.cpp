@@ -4,9 +4,8 @@
 #include "songfactory.hpp" // IWYU pragma: keep
 #include "shortcutslist.hpp"
 
-ShortcutsListLI::ShortcutsListLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider)
-    : AbstractMediaSequence(parent, container_roles),
-      chosen_cover_provider(cover_provider)
+ShortcutsListLI::ShortcutsListLI(QObject *parent)
+    : AbstractMediaSequence(parent, container_roles)
 {}
 
 QFuture<void>
@@ -19,10 +18,6 @@ ShortcutsListLI::read_conf_and_load ()
 
     return song_factory::batch_extract(shortcuts_song_paths, {256, true})
     .then(this, [this](QList<Types::Song> loaded_shortcuts) {
-        for (const Types::Song &song : loaded_shortcuts) {
-            chosen_cover_provider->register_cover_reference(song.cover);
-        }
-
         batch_append(std::move(loaded_shortcuts));
     });
 }

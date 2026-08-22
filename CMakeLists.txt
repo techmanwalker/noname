@@ -270,8 +270,6 @@ target_link_libraries (locallibrary_li
         mediasequences
         
     PRIVATE
-        covers_in
-
         diskio
         configuration
         mediatypes
@@ -295,13 +293,12 @@ target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutsli
 target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes)
 
 # Covers - where your vision lives, use the interface to register your cover on memory cache to display on any QML
-add_library(covers_li STATIC
+add_library(covers STATIC
     ${COVERS_SOURCES}
 )
 
-target_link_libraries(covers_li
+target_link_libraries(covers
     PUBLIC
-        covers_in
         Qt6::Quick
 
     PRIVATE
@@ -319,13 +316,10 @@ target_link_libraries(covers_li
         FFmpeg::swscale
 )
 
-target_include_directories(covers_li
+target_include_directories(covers
     PUBLIC
         src/covers
 )
-
-add_library(covers_in INTERFACE)
-target_include_directories(covers_in INTERFACE src/interfaces/covers)
 
 
 ## --- Context presenters: everything the GUI can control and needs to watch on real time
@@ -382,13 +376,7 @@ target_link_libraries(playqueue_li
         
     PRIVATE
         audioengine_in # coordinates the progression and flow of the batch that's currently playing, controls what will play
-
-        # since the songfactory/covers separation, every song_factory caller must register the cover on their own; there
-        # will always be a dependency to a cover provider as this is a mandatory requirement for QQuickAsyncImageProvider
-        # bidirectional hash<->source conversion... unless something like base64 or other non destructive encoder/decoder
-        # is used in the future to get rid of this
-        covers_in
-
+        
         mediasequences
         songfactory # qml can drop songs to the play queue graphically, needs to read them
 )
@@ -574,7 +562,7 @@ target_link_libraries(${PROJECT_NAME}
         playerpresenter_li
         playqueue_li
 
-        covers_li # every executable that features its own cover storage will feature this
+        covers # every executable that features its own cover storage will feature this
 
         mainwindow # window decorations and such
 

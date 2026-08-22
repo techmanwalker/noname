@@ -1,7 +1,6 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
-#include "coverprovider-in.hpp"
 
 #include "shortcutslist-in.hpp"
 
@@ -14,7 +13,7 @@ class ShortcutsListLI : public AbstractMediaSequence, public ShortcutsList
     Q_INTERFACES(ShortcutsList)
 
 public:
-    explicit ShortcutsListLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider);
+    explicit ShortcutsListLI(QObject *parent);
 
     // must not copy nor reassign
     ShortcutsListLI(const ShortcutsListLI&) = delete;
@@ -30,8 +29,4 @@ public:
 
     // shorthand
     QFuture<void> read_conf_and_load ();
-
-private:
-
-    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 };

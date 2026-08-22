@@ -2,7 +2,6 @@
 
 #include "playqueue.hpp"
 #include "playlistsequence.hpp"
-#include "coverprovider-in.hpp"
 #include "songfactory.hpp"
 
 #include <QLoggingCategory>
@@ -14,24 +13,20 @@ class PlayQueueLIPrivate {
 public: 
     PlaylistSequence sequence;
     std::shared_ptr<audio_engine> playing;
-    std::shared_ptr<covers::live::cover_provider> chosen_cover_provider;
 
     PlayQueueLIPrivate(
-        std::shared_ptr<covers::live::cover_provider> cover_provider,
         std::shared_ptr<audio_engine> controller
     ) :
-        chosen_cover_provider(cover_provider),
         playing(controller)
     {}
 };
 
 PlayQueueLI::PlayQueueLI (
     QObject *parent,
-    std::shared_ptr<covers::live::cover_provider> cover_provider,
     std::shared_ptr<audio_engine> controller
 )
     : QIdentityProxyModel(parent),
-      m_d(std::make_unique<PlayQueueLIPrivate>(cover_provider, controller))
+      m_d(std::make_unique<PlayQueueLIPrivate> (controller))
 {
     // Binds the hidden sequence so QIdentityProxyModel automatically forwards model data
     setSourceModel(&m_d->sequence);
@@ -62,11 +57,6 @@ void PlayQueueLI::clear () {
 
 QFuture<void> PlayQueueLI::batch_append (const QList<QUrl> &sources) {
     return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Song> to_append) {
-        if (m_d->chosen_cover_provider) {
-            for (const Types::Song &song : to_append) {
-                m_d->chosen_cover_provider->register_cover_reference(song.cover);
-            }
-        }
         m_d->sequence.batch_append(std::move(to_append));
     });
 }
@@ -136,9 +126,6 @@ void PlayQueueLI::switch_to (const QUrl &source) {
         this,
         [this](Types::Song song) {
             if (song.is_valid()) {
-                if (m_d->chosen_cover_provider) {
-                    m_d->chosen_cover_provider->register_cover_reference(song.cover);
-                }
                 switch_to(song, true);
             }
         }
