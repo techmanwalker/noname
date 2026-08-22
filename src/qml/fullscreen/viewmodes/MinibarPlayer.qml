@@ -12,8 +12,8 @@ ColumnLayout {
     property var stateModel: PlayerPresenter
 
 
-    readonly property string noTitleText: "Untitled song"
-    readonly property string noArtistText: "Unknown artist"
+    readonly property string noTitleText: qsTr("Untitled track")
+    readonly property string noArtistText: qsTr("Unknown artist")
 
     property real padding: 0
     property real topPadding: padding
