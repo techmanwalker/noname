@@ -310,15 +310,3 @@ AbstractMediaSequence::sources () const
 {
     return sources<QList<Types::Any>>(m_d->m_items);
 }
-
-std::string 
-AbstractMediaSequence::normalize_string_for_search (const QString &str) 
-{
-    QString normalized = str.normalized(QString::NormalizationForm_KD).toLower();
-    
-    normalized.removeIf([](QChar c) {
-        return c.category() == QChar::Mark_NonSpacing;
-    });
-    
-    return normalized.toStdString();
-}

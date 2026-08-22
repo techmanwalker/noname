@@ -19,6 +19,8 @@ public:
     static SearchResults &instance();
     static SearchResults *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
+    static QString nfkd (const QString &string);
+
     Q_INVOKABLE void performSearch(const QString &query, QObject *sourceModel);
     void performSearch (const QString &query, QList<Types::Song> &song_list);
 

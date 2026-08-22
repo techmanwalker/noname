@@ -81,9 +81,6 @@ public:
     template <typename MediaType, typename FieldType>
     QPersistentModelIndex find(FieldType MediaType::* member, const FieldType &needle) const;
 
-    static std::string normalize_string_for_search (const QString &str);
-
-
 signals:
     void countChanged();
 
