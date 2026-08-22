@@ -9,6 +9,7 @@
 #include <QJSEngine>
 #include <QQmlEngine>
 
+#include <qobject.h>
 #include <rapidfuzz/fuzz.hpp>
 
 // Meyers singleton implementation
@@ -23,6 +24,19 @@ SearchResults::SearchResults(QObject *parent)
     : PlaylistSequence(parent)
 {
 }
+
+QString
+SearchResults::nfkd(const QString &string)
+{
+    QString normalized = string.normalized(QString::NormalizationForm_KD).toLower();
+    
+    normalized.removeIf([](QChar c) {
+        return c.category() == QChar::Mark_NonSpacing;
+    });
+    
+    return normalized;
+}
+
 
 // factory for the qml engine
 SearchResults *
@@ -92,13 +106,13 @@ SearchResults::performSearch (const QString &query, QList<Types::Song> &song_lis
     std::vector<rankable_item> rankable;
 
     // Normalize query safely using the sequence's static helper
-    const std::string clean_keywords = AbstractMediaSequence::normalize_string_for_search(query);
+    const std::string clean_keywords = nfkd(query).toStdString();
     rapidfuzz::fuzz::CachedPartialRatio<char> scorer(clean_keywords.c_str());
     const double score_thresh = 50.0;
 
     // 3. Execute search directly against the flattened song list
     for (size_t i = 0; i < song_list.size(); ++i) {
-        const std::string clean_title = AbstractMediaSequence::normalize_string_for_search(song_list.at(i).title);
+        const std::string clean_title = nfkd(song_list.at(i).title).toStdString();
         double score = scorer.similarity(clean_title.c_str(), score_thresh);
 
         if (score >= score_thresh) {
