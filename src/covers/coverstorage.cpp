@@ -3,6 +3,7 @@
 #include "mediatypes.hpp"
 #include "pixelformats.hpp"
 #include "thumbnails.hpp"
+#include <qhashfunctions.h>
 
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
@@ -41,13 +42,6 @@ cover_storage::requestImageResponse(const QString &id, const QSize &requestedSiz
     return response;
 }
 
-void
-cover_storage::register_cover_reference(const CoverRef &ref)
-{
-    QWriteLocker locker(&m_sources_lock);
-    m_refs.append(ref);
-}
-
 bool
 cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache)
 {
@@ -60,19 +54,21 @@ cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, b
         return false;
     }
 
+    const QString &base64url_coverref = ref.encode_base64url();
+
     const qsizetype cost = img.sizeInBytes();
 
     // calculate deterministic shard destination
-    const size_t shard_idx = qHash(ref.hash()) % SHARD_COUNT;
+    const size_t shard_idx = qHash(base64url_coverref) % SHARD_COUNT;
     auto &shard = m_shards[shard_idx];
 
     {
         // lock only this specific shard
         QMutexLocker locker(&shard->lock);
-        const bool cached = shard->cache.insert(ref.hash(), new QImage(img), cost);
+        const bool cached = shard->cache.insert(base64url_coverref, new QImage(img), cost);
         if (!cached) {
-            qCWarning(l_coverprovider) << "Cover for" << ref.hash() 
-                                       << "exceeds shard max cost; not kept in memory.";
+            qCWarning(l_coverprovider) << "Cover for " << ref.source()
+                                       << " exceeds shard max cost; not kept in memory.";
         }
     } // shard lock released immediately
 
@@ -84,42 +80,17 @@ cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, b
 }
 
 QImage
-cover_storage::resolve_blocking(const QString &id, const QSize &requestedSize)
-{
-    CoverRef target_ref(QUrl(), 0);
-    
-    bool found = false;
-
-    {
-        // Protect the read iteration
-        QReadLocker locker(&m_sources_lock);
-        
-        // Lean on C++20 ranges
-        auto it = std::ranges::find_if(m_refs, [&id](const CoverRef& ref) {
-            return ref.hash() == id;
-        });
-
-        if (it != m_refs.end()) {
-            target_ref = *it;
-            found = true;
-        }
-    } // Read lock released safely before heavy decoding
-
-    if (found) {
-        return resolve_blocking(target_ref, requestedSize);
-    }
-
-    return QImage();
-}
-
-QImage
-cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
+cover_storage::resolve_blocking(const QString &base64url_coverref, const QSize &requestedSize)
 {
     Q_UNUSED(requestedSize);
 
+    CoverRef ref = CoverRef::decode_base64url(base64url_coverref);
+
+    if (ref.source().isEmpty()) return QImage();
+
     // Get from hot cache first
     // route to the correct shard based on the ID hash
-    const size_t shard_idx = qHash(ref.hash()) % SHARD_COUNT;
+    const size_t shard_idx = qHash(base64url_coverref) % SHARD_COUNT;
     auto& shard = m_shards[shard_idx];
 
     QImage img;
@@ -127,7 +98,7 @@ cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
     // lock ONLY this specific shard
     {
         QMutexLocker locker(&shard->lock);
-        QImage *cached_ptr = shard->cache.object(ref.hash());
+        QImage *cached_ptr = shard->cache.object(base64url_coverref);
         if (cached_ptr) {
             img = *cached_ptr;
         }
@@ -187,12 +158,13 @@ cover_storage::resolve_blocking(const CoverRef &ref, const QSize &requestedSize)
 bool
 cover_storage::is_cached(const CoverRef &ref)
 {
+    const QString base64url_coverref = ref.encode_base64url();
     // Route directly to the same shard
-    const size_t shard_idx = qHash(ref.hash()) % SHARD_COUNT;
+    const size_t shard_idx = qHash(base64url_coverref) % SHARD_COUNT;
     auto &shard = m_shards[shard_idx];
 
     QMutexLocker locker(&shard->lock);
-    return shard->cache.contains(ref.hash());
+    return shard->cache.contains(base64url_coverref);
 }
 
 }

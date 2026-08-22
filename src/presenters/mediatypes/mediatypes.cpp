@@ -74,13 +74,35 @@ CoverRef::CoverRef (const QUrl &source_media_path, size_t square_size)
 }
 
 QString
-CoverRef::hash () const
+CoverRef::encode_base64url() const
 {
-    const QByteArray key = m_source.toLocalFile().toUtf8()
-                          + ':' + QByteArray::number(qulonglong(m_square_size));
+    if (m_source.isEmpty()) return QString();
 
-    return QString::fromLatin1(
-        QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
+    // Serialize as: "size|url"
+    const QByteArray payload = QByteArray::number(m_square_size) + '|' + m_source.toEncoded();
+    
+    // OmitTrailingEquals prevents padding characters ('=') which clutter the URL
+    return QString::fromLatin1(payload.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
+}
+
+CoverRef 
+CoverRef::decode_base64url(const QString &base64url_coverref)
+{
+    if (base64url_coverref.isEmpty()) return CoverRef(QUrl());
+
+    const QByteArray payload = QByteArray::fromBase64(
+        base64url_coverref.toLatin1(), 
+        QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals
+    );
+    
+    const qsizetype sep_idx = payload.indexOf('|');
+    if (sep_idx == -1) return CoverRef(QUrl()); // Invalid format safeguard
+
+    // Qt 6 idiomatic substring extraction
+    const size_t size = payload.first(sep_idx).toULongLong();
+    const QUrl url = QUrl::fromEncoded(payload.sliced(sep_idx + 1));
+
+    return CoverRef(url, size);
 }
 
 QUrl
@@ -98,6 +120,6 @@ CoverRef::size() const
 QUrl
 CoverRef::uri () const
 {
-    QString prolly_hashed = hash();
-    return covers::schema + (prolly_hashed.isEmpty() ? covers::default_cover_uri : prolly_hashed);
+    const QString prolly_encoded = encode_base64url();
+    return QUrl(covers::schema + (prolly_encoded.isEmpty() ? covers::default_cover_uri : prolly_encoded));
 }

@@ -42,18 +42,12 @@ public:
     /*  Blocking resolution chain: memory cache -> disk cache -> decode from
     registered source. Called from a worker thread only
     (cover_image_response::run()) — never the GUI thread. */
-    QImage resolve_blocking(const CoverRef &ref, const QSize &requestedSize);
-    QImage resolve_blocking(const QString &id, const QSize &requestedSize);
-
-    void register_cover_reference(const CoverRef &ref);
+    QImage resolve_blocking(const QString &base64url_coverref, const QSize &requestedSize);
 
 private:
 
     static constexpr size_t SHARD_COUNT = 16;
     std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;
-
-    QList<CoverRef> m_refs;
-    QReadWriteLock m_sources_lock; // separate lock from m_spin_lock: writes come in bursts during a scan, reads can come from many concurrent decode jobs at once
 
     QThreadPool m_response_pool; // dedicated so cover decoding never queues behind (or blocks) song_factory's metadata scan
 };

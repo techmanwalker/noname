@@ -35,26 +35,14 @@ main (int argc, char ** argv)
     // cover cache to hold the shortcuts covers across the entire session
     std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
 
-    // protect the cover cache from the qml gc gremlin
-
-    /*  Explanation of the proxy mechanism:
-
-        QQmlEngine will take ownership of this proxy, and upon program teardown,
-        will invoke 'delete' on it.
-        As m_real is a std::shared_ptr, when the proxy is destroyed it will
-        decrement the reference counter safely without prematurely freeing the
-        displaced memory block where the qml engine thinks the cover_provider is.
-    */
-    std::shared_ptr<covers::live::cover_providerLI> covers = std::make_shared<covers::live::cover_providerLI>(cover_private_storage);
-
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
     auto ae = std::make_shared<audio_engineLI>    (nullptr);
-    auto ll = std::make_shared<LocalLibraryLI>    (nullptr, covers);
+    auto ll = std::make_shared<LocalLibraryLI>    (nullptr);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr);
-    auto pq = std::make_shared<PlayQueueLI>       (nullptr, covers, ae);
+    auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
     auto pn = std::make_shared<PlayerPresenterLI> (nullptr, ae, pq, lm);
-    auto sl = std::make_shared<ShortcutsListLI>   (nullptr, covers);
+    auto sl = std::make_shared<ShortcutsListLI>   (nullptr);
 
     // trigger first refresh
     ll->snapshot_known_directories();
@@ -104,14 +92,18 @@ main (int argc, char ** argv)
     // create base engine
     QQmlApplicationEngine engine;
 
-    /* Give the QML engine its own proxy instance allocating a secondary wrapper.
+    // protect the cover cache from the qml gc gremlin
+    /*  Give the QML engine its own proxy instance allocating a secondary wrapper.
         It will safely invoke 'delete' on this proxy without corrupting the heap
         or interfering with the 'covers' shared_ptr used by the C++ models.
 
         cover_providerLI is fine here because the engine only care about resolving image://covers...
         and doing this does not break DIP linking in CMakeLists.txt
+
+        QQmlEngine will take ownership of this proxy, and upon program teardown,
+        will invoke 'delete' on it.
     */
-    engine.addImageProvider("covers", new covers::live::cover_providerLI(cover_private_storage));
+    engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
 
     // qml singleton proxies now register the singletons
 

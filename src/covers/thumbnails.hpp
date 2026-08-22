@@ -14,6 +14,8 @@ namespace disk {
 
 Q_DECLARE_LOGGING_CATEGORY(l_thumbnails)
 
+QString thumbnail_hash_for_fs (const CoverRef &ref);
+
 // path on disk where the thumbnail is stored and retrieved
 QString thumbnail_file_path   (const CoverRef &ref);
 

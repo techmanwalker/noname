@@ -19,12 +19,14 @@ struct CoverRef {
     CoverRef (const QUrl &source_media_path, size_t square_size = 0);
 
     QUrl source () const;
-    QString hash () const;
     size_t size () const;
 
     QUrl uri () const;
 
     bool operator==(const CoverRef &) const = default;
+
+    QString encode_base64url () const;
+    static CoverRef decode_base64url (const QString &base64url_coverref);
 
     private:
         QUrl m_source;

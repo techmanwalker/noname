@@ -40,7 +40,7 @@ bool
 write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 {
     if (thumbnail.isNull()) {
-        qCWarning(l_standardpaths) << "refusing to write a null thumbnail for" << ref.hash();
+        qCWarning(l_standardpaths) << "refusing to write a null thumbnail for " << ref.source();
         return false;
     }
 
@@ -63,7 +63,7 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 
     auto enc = JxlEncoderMake(nullptr);
     if (!enc) {
-        qCWarning(l_standardpaths) << "failed to create JxlEncoder for" << ref.hash();
+        qCWarning(l_standardpaths) << "failed to create JxlEncoder for" << ref.source();
         return false;
     }
 
@@ -71,7 +71,7 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
     if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
             JxlResizableParallelRunner, runner.get()))
     {
-        qCWarning(l_standardpaths) << "failed to set parallel runner for" << ref.hash();
+        qCWarning(l_standardpaths) << "failed to set parallel runner for" << ref.source();
         return false;
     }
 
@@ -86,14 +86,14 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
     basic_info.uses_original_profile = JXL_FALSE;
 
     if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
-        qCWarning(l_standardpaths) << "JxlEncoderSetBasicInfo failed for" << ref.hash();
+        qCWarning(l_standardpaths) << "JxlEncoderSetBasicInfo failed for" << ref.source();
         return false;
     }
 
     JxlColorEncoding color_encoding;
     JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray=*/JXL_FALSE);
     if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
-        qCWarning(l_standardpaths) << "JxlEncoderSetColorEncoding failed for" << ref.hash();
+        qCWarning(l_standardpaths) << "JxlEncoderSetColorEncoding failed for" << ref.source();
         return false;
     }
 
@@ -116,7 +116,7 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
                                                    packed.data(),
                                                    bytes))
     {
-        qCWarning(l_standardpaths) << "JxlEncoderAddImageFrame failed for" << ref.hash();
+        qCWarning(l_standardpaths) << "JxlEncoderAddImageFrame failed for" << ref.source();
         return false;
     }
 
@@ -141,7 +141,7 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
     }
 
     if (status != JXL_ENC_SUCCESS) {
-        qCWarning(l_standardpaths) << "JxlEncoderProcessOutput failed for" << ref.hash();
+        qCWarning(l_standardpaths) << "JxlEncoderProcessOutput failed for" << ref.source();
         return false;
     }
 
@@ -169,13 +169,25 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 
 } // anonymous
 
+QString thumbnail_hash_for_fs (const CoverRef &ref)
+{
+    // at the file system level we need short names, no bijective encoding needed here
+
+    const QByteArray key = ref.source().toLocalFile().toUtf8()
+                          + ':' + QByteArray::number(qulonglong(ref.size()));
+
+    return QString::fromLatin1(
+        QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
+}
+
 QString thumbnail_file_path (const CoverRef &ref)
 {
-    if (ref.hash().isEmpty()) return QString();
+    QString fs_file_hash = thumbnail_hash_for_fs(ref);
+    if (fs_file_hash.isEmpty()) return QString();
 
     QDir thumb_dir (dir(standardpaths::standard_dirs::thumbnails));
     thumb_dir.mkpath(".");
-    return thumb_dir.absoluteFilePath(ref.hash() + QStringLiteral(".jxl"));
+    return thumb_dir.absoluteFilePath(fs_file_hash + QStringLiteral(".jxl"));
 }
 
 bool thumbnail_file_exists(const CoverRef &ref)

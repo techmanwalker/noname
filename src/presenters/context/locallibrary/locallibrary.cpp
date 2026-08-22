@@ -1,6 +1,5 @@
 #include "basicdiskio.hpp"
 #include "configuration.hpp"
-#include "coverprovider-in.hpp"
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
@@ -120,8 +119,6 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
                     return existing_song.source == song.source;
                 });
 
-                chosen_cover_provider->register_cover_reference(song.cover);
-
                 if (it != target_dir.songs.end()) {
                     *it = std::move(song);
                 } else {
@@ -189,8 +186,7 @@ LocalLibraryLI::paths ()
     return sources<Types::Directory>();
 }
 
-LocalLibraryLI::LocalLibraryLI(QObject *parent, std::shared_ptr<covers::live::cover_provider> cover_provider)
-    : AbstractMediaSequence (parent, container_roles),
-      chosen_cover_provider (cover_provider)
+LocalLibraryLI::LocalLibraryLI(QObject *parent)
+    : AbstractMediaSequence (parent, container_roles)
 {
 }
