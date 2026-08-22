@@ -12,7 +12,6 @@
 
 #include <functional>
 #include <memory>
-#include <rapidfuzz/fuzz.hpp>
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
@@ -83,12 +82,7 @@ public:
     QPersistentModelIndex find(FieldType MediaType::* member, const FieldType &needle) const;
 
     static std::string normalize_string_for_search (const QString &str);
-    
-    QList<QPersistentModelIndex>
-    search_by_title (
-        const QString &keywords, // search tokens, QString has wider locale support
-        double score_thresh = 50 // out of 100
-    );
+
 
 signals:
     void countChanged();
