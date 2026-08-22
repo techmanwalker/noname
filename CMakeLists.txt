@@ -18,6 +18,8 @@ find_package(TagLib REQUIRED)
 
 find_package(rapidfuzz REQUIRED)
 
+find_package(ICU REQUIRED COMPONENTS i18n uc)
+
 find_package(libjxl REQUIRED)
 
 add_subdirectory(submodules/syrinc)
@@ -277,6 +279,10 @@ target_link_libraries (locallibrary_li
         songfactory # local library interface, needs to load the songs metadata
 
         rapidfuzz::rapidfuzz
+
+        # nfkd and translit for search
+        ICU::i18n
+        ICU::uc
 )
 
 target_include_directories(locallibrary_li
