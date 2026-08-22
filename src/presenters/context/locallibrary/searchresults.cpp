@@ -10,7 +10,14 @@
 #include <QQmlEngine>
 
 #include <qobject.h>
+
 #include <rapidfuzz/fuzz.hpp>
+#include <unicode/translit.h>
+#include <unicode/unistr.h>
+#include <unicode/utypes.h>
+
+// bridge icu and icu_<version> safely
+using namespace U_ICU_NAMESPACE; 
 
 // Meyers singleton implementation
 SearchResults &
@@ -23,18 +30,6 @@ SearchResults::instance()
 SearchResults::SearchResults(QObject *parent)
     : PlaylistSequence(parent)
 {
-}
-
-QString
-SearchResults::nfkd(const QString &string)
-{
-    QString normalized = string.normalized(QString::NormalizationForm_KD).toLower();
-    
-    normalized.removeIf([](QChar c) {
-        return c.category() == QChar::Mark_NonSpacing;
-    });
-    
-    return normalized;
 }
 
 
@@ -51,6 +46,19 @@ SearchResults::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
 
     return inst;
+}
+
+std::string
+SearchResults::nfkd_and_translit(const std::string& input, Transliterator* transliterator) {
+    if (!transliterator) {
+        return input;
+    }
+    UnicodeString uText = UnicodeString::fromUTF8(input);
+    transliterator->transliterate(uText);
+    
+    std::string result;
+    uText.toUTF8String(result);
+    return result;
 }
 
 
@@ -71,8 +79,7 @@ SearchResults::performSearch(const QString &query, QObject *sourceModel)
     if (auto *localLib = qobject_cast<LocalLibrary*>(sourceModel)) {
         
         all_songs = localLib->flattened(); // faster and dedicated
-    } 
-    else if (auto *sourceSequence = qobject_cast<AbstractMediaSequence*>(sourceModel)) {
+    } else if (auto *sourceSequence = qobject_cast<AbstractMediaSequence*>(sourceModel)) {
         
         // Fallback for generic sequences if needed
         for (const Types::Any &item : sourceSequence->items()) {
@@ -92,27 +99,37 @@ SearchResults::performSearch(const QString &query, QObject *sourceModel)
 }
 
 void
-SearchResults::performSearch (const QString &query, QList<Types::Song> &song_list)
+SearchResults::performSearch(const QString &query, QList<Types::Song> &song_list)
 {
     if (query.isEmpty()) {
-        // Return all available songs instead
-
         respawn_list(Prettifiers::sortBy(&Types::Song::title, song_list));
         return;
     }
 
-    // 2. Prepare the RapidFuzz algorithm
+    // Initialize ICU Transliterator ONCE per search execution
+    UErrorCode status = U_ZERO_ERROR;
+    std::unique_ptr<Transliterator> transliterator(
+        Transliterator::createInstance("Any-Lower; Any-Latin; NFKD; [:Nonspacing Mark:] Remove", UTRANS_FORWARD, status)
+    );
+
+    // Fallback indicator if ICU initialization fails
+    Transliterator* transPtr = U_SUCCESS(status) ? transliterator.get() : nullptr;
+    if (!transPtr) {
+        qCWarning(l_mediasequences) << "ICU Transliterator failed to initialize:" << u_errorName(status);
+    }
+
     using rankable_item = std::pair<size_t, double>;
     std::vector<rankable_item> rankable;
 
-    // Normalize query safely using the sequence's static helper
-    const std::string clean_keywords = nfkd(query).toStdString();
+    // Clean query once using the local transliterator instance
+    const std::string clean_keywords = nfkd_and_translit(query.toStdString(), transPtr);
     rapidfuzz::fuzz::CachedPartialRatio<char> scorer(clean_keywords.c_str());
     const double score_thresh = 50.0;
 
-    // 3. Execute search directly against the flattened song list
+    // Execute search directly against the flattened song list
     for (size_t i = 0; i < song_list.size(); ++i) {
-        const std::string clean_title = nfkd(song_list.at(i).title).toStdString();
+        // Pass transPtr to process text instantly without initialization overhead
+        const std::string clean_title = nfkd_and_translit(song_list.at(i).title.toStdString(), transPtr);
         double score = scorer.similarity(clean_title.c_str(), score_thresh);
 
         if (score >= score_thresh) {
@@ -120,10 +137,10 @@ SearchResults::performSearch (const QString &query, QList<Types::Song> &song_lis
         }
     }
 
-    // 4. Rank by scores in descending order using C++20 projections
+    // Rank by scores in descending order using C++20 projections
     std::ranges::sort(rankable, std::greater<>{}, &rankable_item::second);
 
-    // 5. Map the ranked results back to the original song objects
+    // Map the ranked results back to the original song objects
     QList<Types::Song> matching_songs;
     matching_songs.reserve(rankable.size());
 
@@ -131,6 +148,5 @@ SearchResults::performSearch (const QString &query, QList<Types::Song> &song_lis
         matching_songs.append(song_list.at(ranked.first));
     }
 
-    // 6. Clear and repopulate the singleton in one step
     respawn_list(matching_songs);
 }

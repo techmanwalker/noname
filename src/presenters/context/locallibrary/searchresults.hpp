@@ -2,8 +2,15 @@
 
 #include "playlistsequence.hpp"
 
+#include <unicode/utypes.h>
+
 class QQmlEngine;
 class QJSEngine;
+
+// forward declaration
+U_NAMESPACE_BEGIN
+class Transliterator;
+U_NAMESPACE_END
 
 class SearchResults : public PlaylistSequence {
     Q_OBJECT
@@ -19,7 +26,7 @@ public:
     static SearchResults &instance();
     static SearchResults *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
 
-    static QString nfkd (const QString &string);
+    static std::string nfkd_and_translit (const std::string &string, icu::Transliterator* transliterator);
 
     Q_INVOKABLE void performSearch(const QString &query, QObject *sourceModel);
     void performSearch (const QString &query, QList<Types::Song> &song_list);
