@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
-#include <rapidfuzz/fuzz.hpp>
-#include <variant>
 
 Q_LOGGING_CATEGORY(l_mediasequences, "noname.mediasequences")
 
@@ -324,51 +322,3 @@ AbstractMediaSequence::normalize_string_for_search (const QString &str)
     
     return normalized.toStdString();
 }
-
-QList<QPersistentModelIndex>
-AbstractMediaSequence::search_by_title (
-    const QString &keywords,
-    double score_thresh
-)
-{
-    QReadLocker locker (&m_d->m_lock);
-
-    using rankable_item = std::pair<size_t, double>;
-    using rankable_list = std::vector<rankable_item>;
-    
-    rankable_list rankable;
-
-    const std::string clean_keywords = normalize_string_for_search(keywords);
-    rapidfuzz::fuzz::CachedPartialRatio<char> scorer (clean_keywords.c_str());
-
-    for (size_t i = 0; i < m_d->m_items.size(); ++i) {
-
-        const std::string clean_title = std::visit([](const auto& item) -> std::string {
-            return normalize_string_for_search(item.title);
-        }, m_d->m_items.at(i));
-
-        double score = scorer.similarity(clean_title.c_str(), score_thresh);
-
-        qCDebug(l_mediasequences) << "Searching for \"" << clean_keywords << "\", matching against " << clean_title
-            << " scores " << score;
-
-        if (score >= score_thresh) {
-            rankable.emplace_back(i, score);
-        }
-    }
-
-    std::ranges::sort (
-        rankable, std::greater<>(), &rankable_item::second
-    );
-
-    QList<QPersistentModelIndex> ranked;
-    ranked.reserve(rankable.size());
-
-    for (const rankable_item &already_ranked : rankable) {
-        ranked.emplace_back(
-            index(static_cast<int>(already_ranked.first))
-        );
-    }
-
-    return ranked;
-};

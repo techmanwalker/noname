@@ -1,12 +1,15 @@
 #include "searchresults.hpp"
-#include "locallibrary.hpp"
 #include "prettifiers.hpp" // IWYU pragma: keep this provides prettifiers.tpp
+
+#include "locallibrary.hpp" // IWYU pragma: keep for qobject_cast<LocalLibrary*>
 
 #include <QIdentityProxyModel>
 #include <QList>
 
 #include <QJSEngine>
 #include <QQmlEngine>
+
+#include <rapidfuzz/fuzz.hpp>
 
 // Meyers singleton implementation
 SearchResults &
