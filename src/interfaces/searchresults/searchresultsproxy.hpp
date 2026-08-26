@@ -1,16 +1,18 @@
 #pragma once
 
+#include "searchresults-in.hpp"
+
 #include <QIdentityProxyModel>
 
 #include <QtQmlIntegration/qqmlintegration.h>
 
-class ShortcutsListProxy : public QIdentityProxyModel {
+class SearchResultsProxy : public QIdentityProxyModel {
     Q_OBJECT
-    QML_NAMED_ELEMENT(ShortcutsList)
+    QML_NAMED_ELEMENT(SearchResults)
     QML_SINGLETON
 
 public:
-    explicit ShortcutsListProxy(QObject *parent = nullptr)
+    explicit SearchResultsProxy (QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
           m_slist(s_injectedList) // Copies shared_ptr, incrementing ref count
     {
@@ -22,6 +24,15 @@ public:
     // Non-destructive injection via const reference
     static void inject(const std::shared_ptr<QAbstractListModel> &list) {
         s_injectedList = list; // Ref count incremented, caller's instance unaffected
+    }
+
+    Q_INVOKABLE void performSearch(const QString &query, QObject *containerModel) {
+        if (auto *list = qobject_cast<SearchResults*>(sourceModel())) {
+            qDebug() << "SearchResultst was set.";
+            return list->performSearch(query, containerModel);
+        } else {
+            qDebug() << "SearchResultst was NOT set.";
+        }
     }
 
 private:

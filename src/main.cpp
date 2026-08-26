@@ -1,6 +1,7 @@
 #include "audioengine.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
+#include "interfaces/searchresults/searchresultsproxy.hpp"
 #include "locallibrary.hpp"
 #include "locallibraryproxy.hpp"
 #include "lyricsmanifestproxy.hpp"
@@ -9,6 +10,7 @@
 #include "lyricsmanifest.hpp"
 #include "playqueue.hpp"
 #include "playqueueproxy.hpp"
+#include "searchresults.hpp"
 #include "shortcutslist.hpp"
 #include "shortcutslistproxy.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
@@ -48,6 +50,7 @@ main (int argc, char ** argv)
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, ae, pq, lm);
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr);
+    auto sr = std::make_shared<SearchResultsLI>   (nullptr);
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
@@ -62,7 +65,7 @@ main (int argc, char ** argv)
     PlayerPresenterProxy::inject(pp);
     PlayQueueProxy::inject(pq);
     ShortcutsListProxy::inject(sl);
-
+    SearchResultsProxy::inject(sr);
 
 
     // bind signals

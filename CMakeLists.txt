@@ -258,6 +258,7 @@ qt_add_qml_module(locallibrary_li
     URI Player.LocalLibrary
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/searchresults/searchresultsproxy.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
         ${LOCALLIBRARY_SOURCES}
     OUTPUT_DIRECTORY
@@ -267,6 +268,7 @@ qt_add_qml_module(locallibrary_li
 target_link_libraries (locallibrary_li
     PUBLIC
         locallibrary_in
+        searchresults_in
         shortcutslist_in
         
         mediasequences
@@ -293,6 +295,10 @@ target_include_directories(locallibrary_li
 add_library(locallibrary_in INTERFACE)
 target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
 target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
+
+add_library(searchresults_in INTERFACE)
+target_include_directories(searchresults_in INTERFACE src/interfaces/searchresults)
+target_link_libraries(searchresults_in INTERFACE Qt6::Core mediatypes)
 
 add_library(shortcutslist_in INTERFACE)
 target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)
