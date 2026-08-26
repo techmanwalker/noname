@@ -25,7 +25,7 @@ Q_LOGGING_CATEGORY(l_noname, "noname.app")
 int
 main (int argc, char ** argv)
 {
-    // real entry point for this player app - main executable "noname"
+    // real entry point for this player app main executable
     // which must take the project name when I decide what it will be.
 
     QGuiApplication app(argc, argv);
@@ -35,27 +35,35 @@ main (int argc, char ** argv)
     // cover cache to hold the shortcuts covers across the entire session
     std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
 
-    /*  load the songs from the known music directories and display as
-        a folder-separated view of all available songs */
+    /*  
+        Composition root: instantiate concrete implementations behind each
+        interface boundary. Order reflects the dependency graph (pq needs ae;
+        pn needs ae+pq+lm). Ownership is shared_ptr only, to avoid
+        double-ownership with Qt's parent/child teardown, hence all initialized
+        with nullptr.
+    */
     auto ae = std::make_shared<audio_engineLI>    (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr);
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
-    auto pn = std::make_shared<PlayerPresenterLI> (nullptr, ae, pq, lm);
+    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, ae, pq, lm);
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr);
 
-    // trigger first refresh
+    /*  load the songs from the known music directories and display as
+        a folder-separated view of all available songs */
     ll->snapshot_known_directories();
 
     // load shortcuts
     sl->read_conf_and_load();
 
-    // Initialize QML proxies
+    // initialize QML proxies
     LyricsManifestProxy::inject(lm);
     LocalLibraryProxy::inject(ll);
-    PlayerPresenterProxy::inject(pn);
+    PlayerPresenterProxy::inject(pp);
     PlayQueueProxy::inject(pq);
     ShortcutsListProxy::inject(sl);
+
+
 
     // bind signals
     QObject::connect (ae.get(), &audio_engineLI::track_changed,
@@ -68,19 +76,19 @@ main (int argc, char ** argv)
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and
     // main.cpp is the one place allowed to wire concrete-to-concrete connections.
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
-            pn.get(), &PlayerPresenterLI::handleTrackChanged);
+            pp.get(), &PlayerPresenterLI::handleTrackChanged);
 
     QObject::connect(ae.get(), &audio_engineLI::playback_state_changed,
-            pn.get(), &PlayerPresenterLI::handlePlaybackStateChanged);
+            pp.get(), &PlayerPresenterLI::handlePlaybackStateChanged);
 
     QObject::connect(ae.get(), &audio_engineLI::seek_finished,
-            pn.get(), &PlayerPresenterLI::positionChanged);
+            pp.get(), &PlayerPresenterLI::positionChanged);
 
     QObject::connect(ae.get(), &audio_engineLI::volume_changed,
-            pn.get(), &PlayerPresenterLI::volumeChanged);
+            pp.get(), &PlayerPresenterLI::volumeChanged);
 
     QObject::connect (ae.get(), &audio_engineLI::seek_finished,
-            pn.get(), &PlayerPresenterLI::gate_poll_timer);
+            pp.get(), &PlayerPresenterLI::gate_poll_timer);
 
 
 
@@ -92,8 +100,8 @@ main (int argc, char ** argv)
     // create base engine
     QQmlApplicationEngine engine;
 
-    // protect the cover cache from the qml gc gremlin
-    /*  Give the QML engine its own proxy instance allocating a secondary wrapper.
+    /* 
+        Give the QML engine its own proxy instance allocating a secondary wrapper.
         It will safely invoke 'delete' on this proxy without corrupting the heap
         or interfering with the 'covers' shared_ptr used by the C++ models.
 
@@ -105,17 +113,20 @@ main (int argc, char ** argv)
     */
     engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
 
-    // qml singleton proxies now register the singletons
-
-
     // load qml module for noname
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
-                     &app, []() { QCoreApplication::exit(-1); },
-                     Qt::QueuedConnection);
+    QObject::connect(
+        &engine,
+        &QQmlApplicationEngine::objectCreationFailed,
+        &app, []() {
+            QCoreApplication::exit(-1);
+        },
+        Qt::QueuedConnection
+    );
     engine.loadFromModule("Player.App", "Main");
 
     if (engine.rootObjects().isEmpty()) {
         song_factory::teardown();
+        ae->teardown();
         return -1;
     }
 
