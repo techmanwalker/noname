@@ -13,7 +13,8 @@ class LocalLibraryProxy : public QIdentityProxyModel {
 public:
     explicit LocalLibraryProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
-          m_library(s_injectedLibrary) // Copies shared_ptr, incrementing ref count
+          m_library(s_injectedLibrary), // Copies shared_ptr, incrementing ref count
+          m_iface(qobject_cast<LocalLibrary*>(m_library.get()))
     {
         if (m_library) {
             setSourceModel(m_library.get());
@@ -34,24 +35,21 @@ public:
 
     // Respect and expose the public interface using the abstraction
     Q_INVOKABLE QFuture<void> snapshot_known_directories() {
-        if (auto *lib = qobject_cast<LocalLibrary*>(sourceModel())) {
-            return lib->snapshot_known_directories();
-        }
-        return QtFuture::makeReadyVoidFuture();
+        if (!m_iface) return QtFuture::makeReadyVoidFuture(); 
+
+        return m_iface->snapshot_known_directories();
     }
 
     Q_INVOKABLE QList<Types::Song> flattened() const {
-        if (auto *lib = qobject_cast<LocalLibrary*>(sourceModel())) {
-            return lib->flattened();
-        }
-        return {};
+        if (!m_iface) return {}; 
+        
+        return m_iface->flattened();
     }
 
     Q_INVOKABLE QStringList flattened_sources() const {
-        if (auto *lib = qobject_cast<LocalLibrary*>(sourceModel())) {
-            return lib->flattened_sources();
-        }
-        return {};
+        if (!m_iface) return {}; 
+
+        return m_iface->flattened_sources();
     }
 
 signals:
@@ -60,4 +58,6 @@ signals:
 private:
     std::shared_ptr<QAbstractListModel> m_library;
     inline static std::shared_ptr<QAbstractListModel> s_injectedLibrary = nullptr;
+
+    LocalLibrary *m_iface = nullptr; // same lifetime as m_library
 };

@@ -35,19 +35,15 @@ public:
     }
 
     int width ()  { 
-        if (m_geometry) {
-            return m_geometry->width();
-        }
+        if (!m_geometry) return 0;
 
-        return 0;
+        return m_geometry->width();
     }
 
     int height () {
-        if (m_geometry) {
-            return m_geometry->height(); 
-        }
+        if (!m_geometry) return 0;
 
-        return 0;
+        return m_geometry->height();
     }
 
     Q_INVOKABLE void save(int width, int height) { if (m_geometry) m_geometry->save(width, height); }

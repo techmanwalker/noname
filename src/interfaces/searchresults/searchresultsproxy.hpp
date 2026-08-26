@@ -14,7 +14,8 @@ class SearchResultsProxy : public QIdentityProxyModel {
 public:
     explicit SearchResultsProxy (QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
-          m_slist(s_injectedList) // Copies shared_ptr, incrementing ref count
+          m_slist(s_injectedList), // Copies shared_ptr, incrementing ref count
+          m_iface(qobject_cast<SearchResults*>(m_slist.get()))
     {
         if (m_slist) {
             setSourceModel(m_slist.get());
@@ -27,12 +28,14 @@ public:
     }
 
     Q_INVOKABLE void performSearch(const QString &query, QObject *containerModel) {
-        if (auto *list = qobject_cast<SearchResults*>(sourceModel())) {
-            return list->performSearch(query, containerModel);
-        }
+        if (!m_iface) return;
+        
+        return m_iface->performSearch(query, containerModel);
     }
 
 private:
     std::shared_ptr<QAbstractListModel> m_slist;
     inline static std::shared_ptr<QAbstractListModel> s_injectedList = nullptr;
+
+    SearchResults *m_iface = nullptr;
 };
