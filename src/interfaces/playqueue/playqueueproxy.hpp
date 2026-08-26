@@ -20,7 +20,8 @@ class PlayQueueProxy : public QIdentityProxyModel {
 public:
     explicit PlayQueueProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
-          m_queue(s_injectedQueue) // Copies shared_ptr, incrementing ref count
+          m_queue(s_injectedQueue), // Copies shared_ptr, incrementing ref count
+          m_iface(qobject_cast<PlayQueue*>(m_queue.get()))
     {
         if (m_queue) {
             setSourceModel(m_queue.get());
@@ -38,52 +39,57 @@ public:
     }
 
     int itemCount() const {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) return q->itemCount();
-        return 0;
+        if (!m_iface) return 0;
+        
+        return m_iface->itemCount();
     }
 
     // Same QObject* -> interface* direction as LocalLibrary/LyricsManifest — qobject_cast
     // works fine here (unlike PlayerPresenterProxy, which needed the reverse direction).
     QPersistentModelIndex playhead() const {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) {
-            QPersistentModelIndex src_idx = q->playhead();        // PlayQueue's own space
-            if (!src_idx.isValid()) return {};
-            return QPersistentModelIndex(mapFromSource(src_idx)); // -> this proxy's space
-        }
-        return {};
+        if (!m_iface) return {};
+
+        QPersistentModelIndex src_idx = m_iface->playhead();        // PlayQueue's own space
+        if (!src_idx.isValid()) return {};
+        return QPersistentModelIndex(mapFromSource(src_idx)); // -> this proxy's space
     }
 
     Q_INVOKABLE void qml_switch_to(const QModelIndex &index) {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) {
-            // index arrives in THIS proxy's space — map down before crossing the
-            // interface, the reverse trip of playhead() above.
-            q->switch_to(QPersistentModelIndex(mapToSource(index)), true);
-        }
+        if (!m_iface) return; 
+
+        // index arrives in THIS proxy's space — map down before crossing the
+        // interface, the reverse trip of playhead() above.
+        m_iface->switch_to(QPersistentModelIndex(mapToSource(index)), true);
     }
 
     Q_INVOKABLE void switch_to(const QUrl &source) {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) q->switch_to(source);
+        if (!m_iface) return; 
+        m_iface->switch_to(source);
     }
 
     Q_INVOKABLE void next() {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) q->next();
+        if (!m_iface) return;
+        m_iface->next();
     }
 
     Q_INVOKABLE void prev() {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) q->prev();
+        if (!m_iface) return; 
+        m_iface->prev();
     }
 
     Q_INVOKABLE void clear() {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) q->clear();
+        if (!m_iface) return; 
+        m_iface->clear();
     }
 
     Q_INVOKABLE QFuture<void> batch_append(const QList<QUrl> &sources) {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) return q->batch_append(sources);
-        return QtFuture::makeReadyVoidFuture();
+        if (!m_iface) return QtFuture::makeReadyVoidFuture(); 
+        return m_iface->batch_append(sources);
     }
 
     Q_INVOKABLE void respawn_queue(const QStringList &sources) {
-        if (auto *q = qobject_cast<PlayQueue*>(sourceModel())) q->respawn_queue(sources);
+        if (!m_iface) return;
+        m_iface->respawn_queue(sources);
     }
 
 signals:
@@ -93,4 +99,6 @@ signals:
 private:
     std::shared_ptr<QAbstractItemModel> m_queue;
     inline static std::shared_ptr<QAbstractItemModel> s_injectedQueue = nullptr;
+
+    PlayQueue *m_iface = nullptr;
 };
