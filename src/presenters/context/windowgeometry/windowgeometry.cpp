@@ -1,15 +1,17 @@
-// windowgeometry.cpp
-#include "configuration.hpp"
+#include "manager-in.hpp"
 #include "windowgeometry.hpp"
 
 #include <QQmlEngine>
+#include <memory>
 
 using configuration::conf_file_type;
 
-WindowGeometry::WindowGeometry(QObject *parent) : QObject(parent) {
+WindowGeometryLI::WindowGeometryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager) 
+    : QObject(parent),
+      cm(confmanager)
+{
 
-    auto &conf = configuration::manager::instance();
-    const auto lines = conf.read_lines(conf_file_type::window_geometry);
+    const auto lines = cm->read_lines(conf_file_type::window_geometry);
 
     if (lines.size() == 2) {
         bool wOk = false, hOk = false;
@@ -25,25 +27,14 @@ WindowGeometry::WindowGeometry(QObject *parent) : QObject(parent) {
     }
 }
 
-WindowGeometry &WindowGeometry::instance() {
-    static WindowGeometry inst;
-    return inst;
-}
-
-WindowGeometry *WindowGeometry::create(QQmlEngine *, QJSEngine *) {
-    auto *inst = &instance();
-    QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
-    return inst;
-}
-
-void WindowGeometry::save(int width, int height) {
+void WindowGeometryLI::save(int width, int height) {
     if (width < MIN_WIDTH || height < MIN_HEIGHT) return;
 
-    configuration::manager::instance().write_lines(
+    cm->write_lines(
         conf_file_type::window_geometry,
         { QString::number(width), QString::number(height) }
     );
 }
 
-int WindowGeometry::width()  const { return m_width;  }
-int WindowGeometry::height() const { return m_height; }
+int WindowGeometryLI::width()  const { return m_width;  }
+int WindowGeometryLI::height() const { return m_height; }

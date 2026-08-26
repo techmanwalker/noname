@@ -1,6 +1,8 @@
 #include "audioengine.hpp"
+#include "configuration.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
+#include "interfaces/configuration/windowgeometryproxy.hpp"
 #include "interfaces/searchresults/searchresultsproxy.hpp"
 #include "locallibrary.hpp"
 #include "locallibraryproxy.hpp"
@@ -14,6 +16,7 @@
 #include "shortcutslist.hpp"
 #include "shortcutslistproxy.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
+#include "windowgeometry.hpp"
 
 #include <QGuiApplication>
 #include <QLoggingCategory>
@@ -44,13 +47,16 @@ main (int argc, char ** argv)
         double-ownership with Qt's parent/child teardown, hence all initialized
         with nullptr.
     */
+    auto cm = std::make_shared<configuration::managerLI> (nullptr);
+
     auto ae = std::make_shared<audio_engineLI>    (nullptr);
-    auto ll = std::make_shared<LocalLibraryLI>    (nullptr);
+    auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr);
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
-    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, ae, pq, lm);
-    auto sl = std::make_shared<ShortcutsListLI>   (nullptr);
+    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, lm);
+    auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto sr = std::make_shared<SearchResultsLI>   (nullptr);
+    auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
@@ -66,6 +72,7 @@ main (int argc, char ** argv)
     PlayQueueProxy::inject(pq);
     ShortcutsListProxy::inject(sl);
     SearchResultsProxy::inject(sr);
+    WindowGeometryProxy::inject(wi);
 
 
     // bind signals

@@ -3,6 +3,7 @@
 #include "audioengine-in.hpp"
 
 #include "lyricsmanifest-in.hpp"
+#include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
 
 #include <QLoggingCategory>
@@ -56,6 +57,7 @@ class PlayerPresenterLI : public QObject, public PlayerPresenter
 public:
     explicit PlayerPresenterLI(
         QObject *parent,
+        std::shared_ptr<configuration::manager> confmanager,
         std::shared_ptr<audio_engine> controller,
         std::shared_ptr<PlayQueue> pqueue,
         std::shared_ptr<LyricsManifest> lyricsproj
@@ -120,6 +122,7 @@ private:
 
     std::shared_ptr<PlayQueue> queue;
     std::shared_ptr<LyricsManifest> lm;
+    std::shared_ptr<configuration::manager> cm;
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 

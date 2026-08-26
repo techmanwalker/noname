@@ -1,5 +1,5 @@
 #include "basicdiskio.hpp"
-#include "configuration.hpp"
+#include "manager-in.hpp"
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
@@ -161,11 +161,10 @@ LocalLibraryLI::snapshot_known_directories ()
 {
     // This is a full refresh.
 
-    auto &manager = configuration::manager::instance();
     using ft = configuration::conf_file_type;
 
     return take_snapshots(
-        manager.read_lines(
+        cm->read_lines(
             ft::known_music_directories
         )
     ).then(this, [this]() {
@@ -186,7 +185,8 @@ LocalLibraryLI::paths ()
     return sources<Types::Directory>();
 }
 
-LocalLibraryLI::LocalLibraryLI(QObject *parent)
-    : AbstractMediaSequence (parent, container_roles)
+LocalLibraryLI::LocalLibraryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
+    : AbstractMediaSequence (parent, container_roles),
+      cm(confmanager)
 {
 }
