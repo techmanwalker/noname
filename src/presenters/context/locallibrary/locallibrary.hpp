@@ -2,6 +2,7 @@
 
 #include "abstractmediasequence.hpp"
 #include "locallibrary-in.hpp" // interface header
+#include "manager-in.hpp"
 #include "mediatypes.hpp"
 
 #include <QFuture>
@@ -18,7 +19,7 @@ class LocalLibraryLI : public AbstractMediaSequence, public LocalLibrary
     Q_INTERFACES(LocalLibrary)
 
 public:
-    explicit LocalLibraryLI(QObject *parent);
+    explicit LocalLibraryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager);
 
     // Take a snapshot of the songs metadata in given directory path
     QFuture<void> take_snapshot (const QString &dir_path);
@@ -33,4 +34,7 @@ public:
 
 signals:
     void refreshFinished ();
+
+private:
+    std::shared_ptr<configuration::manager> cm;
 };

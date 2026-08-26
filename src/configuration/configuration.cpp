@@ -39,22 +39,15 @@ file (conf_file_type type)
     return QUrl::fromLocalFile(conf_dir.absoluteFilePath(conf_file_name));
 }
 
-// manager implementation
+// managerLI implementation
 
-manager::manager(QObject *parent)
+managerLI::managerLI(QObject *parent)
     : QObject (parent)
 {
 }
 
-manager &
-manager::instance()
-{
-    static manager inst;
-    return inst;
-}
-
 QStringList
-manager::read_lines (conf_file_type type, bool unconditionally_refresh)
+managerLI::read_lines (conf_file_type type, bool unconditionally_refresh)
 {
 
     if (unconditionally_refresh) {
@@ -77,7 +70,7 @@ manager::read_lines (conf_file_type type, bool unconditionally_refresh)
 }
 
 QStringList
-manager::prolly_cache_lines (conf_file_type type, bool condition_to_trigger_recaching)
+managerLI::prolly_cache_lines (conf_file_type type, bool condition_to_trigger_recaching)
 {
     // externally lock for reading + obbey a simple recache trigger
     QWriteLocker locker (&m_lock);
@@ -90,7 +83,7 @@ manager::prolly_cache_lines (conf_file_type type, bool condition_to_trigger_reca
 }
 
 void
-manager::__cache_lines_unlocked (conf_file_type type)
+managerLI::__cache_lines_unlocked (conf_file_type type)
 {
     // unsafe to use as-is, read write locks must be externally managed
 
@@ -124,7 +117,7 @@ manager::__cache_lines_unlocked (conf_file_type type)
 }
 
 QFuture<bool>
-manager::write_lines (conf_file_type type, const QStringList &lines)
+managerLI::write_lines (conf_file_type type, const QStringList &lines)
 {
     // immediately update cache, tryLock may last up to 10s but this is a write operation so nevermind
     QWriteLocker locker (&m_lock);
@@ -149,7 +142,7 @@ manager::write_lines (conf_file_type type, const QStringList &lines)
 }
 
 QFuture<bool>
-manager::__write_lines_to_disk_unlocked (conf_file_type type, const QStringList &lines)
+managerLI::__write_lines_to_disk_unlocked (conf_file_type type, const QStringList &lines)
 {
     // no direct access to the "this" in case it dies
 

@@ -7,42 +7,28 @@
 #include <QString>
 #include <QUrl>
 
+#include "manager-in.hpp"
+
 namespace configuration {
 
 Q_DECLARE_LOGGING_CATEGORY(l_configuration)
 
-enum class conf_file_type {
-    known_music_directories,
-    shortcuts,
-    window_geometry,
-    volume
-};
-
 QUrl file (conf_file_type type);
 
-class manager : public QObject
+class managerLI : public QObject, public manager
 {
     Q_OBJECT
 
 public:
-    static manager &instance();
+    explicit managerLI(QObject *parent);
+    ~managerLI() override = default;
 
-    // delete copy and reassignment
-    manager (const manager &) = delete;
-    manager &operator= (const manager &) = delete;
-
-    /** main operations, use conf_file_type to choose
-        which file's line you wish to read from or
-        write to
-        */
-    QStringList read_lines (conf_file_type type, bool unconditionally_refresh = false);
+    QStringList read_lines (conf_file_type type, bool unconditionally_refresh = false) override;
 
     /// its QFuture rather means when the new content has finished writing to disk
-    QFuture<bool> write_lines (conf_file_type type, const QStringList &lines);
+    QFuture<bool> write_lines (conf_file_type type, const QStringList &lines) override;
 
 private:
-    explicit manager(QObject *parent = nullptr);
-    ~manager() override = default;
 
     // called when lines don't exist in the cache map
     QStringList prolly_cache_lines (conf_file_type type, bool condition_to_trigger_recaching = false);

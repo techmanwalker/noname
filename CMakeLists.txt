@@ -147,21 +147,30 @@ target_include_directories(diskio
 )
 
 # Configuration, caching and all settings the player needs to remember from boot time
-add_library(configuration STATIC
+add_library(configuration_li STATIC
     ${CONFIGURATION_SOURCES}
 )
 
-target_link_libraries(configuration
+target_link_libraries(configuration_li
+    PUBLIC
+        configuration_in
+
     PRIVATE
         Qt6::Core
 
         diskio
 )
 
-target_include_directories(configuration
+target_include_directories(configuration_li
     PUBLIC
         src/configuration
 )
+
+
+add_library(configuration_in INTERFACE)
+target_include_directories(configuration_in INTERFACE src/interfaces/configuration)
+target_link_libraries(configuration_in INTERFACE Qt6::Core)
+
 
 
 # The Song factory - enables extracting metadata, media and covers from songs themselves
@@ -275,7 +284,7 @@ target_link_libraries (locallibrary_li
         
     PRIVATE
         diskio
-        configuration
+        configuration_in
         mediatypes
         rolecompiler
         songfactory # local library interface, needs to load the songs metadata
@@ -318,7 +327,7 @@ target_link_libraries(covers
 
         diskio
         mediatypes
-        configuration
+        configuration_in
 
         libjxl::libjxl
 
@@ -423,7 +432,7 @@ target_link_libraries(playerpresenter_li
         lyricsmanifest_in
         playqueue_in
 
-        configuration # load last volume from its save file
+        configuration_in # load last volume from its save file
         mediatypes
 )
 
@@ -573,6 +582,7 @@ target_link_libraries(${PROJECT_NAME}
         lyricsmanifest_li
         playerpresenter_li
         playqueue_li
+        configuration_li
 
         covers # every executable that features its own cover storage will feature this
 
@@ -585,6 +595,7 @@ qt_add_qml_module(mainwindow
     STATIC
     URI Player.App
     SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/configuration/windowgeometryproxy.hpp"
         ${WINDOWGEOMETRY_SOURCES}
     QML_FILES
         ${MAINWINDOW_QMLS}
@@ -598,7 +609,7 @@ target_link_libraries(mainwindow
         Qt6::Quick
         Qt6::Qml
 
-        configuration
+        configuration_in
 )
 
 target_include_directories(mainwindow

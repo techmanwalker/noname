@@ -2,9 +2,11 @@
 
 #include "abstractmediasequence.hpp"
 
+#include "manager-in.hpp"
 #include "shortcutslist-in.hpp"
 
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <memory>
 
 // Intended to end up showing in the Start page showing shortcuts to your favorite music.
 class ShortcutsListLI : public AbstractMediaSequence, public ShortcutsList
@@ -13,7 +15,7 @@ class ShortcutsListLI : public AbstractMediaSequence, public ShortcutsList
     Q_INTERFACES(ShortcutsList)
 
 public:
-    explicit ShortcutsListLI(QObject *parent);
+    explicit ShortcutsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager);
 
     // must not copy nor reassign
     ShortcutsListLI(const ShortcutsListLI&) = delete;
@@ -29,4 +31,7 @@ public:
 
     // shorthand
     QFuture<void> read_conf_and_load ();
+
+private:
+    std::shared_ptr<configuration::manager> cm;
 };

@@ -28,10 +28,7 @@ public:
 
     Q_INVOKABLE void performSearch(const QString &query, QObject *containerModel) {
         if (auto *list = qobject_cast<SearchResults*>(sourceModel())) {
-            qDebug() << "SearchResultst was set.";
             return list->performSearch(query, containerModel);
-        } else {
-            qDebug() << "SearchResultst was NOT set.";
         }
     }
 

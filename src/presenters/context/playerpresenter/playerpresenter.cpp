@@ -4,21 +4,24 @@
 #include "audioengine-in.hpp"
 #include "lyricsmanifest-in.hpp"
 
-#include "configuration.hpp"
+#include "manager-in.hpp"
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
 
 #include <QQmlEngine>
 #include <atomic>
+#include <memory>
 
 // Private constructor
 PlayerPresenterLI::PlayerPresenterLI(
     QObject *parent, 
+    std::shared_ptr<configuration::manager> confmanager,
     std::shared_ptr<audio_engine> controller,
     std::shared_ptr<PlayQueue> pqueue ,
     std::shared_ptr<LyricsManifest> lyricsproj
 )
     : QObject(parent),
+      cm(confmanager),
       playing(controller),
       queue(pqueue),
       lm(lyricsproj)
@@ -32,8 +35,7 @@ PlayerPresenterLI::PlayerPresenterLI(
             this, &PlayerPresenterLI::handleSliderPressedChanged);
 
     // load volume from conf file
-    auto &conf = configuration::manager::instance();
-    const auto lines = conf.read_lines(configuration::conf_file_type::volume);
+    const auto lines = cm->read_lines(configuration::conf_file_type::volume);
 
     // only the volume value, nothing else
     if (lines.size() == 1) {
@@ -90,7 +92,7 @@ void
 PlayerPresenterLI::saveVolume () const
 {
     
-    configuration::manager::instance().write_lines(
+    cm->write_lines(
         configuration::conf_file_type::volume,
         { QString::number(volume()) }
     );
