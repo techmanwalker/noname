@@ -19,37 +19,14 @@
 // bridge icu and icu_<version> safely
 using namespace U_ICU_NAMESPACE; 
 
-// Meyers singleton implementation
-SearchResults &
-SearchResults::instance()
-{
-    static SearchResults s_instance;
-    return s_instance;
-}
 
-SearchResults::SearchResults(QObject *parent)
+SearchResultsLI::SearchResultsLI(QObject *parent)
     : PlaylistSequence(parent)
 {
 }
 
-
-// factory for the qml engine
-SearchResults *
-SearchResults::create(QQmlEngine *qmlEngine, QJSEngine *jsEngine)
-{
-    Q_UNUSED(qmlEngine);
-    Q_UNUSED(jsEngine);
-    
-    SearchResults *inst = &instance();
-
-    // avoid QML GC to try to free object memory
-    QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
-
-    return inst;
-}
-
 std::string
-SearchResults::nfkd_and_translit(const std::string& input, Transliterator* transliterator) {
+SearchResultsLI::nfkd_and_translit(const std::string& input, Transliterator* transliterator) {
     if (!transliterator) {
         return input;
     }
@@ -65,7 +42,7 @@ SearchResults::nfkd_and_translit(const std::string& input, Transliterator* trans
 // The Search proxy
 
 void
-SearchResults::performSearch(const QString &query, QObject *sourceModel)
+SearchResultsLI::performSearch(const QString &query, QObject *sourceModel)
 {
     QList<Types::Song> all_songs;
 
@@ -99,7 +76,7 @@ SearchResults::performSearch(const QString &query, QObject *sourceModel)
 }
 
 void
-SearchResults::performSearch(const QString &query, QList<Types::Song> &song_list)
+SearchResultsLI::performSearch(const QString &query, QList<Types::Song> &song_list)
 {
     if (query.isEmpty()) {
         respawn_list(Prettifiers::sortBy(&Types::Song::title, song_list));

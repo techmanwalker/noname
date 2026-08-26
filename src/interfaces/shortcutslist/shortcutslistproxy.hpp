@@ -12,19 +12,19 @@ class ShortcutsListProxy : public QIdentityProxyModel {
 public:
     explicit ShortcutsListProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
-          m_manifest(s_injectedManifest) // Copies shared_ptr, incrementing ref count
+          m_slist(s_injectedList) // Copies shared_ptr, incrementing ref count
     {
-        if (m_manifest) {
-            setSourceModel(m_manifest.get());
+        if (m_slist) {
+            setSourceModel(m_slist.get());
         }
     }
 
     // Non-destructive injection via const reference
-    static void inject(const std::shared_ptr<QAbstractListModel> &manifest) {
-        s_injectedManifest = manifest; // Ref count incremented, caller's instance unaffected
+    static void inject(const std::shared_ptr<QAbstractListModel> &list) {
+        s_injectedList = list; // Ref count incremented, caller's instance unaffected
     }
 
 private:
-    std::shared_ptr<QAbstractListModel> m_manifest;
-    inline static std::shared_ptr<QAbstractListModel> s_injectedManifest = nullptr;
+    std::shared_ptr<QAbstractListModel> m_slist;
+    inline static std::shared_ptr<QAbstractListModel> s_injectedList = nullptr;
 };

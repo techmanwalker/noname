@@ -2,6 +2,9 @@
 
 #include "playlistsequence.hpp"
 
+#include "searchresults-in.hpp"
+
+#include <qtmetamacros.h>
 #include <unicode/utypes.h>
 
 class QQmlEngine;
@@ -12,27 +15,18 @@ U_NAMESPACE_BEGIN
 class Transliterator;
 U_NAMESPACE_END
 
-class SearchResults : public PlaylistSequence {
+class SearchResultsLI : public PlaylistSequence, public SearchResults
+
+{
     Q_OBJECT
-    QML_ELEMENT
-    QML_SINGLETON
+    Q_INTERFACES(SearchResults)
 
 public:
-    // disable copy and assignment for single instance
-    SearchResults(const SearchResults&) = delete;
-    SearchResults &operator=(const SearchResults&) = delete;
-
-    // singleton instantiation and global access
-    static SearchResults &instance();
-    static SearchResults *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine);
+    explicit SearchResultsLI(QObject *parent);
 
     static std::string nfkd_and_translit (const std::string &string, icu::Transliterator* transliterator);
 
-    Q_INVOKABLE void performSearch(const QString &query, QObject *sourceModel);
+    Q_INVOKABLE void performSearch(const QString &query, QObject *sourceModel) override;
     void performSearch (const QString &query, QList<Types::Song> &song_list);
-
-private:
-    // private constructor to disallow external creations
-    explicit SearchResults(QObject *parent = nullptr);
 
 };
