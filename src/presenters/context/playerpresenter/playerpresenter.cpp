@@ -2,7 +2,6 @@
 #include "playerpresenter.hpp"
 
 #include "audioengine-in.hpp"
-#include "lyricsmanifest-in.hpp"
 
 #include "manager-in.hpp"
 #include "mediatypes.hpp"
@@ -17,14 +16,12 @@ PlayerPresenterLI::PlayerPresenterLI(
     QObject *parent, 
     std::shared_ptr<configuration::manager> confmanager,
     std::shared_ptr<audio_engine> controller,
-    std::shared_ptr<PlayQueue> pqueue ,
-    std::shared_ptr<LyricsManifest> lyricsproj
+    std::shared_ptr<PlayQueue> pqueue
 )
     : QObject(parent),
       cm(confmanager),
       playing(controller),
-      queue(pqueue),
-      lm(lyricsproj)
+      queue(pqueue)
 {
     m_position_poll_timer->setInterval(10);
 
@@ -185,16 +182,6 @@ PlayerPresenterLI::handleTrackChanged()
     emit durationChanged();
     emit positionChanged();
     emit mediaLoadedChanged();
-
-    // read lyrics from audio file and update
-    lm->repopulate_with_lyrics_for_file(playing->current_track().source.toLocalFile()); /*
-        .then([this] (std::vector<std::string> lrc_lines) {
-
-                // uncomment this to print the lyrics model contents
-                debug::print(l_playerpresenter(), "Lyrics in the LyricManifest:");
-                debug::print(l_playerpresenter(), debug::serialize(lrc_lines));
-                
-            });*/
 }
 
 void

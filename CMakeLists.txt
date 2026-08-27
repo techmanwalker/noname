@@ -429,7 +429,6 @@ target_link_libraries(playerpresenter_li
 
     PRIVATE
         audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
-        lyricsmanifest_in
         playqueue_in
 
         configuration_in # load last volume from its save file
