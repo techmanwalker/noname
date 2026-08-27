@@ -28,7 +28,6 @@ using namespace syrinc::timestamps;
 struct __syrinc_lyric {
     syrinc::timestamps::timestamp ts;
     QString text;
-    bool highlighted = false;
 };
 
 static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
@@ -37,9 +36,6 @@ static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
     }},
     { "text", [](const __syrinc_lyric &x) -> QVariant {
         return x.text;
-    }},
-    { "highlighted", [](const __syrinc_lyric &x) -> QVariant {
-        return x.highlighted;
     }}
 
 };
@@ -47,12 +43,13 @@ static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
 namespace {
 
 struct LyricLookup {
-    const __syrinc_lyric *active = nullptr; // last line with ts <= ts_ms, or nullptr
-    const __syrinc_lyric *next   = nullptr; // first line with ts >  ts_ms, or nullptr
+    std::optional<int> active_row; // index of the last line with ts <= ts_ms
+    std::optional<int> next_row;   // index of the first line with ts >  ts_ms
 };
 
-// Caller must hold at least a read lock over `lyrics` for the duration of the call
-// and for as long as it dereferences the returned pointers.
+// No locking here — callers hold whatever lock they need for as long as they
+// use the result. Row indices, not pointers: nothing to keep alive, nothing
+// to own, and it's the exact shape QModelIndex needs downstream.
 LyricLookup
 lookup_lyrics_at(const std::vector<__syrinc_lyric> &lyrics, quint64 ts_ms)
 {
@@ -63,10 +60,17 @@ lookup_lyrics_at(const std::vector<__syrinc_lyric> &lyrics, quint64 ts_ms)
         });
 
     LyricLookup result;
-    if (it != lyrics.begin())
-        result.active = &*std::prev(it);
+    if (it != lyrics.begin()) {
+        // Walk left over any lines sharing the same timestamp so ties
+        // resolve to the first line in file order.
+        auto active_it = std::prev(it);
+        while (active_it != lyrics.begin()
+               && std::prev(active_it)->ts.as_ms() == active_it->ts.as_ms())
+            --active_it;
+        result.active_row = static_cast<int>(std::distance(lyrics.begin(), active_it));
+    }
     if (it != lyrics.end())
-        result.next = &*it;
+        result.next_row = static_cast<int>(std::distance(lyrics.begin(), it));
     return result;
 }
 
@@ -80,6 +84,12 @@ public:
     std::vector<__syrinc_lyric> m_lyrics;
     CompiledRoleSet<__syrinc_lyric> m_roles;
     mutable QReadWriteLock m_lock;
+
+    // Purely a diff-check for highlightedRowChanged — never consulted as
+    // ground truth. index_of_first_highlighted_row() always recomputes
+    // fresh, so a stale value here can cause at worst one skipped/extra
+    // notify, self-correcting on the next poll. Nothing reads it as fact.
+    int m_lastHighlightedRow = -1;
 
     QFuture<filelines> read_from_metadata_tag(const QString &source) {
         if (!QFile::exists(source)) {
@@ -194,6 +204,11 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
         }
 
         endResetModel();
+
+        if (m_d->m_lastHighlightedRow != -1) {
+            m_d->m_lastHighlightedRow = -1;
+            emit highlightedRowChanged();
+        }
     });
 }
 
@@ -215,6 +230,11 @@ LyricsManifestLI::clear()
         m_d->m_lyrics.clear();
     }
     endResetModel();
+
+    if (m_d->m_lastHighlightedRow != -1) {
+        m_d->m_lastHighlightedRow = -1;
+        emit highlightedRowChanged();
+    }
 }
 
 // Lookup
@@ -223,64 +243,54 @@ std::optional<quint64>
 LyricsManifestLI::ts_of_lyric_at(quint64 ts_ms) const
 {
     QReadLocker locker(&m_d->m_lock);
-    const auto *line = lookup_lyrics_at(m_d->m_lyrics, ts_ms).active;
-    if (!line) return std::nullopt;
+    const auto row = lookup_lyrics_at(m_d->m_lyrics, ts_ms).active_row;
+    if (!row) return std::nullopt;
 
-    return static_cast<quint64>(line->ts.as_ms());
+    return static_cast<quint64>(m_d->m_lyrics[*row].ts.as_ms());
 }
 
 std::optional<quint64>
 LyricsManifestLI::next_lyric_ts_at(quint64 ts_ms) const
 {
     QReadLocker locker(&m_d->m_lock);
-    const auto *line = lookup_lyrics_at(m_d->m_lyrics, ts_ms).next;
-    if (!line) return std::nullopt;
+    const auto row = lookup_lyrics_at(m_d->m_lyrics, ts_ms).next_row;
+    if (!row) return std::nullopt;
 
-    return static_cast<quint64>(line->ts.as_ms());
+    return static_cast<quint64>(m_d->m_lyrics[*row].ts.as_ms());
 }
 
 std::optional<QString>
 LyricsManifestLI::lyric_at(quint64 ts_ms) const
 {
     QReadLocker locker(&m_d->m_lock);
-    const auto *line = lookup_lyrics_at(m_d->m_lyrics, ts_ms).active;
-    if (!line) return std::nullopt;
+    const auto row = lookup_lyrics_at(m_d->m_lyrics, ts_ms).active_row;
+    if (!row) return std::nullopt;
 
-    return line->text;
+    return m_d->m_lyrics[*row].text;
+}
+
+QModelIndex
+LyricsManifestLI::index_of_first_highlighted_row() const
+{
+    if (!ae)
+        return {};
+
+    const quint64 curr_ms = ae->current_position_ms();
+
+    QReadLocker locker(&m_d->m_lock);
+    const auto row = lookup_lyrics_at(m_d->m_lyrics, curr_ms).active_row;
+
+    return row ? index(*row) : QModelIndex();
 }
 
 void
 LyricsManifestLI::poll_highlighted_line_change()
 {
-    if (!ae || m_d->m_lyrics.empty())
+    const int newRow = index_of_first_highlighted_row().row(); // -1 if none
+
+    if (newRow == m_d->m_lastHighlightedRow)
         return;
 
-    auto &lyrics = m_d->m_lyrics;
-    const quint64 now = ae->current_position_ms();
-
-    const __syrinc_lyric *active;
-    {
-        QReadLocker locker(&m_d->m_lock);
-        active = lookup_lyrics_at(lyrics, now).active;
-    }
-
-    const std::optional<int> highlighted_role = m_d->m_roles.roleNumber("highlighted");
-
-    for (int row = 0; row < static_cast<int>(lyrics.size()); ++row) {
-        const bool should_be_highlighted = (&lyrics[row] == active);
-
-        if (lyrics[row].highlighted == should_be_highlighted)
-            continue;
-
-        {
-            QWriteLocker locker(&m_d->m_lock);
-            lyrics[row].highlighted = should_be_highlighted;
-        }
-
-        const QModelIndex idx = index(row);
-        if (highlighted_role)
-            emit dataChanged(idx, idx, {*highlighted_role});
-        else
-            emit dataChanged(idx, idx);
-    }
+    m_d->m_lastHighlightedRow = newRow;
+    emit highlightedRowChanged();
 }

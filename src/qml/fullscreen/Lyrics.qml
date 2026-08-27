@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 import Player.Fullscreen
@@ -7,9 +8,10 @@ ListView {
 
     delegate: LyricDelegate {
         required property var model
+        required property int index
 
         timestamp: model.timestamp
         text: model.text
-        highlighted: model.highlighted
+        highlighted: root.model.highlighted === root.model.index(index, 0)
     }
 }
