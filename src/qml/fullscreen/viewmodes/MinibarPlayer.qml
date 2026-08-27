@@ -21,6 +21,9 @@ ColumnLayout {
     property real leftPadding: padding
     property real rightPadding: padding
 
+    property real coverWidth: 48
+    property real coverHeight: coverWidth
+
     property real coverToMetadataSpacing: 0
 
     property bool insetDurationBarInPadding: true
@@ -57,7 +60,7 @@ ColumnLayout {
         RowLayout {
             spacing: root.coverToMetadataSpacing
 
-            Layout.preferredWidth: thiscover.width + metadata.width
+            Layout.fillWidth: true
 
             TapHandler {
                 onTapped: root.metadataClicked()
@@ -66,12 +69,14 @@ ColumnLayout {
             Cover {
                 id: thiscover
 
-                Layout.fillHeight: true
-                Layout.preferredWidth: height
+                Layout.preferredWidth: root.coverWidth
+                Layout.preferredHeight: root.coverHeight
 
                 Layout.alignment: Qt.AlignVCenter
 
                 source: PlayerPresenter.cover
+
+                sourceSize: Qt.size(root.coverWidth, root.coverHeight)
             }
 
             ColumnLayout {

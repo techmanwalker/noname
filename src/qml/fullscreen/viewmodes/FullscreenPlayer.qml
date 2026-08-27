@@ -74,6 +74,12 @@ Item {
                 TapHandler {
                     onTapped: root.switchToLyricsViewRequested ()
                 }
+
+                mipmap: true
+                smooth: true
+
+                // bind to maximum possible size to avoid flicker on resizing
+                sourceSize: Qt.size(root.coverIdealSize, root.coverIdealSize)
             }
 
             ColumnLayout {

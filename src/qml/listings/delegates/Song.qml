@@ -99,6 +99,8 @@ Item {
 
             Layout.preferredWidth:  root.coverWidth
             Layout.preferredHeight: root.coverHeight
+
+            sourceSize: Qt.size(root.coverWidth, root.coverHeight)
         }
 
         Column {
