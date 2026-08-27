@@ -10,5 +10,6 @@ ListView {
 
         timestamp: model.timestamp
         text: model.text
+        highlighted: model.highlighted
     }
 }

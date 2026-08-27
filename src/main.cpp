@@ -23,6 +23,7 @@
 #include <QQmlApplicationEngine>
 #include <QTranslator>
 #include <memory>
+#include <qobject.h>
 
 Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
@@ -102,6 +103,9 @@ main (int argc, char ** argv)
 
     QObject::connect (ae.get(), &audio_engineLI::seek_finished,
             pp.get(), &PlayerPresenterLI::gate_poll_timer);
+
+    QObject::connect(pp.get(), &PlayerPresenterLI::positionChanged,
+            lm.get(), &LyricsManifestLI::poll_highlighted_line_change);
 
 
 

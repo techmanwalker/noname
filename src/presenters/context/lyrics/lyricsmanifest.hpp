@@ -36,6 +36,10 @@ public:
 
     std::vector<std::string> current_lines() const;
 
+    std::optional<quint64> ts_of_lyric_at(quint64 ts_ms) const override;
+    std::optional<quint64> next_lyric_ts_at(quint64 ts_ms) const override;
+    std::optional<QString> lyric_at(quint64 ts_ms) const override;
+
     // Q_INVOKABLE makes them callable from QML
     Q_INVOKABLE void clear() override;
 
@@ -44,6 +48,10 @@ signals:
 
 public slots:
     QFuture<void> load_current_track_lyrics ();
+
+    // Fire this (e.g. from the timer that polls for duration) to reconcile
+    // the highlighted lyric against the current playback position.
+    void poll_highlighted_line_change ();
 
 private:
     std::unique_ptr<LyricsManifestPrivate> m_d;
