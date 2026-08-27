@@ -11,6 +11,10 @@ Item {
 
     property alias outputSource: _outputSource
 
+    // Hard-locked allocation bounds
+    property real maximumWidth: Screen.width
+    property real maximumHeight: Screen.height
+
     // internal state
     property var _chain: []
 
@@ -70,56 +74,66 @@ Item {
         if (!root.source || root.passes <= 0 || root.width <= 0 || root.height <= 0)
             return
 
-        var items    = []
-        var prevItem = root.source
-        var w = root.width
-        var h = root.height
+        let items    = []
+        let prevItem = root.source
+        let maxW     = root.maximumWidth
+        let maxH     = root.maximumHeight
 
         // N downsample passes
-        for (var d = 0; d < root.passes; d++) {
-            w = Math.max(1, Math.floor(w / 2))
-            h = Math.max(1, Math.floor(h / 2))
+        for (let d = 0; d < root.passes; d++) {
+            maxW = Math.max(1, Math.floor(maxW / 2))
+            maxH = Math.max(1, Math.floor(maxH / 2))
+            
+            let passDivisor = Math.pow(2, d + 1)
 
-            var src = _srcTemplate.createObject(_passContainer, {
+            let src = _srcTemplate.createObject(_passContainer, {
                 sourceItem: prevItem,
-                width:  w,
-                height: h
+                textureSize: Qt.size(maxW, maxH) // Hard-lock allocated FBO size
             })
-            src.live = Qt.binding(function() { return !root.frozen })
+            
+            // Dynamically bind active bounds inside the locked buffer
+            src.live = Qt.binding(() => !root.frozen)
+            src.width = Qt.binding(() => Math.max(1, Math.floor(root.width / passDivisor)))
+            src.height = Qt.binding(() => Math.max(1, Math.floor(root.height / passDivisor)))
 
-            var effect = _downTemplate.createObject(_passContainer, {
-                width:     w,
-                height:    h,
-                source:    src,
-                texelSize: Qt.vector2d(1.0 / w, 1.0 / h),
-                offset:    root.offset
+            let effect = _downTemplate.createObject(_passContainer, {
+                source: src
             })
+            effect.width = Qt.binding(() => src.width)
+            effect.height = Qt.binding(() => src.height)
+            effect.texelSize = Qt.binding(() => Qt.vector2d(1.0 / src.width, 1.0 / src.height))
+            effect.offset = Qt.binding(() => root.offset)
 
             items.push(src, effect)
             prevItem = effect
         }
 
         // N upsample passes
-        for (var u = 0; u < root.passes; u++) {
-            var srcW = w
-            var srcH = h
-            w = Math.min(root.width,  w * 2)
-            h = Math.min(root.height, h * 2)
+        for (let u = 0; u < root.passes; u++) {
+            let divForSrc = Math.pow(2, root.passes - u)
+            let divForEffect = Math.pow(2, root.passes - u - 1)
+            
+            let srcMaxW = maxW
+            let srcMaxH = maxH
+            maxW = Math.min(root.maximumWidth, maxW * 2)
+            maxH = Math.min(root.maximumHeight, maxH * 2)
 
-            var usrc = _srcTemplate.createObject(_passContainer, {
+            let usrc = _srcTemplate.createObject(_passContainer, {
                 sourceItem: prevItem,
-                width:  srcW,
-                height: srcH
+                textureSize: Qt.size(srcMaxW, srcMaxH) // Hard-lock allocated FBO size
             })
-            usrc.live = Qt.binding(function() { return !root.frozen })
+            
+            usrc.live = Qt.binding(() => !root.frozen)
+            usrc.width = Qt.binding(() => Math.max(1, Math.floor(root.width / divForSrc)))
+            usrc.height = Qt.binding(() => Math.max(1, Math.floor(root.height / divForSrc)))
 
-            var ueffect = _upTemplate.createObject(_passContainer, {
-                width:     w,
-                height:    h,
-                source:    usrc,
-                texelSize: Qt.vector2d(1.0 / srcW, 1.0 / srcH),
-                offset:    root.offset
+            let ueffect = _upTemplate.createObject(_passContainer, {
+                source: usrc
             })
+            ueffect.width = Qt.binding(() => Math.min(root.width, Math.floor(root.width / divForEffect)))
+            ueffect.height = Qt.binding(() => Math.min(root.height, Math.floor(root.height / divForEffect)))
+            ueffect.texelSize = Qt.binding(() => Qt.vector2d(1.0 / usrc.width, 1.0 / usrc.height))
+            ueffect.offset = Qt.binding(() => root.offset)
 
             items.push(usrc, ueffect)
             prevItem = ueffect

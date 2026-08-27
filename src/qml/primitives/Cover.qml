@@ -9,11 +9,4 @@ Image {
     height: width
 
     asynchronous: true
-
-    sourceSize: Qt.size(width, height)
-    
-    // Smooth scaling for better quality
-    smooth: true
-
-    mipmap: true
 }

@@ -179,7 +179,9 @@ GridLayout {
             topPadding: 20
             bottomPadding: topPadding
 
+            // this match may explain why this drifts below the window when it is too small
             Layout.preferredHeight: 48
+            coverWidth: 48
 
             visible: stateModel.isMediaLoaded
 

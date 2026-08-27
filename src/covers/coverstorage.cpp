@@ -6,6 +6,7 @@
 #include "pixelformats.hpp"
 #include "thumbnails.hpp"
 #include <qhashfunctions.h>
+#include <qloggingcategory.h>
 
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
@@ -109,6 +110,7 @@ cover_storage::resolve_blocking (
         QImage *cached_ptr = shard->cache.object(base64url_coverref);
         if (cached_ptr) {
             img = *cached_ptr;
+            qCDebug(l_coverprovider) << "Stored/overwritten by memory cache lookup.";
         }
     }
 
@@ -117,6 +119,7 @@ cover_storage::resolve_blocking (
         img = covers::disk::fetch_thumbnail(ref);
         if (!img.isNull()) {
             store(ref, img);
+            qCDebug(l_coverprovider) << "Stored/overwritten by reading from the thumbnails cache.";
         }
     }
 
@@ -129,23 +132,30 @@ cover_storage::resolve_blocking (
             img = extract_cover(file.file(), ref.size());
             if (!img.isNull()) {
                 store(ref, img);
+                qCDebug(l_coverprovider) << "Stored/overwritten on demand decoding.";
             }
         }
     }
 
     // Return empty if completely unresolved
     if (img.isNull()) {
+        qCDebug(l_coverprovider) << "No image resolved.";
         return {};
     }
 
     // 4. Validate constraints and apply scaling once
     if (!requestedSize.isValid() || requestedSize.isEmpty()) {
+        qCDebug(l_coverprovider) << "Full res resource returned by not specifying a requestedSize..";
         return img; // Unspecified size (-1, -1) or invalid = return full res
     }
 
     if (requestedSize.width() == requestedSize.height()) {
-        return decode::lanczos_resize_square(img, requestedSize.width());
+        int squareSize = requestedSize.width();
+        qCDebug(l_coverprovider) << "Returned a square image of size " << squareSize;
+        return decode::lanczos_resize_square(img, squareSize);
     }
+
+    qCDebug(l_coverprovider) << "Returned a non square image of size " << requestedSize.width() << "x" << requestedSize.height();
 
     return decode::lanczos_resize (
         img,

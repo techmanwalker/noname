@@ -6,8 +6,11 @@ Item {
     id: root
     property url  source
 
+    property real maximumWidth: Screen.width
+    property real maximumHeight: Screen.height
+
     // x coordinates from 0 to 1
-    property real playerLeft: .15
+    property real playerLeft:  .15
     property real coverLeft:   .25
     property real coverRight:  .75
     property real playerRight: .85
@@ -92,6 +95,8 @@ Item {
     DualKawaseBlur {
         id: blur
         anchors.fill: parent
+        maximumWidth: root.maximumWidth
+        maximumHeight: root.maximumHeight
         source: root.darken ? bgOverlay.outputSource : img
         passes: 4
         offset: 1.5

@@ -30,6 +30,9 @@ ApplicationWindow {
         source: activeView.currentIndex === 1 ? PlayerPresenter.cover : ""
         anchors.fill: parent
 
+        maximumWidth: Screen.width
+        maximumHeight: Screen.height
+
         // Math.max(1, root.width) prevents zero-division errors during
         // the brief moment when the window is still being constructed
         playerLeft:  0

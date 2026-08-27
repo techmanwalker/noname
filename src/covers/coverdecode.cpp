@@ -122,6 +122,10 @@ crop_largest_square(const QImage &image)
     if (image.isNull())
         return {};
 
+    if (image.width() == image.height()) {
+        return image; // it is already a square
+    }
+
     const QImage src = image.convertToFormat(pixelformat_qimage);
     
     const int crop_size = std::min(src.width(), src.height());
