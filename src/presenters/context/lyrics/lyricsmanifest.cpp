@@ -13,6 +13,7 @@
 #include <QFile>
 #include <QQmlEngine>
 #include <QtConcurrent/QtConcurrent>
+#include <optional>
 #include <qfuture.h>
 #include <qloggingcategory.h>
 #include <qreadwritelock.h>
@@ -27,6 +28,7 @@ using namespace syrinc::timestamps;
 struct __syrinc_lyric {
     syrinc::timestamps::timestamp ts;
     QString text;
+    bool highlighted = false;
 };
 
 static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
@@ -35,8 +37,40 @@ static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
     }},
     { "text", [](const __syrinc_lyric &x) -> QVariant {
         return x.text;
+    }},
+    { "highlighted", [](const __syrinc_lyric &x) -> QVariant {
+        return x.highlighted;
     }}
+
 };
+
+namespace {
+
+struct LyricLookup {
+    const __syrinc_lyric *active = nullptr; // last line with ts <= ts_ms, or nullptr
+    const __syrinc_lyric *next   = nullptr; // first line with ts >  ts_ms, or nullptr
+};
+
+// Caller must hold at least a read lock over `lyrics` for the duration of the call
+// and for as long as it dereferences the returned pointers.
+LyricLookup
+lookup_lyrics_at(const std::vector<__syrinc_lyric> &lyrics, quint64 ts_ms)
+{
+    auto it = std::upper_bound(
+        lyrics.begin(), lyrics.end(), timestamp(ts_ms),
+        [](const timestamp &pos, const __syrinc_lyric &line) {
+            return pos.as_ms() < line.ts.as_ms();
+        });
+
+    LyricLookup result;
+    if (it != lyrics.begin())
+        result.active = &*std::prev(it);
+    if (it != lyrics.end())
+        result.next = &*it;
+    return result;
+}
+
+}
 
 // Private implementation class sealing the internal components
 class LyricsManifestPrivate {
@@ -181,4 +215,72 @@ LyricsManifestLI::clear()
         m_d->m_lyrics.clear();
     }
     endResetModel();
+}
+
+// Lookup
+
+std::optional<quint64>
+LyricsManifestLI::ts_of_lyric_at(quint64 ts_ms) const
+{
+    QReadLocker locker(&m_d->m_lock);
+    const auto *line = lookup_lyrics_at(m_d->m_lyrics, ts_ms).active;
+    if (!line) return std::nullopt;
+
+    return static_cast<quint64>(line->ts.as_ms());
+}
+
+std::optional<quint64>
+LyricsManifestLI::next_lyric_ts_at(quint64 ts_ms) const
+{
+    QReadLocker locker(&m_d->m_lock);
+    const auto *line = lookup_lyrics_at(m_d->m_lyrics, ts_ms).next;
+    if (!line) return std::nullopt;
+
+    return static_cast<quint64>(line->ts.as_ms());
+}
+
+std::optional<QString>
+LyricsManifestLI::lyric_at(quint64 ts_ms) const
+{
+    QReadLocker locker(&m_d->m_lock);
+    const auto *line = lookup_lyrics_at(m_d->m_lyrics, ts_ms).active;
+    if (!line) return std::nullopt;
+
+    return line->text;
+}
+
+void
+LyricsManifestLI::poll_highlighted_line_change()
+{
+    if (!ae || m_d->m_lyrics.empty())
+        return;
+
+    auto &lyrics = m_d->m_lyrics;
+    const quint64 now = ae->current_position_ms();
+
+    const __syrinc_lyric *active;
+    {
+        QReadLocker locker(&m_d->m_lock);
+        active = lookup_lyrics_at(lyrics, now).active;
+    }
+
+    const std::optional<int> highlighted_role = m_d->m_roles.roleNumber("highlighted");
+
+    for (int row = 0; row < static_cast<int>(lyrics.size()); ++row) {
+        const bool should_be_highlighted = (&lyrics[row] == active);
+
+        if (lyrics[row].highlighted == should_be_highlighted)
+            continue;
+
+        {
+            QWriteLocker locker(&m_d->m_lock);
+            lyrics[row].highlighted = should_be_highlighted;
+        }
+
+        const QModelIndex idx = index(row);
+        if (highlighted_role)
+            emit dataChanged(idx, idx, {*highlighted_role});
+        else
+            emit dataChanged(idx, idx);
+    }
 }

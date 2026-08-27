@@ -11,6 +11,10 @@ public:
 
     virtual void clear () = 0;
 
+    virtual std::optional<quint64> ts_of_lyric_at(quint64 ts_ms) const = 0;      // 0 if ts_ms precedes the first line
+    virtual std::optional<quint64> next_lyric_ts_at(quint64 ts_ms) const = 0;    // 0 if there's no line after the active one
+    virtual std::optional<QString> lyric_at(quint64 ts_ms) const = 0;            // empty if ts_ms precedes the first line
+
 };
 
 Q_DECLARE_INTERFACE(LyricsManifest, "com.noname.LyricsManifest");
