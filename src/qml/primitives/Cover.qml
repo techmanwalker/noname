@@ -9,17 +9,11 @@ Image {
     height: width
 
     asynchronous: true
+
+    sourceSize: Qt.size(width, height)
     
     // Smooth scaling for better quality
     smooth: true
-    mipmap: false
 
-    // imperative mipmap toggling
-    onStatusChanged: {
-        if (status === Image.Ready) {
-            mipmap = true;
-        } else if (status === Image.Null || status === Image.Error) {
-            mipmap = false;
-        }
-    }
+    mipmap: true
 }

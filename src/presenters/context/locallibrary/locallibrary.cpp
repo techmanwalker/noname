@@ -1,4 +1,5 @@
 #include "basicdiskio.hpp"
+#include "coveruris.hpp"
 #include "manager-in.hpp"
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
@@ -88,7 +89,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
     qCDebug(l_mediasequences) << "Reading directory: " << target_dir.path;
 
     // Ask song_factory to extract the metadata of songs, all at once
-    return song_factory::batch_extract (not_yet_loaded, {256, true} /* enough for 1440p, can be tweaked any time later */)
+    return song_factory::batch_extract (not_yet_loaded, {covers::default_cover_thumbnail_size, true} /* enough for 1440p, can be tweaked any time later */)
         .then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
             /*  Re-resolve through the persistent index rather than trusting target_dir from
                 above: m_items may have reallocated (another take_snapshot() appending a new

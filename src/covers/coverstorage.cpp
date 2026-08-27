@@ -1,5 +1,7 @@
+#include "coverdecode.hpp"
 #include "coverextract.hpp"
 #include "coverstorage.hpp"
+#include "coveruris.hpp"
 #include "mediatypes.hpp"
 #include "pixelformats.hpp"
 #include "thumbnails.hpp"
@@ -16,7 +18,12 @@ cover_storage::cover_storage()
 {
     // You MUST increase this total budget. 96 is not enough to prevent 
     // thrashing during scrolling. Let's allocate enough for ~1000 thumbnails.
-    static const qsizetype thumbnail_cost = QImage(256, 256, pixelformat_qimage).sizeInBytes();
+    static const qsizetype thumbnail_cost = QImage(
+        default_cover_thumbnail_size, 
+        default_cover_thumbnail_size, 
+        pixelformat_qimage
+    ).sizeInBytes();
+
     const qsizetype total_budget = 1024 * thumbnail_cost;
     const qsizetype budget_per_shard = total_budget / SHARD_COUNT;
 
@@ -88,20 +95,15 @@ cover_storage::resolve_blocking (
     const QSize &requestedSize
 )
 {
-    Q_UNUSED(requestedSize);
-
     CoverRef ref = CoverRef::decode_base64url(base64url_coverref);
-
     if (ref.source().isEmpty()) return QImage();
-
-    // Get from hot cache first
-    // route to the correct shard based on the ID hash
-    const size_t shard_idx = qHash(base64url_coverref) % SHARD_COUNT;
-    auto& shard = m_shards[shard_idx];
 
     QImage img;
 
-    // lock ONLY this specific shard
+    const size_t shard_idx = qHash(base64url_coverref) % SHARD_COUNT;
+    auto& shard = m_shards[shard_idx];
+
+    // Hot cache lookup
     {
         QMutexLocker locker(&shard->lock);
         QImage *cached_ptr = shard->cache.object(base64url_coverref);
@@ -110,55 +112,46 @@ cover_storage::resolve_blocking (
         }
     }
 
-    if (!img.isNull()) {
-        return img;
+    // Disk cache fallback
+    if (img.isNull()) {
+        img = covers::disk::fetch_thumbnail(ref);
+        if (!img.isNull()) {
+            store(ref, img);
+        }
     }
 
-    // If not in m_cache, fetch from disk
-    img = covers::disk::fetch_thumbnail(ref);
-
-    if (!img.isNull()) {
-
-        // qCDebug(l_coverprovider) << "Fetched thumbnail from disk cache for " << id;
-
-        // Store in memory cache
-        store (ref, img);
-
-        return img;
-    }
-
-    // The reference tells us where to look for the coer
-
-
-    if (!ref.source().isEmpty()) {
+    // On-demand decoding fallback
+    if (img.isNull() && !ref.source().isEmpty()) {
         const QByteArray local_path = ref.source().toLocalFile().toUtf8();
         TagLib::FileRef file(local_path.constData());
 
         if (!file.isNull()) {
             img = extract_cover(file.file(), ref.size());
-
             if (!img.isNull()) {
-                // qCDebug(l_coverprovider) << "Decoded cover on demand for " << id;
                 store(ref, img);
-                return img;
             }
         }
     }
 
-    // until we set a real null cover to display
-    return QImage ();
+    // Return empty if completely unresolved
+    if (img.isNull()) {
+        return {};
+    }
 
-    /*
-    qCDebug (l_coverprovider) << "Could not fetch thumbnail from the requestImage standpoint.";
+    // 4. Validate constraints and apply scaling once
+    if (!requestedSize.isValid() || requestedSize.isEmpty()) {
+        return img; // Unspecified size (-1, -1) or invalid = return full res
+    }
 
-    // To be able to actually retrieve the default cover
-    using namespace Qt::StringLiterals;
+    if (requestedSize.width() == requestedSize.height()) {
+        return decode::lanczos_resize_square(img, requestedSize.width());
+    }
 
-    // _s suffix creates a QString on compilation time cleanly without macros
-    QImage default_cover(default_cover_uri);
-
-    return default_cover;
-    */
+    return decode::lanczos_resize (
+        img,
+        static_cast<size_t>(requestedSize.width()),
+        static_cast<size_t>(requestedSize.height())
+    );
 }
 
 bool

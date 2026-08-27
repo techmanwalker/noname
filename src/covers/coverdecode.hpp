@@ -4,9 +4,11 @@
 
 namespace covers::decode {
 
-QImage lanczos_resize_square(const QImage &image, int target_size);
+QImage crop_largest_square(const QImage &image);
 
-int    read_packet(void *opaque, uint8_t *buf, int buf_size);
+QImage lanczos_resize(const QImage &image, size_t width, size_t height);
+
+QImage lanczos_resize_square(const QImage &image, size_t target_size);
 
 QImage decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format);
 
