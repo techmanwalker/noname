@@ -6,7 +6,8 @@ namespace Types {
     struct Song;
 }
 
-class SearchResults {
+class SearchResults
+{
 
 public: 
     virtual ~SearchResults () = default;

@@ -12,7 +12,8 @@ enum class conf_file_type {
     volume
 };
 
-class manager {
+class manager
+{
 
 public:
     virtual ~manager() = default;

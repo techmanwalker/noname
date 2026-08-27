@@ -3,10 +3,10 @@
 #include "searchresults-in.hpp"
 
 #include <QIdentityProxyModel>
+#include <QtQmlIntegration>
 
-#include <QtQmlIntegration/qqmlintegration.h>
-
-class SearchResultsProxy : public QIdentityProxyModel {
+class SearchResultsProxy : public QIdentityProxyModel
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(SearchResults)
     QML_SINGLETON

@@ -11,12 +11,9 @@
 #include "tokens.hpp"
 
 #include <QFile>
-#include <QQmlEngine>
 #include <QtConcurrent/QtConcurrent>
+
 #include <optional>
-#include <qfuture.h>
-#include <qloggingcategory.h>
-#include <qreadwritelock.h>
 
 Q_LOGGING_CATEGORY(l_lyricsmanifest, "noname.lyrics");
 

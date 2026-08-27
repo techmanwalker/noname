@@ -2,10 +2,11 @@
 
 #include "lyricsmanifest-in.hpp"
 #include <QIdentityProxyModel>
-#include <QtQmlIntegration/qqmlintegration.h>
+#include <QtQmlIntegration>
 #include <memory>
 
-class LyricsManifestProxy : public QIdentityProxyModel {
+class LyricsManifestProxy : public QIdentityProxyModel
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(LyricsManifest)
     QML_SINGLETON

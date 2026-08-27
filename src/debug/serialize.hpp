@@ -9,6 +9,9 @@
 #include <qjsonarray.h>
 #include <type_traits>
 
+template <typename T>
+concept convertible_to_any_t = std::is_convertible_v<T, Types::Any>;
+
 namespace debug {
     void print (const QLoggingCategory &cat, const QJsonValue &val);
 
@@ -19,19 +22,16 @@ namespace debug {
 
     QJsonArray serialize(const std::vector<std::string> &lines);
 
-    template <typename MediaType>
-    requires std::is_convertible_v<MediaType, Types::Any>
+    template <convertible_to_any_t MediaType>
     QJsonObject serialize (const QFuture<MediaType> &future_unit);
 
     QJsonArray serialize(const QList<QUrl> &uris);
     QJsonArray serialize(const QList<Types::Any> &media);
 
-    template <typename MediaType>
-    requires std::is_convertible_v<MediaType, Types::Any>
+    template <convertible_to_any_t MediaType>
     QJsonArray serialize(const QList<MediaType> &media);
 
-    template <typename MediaType>
-    requires std::is_convertible_v<MediaType, Types::Any>
+    template <convertible_to_any_t MediaType>
     QJsonArray serialize(const QList<QFuture<MediaType>> &futures);
 }
 

@@ -15,9 +15,7 @@
 #include <jxl/decode_cxx.h>
 #include <jxl/resizable_parallel_runner_cxx.h>
 
-namespace covers {
-
-namespace disk {
+namespace covers::disk {
 
 Q_LOGGING_CATEGORY(l_thumbnails, "noname.thumbnails")
 
@@ -39,7 +37,10 @@ thumbnail_pool ()
     the public write_thumbnail() below only ever queues this onto
     thumbnail_pool(), it's never called directly. */
 bool
-write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
+write_thumbnail_blocking (
+    const CoverRef &ref,
+    const QImage &thumbnail
+)
 {
     if (thumbnail.isNull()) {
         qCWarning(l_thumbnails) << "refusing to write a null thumbnail for " << ref.source();
@@ -171,7 +172,10 @@ write_thumbnail_blocking (const CoverRef &ref, const QImage &thumbnail)
 
 } // anonymous
 
-QString thumbnail_hash_for_fs (const CoverRef &ref)
+QString
+thumbnail_hash_for_fs (
+    const CoverRef &ref
+)
 {
     // at the file system level we need short names, no bijective encoding needed here
 
@@ -182,7 +186,10 @@ QString thumbnail_hash_for_fs (const CoverRef &ref)
         QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());
 }
 
-QString thumbnail_file_path (const CoverRef &ref)
+QString
+thumbnail_file_path (
+    const CoverRef &ref
+)
 {
     QString fs_file_hash = thumbnail_hash_for_fs(ref);
     if (fs_file_hash.isEmpty()) return QString();
@@ -192,14 +199,18 @@ QString thumbnail_file_path (const CoverRef &ref)
     return thumb_dir.absoluteFilePath(fs_file_hash + QStringLiteral(".jxl"));
 }
 
-bool thumbnail_file_exists(const CoverRef &ref)
+bool thumbnail_file_exists(
+    const CoverRef &ref
+)
 {
     return QFile::exists(thumbnail_file_path(ref));
 }
 
 // Read the file ~/.local/share/noname/thumbnails/<hash>.tga and decode it
 QImage
-fetch_thumbnail (const CoverRef &ref)
+fetch_thumbnail (
+    const CoverRef &ref
+)
 {
     const QString file_path = thumbnail_file_path(ref);
 
@@ -310,7 +321,10 @@ fetch_thumbnail (const CoverRef &ref)
 }
 
 QFuture<void>
-write_thumbnail (const CoverRef &ref, QImage thumbnail)
+write_thumbnail (
+    const CoverRef &ref,
+    QImage thumbnail
+)
 {
     return QtConcurrent::run(thumbnail_pool(), [ref, thumbnail] {
         write_thumbnail_blocking(ref, thumbnail);
@@ -323,8 +337,6 @@ teardown ()
     QThreadPool *pool = thumbnail_pool();
     pool->clear();          // drop anything queued but not yet started
     pool->waitForDone();    // let whatever's already encoding finish naturally
-}
-
 }
 
 }

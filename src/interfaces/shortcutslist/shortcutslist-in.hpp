@@ -2,7 +2,8 @@
 
 #include <QFuture>
 
-class ShortcutsList {
+class ShortcutsList
+{
 
 public:
     virtual ~ShortcutsList () = default;

@@ -23,15 +23,20 @@ struct BufferData {
     size_t size;
 };
 
-int read_packet(void *opaque, uint8_t *buf, int buf_size)
+int
+read_packet(void *opaque, uint8_t *buf, int buf_size)
 {
     auto *bd = static_cast<BufferData *>(opaque);
     const size_t n = std::min(static_cast<size_t>(buf_size), bd->size);
-    if (n == 0)
+
+    if (n == 0) {
         return AVERROR_EOF;
+    }
+
     std::memcpy(buf, bd->ptr, n);
     bd->ptr  += n;
     bd->size -= n;
+
     return static_cast<int>(n);
 }
 
@@ -58,7 +63,8 @@ struct AVPacketDeleter { void operator()(AVPacket *p) const { if (p) av_packet_f
 /* Runs sws_scale without ever letting swscale touch the QImage allocation.
    Output goes into an FFmpeg-owned, aligned, padded buffer, then is copied
    row by row into the QImage. */
-QImage sws_convert_to_qimage(const uint8_t *const *src_data, const int *src_linesize,
+QImage
+sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
                              int src_w, int src_h, AVPixelFormat src_fmt,
                              int dst_w, int dst_h, int flags,
                              AVPixelFormat dst_fmt, QImage::Format out_format)
@@ -83,6 +89,7 @@ QImage sws_convert_to_qimage(const uint8_t *const *src_data, const int *src_line
 
     uint8_t *dst_data[4]     = {};
     int      dst_linesize[4] = {};
+
     if (av_image_alloc(dst_data, dst_linesize, dst_w, dst_h, dst_fmt, 32) < 0) {
         sws_freeContext(sws);
         return {};
@@ -97,6 +104,7 @@ QImage sws_convert_to_qimage(const uint8_t *const *src_data, const int *src_line
         return {};
     }
     const size_t row = std::min<size_t>(img.bytesPerLine(), dst_linesize[0]);
+
     for (int y = 0; y < dst_h; ++y)
         std::memcpy(img.scanLine(y),
                     dst_data[0] + static_cast<ptrdiff_t>(y) * dst_linesize[0],
@@ -107,7 +115,8 @@ QImage sws_convert_to_qimage(const uint8_t *const *src_data, const int *src_line
 
 } // namespace
 
-QImage lanczos_resize_square(const QImage &image, int target_size)
+QImage
+lanczos_resize_square(const QImage &image, int target_size)
 {
     const QImage src = image.convertToFormat(pixelformat_qimage);
     
@@ -132,7 +141,8 @@ QImage lanczos_resize_square(const QImage &image, int target_size)
                                  av_format_for_qimage(pixelformat_qimage), pixelformat_qimage);
 }
 
-QImage decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
+QImage
+decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
 {
     if (!data || size == 0)
         return {};

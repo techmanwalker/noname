@@ -4,11 +4,7 @@
 
 #include "searchresults-in.hpp"
 
-#include <qtmetamacros.h>
 #include <unicode/utypes.h>
-
-class QQmlEngine;
-class QJSEngine;
 
 // forward declaration
 U_NAMESPACE_BEGIN
@@ -16,7 +12,6 @@ class Transliterator;
 U_NAMESPACE_END
 
 class SearchResultsLI : public PlaylistSequence, public SearchResults
-
 {
     Q_OBJECT
     Q_INTERFACES(SearchResults)

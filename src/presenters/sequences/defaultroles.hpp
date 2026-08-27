@@ -6,7 +6,6 @@
 
 #include <QVariant>
 #include <QHash>
-#include <qvariant.h>
 
 /**
     @brief Roles that are common to all container models.

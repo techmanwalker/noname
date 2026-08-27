@@ -2,7 +2,8 @@
 
 #include <QFuture>
 
-class LyricsManifest {
+class LyricsManifest
+{
 
 public:
     virtual ~LyricsManifest () = default;

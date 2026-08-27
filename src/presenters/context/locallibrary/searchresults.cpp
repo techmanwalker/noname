@@ -6,11 +6,6 @@
 #include <QIdentityProxyModel>
 #include <QList>
 
-#include <QJSEngine>
-#include <QQmlEngine>
-
-#include <qobject.h>
-
 #include <rapidfuzz/fuzz.hpp>
 #include <unicode/translit.h>
 #include <unicode/unistr.h>

@@ -6,14 +6,15 @@
 #include <QVariant>
 #include <memory>
 
+// fwd
 class CoverRef;
 
-// Forward declare the implementation to hide it from the rest of the application
-namespace covers::live {
-    class cover_storage;
-}
 
 namespace covers::live {
+
+// fwd
+class cover_storage;
+
 
 class cover_provider : public QQuickAsyncImageProvider
 {
@@ -30,5 +31,7 @@ public:
 private:
     std::shared_ptr<covers::live::cover_storage> m_real;
 };
+
+
 
 } // namespace covers::live

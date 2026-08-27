@@ -8,7 +8,8 @@ namespace Types {
 }
 
 // public interface for the audio_engine
-class audio_engine {
+class audio_engine
+{
 
 public: 
     enum class playback_state {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <QtQmlIntegration>
+
 #include <memory>
 
 #include "manager-in.hpp"
