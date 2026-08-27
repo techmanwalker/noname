@@ -11,6 +11,8 @@ class LyricsManifestProxy : public QIdentityProxyModel {
     QML_SINGLETON
 
 public:
+    Q_PROPERTY(QModelIndex highlighted READ index_of_first_highlighted_row NOTIFY highlightedRowChanged)
+
     explicit LyricsManifestProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
           m_manifest(s_injectedManifest), // Copies shared_ptr, incrementing ref count
@@ -19,6 +21,9 @@ public:
         if (m_manifest) {
             setSourceModel(m_manifest.get());
         }
+
+        connect(m_manifest.get(), SIGNAL(highlightedRowChanged()),
+                        this, SIGNAL(highlightedRowChanged()));
     }
 
     // Non-destructive injection via const reference
@@ -32,6 +37,18 @@ public:
 
         m_iface->clear();
     }
+
+    QModelIndex index_of_first_highlighted_row() const {
+        if (!m_iface) return {};
+
+        // Re-home the index onto this proxy — an index carries a pointer to
+        // the model it belongs to, and m_iface hands back one rooted in the
+        // source model, not this one.
+        return mapFromSource(m_iface->index_of_first_highlighted_row());
+    }
+
+signals:
+    void highlightedRowChanged();
 
 private:
     std::shared_ptr<QAbstractListModel> m_manifest;
