@@ -11,6 +11,7 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 
 #include "lyricsmanifest-in.hpp"
+#include "audioengine-in.hpp"
 
 Q_DECLARE_LOGGING_CATEGORY(l_lyricsmanifest);
 
@@ -23,7 +24,7 @@ class LyricsManifestLI : public QAbstractListModel, public LyricsManifest
     Q_INTERFACES(LyricsManifest)
 
 public:
-    explicit LyricsManifestLI(QObject *parent);
+    explicit LyricsManifestLI(QObject *parent, std::shared_ptr<audio_engine> position_tracker);
     ~LyricsManifestLI() override; // explicitly required for std::unique_ptr with incomplete types
 
     QFuture<void> repopulate_with_lyrics_for_file(const QString &source) override;
@@ -41,6 +42,11 @@ public:
 signals:
     void linesChanged();
 
+public slots:
+    QFuture<void> load_current_track_lyrics ();
+
 private:
     std::unique_ptr<LyricsManifestPrivate> m_d;
+
+    std::shared_ptr<audio_engine> ae;
 };

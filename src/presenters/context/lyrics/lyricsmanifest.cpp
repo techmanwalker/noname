@@ -5,6 +5,7 @@
 #include "rolecompiler.hpp"
 #include "timestamps.hpp"
 #include "lines.hpp"
+#include "mediatypes.hpp"
 #include "metadata.hpp"
 #include "process.hpp"
 #include "tokens.hpp"
@@ -12,6 +13,7 @@
 #include <QFile>
 #include <QQmlEngine>
 #include <QtConcurrent/QtConcurrent>
+#include <qfuture.h>
 #include <qloggingcategory.h>
 #include <qreadwritelock.h>
 
@@ -63,9 +65,10 @@ public:
 };
 
 // private constructor utilizing unique_ptr standard setup
-LyricsManifestLI::LyricsManifestLI(QObject *parent)
+LyricsManifestLI::LyricsManifestLI(QObject *parent, std::shared_ptr<audio_engine> position_tracker)
     : QAbstractListModel(parent),
-      m_d(std::make_unique<LyricsManifestPrivate>())
+      m_d(std::make_unique<LyricsManifestPrivate>()),
+      ae(position_tracker)
 {
 }
 
@@ -158,6 +161,12 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 
         endResetModel();
     });
+}
+
+QFuture<void>
+LyricsManifestLI::load_current_track_lyrics ()
+{
+    return repopulate_with_lyrics_for_file(ae->current_track().source.toLocalFile());
 }
 
 void
