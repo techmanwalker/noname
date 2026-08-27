@@ -363,6 +363,9 @@ target_link_libraries(lyricsmanifest_li
     PRIVATE
         Qt6::Core
 
+        audioengine_in # track position, ask for current track if requested
+
+        mediatypes
         rolecompiler
 
         # from syrinc

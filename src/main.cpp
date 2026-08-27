@@ -2,8 +2,8 @@
 #include "configuration.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
-#include "interfaces/configuration/windowgeometryproxy.hpp"
-#include "interfaces/searchresults/searchresultsproxy.hpp"
+#include "windowgeometryproxy.hpp"
+#include "searchresultsproxy.hpp"
 #include "locallibrary.hpp"
 #include "locallibraryproxy.hpp"
 #include "lyricsmanifestproxy.hpp"
@@ -50,9 +50,9 @@ main (int argc, char ** argv)
 
     auto ae = std::make_shared<audio_engineLI>    (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
-    auto lm = std::make_shared<LyricsManifestLI>  (nullptr);
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq);
+    auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto sr = std::make_shared<SearchResultsLI>   (nullptr);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
@@ -89,10 +89,7 @@ main (int argc, char ** argv)
 
     // Both the PlayerPresenter and the LyricsManifest need to be aware
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
-            lm.get(), [lm, ae] () {
-                lm->repopulate_with_lyrics_for_file(ae->current_track().source.toLocalFile());
-            }
-        );
+            lm.get(), &LyricsManifestLI::load_current_track_lyrics);
 
     QObject::connect(ae.get(), &audio_engineLI::playback_state_changed,
             pp.get(), &PlayerPresenterLI::handlePlaybackStateChanged);
