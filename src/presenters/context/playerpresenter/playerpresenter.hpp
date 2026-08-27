@@ -2,7 +2,6 @@
 
 #include "audioengine-in.hpp"
 
-#include "lyricsmanifest-in.hpp"
 #include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
 
@@ -59,8 +58,7 @@ public:
         QObject *parent,
         std::shared_ptr<configuration::manager> confmanager,
         std::shared_ptr<audio_engine> controller,
-        std::shared_ptr<PlayQueue> pqueue,
-        std::shared_ptr<LyricsManifest> lyricsproj
+        std::shared_ptr<PlayQueue> pqueue
     );
     
     using PlayerPresenter::PlaybackState;
@@ -121,7 +119,6 @@ private:
     std::shared_ptr<audio_engine> playing; // controller
 
     std::shared_ptr<PlayQueue> queue;
-    std::shared_ptr<LyricsManifest> lm;
     std::shared_ptr<configuration::manager> cm;
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer

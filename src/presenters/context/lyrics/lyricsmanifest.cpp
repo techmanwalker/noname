@@ -22,16 +22,16 @@ using namespace syrinc::audio;
 using namespace syrinc::timestamps;
 
 // decoupled
-struct lyric {
+struct __syrinc_lyric {
     syrinc::timestamps::timestamp ts;
     QString text;
 };
 
-static const RoleDefinitions<lyric> lyrics_roles = {
-    { "timestamp", [](const lyric &x) -> QVariant {
+static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
+    { "timestamp", [](const __syrinc_lyric &x) -> QVariant {
         return static_cast<qulonglong>(x.ts.as_ms());
     }},
-    { "text", [](const lyric &x) -> QVariant {
+    { "text", [](const __syrinc_lyric &x) -> QVariant {
         return x.text;
     }}
 };
@@ -41,8 +41,8 @@ class LyricsManifestPrivate {
 public:
     LyricsManifestPrivate() : m_roles(lyrics_roles) {}
 
-    std::vector<lyric> m_lyrics;
-    CompiledRoleSet<lyric> m_roles;
+    std::vector<__syrinc_lyric> m_lyrics;
+    CompiledRoleSet<__syrinc_lyric> m_roles;
     mutable QReadWriteLock m_lock;
 
     QFuture<filelines> read_from_metadata_tag(const QString &source) {
@@ -107,7 +107,7 @@ LyricsManifestLI::current_lines() const
 
     // serialize the logical lyrics back to .lrc only to print it back
     // utilizes a const reference to strictly avoid copying
-    for (const lyric &single_timestamp_line : m_d->m_lyrics) {
+    for (const __syrinc_lyric &single_timestamp_line : m_d->m_lyrics) {
         lrc_lines.emplace_back(
             "[" + single_timestamp_line.ts.as_string() + "] " 
             + single_timestamp_line.text.toStdString());
@@ -121,7 +121,7 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 {
     return m_d->read_from_metadata_tag(source).then(
         [](filelines lines) {
-            std::vector<lyric> decoupled_lines;
+            std::vector<__syrinc_lyric> decoupled_lines;
 
             for (const std::string &line : lines) {
                 std::vector<timestamp> prolly_single_timestamp = lines::line_timestamps(line);
@@ -148,7 +148,7 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 
             return decoupled_lines;
         }
-    ).then(this, [this](std::vector<lyric> lines_to_add) {
+    ).then(this, [this](std::vector<__syrinc_lyric> lines_to_add) {
         beginResetModel();
 
         {

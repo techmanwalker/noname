@@ -23,7 +23,6 @@
 #include <QQmlApplicationEngine>
 #include <QTranslator>
 #include <memory>
-#include <qqml.h>
 
 Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
@@ -53,7 +52,7 @@ main (int argc, char ** argv)
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr);
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
-    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, lm);
+    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq);
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto sr = std::make_shared<SearchResultsLI>   (nullptr);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
@@ -87,6 +86,13 @@ main (int argc, char ** argv)
     // main.cpp is the one place allowed to wire concrete-to-concrete connections.
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
             pp.get(), &PlayerPresenterLI::handleTrackChanged);
+
+    // Both the PlayerPresenter and the LyricsManifest need to be aware
+    QObject::connect(ae.get(), &audio_engineLI::track_changed,
+            lm.get(), [lm, ae] () {
+                lm->repopulate_with_lyrics_for_file(ae->current_track().source.toLocalFile());
+            }
+        );
 
     QObject::connect(ae.get(), &audio_engineLI::playback_state_changed,
             pp.get(), &PlayerPresenterLI::handlePlaybackStateChanged);

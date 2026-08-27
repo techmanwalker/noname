@@ -14,10 +14,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(l_lyricsmanifest);
 
-// forward declarations
-class QQmlEngine;
-class QJSEngine;
-
 class LyricsManifestPrivate;
 
 // The lyrics of the current playing song, accessible from within the entire player.
