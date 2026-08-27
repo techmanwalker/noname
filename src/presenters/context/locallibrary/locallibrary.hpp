@@ -6,9 +6,7 @@
 #include "mediatypes.hpp"
 
 #include <QFuture>
-#include <QJSEngine>
 #include <QLoggingCategory>
-#include <QQmlEngine>
 #include <QUrl>
 
 // Snapshots of directories built from the songs of all known directories and other music sources, if ever supported

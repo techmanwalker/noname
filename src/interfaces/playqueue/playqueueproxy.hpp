@@ -4,12 +4,13 @@
 
 #include <QFuture>
 #include <QIdentityProxyModel>
-#include <QtQmlIntegration/qqmlintegration.h>
+#include <QtQmlIntegration>
 #include <QUrl>
 
 #include <memory>
 
-class PlayQueueProxy : public QIdentityProxyModel {
+class PlayQueueProxy : public QIdentityProxyModel
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(PlayQueue)
     QML_SINGLETON

@@ -13,8 +13,10 @@ namespace covers::live {
     class cover_provider;
 }
 
-class song_factory_impl : public QObject {
+class song_factory_impl : public QObject
+{
     Q_OBJECT
+    
 public:
     // logging
     static const QLoggingCategory &l_songfactory();

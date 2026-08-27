@@ -12,7 +12,9 @@
     nor print to console. 
 */
 
-void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
+void
+write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max)
+{
     // fetch our buffer from the userdata pointer
     audio_ring_buffer *ring_buf = static_cast<audio_ring_buffer*>(outstream->userdata);
     
@@ -120,12 +122,14 @@ void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int
 
 // Error handling
 
-void error_callback(struct SoundIoOutStream *outstream, int err)
+void
+error_callback(struct SoundIoOutStream *outstream, int err)
 {
     qCWarning(l_soundio) << "SoundIo outstream error:" << soundio_strerror(err);
 }
 
-void underflow_callback (struct SoundIoOutStream *outstream)
+void
+underflow_callback (struct SoundIoOutStream *outstream)
 {
     qCWarning(l_soundio) << "SoundIo outstream underflow";
 };

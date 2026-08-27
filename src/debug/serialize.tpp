@@ -4,9 +4,9 @@
 
 namespace debug {
 
-template <typename MediaType>
-requires std::is_convertible_v<MediaType, Types::Any>
-QJsonObject serialize (const QFuture<MediaType> &future_unit)
+template <convertible_to_any_t MediaType>
+QJsonObject
+serialize (const QFuture<MediaType> &future_unit)
 {
     QJsonObject out;
 
@@ -21,9 +21,9 @@ QJsonObject serialize (const QFuture<MediaType> &future_unit)
     return out;
 }
 
-template <typename MediaType>
-requires std::is_convertible_v<MediaType, Types::Any>
-QJsonArray serialize(const QList<MediaType> &media)
+template <convertible_to_any_t MediaType>
+QJsonArray
+serialize(const QList<MediaType> &media)
 {
     QList<Types::Any> any_list;
 
@@ -34,9 +34,9 @@ QJsonArray serialize(const QList<MediaType> &media)
     return serialize(any_list);
 }
 
-template <typename MediaType>
-requires std::is_convertible_v<MediaType, Types::Any>
-QJsonArray serialize(const QList<QFuture<MediaType>> &futures)
+template <convertible_to_any_t MediaType>
+QJsonArray
+serialize(const QList<QFuture<MediaType>> &futures)
 {
     QJsonArray out;
 

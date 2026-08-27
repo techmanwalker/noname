@@ -11,8 +11,6 @@
 #include <QString>
 #include <QUrl>
 
-#include <QtQmlIntegration/qqmlintegration.h>
-
 #include <atomic>
 #include <memory>
 
@@ -50,8 +48,6 @@ class PlayerPresenterLI : public QObject, public PlayerPresenter
 {
     Q_OBJECT
     Q_INTERFACES(PlayerPresenter)
-    // its qml proxy is located in its interfaces subfolder and needs audio_controller
-    // and lyricmanifest already injected
 
 public:
     explicit PlayerPresenterLI(

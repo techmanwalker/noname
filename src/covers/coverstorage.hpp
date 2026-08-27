@@ -13,8 +13,7 @@ Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
 
 class CoverRef;
 
-namespace covers {
-namespace live {
+namespace covers::live {
 
 // cache structured like this to allow multiple responses at once to qml
 struct cache_shard {
@@ -25,6 +24,7 @@ struct cache_shard {
 // Enables loading embedded thumbnails to memory.
 class cover_storage : public QQuickAsyncImageProvider
 {
+    
 public:
     // Initialize indicating that this provider provides QImage objects
     cover_storage();
@@ -52,7 +52,6 @@ private:
     QThreadPool m_response_pool; // dedicated so cover decoding never queues behind (or blocks) song_factory's metadata scan
 };
 
-}
 }
 
 

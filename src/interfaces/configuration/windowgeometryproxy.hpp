@@ -1,13 +1,12 @@
 #pragma once
 
 #include "windowgeometry-in.hpp"
+
 #include <QObject>
-#include <QtQmlIntegration/qqmlintegration.h>
-#include <qobject.h>
-#include <qtmetamacros.h>
+#include <QtQmlIntegration>
 
-class WindowGeometryProxy : public QObject {
-
+class WindowGeometryProxy : public QObject
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(WindowGeometry)
     QML_SINGLETON

@@ -3,7 +3,8 @@
 #include <QFuture>
 #include <QPersistentModelIndex>
 
-class PlayQueue {
+class PlayQueue
+{
 
 public: 
     virtual ~PlayQueue () = default;

@@ -8,7 +8,7 @@
 #include <QLoggingCategory>
 #include <QReadWriteLock>
 
-#include <QtQmlIntegration/qqmlintegration.h>
+#include <QtQmlIntegration>
 
 #include <functional>
 #include <memory>
@@ -24,7 +24,8 @@ class AbstractMediaSequencePrivate;
     Inherited classes can restrict themselves to only hold 1 or more specified types and update
     their add(T) and remove(T) functions accordingly.
 */
-class AbstractMediaSequence : public QAbstractListModel {
+class AbstractMediaSequence : public QAbstractListModel
+{
     Q_OBJECT
     QML_ANONYMOUS
 

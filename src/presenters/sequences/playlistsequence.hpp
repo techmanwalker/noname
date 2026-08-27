@@ -4,9 +4,11 @@
 
 #include <QObject>
 
-class PlaylistSequence : public AbstractMediaSequence {
+class PlaylistSequence : public AbstractMediaSequence
+{
     Q_OBJECT
     QML_ANONYMOUS
+
 public:
     explicit PlaylistSequence(QObject *parent = nullptr);
 
@@ -24,6 +26,4 @@ public:
 
     /// clear and repopulate this playlist in one step
     void respawn_list (const QList<Types::Song> &new_list);
-
-private:
 };

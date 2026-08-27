@@ -8,7 +8,8 @@ namespace Types {
     struct Song;
 }
 
-class PlayerPresenter {
+class PlayerPresenter
+{
 
 public:
     // direct mirror of audio_controller::playback_state

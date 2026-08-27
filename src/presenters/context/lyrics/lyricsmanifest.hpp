@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#include <QtQmlIntegration/qqmlintegration.h>
-
 #include "lyricsmanifest-in.hpp"
 #include "audioengine-in.hpp"
 

@@ -5,7 +5,7 @@
 
 #include <QIdentityProxyModel>
 #include <QFuture>
-#include <QtQmlIntegration/qqmlintegration.h>
+
 #include <memory>
 
 namespace covers::live {

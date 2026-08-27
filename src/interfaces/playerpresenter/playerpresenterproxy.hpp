@@ -5,11 +5,12 @@
 #include <QObject>
 #include <QString>
 #include <QUrl>
-#include <QtQmlIntegration/qqmlintegration.h>
+#include <QtQmlIntegration>
 
 #include <memory>
 
-class PlayerPresenterProxy : public QObject {
+class PlayerPresenterProxy : public QObject
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(PlayerPresenter)
     QML_SINGLETON

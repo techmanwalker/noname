@@ -5,7 +5,8 @@
 #include "mediatypes.hpp"
 
 // The manager of your logical local library database
-class LocalLibrary {
+class LocalLibrary 
+{
 
 public:
     virtual ~LocalLibrary () = default;

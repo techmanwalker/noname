@@ -2,9 +2,10 @@
 
 #include <QIdentityProxyModel>
 
-#include <QtQmlIntegration/qqmlintegration.h>
+#include <QtQmlIntegration>
 
-class ShortcutsListProxy : public QIdentityProxyModel {
+class ShortcutsListProxy : public QIdentityProxyModel
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(ShortcutsList)
     QML_SINGLETON

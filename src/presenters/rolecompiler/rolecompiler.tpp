@@ -50,9 +50,11 @@ CompiledRoleSet<T>::extract(int role, const T &item) const
 
 // Enable concatenation of role definition lists
 template <typename T>
-inline RoleDefinitions<T> operator+(
+inline RoleDefinitions<T>
+operator+(
     const RoleDefinitions<T> &a,
-    const RoleDefinitions<T> &b)
+    const RoleDefinitions<T> &b
+)
 {
     RoleDefinitions<T> result;
     result.reserve(a.size() + b.size());

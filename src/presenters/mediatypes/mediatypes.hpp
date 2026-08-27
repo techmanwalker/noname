@@ -5,7 +5,6 @@
 #include <QString>
 #include <QUrl>
 
-#include <QtQmlIntegration/qqmlintegration.h>
 #include <cstddef>
 
 /*  Deterministic, session-independent cache key for a song's thumbnail.

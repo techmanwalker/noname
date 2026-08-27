@@ -25,5 +25,5 @@ ShortcutsListLI::read_conf_and_load ()
 // a shortcut could be actually anything, just not now
 void ShortcutsListLI::append(const Types::Song &shortcut)                { AbstractMediaSequence::append(shortcut); }
 void ShortcutsListLI::batch_append (const QList<Types::Song> &shortcuts) { AbstractMediaSequence::batch_append(shortcuts); }
-void ShortcutsListLI::remove(size_t index)                                 { AbstractMediaSequence::remove(index); }
-void ShortcutsListLI::clear()                                           { AbstractMediaSequence::clear(); }
+void ShortcutsListLI::remove(size_t index)                               { AbstractMediaSequence::remove(index); }
+void ShortcutsListLI::clear()                                            { AbstractMediaSequence::clear(); }

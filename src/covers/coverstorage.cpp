@@ -8,8 +8,7 @@
 Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
 
 
-namespace covers {
-namespace live {
+namespace covers::live {
 
 
 cover_storage::cover_storage()
@@ -43,7 +42,11 @@ cover_storage::requestImageResponse(const QString &id, const QSize &requestedSiz
 }
 
 bool
-cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache)
+cover_storage::store (
+    const CoverRef &ref,
+    const QVariant &cover_from_metadata,
+    bool save_to_disk_cache
+)
 {
     if (!cover_from_metadata.canConvert<QImage>()) {
         return false;
@@ -80,7 +83,10 @@ cover_storage::store(const CoverRef &ref, const QVariant &cover_from_metadata, b
 }
 
 QImage
-cover_storage::resolve_blocking(const QString &base64url_coverref, const QSize &requestedSize)
+cover_storage::resolve_blocking (
+    const QString &base64url_coverref,
+    const QSize &requestedSize
+)
 {
     Q_UNUSED(requestedSize);
 
@@ -167,5 +173,4 @@ cover_storage::is_cached(const CoverRef &ref)
     return shard->cache.contains(base64url_coverref);
 }
 
-}
 }

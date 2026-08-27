@@ -33,27 +33,36 @@ audio_engineLI::audio_engineLI(QObject *parent)
             this, &audio_engineLI::handle_track_changed);
 }
 
-void audio_engineLI::teardown ()
+void
+audio_engineLI::teardown ()
 {
     m_internal.reset();
 }
 
-void audio_engineLI::play() {
+void
+audio_engineLI::play()
+{
     m_internal->set_transport_paused(false);
     emit playback_state_changed();
 }
 
-void audio_engineLI::pause() {
+void
+audio_engineLI::pause()
+{
     m_internal->set_transport_paused(true);
     emit playback_state_changed();
 }
 
-void audio_engineLI::stop() {
+void
+audio_engineLI::stop()
+{
     m_internal->stop();
     emit playback_state_changed();
 }
 
-void audio_engineLI::load(const Types::Song &song) {
+void
+audio_engineLI::load(const Types::Song &song)
+{
     if (!song.is_valid()) return;
 
     m_current_transaction_id++;
@@ -65,28 +74,38 @@ void audio_engineLI::load(const Types::Song &song) {
     emit track_changed();
 }
 
-void audio_engineLI::prepare_next_track(const Types::Song &song) {
+void
+audio_engineLI::prepare_next_track(const Types::Song &song)
+{
     m_prolly_next_track = song;
     m_internal->prepare_next_track(song);
 }
 
-void audio_engineLI::undo_prepare_next_track() {
+void
+audio_engineLI::undo_prepare_next_track()
+{
     m_prolly_next_track = Types::Song{};
     m_internal->undo_prepare_next_track();
 }
 
-void audio_engineLI::unload() {
+void
+audio_engineLI::unload()
+{
     m_current_transaction_id++; 
     stop();
     m_current_track = Types::Song{};
     emit track_changed();
 }
 
-void audio_engineLI::set_position(const quint64 position_ms) {
+void
+audio_engineLI::set_position(const quint64 position_ms)
+{
     m_internal->set_position(position_ms);
 }
 
-void audio_engineLI::set_volume(quint8 volume_percent) {
+void
+audio_engineLI::set_volume(quint8 volume_percent)
+{
     if (volume_percent > 100) volume_percent = 100;
 
     if (volume_percent == 0) {
@@ -102,7 +121,9 @@ void audio_engineLI::set_volume(quint8 volume_percent) {
     emit volume_changed();
 }
 
-quint8 audio_engineLI::current_volume() const {
+quint8
+audio_engineLI::current_volume() const
+{
     if (m_log_volume <= -std::numeric_limits<double>::infinity()) return 0;
     
     double amplitude = std::pow(10.0, m_log_volume / 20.0);
@@ -110,37 +131,51 @@ quint8 audio_engineLI::current_volume() const {
     return static_cast<quint8>(qRound(volume_percent));
 }
 
-const Types::Song & audio_engineLI::current_track() const {
+const Types::Song &
+audio_engineLI::current_track() const
+{
     return m_current_track;
 }
 
-const Types::Song & audio_engineLI::next_track_prepared() const {
+const Types::Song &
+audio_engineLI::next_track_prepared() const
+{
     return m_prolly_next_track;
 }
 
-quint64 audio_engineLI::current_position_ms() const {
+quint64
+audio_engineLI::current_position_ms() const
+{
     if (!m_internal->is_song_loaded()) return 0;
     return m_internal->current_position_ms();
 }
 
-audio_engineLI::playback_state audio_engineLI::get_playback_state() const {
+audio_engineLI::playback_state
+audio_engineLI::get_playback_state() const
+{
     using ps = audio_engineLI::playback_state;
     if (!m_internal->is_song_loaded()) return ps::stopped;
     return m_internal->is_paused() ? ps::stopped : ps::playing;
 }
 
-bool audio_engineLI::is_a_song_loaded() const {
+bool
+audio_engineLI::is_a_song_loaded() const
+{
     return m_current_track.is_valid();
 }
 
-void audio_engineLI::handle_track_changed() {
+void
+audio_engineLI::handle_track_changed()
+{
     emit duration_changed();
     emit seek_finished(); 
     emit playback_state_changed();
 }
 
 // To reactively trigger the changes signals
-void audio_engineLI::process_track_boundary() {
+void
+audio_engineLI::process_track_boundary()
+{
     if (m_internal->check_and_advance_boundary()) {
         m_current_track = m_prolly_next_track;
         undo_prepare_next_track(); 
@@ -153,6 +188,8 @@ void audio_engineLI::process_track_boundary() {
     }
 }
 
-void audio_engineLI::process_playlist_finished() {
+void
+audio_engineLI::process_playlist_finished()
+{
     emit queued_tracks_finished();
 }

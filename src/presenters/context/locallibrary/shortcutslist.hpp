@@ -5,7 +5,6 @@
 #include "manager-in.hpp"
 #include "shortcutslist-in.hpp"
 
-#include <QtQmlIntegration/qqmlintegration.h>
 #include <memory>
 
 // Intended to end up showing in the Start page showing shortcuts to your favorite music.

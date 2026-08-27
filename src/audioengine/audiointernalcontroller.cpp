@@ -71,11 +71,15 @@ audio_internal_controller::~audio_internal_controller()
     if (m_soundio) soundio_destroy(m_soundio);
 }
 
-void audio_internal_controller::set_transport_paused(bool paused) {
+void
+audio_internal_controller::set_transport_paused(bool paused)
+{
     m_decoder_worker->get_ring_buffer()->is_paused.store(paused);
 }
 
-void audio_internal_controller::stop() {
+void
+audio_internal_controller::stop()
+{
     m_decoder_worker->get_ring_buffer()->is_paused.store(true);
     m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
     
@@ -84,25 +88,33 @@ void audio_internal_controller::stop() {
     m_decoder_worker->get_ring_buffer()->reset_cancel();
 }
 
-void audio_internal_controller::load(const QString &file_path) {
+void
+audio_internal_controller::load(const QString &file_path)
+{
     m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
     QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::load, Qt::BlockingQueuedConnection, file_path);
     m_decoder_worker->get_ring_buffer()->reset_cancel();
 }
 
-void audio_internal_controller::prepare_next_track(const Types::Song &song) {
+void
+audio_internal_controller::prepare_next_track(const Types::Song &song)
+{
     QMetaObject::invokeMethod(m_decoder_worker, [this, song]() {
         m_decoder_worker->queue_next_song(song);
     }, Qt::QueuedConnection);
 }
 
-void audio_internal_controller::undo_prepare_next_track() {
+void
+audio_internal_controller::undo_prepare_next_track()
+{
     QMetaObject::invokeMethod(m_decoder_worker, [this]() {
         m_decoder_worker->clear_queued_song();
     }, Qt::QueuedConnection);
 }
 
-void audio_internal_controller::set_position(uint64_t position_ms) {
+void
+audio_internal_controller::set_position(uint64_t position_ms)
+{
     m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
     m_decoder_worker->get_ring_buffer()->pending_seeks.fetch_add(1, std::memory_order_release);
 
@@ -116,23 +128,33 @@ void audio_internal_controller::set_position(uint64_t position_ms) {
     QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::seek, Qt::QueuedConnection, position_ms);
 }
 
-void audio_internal_controller::set_volume_multiplier(float hw_multiplier) {
+void
+audio_internal_controller::set_volume_multiplier(float hw_multiplier)
+{
     m_decoder_worker->get_ring_buffer()->volume_multiplier.store(hw_multiplier, std::memory_order_relaxed);
 }
 
-bool audio_internal_controller::is_song_loaded() const {
+bool
+audio_internal_controller::is_song_loaded() const
+{
     return m_decoder_worker->is_song_loaded();
 }
 
-uint64_t audio_internal_controller::current_position_ms() const {
+uint64_t
+audio_internal_controller::current_position_ms() const
+{
     return static_cast<uint64_t>(m_decoder_worker->get_ring_buffer()->playback_position_ms());
 }
 
-bool audio_internal_controller::is_paused() const {
+bool
+audio_internal_controller::is_paused() const
+{
     return m_decoder_worker->get_ring_buffer()->is_paused.load();
 }
 
-bool audio_internal_controller::check_and_advance_boundary() {
+bool
+audio_internal_controller::check_and_advance_boundary()
+{
     if (m_decoder_worker->get_ring_buffer()->check_for_boundary_and_advance()) {
         m_decoder_worker->get_ring_buffer()->frames_played.store(0, std::memory_order_relaxed);
         m_decoder_worker->get_ring_buffer()->playback_base_ms.store(0, std::memory_order_relaxed);

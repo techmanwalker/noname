@@ -1,6 +1,7 @@
 #pragma once
 
-class WindowGeometry {
+class WindowGeometry
+{
 
 public:
     virtual ~WindowGeometry () = default;    

@@ -7,7 +7,6 @@
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
 
-#include <QQmlEngine>
 #include <atomic>
 #include <memory>
 

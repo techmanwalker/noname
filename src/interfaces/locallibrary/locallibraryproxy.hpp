@@ -5,7 +5,8 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <memory>
 
-class LocalLibraryProxy : public QIdentityProxyModel {
+class LocalLibraryProxy : public QIdentityProxyModel
+{
     Q_OBJECT
     QML_NAMED_ELEMENT(LocalLibrary)
     QML_SINGLETON

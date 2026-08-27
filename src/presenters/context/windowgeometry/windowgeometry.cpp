@@ -1,7 +1,6 @@
 #include "manager-in.hpp"
 #include "windowgeometry.hpp"
 
-#include <QQmlEngine>
 #include <memory>
 
 using configuration::conf_file_type;
@@ -27,7 +26,9 @@ WindowGeometryLI::WindowGeometryLI(QObject *parent, std::shared_ptr<configuratio
     }
 }
 
-void WindowGeometryLI::save(int width, int height) {
+void
+WindowGeometryLI::save(int width, int height)
+{
     if (width < MIN_WIDTH || height < MIN_HEIGHT) return;
 
     cm->write_lines(
