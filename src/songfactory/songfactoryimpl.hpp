@@ -24,10 +24,7 @@ public:
     // Never touches each other's instances' signals nor members
     // Invoked as song_factory::extract(url, cover_provider);
     static QFuture<Types::Song> extract(const QUrl &source, attributes a);
-
-    // crop_and_resize: memory saving, crop the center square of the cover and rescale so width and height matches.
-    // e.g. crop_and_resize = 256: crop the center of the cover and rescale to 256x256
-
+    
     static void teardown ();
 
     static

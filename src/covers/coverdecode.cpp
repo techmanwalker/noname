@@ -23,23 +23,6 @@ struct BufferData {
     size_t size;
 };
 
-int
-read_packet(void *opaque, uint8_t *buf, int buf_size)
-{
-    auto *bd = static_cast<BufferData *>(opaque);
-    const size_t n = std::min(static_cast<size_t>(buf_size), bd->size);
-
-    if (n == 0) {
-        return AVERROR_EOF;
-    }
-
-    std::memcpy(buf, bd->ptr, n);
-    bd->ptr  += n;
-    bd->size -= n;
-
-    return static_cast<int>(n);
-}
-
 namespace {
 
 struct AVIOCtxDeleter {
@@ -59,6 +42,23 @@ struct AVCodecCtxDeleter {
 };
 struct AVFrameDeleter  { void operator()(AVFrame  *f) const { if (f) av_frame_free(&f);  } };
 struct AVPacketDeleter { void operator()(AVPacket *p) const { if (p) av_packet_free(&p); } };
+
+int
+read_packet(void *opaque, uint8_t *buf, int buf_size)
+{
+    auto *bd = static_cast<BufferData *>(opaque);
+    const size_t n = std::min(static_cast<size_t>(buf_size), bd->size);
+
+    if (n == 0) {
+        return AVERROR_EOF;
+    }
+
+    std::memcpy(buf, bd->ptr, n);
+    bd->ptr  += n;
+    bd->size -= n;
+
+    return static_cast<int>(n);
+}
 
 /* Runs sws_scale without ever letting swscale touch the QImage allocation.
    Output goes into an FFmpeg-owned, aligned, padded buffer, then is copied
@@ -115,31 +115,51 @@ sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
 
 } // namespace
 
+
 QImage
-lanczos_resize_square(const QImage &image, int target_size)
+crop_largest_square(const QImage &image)
 {
+    if (image.isNull())
+        return {};
+
     const QImage src = image.convertToFormat(pixelformat_qimage);
     
-    // Calculate the largest possible centered square
     const int crop_size = std::min(src.width(), src.height());
     const int crop_x = (src.width() - crop_size) / 2;
     const int crop_y = (src.height() - crop_size) / 2;
     
-    // Find the exact byte where the crop region starts
-    const int bytes_per_pixel = src.depth() / 8;
-    const uint8_t *src_slices[1] = { 
-        src.constScanLine(crop_y) + (crop_x * bytes_per_pixel) 
-    };
+    return src.copy(crop_x, crop_y, crop_size, crop_size);
+}
+
+QImage
+lanczos_resize(const QImage &image, size_t width, size_t height)
+{
+    if (image.isNull()) {
+        return {};
+    }
     
-    // Keep the original QImage stride so swscale correctly skips the margins
+    if (width == 0 || height == 0) {
+        return image; // unspecified size = full res
+    }
+
+    const QImage src = image.convertToFormat(pixelformat_qimage);
+    
+    const uint8_t *src_slices[1] = { src.constScanLine(0) };
     int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
 
-    // Feed crop_size as the input dimensions
     return sws_convert_to_qimage(src_slices, src_strides,
-                                 crop_size, crop_size, av_format_for_qimage(pixelformat_qimage),
-                                 target_size, target_size, SWS_LANCZOS,
+                                 src.width(), src.height(), av_format_for_qimage(pixelformat_qimage),
+                                 static_cast<int>(width), static_cast<int>(height), SWS_LANCZOS,
                                  av_format_for_qimage(pixelformat_qimage), pixelformat_qimage);
 }
+
+QImage
+lanczos_resize_square(const QImage &image, size_t target_size)
+{
+    const QImage cropped = crop_largest_square(image);
+    return lanczos_resize(cropped, static_cast<size_t>(target_size), static_cast<size_t>(target_size));
+}
+
 
 QImage
 decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
