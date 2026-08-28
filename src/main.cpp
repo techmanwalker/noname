@@ -37,6 +37,10 @@ main (int argc, char ** argv)
 
     QCoreApplication::setApplicationName(QStringLiteral("noname"));
 
+    QLoggingCategory::setFilterRules(
+        "noname.coverprovider.debug=false"
+    );
+
     // cover cache to hold the shortcuts covers across the entire session
     std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
 

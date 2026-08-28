@@ -65,7 +65,6 @@ Item {
 
     // Chain builder
     function _rebuild() {
-        console.log("rebuild called.")
         // Destroy last chain
         for (var i = 0; i < _chain.length; i++)
             _chain[i].destroy()
