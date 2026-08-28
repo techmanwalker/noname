@@ -65,6 +65,7 @@ Item {
 
     // Chain builder
     function _rebuild() {
+        console.log("rebuild called.")
         // Destroy last chain
         for (var i = 0; i < _chain.length; i++)
             _chain[i].destroy()
@@ -147,7 +148,4 @@ Item {
     Component.onCompleted: _rebuild()
     onSourceChanged:       _rebuild()
     onPassesChanged:       _rebuild()
-    onOffsetChanged:       _rebuild()
-    onWidthChanged:        _rebuild()
-    onHeightChanged:       _rebuild()
 }
