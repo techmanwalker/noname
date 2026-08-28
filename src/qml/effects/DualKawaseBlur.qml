@@ -6,7 +6,7 @@ Item {
     // Bidirectional public interface for free chaining and reorder
     property var   source: null   // input item: Item, ShaderEffectSource or variants
     property int   passes: 3      // N downsamples + N upsamples
-    property real  offset: 1.0    // offset by pass (in texels)
+    property real  offset: 8.0    // offset by pass (in texels)
     property bool  frozen: false  // true → freeze the last frame (no recalculation)
 
     property alias outputSource: _outputSource
