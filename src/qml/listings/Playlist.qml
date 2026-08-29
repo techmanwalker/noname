@@ -17,6 +17,7 @@ ListView {
     // expose to FullscreenPlayer
     property real songInnerSpacing: 8
     property real songFadePadding: 10
+    property real songLateralPadding: 15
 
     // Right padding reserves space for the scrollbar so it appears
     // to float outside the list content without overlapping it
@@ -54,9 +55,9 @@ ListView {
 
         coverWidth: root.songCoverWidth
 
-        innerSpacing:  root.songInnerSpacing
-        fadePadding:   root.songFadePadding
-        lateralPadding: 15
+        innerSpacing:   root.songInnerSpacing
+        fadePadding:    root.songFadePadding
+        lateralPadding: root.songLateralPadding
 
         playing: PlayQueue.playhead === PlayQueue.index(model.index, 0) // qmllint disable
 
