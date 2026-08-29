@@ -8,6 +8,8 @@
 #include <QUrl>
 
 #include <memory>
+#include <qabstractitemmodel.h>
+#include <qtmetamacros.h>
 
 class PlayQueueProxy : public QIdentityProxyModel
 {
@@ -81,6 +83,11 @@ public:
     Q_INVOKABLE void clear() {
         if (!m_iface) return; 
         m_iface->clear();
+    }
+
+    Q_INVOKABLE QPersistentModelIndex find_by_source (const QString &needle) {
+        if (!m_iface) return QPersistentModelIndex();
+        return QPersistentModelIndex(mapFromSource(m_iface->find_by_source(needle)));
     }
 
     Q_INVOKABLE QFuture<void> batch_append(const QList<QUrl> &sources) {

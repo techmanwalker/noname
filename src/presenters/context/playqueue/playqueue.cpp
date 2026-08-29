@@ -1,3 +1,4 @@
+#include "abstractmediasequence.hpp"
 #include "audioengine-in.hpp"
 
 #include "playqueue.hpp"
@@ -7,6 +8,7 @@
 #include <QLoggingCategory>
 
 #include <memory>
+#include <qabstractitemmodel.h>
 
 class PlayQueueLIPrivate 
 {
@@ -212,6 +214,12 @@ PlayQueueLI::handle_queued_tracks_finished()
     if (!switch_to(QPersistentModelIndex(mapFromSource(src_next)), true)) {
         m_d->playing->pause(); 
     }
+}
+
+QPersistentModelIndex
+PlayQueueLI::find_by_source(const QString &needle)
+{
+    return QPersistentModelIndex(mapFromSource(m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle)));
 }
 
 void
