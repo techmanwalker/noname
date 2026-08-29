@@ -7,6 +7,7 @@
 #include <QFuture>
 
 #include <memory>
+#include <qabstractitemmodel.h>
 
 namespace covers::live {
     class cover_provider;
@@ -49,6 +50,8 @@ public:
     Q_INVOKABLE void prev () override;
 
     Q_INVOKABLE void clear () override;
+
+    QPersistentModelIndex find_by_source (const QString &needle) override;
 
     Q_INVOKABLE QFuture<void> batch_append (const QList<QUrl> &sources) override;
 

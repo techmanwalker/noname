@@ -60,7 +60,8 @@ ListView {
         fadePadding:    root.songFadePadding
         lateralPadding: root.songLateralPadding
 
-        playing: PlayQueue.playhead === PlayQueue.index(model.index, 0) // qmllint disable
+        // find_by_source returns a different object from memory, hence comparing .row instead
+        playing: PlayQueue.playhead.row === PlayQueue.find_by_source(model.source).row // qmllint disable
 
         showSeparator: true
 

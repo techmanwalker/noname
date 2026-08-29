@@ -608,6 +608,8 @@ target_link_libraries(${PROJECT_NAME}
         mainwindow # window decorations and such
 
         songfactory # MUST be able to shut down its thread pool if something goes wrong
+
+        debugtools # printing
 )
 
 qt_add_qml_module(mainwindow

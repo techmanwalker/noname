@@ -21,6 +21,8 @@ public:
 
     virtual void clear () = 0;
 
+    virtual QPersistentModelIndex find_by_source (const QString &needle) = 0;
+
     virtual QFuture<void> batch_append (const QList<QUrl> &sources) = 0;
     
     virtual void respawn_queue (const QStringList &sources) = 0;

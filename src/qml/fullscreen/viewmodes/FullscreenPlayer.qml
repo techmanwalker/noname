@@ -225,7 +225,7 @@ Item {
                     reuseItems: true // tons of songs moving
 
                     onSongClicked: (song) => {
-                        PlayQueue.playhead = PlayQueue.index(song.index, 0)
+                        PlayQueue.playhead = PlayQueue.find_by_source(song.source)
                     }
 
                     additionalMenuActions: [
