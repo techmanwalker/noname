@@ -97,8 +97,3 @@ namespace Types {
 
     using Any = std::variant<Types::Song, Types::Album, Types::Directory>;
 }
-
-// Expose the structures and their sequences at compile-time
-Q_DECLARE_METATYPE(Types::Song)
-Q_DECLARE_METATYPE(QList<Types::Song>)
-Q_DECLARE_METATYPE(CoverRef)
