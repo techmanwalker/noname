@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 
-Slider {
+T.Slider {
     id: root
     from: 0
     to: 100

@@ -99,5 +99,7 @@ ListView {
         id: scrollbar
         barWidth: root.scrollBarWidth
         logicalWidth: root.scrollBarWidth * 3
+
+        policy: ScrollBar.AsNeeded
     }
 }

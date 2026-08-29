@@ -13,12 +13,12 @@ Item {
     // L_mult: 0.0 = black, 1.0 = no brightness change
     // C_mult: 0.0 = gray, 1.0 = no saturation change
 
-    property vector3d pointA:  Qt.vector3d(0.00, 0.15, 0.20) // extreme left
-    property vector3d pointPA: Qt.vector3d(0.20, 0.55, 0.60) // left player border
-    property vector3d pointCA: Qt.vector3d(0.35, 0.85, 0.90) // left cover border
-    property vector3d pointCB: Qt.vector3d(0.65, 0.85, 0.90) // right cover border
-    property vector3d pointPB: Qt.vector3d(0.80, 0.55, 0.60) // right player border
-    property vector3d pointB:  Qt.vector3d(1.00, 0.15, 0.20) // extreme right
+    property vector3d pointA:  ({ x: 0, y: 0.15, z: 0.2 }) // extreme left
+    property vector3d pointPA: ({ x: 0.2, y: 0.55, z: 0.6 }) // left player border
+    property vector3d pointCA: ({ x: 0.35, y: 0.85, z: 0.9 }) // left cover border
+    property vector3d pointCB: ({ x: 0.65, y: 0.85, z: 0.9 }) // right cover border
+    property vector3d pointPB: ({ x: 0.8, y: 0.55, z: 0.6 }) // right player border
+    property vector3d pointB:  ({ x: 1, y: 0.15, z: 0.2 }) // extreme right
 
     // Immediate interface to ensure input is treated as a texture
     ShaderEffectSource {

@@ -3,20 +3,21 @@ import QtQuick.Layouts
 import QtQuick.Controls
 
 import Player.Primitives
+import Player.PlayerPresenter
 
 RowLayout {
     id: root
 
-    required property var stateModel
+    required property PlayerPresenter stateModel
 
     property bool hideTimestamps: false
 
     // Helper function to format seconds as mm:ss
-    function formatTime(ms) {
+    function formatTime(ms: double): string {
         let totalSeconds = Math.floor(ms / 1000)
         let minutes = Math.floor(totalSeconds / 60)
         let seconds = totalSeconds % 60
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`
+        return minutes + ":" + (seconds < 10 ? "0" : "") + seconds
     }
 
     Label {

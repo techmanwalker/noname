@@ -1,14 +1,21 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 
-Label {
+// for some reason, aot gives problems with non template types
+T.Label {
     id: root
 
     property string name: "Unnamed folder"
 
-    text: name
+    text: root.name
 
-    font.weight: Font.DemiBold
+    color: root.palette.windowText
+    linkColor: root.palette.link
+
+    font {
+        weight: Font.DemiBold
+    }
 
     padding: 8
 
@@ -18,14 +25,8 @@ Label {
 
     background: Rectangle {
         color: "#1f1f1f"
-
-        width: root.width
-        height: root.height
-
         radius: height / 2
-
-        anchors.centerIn: parent
-
         opacity: hover.hovered ? 1 : 0
+        anchors.fill: parent
     }
 }

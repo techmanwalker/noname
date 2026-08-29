@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 
+import Player.Primitives
+
 Column {
     id: root
 

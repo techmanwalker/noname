@@ -197,7 +197,7 @@ Item {
                     text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
 
                     horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                    verticalAlignment:   Text.AlignVCenter
 
                     wrapMode: Text.WordWrap
 
@@ -219,6 +219,7 @@ Item {
                     songCoverWidth: root.songCoverWidth
                     songInnerSpacing: root.songInnerSpacing
 
+                    clip: true
                     reuseItems: true // tons of songs moving
 
                     onSongClicked: (song) => {

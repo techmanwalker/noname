@@ -11,7 +11,7 @@ QtObject {
         Playlist
     }
 
-    function stringMediaTypeToEnum (stringMediaType) {
+    function stringMediaTypeToEnum (stringMediaType : string) : int{
         switch (stringMediaType) {
             case "Song":
                 return MediaTypes.Song;
@@ -24,7 +24,7 @@ QtObject {
         }
     }
 
-    function mediaTypeEnumToString (mediaTypeValue) {
+    function mediaTypeEnumToString (mediaTypeValue : int) : string {
         switch (mediaTypeValue) {
             case MediaTypes.Song:
                 return "Song";

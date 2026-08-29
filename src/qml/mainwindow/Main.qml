@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 
 import Player.App
@@ -8,7 +8,7 @@ import Player.Browser
 import Player.Fullscreen
 import Player.PlayerPresenter
 
-ApplicationWindow {
+T.ApplicationWindow {
     id: root
 
     visible: true

@@ -17,7 +17,7 @@ ResizableButton {
     property int currentMode: RepeatButton.RepeatMode.Off
 
     // Map state -> icon
-    function getRepeatIcon(mode) {
+    function getRepeatIcon(mode : int) : string {
         switch (mode) {
             case RepeatButton.RepeatMode.RepeatSingle:    return "media-playlist-repeat-song";
             case RepeatButton.RepeatMode.RepeatAllTracks: return "media-playlist-repeat";
@@ -36,12 +36,14 @@ ResizableButton {
     }
     
     // Hovered tooltip
-    ToolTip.visible: hovered
-    ToolTip.text: {
-        switch (currentMode) {
-            case RepeatButton.RepeatMode.RepeatSingle:    return qsTr("Repeat one")
-            case RepeatButton.RepeatMode.RepeatAllTracks: return qsTr("Repeat all")
-            default:                                      return qsTr("Repeat disabled")
+    Hint {
+        visible: root.hovered
+        text: {
+            switch (root.currentMode) {
+                case RepeatButton.RepeatMode.RepeatSingle:    return qsTr("Repeat one")
+                case RepeatButton.RepeatMode.RepeatAllTracks: return qsTr("Repeat all")
+                default:                                      return qsTr("Repeat disabled")
+            }
         }
     }
 }

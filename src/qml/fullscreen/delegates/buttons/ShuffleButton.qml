@@ -15,7 +15,7 @@ ResizableButton {
     // Use mode name to assign the initial value
     property int currentMode: ShuffleButton.ShuffleMode.Off
 
-    function getShuffleIcon(mode) {
+    function getShuffleIcon(mode : int) : string {
         switch (mode) {
             case ShuffleButton.ShuffleMode.ShuffleTracks: return "media-playlist-shuffle";
             case ShuffleButton.ShuffleMode.ShuffleAlbums: return "media-random-albums-amarok";
@@ -32,13 +32,14 @@ ResizableButton {
         root.currentMode = ( (root.currentMode + 1 >= totalModes) ? 0 : root.currentMode + 1);
     }
 
-    // Hovered tooltip
-    ToolTip.visible: hovered
-    ToolTip.text: {
-        switch (currentMode) {
-            case ShuffleButton.ShuffleMode.ShuffleTracks:    return qsTr("Shuffle tracks")
-            case ShuffleButton.ShuffleMode.ShuffleAlbums:    return qsTr("Shuffle albums")
-            default:                                         return qsTr("No shuffle")
+    Hint {
+        visible: root.hovered
+        text: {
+            switch (root.currentMode) {
+                case ShuffleButton.ShuffleMode.ShuffleTracks:    return qsTr("Shuffle tracks")
+                case ShuffleButton.ShuffleMode.ShuffleAlbums:    return qsTr("Shuffle albums")
+                default:                                         return qsTr("No shuffle")
+            }
         }
     }
 }

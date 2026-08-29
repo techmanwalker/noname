@@ -9,7 +9,7 @@ import Player.Primitives
 ColumnLayout {
     id: root
 
-    property var stateModel: PlayerPresenter
+    property PlayerPresenter stateModel: PlayerPresenter
 
 
     readonly property string noTitleText: qsTr("Untitled track")
@@ -103,7 +103,7 @@ ColumnLayout {
                 Label {
                     id: artistalbum
 
-                    text: parent.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
+                    text: metadata.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
 
                     color: "#afafaf"
 
