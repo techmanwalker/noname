@@ -88,8 +88,20 @@ set_source_files_properties("src/qml/primitives/MediaTypes.qml"
 
 ## --- Core domain and basic data structures
 
-add_library(mediatypes STATIC
-    ${MEDIATYPES_SOURCES}
+qt_add_qml_module(mediatypes
+    STATIC
+    URI Player.MediaTypes
+
+    SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/presenters/mediatypes/mediatypes_qml.hpp"
+        ${MEDIATYPES_SOURCES}
+
+    # comment on how linking works: anything that does not explicitly import the "Player.MediaTypes"
+    # URI by itself won't link mediatypesplugin (QML backing target) and thus won't link anything
+    # related to QML itself as per official documentation, so there's no dependency violation here.
+    # Instantiated as a module to ensure type registration works on QML side.
+
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaTypes"
 )
 
 target_link_libraries(mediatypes
@@ -547,6 +559,8 @@ qt_add_qml_module(browser
     URI Player.Browser
     QML_FILES
         ${BROWSER_QMLS}
+    DEPENDENCIES
+        mediatypes
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Browser"
 )
@@ -556,6 +570,9 @@ target_link_libraries(browser
         listings
         locallibrary_in
         uiprimitives
+
+        mediatypes
+        mediatypesplugin
 
     PRIVATE
         Qt6::Quick

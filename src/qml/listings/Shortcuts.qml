@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import Player.Listings
-import Player.Primitives
+import Player.MediaTypes
 
 ListView {
     id: root
@@ -18,7 +18,7 @@ ListView {
 
     clip: true
 
-    signal songClicked (var song)
+    signal songClicked (song clicked_song)
 
     // selection
 
@@ -39,7 +39,7 @@ ListView {
 
         card: true
 
-        required property var model
+        required property song model
 
         title: model.title
         metadata: model.printable_joint_metadata
