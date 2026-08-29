@@ -20,7 +20,7 @@ ListView {
         TapHandler {
             onTapped: {
                 // emit the signal and expose the songs member
-                root.directorySwitched(folder.model.songs)
+                root.directorySwitched(parent.model.songs)
             }
         }
     }

@@ -1,16 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
 
+import Player.PlayerPresenter
 import Player.Primitives
 
 RowLayout {
     id: root
 
-    required property var stateModel
+    required property PlayerPresenter stateModel
     
     spacing: muteButton.width / 2
-
-    height: Math.max(muteButton.height, volumeSlider.height)
 
     ResizableButton {
         id: muteButton
@@ -49,4 +48,6 @@ RowLayout {
         
         orientation: Qt.Horizontal
     }
+
+    height: Math.max(muteButton.height, volumeSlider.height)
 }

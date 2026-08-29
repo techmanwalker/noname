@@ -29,7 +29,7 @@ Item {
     property bool darken: true
     property bool blur: true
 
-    function clamp (magnitude) {
+    function clamp (magnitude: real) : real {
         if (magnitude < 0) return 0;
         if (magnitude > 1) return 1;
         return magnitude;
@@ -58,38 +58,29 @@ Item {
         source: img
         visible: false
 
-        pointA: Qt.vector3d(
-            0.00,
-            root.outer_player_l,
-            root.outer_player_c,
-        )
+        pointA.x: 0.00
+        pointA.y: root.outer_player_l
+        pointA.z: root.outer_player_c
 
-        pointPA: Qt.vector3d(
-            root.clamp(root.playerLeft), 
-            root.inner_player_l, // luma multiplier
-            root.inner_player_c, // chroma multiplier
-        )
-        pointPB: Qt.vector3d(
-            root.clamp(root.playerRight), 
-            root.inner_player_l, 
-            root.inner_player_c
-        )
-        pointCA: Qt.vector3d(
-            root.clamp(root.coverLeft),
-            root.cover_back_l,
-            root.cover_back_c
-        )
-        pointCB: Qt.vector3d(
-            root.clamp(root.coverRight),
-            root.cover_back_l,
-            root.cover_back_c
-        )
+        pointPA.x: root.clamp(root.playerLeft)
+        pointPA.y: root.inner_player_l // luma multiplier
+        pointPA.z: root.inner_player_c // chroma multiplier
+        
+        pointPB.x: root.clamp(root.playerRight)
+        pointPB.y: root.inner_player_l
+        pointPB.z: root.inner_player_c
+        
+        pointCA.x: root.clamp(root.coverLeft)
+        pointCA.y: root.cover_back_l
+        pointCA.z: root.cover_back_c
+        
+        pointCB.x: root.clamp(root.coverRight)
+        pointCB.y: root.cover_back_l
+        pointCB.z: root.cover_back_c
 
-        pointB: Qt.vector3d(
-            1,
-            root.outer_player_l,
-            root.outer_player_c,
-        )
+        pointB.x: 1.00
+        pointB.y: root.outer_player_l
+        pointB.z: root.outer_player_c
     }
 
     DualKawaseBlur {

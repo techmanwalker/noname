@@ -8,10 +8,10 @@ Item {
     property alias outputSource: _outputSource
 
     // Specify your stops and desired alphas here
-    property vector2d outerLeftStop:  Qt.vector2d(0.0, 0.0)
-    property vector2d innerLeftStop:  Qt.vector2d(0.2, 1.0)
-    property vector2d innerRightStop: Qt.vector2d(0.8, 1.0)
-    property vector2d outerRightStop: Qt.vector2d(1.0, 0.0)
+    property vector2d outerLeftStop:  ({ x: 0,   y: 0 })
+    property vector2d innerLeftStop:  ({ x: 0.2, y: 1 })
+    property vector2d innerRightStop: ({ x: 0.8, y: 1 })
+    property vector2d outerRightStop: ({ x: 1,   y: 0 })
     property bool switchAxis: false
 
     // Immediate proxy to force the input to be treated strictly as a texture

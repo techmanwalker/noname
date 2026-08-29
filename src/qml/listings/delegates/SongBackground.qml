@@ -26,7 +26,7 @@ Item {
                 name: "playing"
 
                 PropertyChanges {
-                    background.color: Qt.rgba(200, 200, 200, .08)
+                    background.color: ({ r: 200 / 255, g: 200 / 255, b: 200 / 255, a: .08 })
                 }
 
                 when: root.playing
@@ -36,7 +36,7 @@ Item {
                 name: "selected"
 
                 PropertyChanges {
-                    background.color: Qt.rgba(160, 160, 160, .2)
+                    background.color: ({ r: 160 / 255, g: 160 / 255, b: 160 / 255, a: .3 })
                 }
 
                 when: root.selected
@@ -46,7 +46,7 @@ Item {
                 name: "hovered"
 
                 PropertyChanges {
-                    background.color: Qt.rgba(160, 160, 160, .04)
+                    background.color: ({ r: 160 / 255, g: 160 / 255, b: 160 / 255, a: .08 })
                 }
 
                 when: root.hovered
@@ -70,10 +70,18 @@ Item {
         anchors.fill: parent
         
         // map to the item bounds
-        outerLeftStop:  Qt.vector2d(root.outer_leftstop, 0.0)
-        innerLeftStop:  Qt.vector2d(root.inner_leftstop, 1.0)
-        innerRightStop: Qt.vector2d(root.inner_rightstop, 1.0)
-        outerRightStop: Qt.vector2d(root.outer_rightstop, 0.0)
+        outerLeftStop.x: root.outer_leftstop
+        outerLeftStop.y: 0
+
+        innerLeftStop.x:  root.inner_leftstop
+        innerLeftStop.y: 1.0
+
+        innerRightStop.x: root.inner_rightstop
+        innerRightStop.y: 1.0
+
+        outerRightStop.x: root.outer_rightstop
+        outerRightStop.y: 0
+
         switchAxis: false
 
         visible: root.playing || root.hovered || root.selected

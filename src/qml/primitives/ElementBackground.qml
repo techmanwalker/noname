@@ -14,8 +14,8 @@ Rectangle {
     property bool filled: false
 
     property real clickedOpacity: filled ? 1 : .7
-    property real hoveredOpacity: filled ? 1 : .3
-    property real defaultOpacity: filled ? 1 : ((hoverEnabled || clickable)? 0 : .3)
+    property real hoveredOpacity: filled ? 1 : .4
+    property real defaultOpacity: filled ? 1 : ((hoverEnabled || clickable)? 0 : .4)
 
     property color baseColor: filled ? "#dfdfdf" : "#242424"
     property color hoveredColor: filled ? "#afafaf" : "#242424"

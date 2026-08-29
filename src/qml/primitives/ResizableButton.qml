@@ -1,13 +1,21 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Controls.impl
+import QtQuick.Templates as T
 
 import Player.Primitives
 
-ToolButton {
+// directly inherited to avoid aot compiling issues
+T.ToolButton {
     id: root
 
     property string iconName
+
+    implicitWidth:  Math.max(implicitBackgroundWidth + leftInset + rightInset,
+                             implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
+                             implicitContentHeight + topPadding + bottomPadding)
+
+    padding: 6
 
     property bool magnify: true
 

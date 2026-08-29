@@ -1,7 +1,12 @@
-import QtQuick.Controls
 import QtQuick
+import QtQuick.Templates as T
 
-Label {
+T.Label {
+    id: control
+
     renderType: Text.QtRendering
     renderTypeQuality: Text.VeryHighRenderTypeQuality
+
+    color: control.palette.windowText
+    linkColor: control.palette.link
 }
