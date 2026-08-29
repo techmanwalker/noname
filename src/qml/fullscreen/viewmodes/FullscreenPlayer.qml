@@ -152,6 +152,8 @@ Item {
                 album:  PlayerPresenter.album
 
                 Layout.fillWidth: true
+                Layout.leftMargin: 15 // playlist song lateral padding
+                Layout.rightMargin: Layout.leftMargin
 
                 onClicked: root.immersive = !root.immersive
             }
