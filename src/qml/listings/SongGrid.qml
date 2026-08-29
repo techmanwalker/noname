@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import Player.Listings
+import Player.MediaTypes
 
 GridView {
     id: root
@@ -39,13 +40,13 @@ GridView {
     }
 
     delegate: Item {
-        required property var model
+        required property song model
 
         width: GridView.view.cellWidth
         height: GridView.view.cellHeight
 
         Song {
-            property var model: parent.model
+            property song model: parent.model
 
             card: true
 

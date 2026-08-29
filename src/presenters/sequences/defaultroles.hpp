@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mediatypes.hpp"
-#include "prettifiers.hpp"
 #include "rolecompiler.hpp"
 
 #include <QVariant>
@@ -14,6 +13,17 @@
     are shared across most of models that inherit the Abstract Model.
 */
 static const RoleDefinitions<Types::Any> container_roles = {
+    /*  Whole-gadget role: lets a QML delegate declare a statically typed
+    `required property song model` / `required property directory model`
+    instead of dot-accessing the flattened per-field roles below.
+    QVariant::fromValue(x) boxes whichever concrete alternative
+    std::visit handed us — the QML engine then resolves it against
+    the matching QML_VALUE_TYPE registration in mediatypes_qml.hpp
+    purely from the QMetaType it carries. */
+    { "model", make_visitor([](const auto &x) -> QVariant {
+        return QVariant::fromValue(x);
+    })},
+
     // Direct roles (thanks to the duck-typing of generic lambdas)
     { "title",  make_visitor([](const auto &x) {
         return x.title;
@@ -88,15 +98,8 @@ static const RoleDefinitions<Types::Any> container_roles = {
     {"songs", make_visitor([](const auto &x) -> QVariant {
         using T = std::decay_t<decltype(x)>;
 
-        if constexpr (std::is_same_v<T, Types::Directory>) {
-            // scan order is arbitrary — expose it sorted by title instead
-            return QVariant::fromValue(
-                Prettifiers::sortBy(
-                    &Types::Song::title,
-                    x.songs
-                ));
-        } else if constexpr (std::is_same_v<T, Types::Album>) { // Types::Playlist is the same type
-            // track order / user-arranged order is meaningful here — leave it alone
+        if constexpr (std::is_same_v<T, Types::Directory> || (std::is_same_v<T, Types::Album>)) {
+            // already sorted as needed by each respective type
             return QVariant::fromValue(x.songs);
         }
 

@@ -4,6 +4,7 @@
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
+#include "prettifiers.hpp" // IWYU pragma: keep needs prettifiers.tpp
 #include "songfactory.hpp"
 
 QList<Types::Song>
@@ -126,6 +127,12 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
                     target_dir.songs.append(std::move(song));
                 }
             }
+
+            // Scan order is arbitrary; keep the stored list itself in
+            // display order so QML reading Directory::songs directly
+            // (required property directory model -> model.songs) never
+            // needs a role-side sort on every access.
+            target_dir.songs = Prettifiers::sortBy(&Types::Song::title, target_dir.songs);
 
             emit dataChanged(dir_index_to_refresh, dir_index_to_refresh);
         })

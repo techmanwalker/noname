@@ -41,6 +41,7 @@ namespace Types {
 
     struct Song {
         Q_GADGET
+
         Q_PROPERTY(QString title MEMBER title)
         Q_PROPERTY(QString artist MEMBER artist)
         Q_PROPERTY(QString album MEMBER album)
@@ -69,9 +70,20 @@ namespace Types {
         QUrl coveruri () const;
 
         bool is_valid () const;
+
+        bool operator==(const Song&) const = default; 
     };
 
     struct Album {
+        Q_GADGET
+
+        Q_PROPERTY(QString title MEMBER title)
+        Q_PROPERTY(QString artist MEMBER artist)
+        Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
+        Q_PROPERTY(quint64 duration READ duration)
+
+    public:
+
         QString      title;
         QString      artist;
         QList<Song>  songs;
@@ -79,12 +91,22 @@ namespace Types {
         // sum of all the children
         quint64 duration() const;
 
+        bool operator==(const Album&) const = default; 
+
         // An empty Playlist doesn't make it invalid
     };
 
     using Playlist = Album;
 
     struct Directory {
+        Q_GADGET
+        Q_PROPERTY(QString path MEMBER path)
+        Q_PROPERTY(QString title MEMBER title)
+        Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
+        
+    public:
+
+        Directory () = default;
         explicit Directory (const QString &source_path);
 
         QString path;
@@ -93,6 +115,8 @@ namespace Types {
         QList<Song> songs;
 
         bool is_valid () const;
+
+        bool operator==(const Directory&) const = default; 
     };
 
     using Any = std::variant<Types::Song, Types::Album, Types::Directory>;

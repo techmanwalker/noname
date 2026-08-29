@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 
 import Player.Listings
+import Player.MediaTypes
 import Player.Primitives
 import Player.PlayQueue
 
@@ -23,7 +24,7 @@ ListView {
     // to float outside the list content without overlapping it
     rightMargin: scrollbar.logicalWidth
 
-    signal songClicked(var song)
+    signal songClicked(song clicked_song)
 
     // selection
 
@@ -42,7 +43,7 @@ ListView {
     delegate: Song {
         id: song
 
-        required property var model
+        required property song model
         
         width: root.width - root.rightMargin
 

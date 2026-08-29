@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import Player.Browser
+import Player.MediaTypes
 
 ListView {
     id: root
@@ -12,7 +13,7 @@ ListView {
     delegate: Folder {
         id: folder
 
-        required property var model
+        required property directory model
 
         name: model.title
 
@@ -20,7 +21,7 @@ ListView {
         TapHandler {
             onTapped: {
                 // emit the signal and expose the songs member
-                root.directorySwitched(parent.model.songs)
+                root.directorySwitched(folder.model.songs)
             }
         }
     }
