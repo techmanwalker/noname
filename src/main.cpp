@@ -2,6 +2,7 @@
 #include "configuration.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
+#include "dump.hpp"
 #include "windowgeometryproxy.hpp"
 #include "searchresultsproxy.hpp"
 #include "locallibrary.hpp"
@@ -64,7 +65,9 @@ main (int argc, char ** argv)
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
-    ll->snapshot_known_directories();
+    ll->snapshot_known_directories().then([ll]() {
+        debug::dump_list_model(l_noname(), *ll.get(), "LocalLibrary", true);
+    });
 
     // load shortcuts
     sl->read_conf_and_load();

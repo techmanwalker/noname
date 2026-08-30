@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Player.Browser
 import Player.Listings
 import Player.Primitives
+import Player.MediaTypes
 import Player.LocalLibrary
 import Player.PlayQueue
 
@@ -15,12 +16,12 @@ ColumnLayout {
 
     /*  when a directory under the FolderList is clicked, its .songs list
         will be copied here to display its songs */
-    property var activeDirectoryModel
+    property directory activeDirectoryModel: undefined
 
     SectionHeading {
         id: shortcutsHeading
 
-        text: qsTr("Folders")
+        text: qsTr("Folders");
 
         Layout.leftMargin: root.lateralAlignmentPadding
         Layout.bottomMargin: currentdirectory.songCoverHeight / 16
@@ -37,16 +38,14 @@ ColumnLayout {
 
         orientation: ListView.Horizontal
 
-        onDirectorySwitched: (songs) => {
-            if (songs.length != 0) {
-                root.activeDirectoryModel = songs;
-            }
+        onDirectorySwitched: (dir) => {
+            root.activeDirectoryModel = dir
         }
     }
 
     SongGrid {
         id: currentdirectory
-        model: root.activeDirectoryModel
+        model: root.activeDirectoryModel.songs
 
         Layout.fillWidth: true
         Layout.fillHeight: true

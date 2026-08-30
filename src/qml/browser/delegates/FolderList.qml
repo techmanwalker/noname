@@ -8,7 +8,7 @@ ListView {
     id: root
 
     // expose the songs of the clicked directory
-    signal directorySwitched(var songs)
+    signal directorySwitched(directory dir)
 
     delegate: Folder {
         id: folder
@@ -21,7 +21,7 @@ ListView {
         TapHandler {
             onTapped: {
                 // emit the signal and expose the songs member
-                root.directorySwitched(folder.model.songs)
+                root.directorySwitched(folder.model)
             }
         }
     }
