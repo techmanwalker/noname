@@ -12,8 +12,27 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
       m_decoder_worker(new audio_decode_worker())
 {
     m_soundio = soundio_create();
-    soundio_connect(m_soundio);
+
+    // Prioritize PulseAudio (seamlessly handled by PipeWire)
+    int err = soundio_connect_backend(m_soundio, SoundIoBackendPulseAudio);
+
+    // Fall back to standard iteration if PulseAudio is unavailable
+    if (err != 0) {
+        soundio_connect(m_soundio);
+
+        if (err) {
+            qCCritical(l_audioengine) << "Error connecting soundio:" << soundio_strerror(err);
+            // Handle error or return early
+        } else {
+            // 2. Print the successful backend safely
+            qCDebug(l_audioengine) << "SoundIO connected backend:" << soundio_backend_name(m_soundio->current_backend);
+        }
+    }
+
     soundio_flush_events(m_soundio);
+
+    const char* backend_name = soundio_backend_name(m_soundio->current_backend);
+    qCDebug(l_audioengine) << "SoundIO connected to audio backend:" << backend_name;
 
     int default_out_device_index = soundio_default_output_device_index(m_soundio);
     m_device = soundio_get_output_device(m_soundio, default_out_device_index);
