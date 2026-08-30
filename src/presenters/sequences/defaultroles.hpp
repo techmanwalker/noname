@@ -25,6 +25,11 @@ static const RoleDefinitions<Types::Any> container_roles = {
         return QVariant::fromValue(x);
     })},
 
+    // Injects 'modelData' into the QML delegate scope, matching raw list behavior
+    { "modelData", make_visitor([](const auto &x) -> QVariant {
+        return QVariant::fromValue(x);
+    })},
+
     { "type", make_visitor([](const auto &x) {
         using T = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<T, Types::Song>)      return "Song";

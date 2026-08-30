@@ -16,7 +16,7 @@ ColumnLayout {
 
     /*  when a directory under the FolderList is clicked, its .songs list
         will be copied here to display its songs */
-    property directory activeDirectoryModel: undefined
+    property directory activeDirectoryModel
 
     SectionHeading {
         id: shortcutsHeading

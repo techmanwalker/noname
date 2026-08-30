@@ -17,7 +17,7 @@ GridView {
     cellWidth: dummycard.width + songLateralPadding
     cellHeight: dummycard.height + songVerticalPadding
 
-    signal songClicked(var song);
+    signal songClicked(song clicked_song);
 
     // selection
 
@@ -40,13 +40,15 @@ GridView {
     }
 
     delegate: Item {
-        required property song model
+        id: delegateRoot
+
+        required property song modelData
 
         width: GridView.view.cellWidth
         height: GridView.view.cellHeight
 
         Song {
-            property song model: parent.model
+            property song songItem: delegateRoot.modelData
 
             card: true
 
@@ -55,29 +57,29 @@ GridView {
             anchors.rightMargin: LayoutMirroring.enabled ? 0 : root.songLateralPadding
             anchors.bottomMargin: root.songVerticalPadding
 
-            title: model.title
-            metadata: model.printable_joint_metadata
-            cover: model.cover
-            duration: model.duration_mmss
+            title: songItem.title
+            metadata: songItem.printable_joint_metadata
+            cover: songItem.cover
+            duration: songItem.duration_mmss
 
             coverWidth: root.songCoverWidth
             coverHeight: root.songCoverHeight
 
             // to visually mark it selected
-            selected: root.selectedSources.includes(model.source)
+            selected: root.selectedSources.includes(songItem.source)
 
             onClicked: {
                 // Standard click clears multi-selection
                 root.selectedSources = []
-                root.songClicked(model)
+                root.songClicked(songItem)
             }
 
             onCtrlClicked: {
                 let sources = root.selectedSources
-                let idx = sources.indexOf(model.source)
+                let idx = sources.indexOf(songItem.source)
                 
                 if (idx === -1) {
-                    sources.push(model.source)
+                    sources.push(songItem.source)
                 } else {
                     sources.splice(idx, 1)
                 }
@@ -88,8 +90,8 @@ GridView {
 
             onRightClicked: {
                 // If right-clicked song isn't in current selection, select only it
-                if (!root.selectedSources.includes(model.source)) {
-                    root.selectedSources = [model.source]
+                if (!root.selectedSources.includes(songItem.source)) {
+                    root.selectedSources = [songItem.source]
                 }
                 songContextMenu.popup()
             }
