@@ -23,6 +23,8 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
     m_outstream->sample_rate = m_decoder_worker->get_ring_buffer()->get_sample_rate();
     m_outstream->software_latency = 0.15;
 
+    m_outstream->layout = m_device->current_layout;
+
     m_outstream->userdata = m_decoder_worker->get_ring_buffer();
     m_decoder_worker->get_ring_buffer()->rt_notify_target = this; // reachable from write_callback via userdata
     m_outstream->write_callback = write_callback;
