@@ -71,8 +71,8 @@ ColumnLayout {
 
         reuseItems: true
 
-        onSongClicked: (song) => {
-            PlayQueue.switch_to(song.source)
+        onSongClicked: function(clicked_song: song) {
+            PlayQueue.switch_to(clicked_song.source)
         }
 
         additionalMenuActions: [
