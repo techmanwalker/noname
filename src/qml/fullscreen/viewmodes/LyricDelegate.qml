@@ -18,6 +18,11 @@ Label {
 
     font.pointSize: highlighted ? 25 : 20
     font.weight: highlighted ? Font.DemiBold : Font.Medium
+    
+    Binding on font.bold {
+        value: true
+        when: root.highlighted
+    }
 
     Binding on color {
         value: "white"
