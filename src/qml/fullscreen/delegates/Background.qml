@@ -103,13 +103,13 @@ Item {
 
         // based on screen size
         seedSize: (
-            Screen.height < 720 ? 48 : (
-                Screen.height >= 1440 ? 96 :
-                    64
+            Screen.height < 720 ? 96 : (
+                Screen.height >= 1440 ? 192 :
+                    144
             )
         )
 
         visible: true
-        intensity: 0.02
+        intensity: 0.04
     }
 }

@@ -480,6 +480,7 @@ qt_add_shaders(playereffects "_shaders"
     BATCHABLE
     PRECOMPILE
     OPTIMIZED
+    GLSL "300 es,150"
     PREFIX "/shaders"
     BASE "src/shaders"
     FILES
