@@ -16,6 +16,7 @@ class LyricsManifestProxy : public QIdentityProxyModel
     QML_SINGLETON
 
     Q_PROPERTY(QModelIndex highlighted READ index_of_first_highlighted_row NOTIFY highlightedRowChanged)
+    Q_PROPERTY(qsizetype   count       READ itemCount NOTIFY countChanged)
 
 public:
 
@@ -30,11 +31,22 @@ public:
 
         connect(m_manifest.get(), SIGNAL(highlightedRowChanged()),
                         this, SIGNAL(highlightedRowChanged()));
+
+        connect(m_manifest.get(), SIGNAL(countChanged()), this, SIGNAL(countChanged()));
+
+        connect(this, &LyricsManifestProxy::countChanged,
+                this, &LyricsManifestProxy::print_count);
     }
 
     // Non-destructive injection via const reference
     static void inject(const std::shared_ptr<QAbstractListModel> &manifest) {
         s_injectedManifest = manifest; // Ref count incremented, caller's instance unaffected
+    }
+
+    int itemCount() const {
+        if (!m_iface) return 0;
+        
+        return m_iface->itemCount();
     }
 
     // Respect and expose the public Q_INVOKABLE interface using the abstraction
@@ -53,8 +65,13 @@ public:
         return mapFromSource(m_iface->index_of_first_highlighted_row());
     }
 
+    void print_count () const {
+        qDebug () << "Lyrics count: " << itemCount();
+    }
+
 signals:
     void highlightedRowChanged();
+    void countChanged();
 
 private:
     std::shared_ptr<QAbstractListModel> m_manifest;

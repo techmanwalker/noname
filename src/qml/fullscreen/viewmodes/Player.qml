@@ -42,6 +42,8 @@ Item {
         Lyrics {
             model: LyricsManifest
             highlightedRowIndex: LyricsManifest.highlighted.row
+
+            onSwitchToPlayerViewRequested: stack.currentIndex = 0
         }
     }
 

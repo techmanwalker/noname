@@ -2,29 +2,63 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import Player.PlayerPresenter
+import Player.Primitives
 import Player.Fullscreen
 
-ListView {
+Loader {
     id: root
 
+    required property var model
     required property int highlightedRowIndex
 
-    spacing: 20
+    sourceComponent: (model.count > 0) ? lyrics_c : lyrics_p
+    
+    signal switchToPlayerViewRequested ()
 
-    delegate: LyricDelegate {
-        required property int index
+    Component {
+        id: lyrics_p
 
-        width: root.width
+        Label {
+            text: qsTr("No lyrics.")
 
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
+            font.pointSize: 32
+            font.weight: Font.Light
 
-        id: del
+            opacity: 0.4
 
-        highlighted: root.highlightedRowIndex === del.index
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment:   Text.AlignVCenter
 
-        TapHandler {
-            onTapped: PlayerPresenter.position_ms = del.model.timestamp
+            TapHandler {
+                onTapped: root.switchToPlayerViewRequested()
+            }
+        }
+    }
+
+    Component {
+        id: lyrics_c
+
+        ListView {
+            model: root.model
+
+            spacing: 20
+
+            delegate: LyricDelegate {
+                required property int index
+
+                width: root.width
+
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                id: del
+
+                highlighted: root.highlightedRowIndex === del.index
+
+                TapHandler {
+                    onTapped: PlayerPresenter.position_ms = del.model.timestamp
+                }
+            }
         }
     }
 }

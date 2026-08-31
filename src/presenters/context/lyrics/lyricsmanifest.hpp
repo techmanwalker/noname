@@ -32,6 +32,8 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    int itemCount () const override;
+
     std::vector<std::string> current_lines() const;
 
     std::optional<quint64> ts_of_lyric_at(quint64 ts_ms) const override;
@@ -46,6 +48,7 @@ public:
 signals:
     void linesChanged();
     void highlightedRowChanged();
+    void countChanged();
 
 public slots:
     QFuture<void> load_current_track_lyrics ();
