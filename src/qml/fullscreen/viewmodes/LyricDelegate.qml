@@ -11,10 +11,13 @@ Label {
     required property lyric model
     required property bool highlighted
 
-    font.pointSize: 24
-    font.weight: Font.Medium
-
     text: model.text
+
+    topPadding: highlighted ? 10 : 0
+    bottomPadding: topPadding
+
+    font.pointSize: highlighted ? 25 : 20
+    font.weight: highlighted ? Font.DemiBold : Font.Medium
 
     Binding on color {
         value: "white"

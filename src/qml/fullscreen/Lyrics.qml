@@ -9,8 +9,15 @@ ListView {
 
     required property int highlightedRowIndex
 
+    spacing: 20
+
     delegate: LyricDelegate {
         required property int index
+
+        width: root.width
+
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
 
         id: del
 
