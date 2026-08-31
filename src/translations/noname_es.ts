@@ -37,12 +37,12 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="135"/>
+        <location filename="../qml/browser/Browser.qml" line="134"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="67"/>
+        <location filename="../qml/browser/Browser.qml" line="66"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
@@ -50,7 +50,7 @@
 <context>
     <name>Folders</name>
     <message>
-        <location filename="../qml/browser/vtabs/Folders.qml" line="23"/>
+        <location filename="../qml/browser/vtabs/Folders.qml" line="24"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
@@ -62,7 +62,7 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="224"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="233"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -71,7 +71,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="191"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="199"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -82,6 +82,14 @@
         <location filename="../qml/browser/vtabs/Home.qml" line="21"/>
         <source>Shortcuts</source>
         <translation>Accesos directos</translation>
+    </message>
+</context>
+<context>
+    <name>Lyrics</name>
+    <message>
+        <location filename="../qml/fullscreen/Lyrics.qml" line="20"/>
+        <source>No lyrics.</source>
+        <translation>Sin letras.</translation>
     </message>
 </context>
 <context>
@@ -104,7 +112,7 @@
 <context>
     <name>Player</name>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/Player.qml" line="77"/>
+        <location filename="../qml/fullscreen/viewmodes/Player.qml" line="78"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -112,17 +120,17 @@
 <context>
     <name>RepeatButton</name>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="42"/>
+        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="43"/>
         <source>Repeat one</source>
         <translation>Repetir una vez</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="43"/>
+        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="44"/>
         <source>Repeat all</source>
         <translation>Repetir todas las pistas</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="44"/>
+        <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="45"/>
         <source>Repeat disabled</source>
         <translation>No repetir</translation>
     </message>
@@ -137,7 +145,7 @@
 <context>
     <name>SearchBar</name>
     <message>
-        <location filename="../qml/browser/delegates/SearchBar.qml" line="20"/>
+        <location filename="../qml/browser/delegates/SearchBar.qml" line="29"/>
         <source>Search…</source>
         <translation>Buscar…</translation>
     </message>

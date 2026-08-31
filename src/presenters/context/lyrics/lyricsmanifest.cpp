@@ -135,6 +135,12 @@ LyricsManifestLI::rowCount(const QModelIndex &parent) const
     return static_cast<int>(m_d->m_lyrics.size());
 }
 
+int
+LyricsManifestLI::itemCount () const
+{
+    return rowCount();
+}
+
 QVariant
 LyricsManifestLI::data(const QModelIndex &index, int role) const
 {
@@ -211,6 +217,8 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
         }
 
         endResetModel();
+
+        emit countChanged();
 
         if (m_d->m_lastHighlightedRow != -1) {
             m_d->m_lastHighlightedRow = -1;
