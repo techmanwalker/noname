@@ -41,6 +41,7 @@ Item {
         // just so I can see them
         Lyrics {
             model: LyricsManifest
+            highlightedRowIndex: LyricsManifest.highlighted.row
         }
     }
 

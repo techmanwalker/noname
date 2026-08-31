@@ -1,8 +1,12 @@
 #pragma once
 
 #include "lyricsmanifest-in.hpp"
+#include "lyrictypes.hpp"
+
 #include <QIdentityProxyModel>
-#include <QtQmlIntegration>
+
+#include <QtQmlIntegration//qqmlintegration.h>
+
 #include <memory>
 
 class LyricsManifestProxy : public QIdentityProxyModel
@@ -11,8 +15,9 @@ class LyricsManifestProxy : public QIdentityProxyModel
     QML_NAMED_ELEMENT(LyricsManifest)
     QML_SINGLETON
 
-public:
     Q_PROPERTY(QModelIndex highlighted READ index_of_first_highlighted_row NOTIFY highlightedRowChanged)
+
+public:
 
     explicit LyricsManifestProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),

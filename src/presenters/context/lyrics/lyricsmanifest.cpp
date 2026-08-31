@@ -1,4 +1,5 @@
 #include "lyricsmanifest.hpp"
+#include "lyrictypes.hpp"
 
 // syrinc includes now strictly bound to the implementation file
 #include "globals.hpp" 
@@ -27,14 +28,23 @@ struct __syrinc_lyric {
     QString text;
 };
 
-static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
-    { "timestamp", [](const __syrinc_lyric &x) -> QVariant {
-        return static_cast<qulonglong>(x.ts.as_ms());
-    }},
-    { "text", [](const __syrinc_lyric &x) -> QVariant {
-        return x.text;
-    }}
+// Projects the private, syrinc-coupled __syrinc_lyric into the public Lyric
+// gadget; never hand the private type itself to QML.
+static QVariant
+to_lyric_gadget(const __syrinc_lyric &x)
+{
+    return QVariant::fromValue(Lyric{
+        static_cast<quint64>(x.ts.as_ms()),
+        x.text
+    });
+}
 
+static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
+    // Whole-gadget role: lets LyricDelegate.qml declare
+    // `required property lyric model`, mirroring container_roles's
+    // "model"/"modelData" for Types::Any.
+    { "model", to_lyric_gadget },
+    { "modelData", to_lyric_gadget }
 };
 
 namespace {
