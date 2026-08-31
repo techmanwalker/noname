@@ -53,9 +53,9 @@ Item {
         visible: false
 
         // uniforms linked to the 'buf' block of the shader
-        property size  tSize:     Qt.size(width, height)
         property size  nSize:     Qt.size(root.seedSize, root.seedSize)
         property real  intensity: root.intensity
+        property real  cellSeed:  Math.random() * 1000.0 // reroll tile transforms per instance
 
         // texture injection to the corresponding bindings
         property var sourceTexture: _proxySource
