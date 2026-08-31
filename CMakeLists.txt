@@ -364,6 +364,7 @@ qt_add_qml_module(lyricsmanifest_li
     URI Player.LyricsManifest
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsmanifest/lyricsmanifestproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsmanifest/lyrictypes.hpp"
         ${LYRICSMANIFEST_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
@@ -559,8 +560,6 @@ qt_add_qml_module(browser
     URI Player.Browser
     QML_FILES
         ${BROWSER_QMLS}
-    DEPENDENCIES
-        mediatypes
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/Browser"
 )
