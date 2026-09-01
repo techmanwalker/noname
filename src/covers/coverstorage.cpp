@@ -44,7 +44,7 @@ cover_storage::~cover_storage ()
 QQuickImageResponse *
 cover_storage::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
-    auto *response = new cover_image_response(this, id, requestedSize);
+    auto *response = new cover_image_response(!disabled ? this : nullptr, id, requestedSize);
     m_response_pool.start(response);
     return response;
 }

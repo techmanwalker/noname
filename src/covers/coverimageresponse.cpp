@@ -26,7 +26,7 @@ cover_image_response::cancel()
 void
 cover_image_response::run()
 {
-    if (!m_canceled.loadRelaxed()) {
+    if (m_provider && !m_canceled.loadRelaxed()) {
         m_image = m_provider->resolve_blocking(m_id, m_requested_size);
     }
     // Must still emit finished() even when cancelled, so the engine can clean us up.

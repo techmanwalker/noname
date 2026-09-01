@@ -44,6 +44,8 @@ public:
     (cover_image_response::run()) — never the GUI thread. */
     QImage resolve_blocking(const QString &base64url_coverref, const QSize &requestedSize);
 
+    bool disabled = false; // quickly respond with empty QImages effectively disabling responses
+
 private:
 
     static constexpr size_t SHARD_COUNT = 16;
