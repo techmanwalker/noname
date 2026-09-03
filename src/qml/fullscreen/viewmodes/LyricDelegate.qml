@@ -13,9 +13,6 @@ Label {
 
     text: model.text
 
-    topPadding: highlighted ? 10 : 0
-    bottomPadding: topPadding
-
     font.pointSize: highlighted ? 25 : 20
     font.weight: highlighted ? Font.DemiBold : Font.Medium
     

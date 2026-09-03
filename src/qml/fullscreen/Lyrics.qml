@@ -4,6 +4,7 @@ import QtQuick
 import Player.PlayerPresenter
 import Player.Primitives
 import Player.Fullscreen
+import Player.LyricsManifest
 
 Loader {
     id: root
@@ -41,19 +42,35 @@ Loader {
         ListView {
             model: root.model
 
-            spacing: 20
-
-            delegate: LyricDelegate {
-                required property int index
+            delegate: Item {
+                id: delegateRoot
 
                 width: root.width
+                height: del.height
 
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+                required property lyric modelData
+                required property int index
 
-                id: del
+                LyricDelegate {
+                    id: del
 
-                highlighted: root.highlightedRowIndex === del.index
+                    model: delegateRoot.modelData
+
+                    width: parent.width / 10 * 4
+                    topPadding: highlighted ? 20 : 10
+                    bottomPadding: topPadding
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+
+
+                    highlighted: root.highlightedRowIndex === delegateRoot.index
+
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideNone
+                }
 
                 TapHandler {
                     onTapped: PlayerPresenter.position_ms = del.model.timestamp
