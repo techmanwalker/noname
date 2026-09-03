@@ -56,7 +56,10 @@ Loader {
 
                     model: delegateRoot.modelData
 
-                    width: parent.width / 10 * 4
+                    // Feeds only the break computation now — the item's
+                    // actual on-screen width is implicit, so it's free to
+                    // grow past this when highlighted.
+                    wrapWidth: parent.width / 10 * 4
                     topPadding: highlighted ? 20 : 10
                     bottomPadding: topPadding
 
@@ -65,11 +68,7 @@ Loader {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
 
-
                     highlighted: root.highlightedRowIndex === delegateRoot.index
-
-                    wrapMode: Text.WordWrap
-                    elide: Text.ElideNone
                 }
 
                 TapHandler {
