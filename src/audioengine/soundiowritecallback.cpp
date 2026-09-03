@@ -33,15 +33,13 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
     
     // remaining frames yet to decode
     while (frames_left > 0) {
-        int frame_count = frames_left;
+        // temp_buf is a fixed 8192-float stack array — never request more
+        // than it can hold for this device's channel count.
+        int frame_count = std::min(frames_left, 8192 / outstream->layout.channel_count);
         struct SoundIoChannelArea *areas;
         
-        // ask hardware to make room in memory
         if (execute_soundio(soundio_outstream_begin_write,
-                outstream,
-                &areas,
-                &frame_count
-            ) != 0) {
+                outstream, &areas, &frame_count) != 0) {
                 break;
             }
 
