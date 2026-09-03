@@ -33,9 +33,6 @@ public:
                         this, SIGNAL(highlightedRowChanged()));
 
         connect(m_manifest.get(), SIGNAL(countChanged()), this, SIGNAL(countChanged()));
-
-        connect(this, &LyricsManifestProxy::countChanged,
-                this, &LyricsManifestProxy::print_count);
     }
 
     // Non-destructive injection via const reference
@@ -63,10 +60,6 @@ public:
         // the model it belongs to, and m_iface hands back one rooted in the
         // source model, not this one.
         return mapFromSource(m_iface->index_of_first_highlighted_row());
-    }
-
-    void print_count () const {
-        qDebug () << "Lyrics count: " << itemCount();
     }
 
 signals:
