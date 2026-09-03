@@ -18,7 +18,7 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
 
     // Fall back to standard iteration if PulseAudio is unavailable
     if (err != 0) {
-        soundio_connect(m_soundio);
+        err = soundio_connect(m_soundio);
 
         if (err) {
             qCCritical(l_audioengine) << "Error connecting soundio:" << soundio_strerror(err);
