@@ -22,6 +22,8 @@ find_package(ICU REQUIRED COMPONENTS i18n uc)
 
 find_package(libjxl REQUIRED)
 
+find_package(OpenMP)
+
 add_subdirectory(submodules/syrinc)
 
 qt_policy(SET QTP0001 NEW)
@@ -264,6 +266,11 @@ target_include_directories(audioengine_li
     PUBLIC
         src/audioengine # enable including its own headers como Qt6:: libraries
 )
+
+if(OpenMP_FOUND)
+    target_link_libraries(audioengine_li PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
 
 add_library(audioengine_in INTERFACE)
 target_include_directories(audioengine_in INTERFACE src/interfaces/audioengine)

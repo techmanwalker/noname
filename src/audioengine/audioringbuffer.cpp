@@ -62,19 +62,36 @@ audio_ring_buffer::pop(float* dest, size_t count) {
     size_t h = head.load(std::memory_order_acquire);
     
     // available what? to read what?
-    size_t available = (h + capacity - t) % capacity;
-    size_t to_read = std::min(count, available);
+    size_t available = (h + capacity - t) % capacity; // available samples ready to be consumed
+    size_t to_read = std::min(count, available); // samples we'll read this pop
 
     // apply the recalculated linear volume multiplier
     float current_vol = volume_multiplier.load(std::memory_order_relaxed);
 
-    for(size_t i = 0; i < to_read; ++i) {
-        dest[i] = buffer[(t + i) % capacity] * current_vol;
-    };
-    
+    // calculate how many elements we can read in a row before reaching the buffer end
+    size_t first_chunk = std::min(to_read, capacity - t);
+    size_t second_chunk = to_read - first_chunk;
+
+    float* __restrict__ d = dest;
+    const float* __restrict__ b = buffer.data();
+
+    // loop 1: read in a single pass till the buffer end (or until finishing to read)
+    #pragma omp simd // compiler hint
+    for (size_t i = 0; i < first_chunk; ++i) {
+        d[i] = b[t + i] * current_vol; 
+    }
+
+    // if anything was left, wrap around and read from the beginning (index 0)
+    if (second_chunk > 0) {
+        #pragma omp simd
+        for (size_t i = 0; i < second_chunk; ++i) {
+            d[first_chunk + i] = b[i] * current_vol;
+        }
+    }
+
+    // update the tail only once at the end
     tail.store((t + to_read) % capacity, std::memory_order_release);
 
-    // wake the decoder if it was blocked waiting for space
     if (to_read > 0) {
         m_cv.notify_one();
     }
