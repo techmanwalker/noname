@@ -17,7 +17,7 @@ GridView {
     cellWidth: dummycard.width + songLateralPadding
     cellHeight: dummycard.height + songVerticalPadding
 
-    signal songClicked(song clicked_song);
+    signal songClicked(song clicked_song)
 
     // selection
 
@@ -68,7 +68,7 @@ GridView {
             // to visually mark it selected
             selected: root.selectedSources.includes(songItem.source)
 
-            onClicked: {
+            onClicked: function () : void {
                 // Standard click clears multi-selection
                 root.selectedSources = []
                 root.songClicked(songItem)

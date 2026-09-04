@@ -1,79 +1,145 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 
 import Player.PlayerPresenter
 import Player.Primitives
 import Player.Fullscreen
 import Player.LyricsManifest
 
-Loader {
+StackLayout {
     id: root
 
-    required property var model
+    required property LyricsManifest model
     required property int highlightedRowIndex
 
-    sourceComponent: (model.count > 0) ? lyrics_c : lyrics_p
+    // whether to follow the lyrics by scrolling the list
+    property bool autoscrollEnabled: true
+
+    property real headerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
+    property real footerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
+
+    // also enable first and last rows to be centered too
+    property bool centerEdgeLines: true
+
+    currentIndex: listView.count > 0 ? 1 : 0
     
     signal switchToPlayerViewRequested ()
 
-    Component {
-        id: lyrics_p
+    Label {
+        text: qsTr("No lyrics.")
 
-        Label {
-            text: qsTr("No lyrics.")
+        font.pointSize: 32
+        font.weight: Font.Light
 
-            font.pointSize: 32
-            font.weight: Font.Light
+        opacity: 0.4
 
-            opacity: 0.4
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment:   Text.AlignVCenter
 
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment:   Text.AlignVCenter
-
-            TapHandler {
-                onTapped: root.switchToPlayerViewRequested()
-            }
+        TapHandler {
+            onTapped: root.switchToPlayerViewRequested()
         }
     }
 
-    Component {
-        id: lyrics_c
+    ListView {
+        id: listView
 
-        ListView {
-            model: root.model
+        model: root.model
 
-            delegate: Item {
-                id: delegateRoot
+        // Extra scroll room so row 0 / the last row can reach dead
+        // center too, same as any line in the middle of the list.
 
-                width: root.width
-                height: del.height
+        header: Item {
+            height: root.headerHeight
+            width: listView.width
+        }
 
-                required property lyric modelData
-                required property int index
+        footer: Item {
+            height: root.footerHeight
+            width: listView.width
+        }
 
-                LyricDelegate {
-                    id: del
+        function scrollToHighlighted() : void {
+            const index = root.highlightedRowIndex
+            if (index < 0 || index >= count)
+                return
 
-                    model: delegateRoot.modelData
+            const fromY = contentY
+            positionViewAtIndex(index, ListView.Center)
+            const toY = contentY
+            contentY = fromY
 
-                    // Feeds only the break computation now — the item's
-                    // actual on-screen width is implicit, so it's free to
-                    // grow past this when highlighted.
-                    wrapWidth: parent.width / 10 * 4
-                    topPadding: highlighted ? 20 : 10
-                    bottomPadding: topPadding
+            scrollAnimation.to = toY
+            scrollAnimation.restart()
+        }
 
-                    anchors.horizontalCenter: parent.horizontalCenter
+        NumberAnimation {
+            id: scrollAnimation
+            target: listView
+            property: "contentY"
+            duration: 125
+            easing.type: Easing.InOutCubic
+        }
+        
+        readonly property bool doAutoscroll: !(moving || cooldownTimer.running || !root.autoscrollEnabled)
 
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+        onDoAutoscrollChanged: if (doAutoscroll) scrollToHighlighted()
 
-                    highlighted: root.highlightedRowIndex === delegateRoot.index
-                }
+        onMovingChanged: if (!moving) cooldownTimer.restart()
 
-                TapHandler {
-                    onTapped: PlayerPresenter.position_ms = del.model.timestamp
-                }
+        onTopMarginChanged: if (doAutoscroll) scrollToHighlighted()
+
+        Timer {
+            id: cooldownTimer
+            interval: 5000
+            running: root.autoscrollEnabled
+        }
+        TapHandler {
+            id: holdTracker
+            target: null
+            acceptedButtons: Qt.AllButtons
+        }
+
+        Connections {
+            target: root
+            function onHighlightedRowIndexChanged() {
+                if (listView.doAutoscroll)
+                    listView.scrollToHighlighted()
+            }
+        }
+        
+        delegate: Item {
+            id: delegateRoot
+
+            width: root.width
+            height: del.height
+
+            required property lyric modelData
+            required property int index
+
+            LyricDelegate {
+                id: del
+
+                model: delegateRoot.modelData
+
+                // Feeds only the break computation now — the item's
+                // actual on-screen width is implicit, so it's free to
+                // grow past this when highlighted.
+                wrapWidth: parent.width / 10 * 4
+                topPadding: highlighted ? 20 : 10
+                bottomPadding: topPadding
+
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                highlighted: root.highlightedRowIndex === delegateRoot.index
+            }
+
+            TapHandler {
+                onTapped: PlayerPresenter.position_ms = del.model.timestamp
             }
         }
     }
