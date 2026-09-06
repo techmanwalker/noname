@@ -50,11 +50,34 @@ Item {
     // ── Navigation ─────────────────────────────────────────────────────────
 
     Row {
+        id: nav
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
 
-        opacity: (!root.immersive || windex_hover.hovered) ? 1 : 0 // immersion
+        opacity: 1
+
+        states: [
+            State {
+                name: "hidden"
+
+                PropertyChanges {
+                    nav.opacity: 0
+                }
+
+                when: root.immersive && !windex_hover.hovered
+            },
+
+            State {
+                name: "partiallyVisible"
+
+                PropertyChanges {
+                    nav.opacity: 0.4
+                }
+
+                when: !root.immersive && stack.currentIndex == 1 && !windex_hover.hovered
+            }
+        ]
 
         layoutDirection: Qt.RightToLeft
 
