@@ -40,7 +40,7 @@ public:
     std::optional<quint64> next_lyric_ts_at(quint64 ts_ms) const override;
     std::optional<QString> lyric_at(quint64 ts_ms) const override;
 
-    QModelIndex index_of_first_highlighted_row() const override;
+    QModelIndex index_of_lyric_to_highlight() const override;
 
     // Q_INVOKABLE makes them callable from QML
     Q_INVOKABLE void clear() override;
