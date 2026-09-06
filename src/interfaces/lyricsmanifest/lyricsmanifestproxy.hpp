@@ -15,7 +15,7 @@ class LyricsManifestProxy : public QIdentityProxyModel
     QML_NAMED_ELEMENT(LyricsManifest)
     QML_SINGLETON
 
-    Q_PROPERTY(QModelIndex highlighted READ index_of_first_highlighted_row NOTIFY highlightedRowChanged)
+    Q_PROPERTY(QModelIndex highlighted READ index_of_lyric_to_highlight NOTIFY highlightedRowChanged)
     Q_PROPERTY(qsizetype   count       READ itemCount NOTIFY countChanged)
 
 public:
@@ -53,13 +53,13 @@ public:
         m_iface->clear();
     }
 
-    QModelIndex index_of_first_highlighted_row() const {
+    QModelIndex index_of_lyric_to_highlight() const {
         if (!m_iface) return {};
 
         // Re-home the index onto this proxy — an index carries a pointer to
         // the model it belongs to, and m_iface hands back one rooted in the
         // source model, not this one.
-        return mapFromSource(m_iface->index_of_first_highlighted_row());
+        return mapFromSource(m_iface->index_of_lyric_to_highlight());
     }
 
 signals:

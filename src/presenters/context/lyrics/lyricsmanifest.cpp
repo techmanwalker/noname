@@ -54,9 +54,6 @@ struct LyricLookup {
     std::optional<int> next_row;   // index of the first line with ts >  ts_ms
 };
 
-// No locking here — callers hold whatever lock they need for as long as they
-// use the result. Row indices, not pointers: nothing to keep alive, nothing
-// to own, and it's the exact shape QModelIndex needs downstream.
 LyricLookup
 lookup_lyrics_at(const std::vector<__syrinc_lyric> &lyrics, quint64 ts_ms)
 {
@@ -68,13 +65,8 @@ lookup_lyrics_at(const std::vector<__syrinc_lyric> &lyrics, quint64 ts_ms)
 
     LyricLookup result;
     if (it != lyrics.begin()) {
-        // Walk left over any lines sharing the same timestamp so ties
-        // resolve to the first line in file order.
-        auto active_it = std::prev(it);
-        while (active_it != lyrics.begin()
-               && std::prev(active_it)->ts.as_ms() == active_it->ts.as_ms())
-            --active_it;
-        result.active_row = static_cast<int>(std::distance(lyrics.begin(), active_it));
+        // people write their .lrc data for the last line to govern, return that instead
+        result.active_row = static_cast<int>(std::distance(lyrics.begin(), std::prev(it)));
     }
     if (it != lyrics.end())
         result.next_row = static_cast<int>(std::distance(lyrics.begin(), it));
@@ -93,7 +85,7 @@ public:
     mutable QReadWriteLock m_lock;
 
     // Purely a diff-check for highlightedRowChanged — never consulted as
-    // ground truth. index_of_first_highlighted_row() always recomputes
+    // ground truth. index_of_last_highlighted_row() always recomputes
     // fresh, so a stale value here can cause at worst one skipped/extra
     // notify, self-correcting on the next poll. Nothing reads it as fact.
     int m_lastHighlightedRow = -1;
@@ -285,7 +277,7 @@ LyricsManifestLI::lyric_at(quint64 ts_ms) const
 }
 
 QModelIndex
-LyricsManifestLI::index_of_first_highlighted_row() const
+LyricsManifestLI::index_of_lyric_to_highlight() const
 {
     if (!ae)
         return {};
@@ -301,7 +293,7 @@ LyricsManifestLI::index_of_first_highlighted_row() const
 void
 LyricsManifestLI::poll_highlighted_line_change()
 {
-    const int newRow = index_of_first_highlighted_row().row(); // -1 if none
+    const int newRow = index_of_lyric_to_highlight().row(); // -1 if none
 
     if (newRow == m_d->m_lastHighlightedRow)
         return;
