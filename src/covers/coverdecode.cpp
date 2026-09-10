@@ -265,4 +265,38 @@ decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
     return {};
 }
 
+// Colorspace operations
+
+double
+srgb_to_linear (uint8_t channel_8bit)
+{
+    static const std::array<double, 256> lut = [] {
+        std::array<double, 256> table{};
+        for (int i = 0; i < 256; ++i) {
+            const double c = i / 255.0;
+            table[i] = c <= 0.04045 ? c / 12.92 : std::pow((c + 0.055) / 1.055, 2.4);
+        }
+        return table;
+    }();
+
+    return lut[channel_8bit];
+}
+
+double
+oklab_lightness (double r_linear, double g_linear, double b_linear)
+{
+    // Björn Ottosson's OkLab forward transform — L channel only, since
+    // that's all percentile_luminance needs.
+    const double l = 0.4122214708 * r_linear + 0.5363325363 * g_linear + 0.0514459929 * b_linear;
+    const double m = 0.2119034982 * r_linear + 0.6806995451 * g_linear + 0.1073969566 * b_linear;
+    const double s = 0.0883024619 * r_linear + 0.2817188376 * g_linear + 0.6299787005 * b_linear;
+
+    const double l_ = std::cbrt(l);
+    const double m_ = std::cbrt(m);
+    const double s_ = std::cbrt(s);
+
+    return 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+}
+
+
 } // namespace covers::decode
