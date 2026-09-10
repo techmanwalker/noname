@@ -31,6 +31,7 @@ public:
     Q_PROPERTY(QString artist      READ artist      NOTIFY artistChanged)
     Q_PROPERTY(QString album       READ album       NOTIFY albumChanged)
     Q_PROPERTY(QUrl    cover       READ cover       NOTIFY coverChanged)
+    Q_PROPERTY(double  coverLuma   READ coverLuma   NOTIFY coverChanged)
     Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY durationChanged)
     Q_PROPERTY(quint64 position_ms READ position_ms WRITE setPosition_ms NOTIFY positionChanged)
     Q_PROPERTY(quint8  volume      READ volume      WRITE setVolume      NOTIFY volumeChanged)
@@ -66,6 +67,7 @@ public:
     QString artist()        const { return m_presenter ? m_presenter->artist()      : QString(); }
     QString album()         const { return m_presenter ? m_presenter->album()       : QString(); }
     QUrl    cover()         const { return m_presenter ? m_presenter->cover()       : QUrl();    }
+    double  coverLuma()     const { return m_presenter ? m_presenter->coverLuma()   : 0.5;       }
     quint64 duration_ms()   const { return m_presenter ? m_presenter->duration_ms() : 0;         }
     quint64 position_ms()   const { return m_presenter ? m_presenter->position_ms() : 0;         }
     quint8  volume()        const { return m_presenter ? m_presenter->volume()      : 0;         }

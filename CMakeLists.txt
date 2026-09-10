@@ -454,6 +454,8 @@ target_link_libraries(playerpresenter_li
         audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
         playqueue_in
 
+        covers # temporary, for quick integration with luma extraction
+
         configuration_in # load last volume from its save file
         mediatypes
 )

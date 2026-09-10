@@ -7,8 +7,16 @@
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
 
+#include "coverextract.hpp"
+#include "thumbnails.hpp"
+
+#include <QImage>
+#include <QPointer>
+#include <QtConcurrent/QtConcurrent>
+
 #include <atomic>
 #include <memory>
+#include <qloggingcategory.h>
 
 // Private constructor
 PlayerPresenterLI::PlayerPresenterLI(
@@ -55,6 +63,13 @@ quint64 PlayerPresenterLI::duration_ms()   const { return playing->current_track
 quint64 PlayerPresenterLI::position_ms()   const { return playing->current_position_ms();          }
 quint8  PlayerPresenterLI::volume()        const { return playing->current_volume();               }
 bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loaded();             }
+
+double
+PlayerPresenterLI::coverLuma() const
+{
+    // the last value recompute_cover_luma() landed.
+    return m_cover_luma.load(std::memory_order_relaxed);
+}
 
 PlayerPresenterLI::PlaybackState
 PlayerPresenterLI::playbackState() const
@@ -172,6 +187,12 @@ void
 PlayerPresenterLI::handleTrackChanged()
 {
     // note: only to update the ui
+
+    // Reset to a neutral placeholder and kick off the real (async) luma
+    // calculation *before* the emits below, so the coverChanged() this
+    // function fires broadcasts the placeholder, not the previous track's
+    // now-stale luma.
+    recompute_cover_luma();
     
     // Suddenly awake the QML declarative tree
     emit titleChanged();
@@ -204,4 +225,44 @@ PlayerPresenterLI::handleSliderPressedChanged()
         return;
     }
 
+}
+
+void
+PlayerPresenterLI::recompute_cover_luma ()
+{
+    const quint64 generation = m_cover_luma_generation.fetch_add(1, std::memory_order_relaxed) + 1;
+
+    // Neutral placeholder until the real value lands.
+    m_cover_luma.store(0.5, std::memory_order_relaxed);
+
+    const QUrl source = playing->current_track().source;
+    // QPointer has been thread-safe against cross-thread destruction since
+    // Qt 5.11 — safe to copy/null-check from the worker thread below.
+    QPointer<PlayerPresenterLI> self(this);
+
+    // covers::disk directly, NOT cover_provider: going through
+    // the provider here would race its own cache population for this exact
+    // song. This reads + decodes the thumbnail independently.
+    (void) QtConcurrent::run([self, source, generation] {
+        const CoverRef ref(source, 256);
+        const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
+        const double luma = covers::live::percentile_luminance(thumbnail, 80, .25);
+
+        qCDebug(covers::disk::l_thumbnails()) << "Luma for current cover: " << luma;
+
+        // Marshal back onto the GUI thread — qApp is guaranteed to live
+        // there and is a stable invocation context even if `self` is gone
+        // by the time this runs.
+        QMetaObject::invokeMethod(qApp, [self, luma, generation] {
+            if (!self) {
+                return; // presenter destroyed while we were decoding
+            }
+            if (self->m_cover_luma_generation.load(std::memory_order_relaxed) != generation) {
+                return; // a newer track switch superseded this result
+            }
+
+            self->m_cover_luma.store(luma, std::memory_order_relaxed);
+            emit self->coverChanged();
+        }, Qt::QueuedConnection);
+    });
 }
