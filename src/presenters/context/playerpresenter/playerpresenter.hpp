@@ -122,13 +122,4 @@ private:
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 
     std::atomic_bool m_slider_pressed {false};
-
-    // coverLuma() just reads this — the disk fetch + OkLab math run
-    // off-thread, kicked off from handleTrackChanged(). The generation
-    // counter guards against a stale in-flight calculation clobbering a
-    // *newer* track's result if the user skips faster than we can decode.
-    std::atomic<double> m_cover_luma {0.0};
-    std::atomic<quint64> m_cover_luma_generation {0};
-
-    void recompute_cover_luma ();
 };

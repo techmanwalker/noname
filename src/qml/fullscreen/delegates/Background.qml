@@ -50,11 +50,7 @@ Item {
     property real cover_back_l:   root.contentLightness < 0
         ? root.coverBackLumaFallback
         : root.clamp(root.curveValue(root.coverBackLumaStops, root.contentLightness))
-
-    onCover_back_lChanged: {
-        console.log("effective luma mult in darkener: " + cover_back_l)
-    }
-
+        
     property real outer_player_c: root.outer_player_l * 1.4
     property real inner_player_c: root.inner_player_l * 1.3
     property real cover_back_c:   root.cover_back_l   * 1.2
