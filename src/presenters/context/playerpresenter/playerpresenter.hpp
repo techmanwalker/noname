@@ -14,6 +14,8 @@
 #include <atomic>
 #include <memory>
 
+Q_DECLARE_LOGGING_CATEGORY(l_playerpresenter)
+
 class LyricsManifest;
 class PlayQueue;
 
@@ -71,7 +73,9 @@ public:
     PlaybackState playbackState() const override;
     bool isMediaLoaded() const override;
 
-    double coverLuma() const override;
+    double coverCentricLuma() const override;
+    double coverMidringLuma() const override;
+    double coverBordersLuma() const override;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position) override;

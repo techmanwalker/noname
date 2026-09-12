@@ -16,7 +16,8 @@
 
 #include <atomic>
 #include <memory>
-#include <qloggingcategory.h>
+
+Q_LOGGING_CATEGORY(l_playerpresenter, "noname.playerpresenter")
 
 // Private constructor
 PlayerPresenterLI::PlayerPresenterLI(
@@ -65,13 +66,52 @@ quint8  PlayerPresenterLI::volume()        const { return playing->current_volum
 bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loaded();             }
 
 double
-PlayerPresenterLI::coverLuma() const
+PlayerPresenterLI::coverCentricLuma() const
 {
     const QUrl source = playing->current_track().source;
 
     const CoverRef ref(source, 256);
     const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
-    return covers::live::percentile_luminance(thumbnail, 80, .25);
+
+    // centric reference
+    double luma = covers::live::percentile_luminance(thumbnail, 70, 0.0, 0.6);
+
+    qCDebug(l_playerpresenter) << "cover centric luma: " << luma;
+
+    return luma;
+}
+
+double
+PlayerPresenterLI::coverMidringLuma() const
+{
+    const QUrl source = playing->current_track().source;
+
+    const CoverRef ref(source, 256);
+    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
+
+    // middle ring reference
+    double luma = covers::live::percentile_luminance(thumbnail, 60, 0.6, 0.8);
+
+    qCDebug(l_playerpresenter) << "cover midring luma: " << luma;
+
+    return luma;
+}
+
+double
+PlayerPresenterLI::coverBordersLuma() const
+{
+    // todo: to calculate all lumas in a single step later
+    const QUrl source = playing->current_track().source;
+
+    const CoverRef ref(source, 256);
+    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
+
+    // borders reference
+    double luma = covers::live::percentile_luminance(thumbnail, 80, 0.8, 1.0);
+
+    qCDebug(l_playerpresenter) << "cover borders luma: " << luma;
+
+    return luma;
 }
 
 PlayerPresenterLI::PlaybackState

@@ -7,6 +7,7 @@ import Player.App
 import Player.Browser
 import Player.Fullscreen
 import Player.PlayerPresenter
+import Player.Primitives
 
 T.ApplicationWindow {
     id: root
@@ -26,6 +27,14 @@ T.ApplicationWindow {
         PlayerPresenter.saveVolume();
     }
 
+    Label {
+        text: PlayerPresenter.coverMidringLuma
+    }
+
+    Label {
+        text: PlayerPresenter.coverBordersLuma
+    }
+
     Background {
         source: activeView.currentIndex === 1 ? PlayerPresenter.cover : ""
         anchors.fill: parent
@@ -33,7 +42,7 @@ T.ApplicationWindow {
         maximumWidth: Screen.width
         maximumHeight: Screen.height
 
-        contentLightness: PlayerPresenter.coverLuma /* from 0 to 1 */
+        contentLightness: PlayerPresenter.coverCentricLuma /* from 0 to 1 */
 
         // Math.max(1, root.width) prevents zero-division errors during
         // the brief moment when the window is still being constructed
