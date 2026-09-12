@@ -6,6 +6,12 @@
 
 namespace covers::live {
 
+struct cover_luma {
+    double centric_luma = 0.5;
+    double midring_luma = 0.5;
+    double borders_luma = 0.5;
+};
+
 // Pulls the embedded cover (if any) out of an already-open TagLib file.
 QImage extract_cover (TagLib::File *file, size_t crop_and_resize);
 
@@ -30,6 +36,6 @@ double percentile_luminance (const QImage &cover, int percentile,
 // weight between a dark-keyed and light-keyed backdrop target, not
 // something to threshold to a bool — the model's own borderline cases
 // (p≈0.5) are exactly where a smooth fade matters most.
-double probability_light (double centric_luma, double borders_luma, double midring_luma);
+double probability_light (const cover_luma &lumas);
 
 }
