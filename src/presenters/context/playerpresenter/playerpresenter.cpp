@@ -39,6 +39,9 @@ PlayerPresenterLI::PlayerPresenterLI(
     connect(this, &PlayerPresenterLI::sliderPressedChanged,
             this, &PlayerPresenterLI::handleSliderPressedChanged);
 
+    connect(this, &PlayerPresenterLI::coverChanged,
+            this, &PlayerPresenterLI::recompute_lumas);
+
     // load volume from conf file
     const auto lines = cm->read_lines(configuration::conf_file_type::volume);
 
@@ -65,72 +68,42 @@ quint64 PlayerPresenterLI::position_ms()   const { return playing->current_posit
 quint8  PlayerPresenterLI::volume()        const { return playing->current_volume();               }
 bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loaded();             }
 
-double
-PlayerPresenterLI::coverCentricLuma() const
-{
-    const QUrl source = playing->current_track().source;
-
-    const CoverRef ref(source, 256);
-    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
-
-    // centric reference
-    double luma = covers::live::percentile_luminance(thumbnail, 70, 0.0, 0.6);
-
-    qCDebug(l_playerpresenter) << "cover centric luma: " << luma;
-
-    return luma;
-}
-
-double
-PlayerPresenterLI::coverMidringLuma() const
-{
-    const QUrl source = playing->current_track().source;
-
-    const CoverRef ref(source, 256);
-    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
-
-    // middle ring reference
-    double luma = covers::live::percentile_luminance(thumbnail, 60, 0.6, 0.8);
-
-    qCDebug(l_playerpresenter) << "cover midring luma: " << luma;
-
-    return luma;
-}
-
-double
-PlayerPresenterLI::coverBordersLuma() const
-{
-    // todo: to calculate all lumas in a single step later
-    const QUrl source = playing->current_track().source;
-
-    const CoverRef ref(source, 256);
-    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
-
-    // borders reference
-    double luma = covers::live::percentile_luminance(thumbnail, 80, 0.8, 1.0);
-
-    qCDebug(l_playerpresenter) << "cover borders luma: " << luma;
-
-    return luma;
-}
+double PlayerPresenterLI::coverCentricLuma() const { return m_cover_lumas.centric_luma; }
+double PlayerPresenterLI::coverMidringLuma() const { return m_cover_lumas.midring_luma; }
+double PlayerPresenterLI::coverBordersLuma() const { return m_cover_lumas.centric_luma; }
 
 double
 PlayerPresenterLI::coverLightProbability() const
 {
-    // Deliberately reuses the three existing getters rather than
-    // re-fetching/re-slicing the thumbnail a fourth time — see the "todo"
-    // already sitting in coverBordersLuma() about consolidating these into
-    // one fetch. That's more relevant now with a 4th consumer, still your
-    // call on timing.
-    double p = covers::live::probability_light(
-        coverCentricLuma(),
-        coverBordersLuma(),
-        coverMidringLuma()
-    );
+    return m_light_cover_probability;
+}
 
-    qCDebug(l_playerpresenter) << "prbability of being a light cover: " << p;
+void
+PlayerPresenterLI::recompute_lumas()
+{
+    const QUrl source = playing->current_track().source;
 
-    return p;
+    const CoverRef ref(source, 256);
+    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
+
+    auto lumas = covers::live::cover_luma {
+        covers::live::percentile_luminance(thumbnail, 70, 0.0, 0.6),
+        covers::live::percentile_luminance(thumbnail, 60, 0.6, 0.8),
+        covers::live::percentile_luminance(thumbnail, 80, 0.8, 1.0)
+    };
+
+    double light_cover_probability = covers::live::probability_light(lumas);
+
+    qCDebug(l_playerpresenter) << "cover centric luma: " << lumas.centric_luma;
+    qCDebug(l_playerpresenter) << "cover midring luma: " << lumas.midring_luma;
+    qCDebug(l_playerpresenter) << "cover borders luma: " << lumas.borders_luma;
+
+    qCDebug(l_playerpresenter) << "prbability of being a light cover: " << light_cover_probability;
+
+    m_cover_lumas = std::move(lumas);
+    m_light_cover_probability = light_cover_probability;
+
+    emit lumasChanged();
 }
 
 PlayerPresenterLI::PlaybackState

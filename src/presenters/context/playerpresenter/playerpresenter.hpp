@@ -5,6 +5,8 @@
 #include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
 
+#include "coverextract.hpp"
+
 #include <QLoggingCategory>
 #include <QObject>
 #include <QTimer>
@@ -111,6 +113,7 @@ signals:
     void playbackStateChanged();
     void mediaLoadedChanged();
     void sliderPressedChanged();
+    void lumasChanged();
 
 public slots:
     // Formally expose as a metadata block receiver
@@ -118,6 +121,7 @@ public slots:
     void handlePlaybackStateChanged();
     void handleSliderPressedChanged(); // diff between seek and playback state change
     void gate_poll_timer();
+    void recompute_lumas();
 
 private:
     std::shared_ptr<audio_engine> playing; // controller
@@ -128,4 +132,7 @@ private:
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 
     std::atomic_bool m_slider_pressed {false};
+
+    covers::live::cover_luma m_cover_lumas;
+    double m_light_cover_probability = 0.5;
 };

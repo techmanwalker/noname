@@ -39,11 +39,11 @@ public:
 
     Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
 
-    Q_PROPERTY(double coverCentricLuma READ coverCentricLuma NOTIFY coverChanged)
-    Q_PROPERTY(double coverMidringLuma READ coverMidringLuma NOTIFY coverChanged)
-    Q_PROPERTY(double coverBordersLuma READ coverBordersLuma NOTIFY coverChanged)
+    Q_PROPERTY(double coverCentricLuma READ coverCentricLuma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverMidringLuma READ coverMidringLuma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverBordersLuma READ coverBordersLuma NOTIFY lumasChanged)
 
-    Q_PROPERTY(double coverLightProbability READ coverLightProbability NOTIFY coverChanged)
+    Q_PROPERTY(double coverLightProbability READ coverLightProbability NOTIFY lumasChanged)
 
     explicit PlayerPresenterProxy(QObject *parent = nullptr)
         : QObject(parent),
@@ -58,6 +58,7 @@ public:
             connect(concrete, SIGNAL(artistChanged()),        this, SIGNAL(artistChanged()));
             connect(concrete, SIGNAL(albumChanged()),         this, SIGNAL(albumChanged()));
             connect(concrete, SIGNAL(coverChanged()),         this, SIGNAL(coverChanged()));
+            connect(concrete, SIGNAL(lumasChanged()),         this, SIGNAL(lumasChanged()));
             connect(concrete, SIGNAL(durationChanged()),      this, SIGNAL(durationChanged()));
             connect(concrete, SIGNAL(positionChanged()),      this, SIGNAL(positionChanged()));
             connect(concrete, SIGNAL(volumeChanged()),        this, SIGNAL(volumeChanged()));
@@ -123,6 +124,7 @@ signals:
     void volumeChanged();
     void playbackStateChanged();
     void mediaLoadedChanged();
+    void lumasChanged();
 
 private:
     std::shared_ptr<PlayerPresenter> m_presenter;

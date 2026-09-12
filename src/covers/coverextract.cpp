@@ -142,11 +142,11 @@ constexpr double kBias          = -4.75136611;
 } // anonymous
 
 double
-probability_light (double centric_luma, double borders_luma, double midring_luma)
+probability_light (const cover_luma &lumas)
 {
-    const double z = kWeightCentric * centric_luma
-                    + kWeightBorders * borders_luma
-                    + kWeightMidring * midring_luma
+    const double z = kWeightCentric * lumas.centric_luma
+                    + kWeightBorders * lumas.borders_luma
+                    + kWeightMidring * lumas.midring_luma
                     + kBias;
     return 1.0 / (1.0 + std::exp(-z));
 }
