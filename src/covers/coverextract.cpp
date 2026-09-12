@@ -52,16 +52,22 @@ extract_cover (TagLib::File *file, size_t crop_and_resize)
     return cover;
 }
 
+// after
 double
-percentile_luminance (const QImage &cover, int percentile, double center_inset)
+percentile_luminance (const QImage &cover, int percentile,
+                       double ring_crop_begin, double ring_crop_end)
 {
     if (cover.isNull() || cover.width() <= 0 || cover.height() <= 0) {
         return 0.0;
     }
 
     const int p = std::clamp(percentile, 0, 100);
-    // clamped below 0.5 so there's always at least a sliver of image left
-    const double inset = std::clamp(center_inset, 0.0, 0.49);
+
+    const double begin = std::clamp(ring_crop_begin, 0.0, 1.0);
+    const double end   = std::clamp(ring_crop_end,   0.0, 1.0);
+    if (begin >= end) {
+        return 0.0; // empty ring
+    }
 
     // Cover thumbnails are treated as opaque; Format_RGB32 gives a known,
     // tightly-packed 0xffRRGGBB layout we can walk with a raw pointer.
@@ -72,17 +78,37 @@ percentile_luminance (const QImage &cover, int percentile, double center_inset)
     const int full_w = rgb.width();
     const int full_h = rgb.height();
 
-    const int x0 = static_cast<int>(full_w * inset);
-    const int y0 = static_cast<int>(full_h * inset);
+    // Bounding box of the ring's *outer* edge only — nothing past `end`
+    // could ever pass the per-pixel test below, so there's no reason to
+    // even visit it. Same formula the old center_inset crop used.
+    const double outer_inset = (1.0 - end) / 2.0;
+    const int x0 = static_cast<int>(full_w * outer_inset);
+    const int y0 = static_cast<int>(full_h * outer_inset);
     const int w  = std::max(1, full_w - 2 * x0);
     const int h  = std::max(1, full_h - 2 * y0);
+
+    const double half_w = full_w / 2.0;
+    const double half_h = full_h / 2.0;
+    const double inv_half_w = half_w > 0.0 ? 1.0 / half_w : 0.0;
+    const double inv_half_h = half_h > 0.0 ? 1.0 / half_h : 0.0;
 
     std::vector<double> lightness;
     lightness.reserve(static_cast<size_t>(w) * static_cast<size_t>(h));
 
     for (int y = y0; y < y0 + h; ++y) {
         const auto *row = reinterpret_cast<const QRgb *>(rgb.constScanLine(y));
+        const double ny = std::abs(y - half_h) * inv_half_h; // hoisted out of the x loop
         for (int x = x0; x < x0 + w; ++x) {
+            const double nx = std::abs(x - half_w) * inv_half_w;
+            const double t  = std::max(nx, ny);
+
+            // half-open [begin, end) — except end == 1 must still keep the
+            // literal outer-edge pixels, or a "borders" ring would exclude
+            // its own border.
+            if (t < begin || (end < 1.0 && t >= end)) {
+                continue;
+            }
+
             const QRgb px = row[x];
             const double r = decode::srgb_to_linear(static_cast<uint8_t>(qRed(px)));
             const double g = decode::srgb_to_linear(static_cast<uint8_t>(qGreen(px)));
