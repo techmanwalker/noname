@@ -27,12 +27,18 @@ T.ApplicationWindow {
         PlayerPresenter.saveVolume();
     }
 
-    Label {
-        text: PlayerPresenter.coverMidringLuma
-    }
+    Column {
+        Label {
+            text: PlayerPresenter.coverMidringLuma
+        }
 
-    Label {
-        text: PlayerPresenter.coverBordersLuma
+        Label {
+            text: PlayerPresenter.coverBordersLuma
+        }
+
+        Label {
+            text: PlayerPresenter.coverLightProbability
+        }
     }
 
     Background {

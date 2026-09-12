@@ -114,6 +114,25 @@ PlayerPresenterLI::coverBordersLuma() const
     return luma;
 }
 
+double
+PlayerPresenterLI::coverLightProbability() const
+{
+    // Deliberately reuses the three existing getters rather than
+    // re-fetching/re-slicing the thumbnail a fourth time — see the "todo"
+    // already sitting in coverBordersLuma() about consolidating these into
+    // one fetch. That's more relevant now with a 4th consumer, still your
+    // call on timing.
+    double p = covers::live::probability_light(
+        coverCentricLuma(),
+        coverBordersLuma(),
+        coverMidringLuma()
+    );
+
+    qCDebug(l_playerpresenter) << "prbability of being a light cover: " << p;
+
+    return p;
+}
+
 PlayerPresenterLI::PlaybackState
 PlayerPresenterLI::playbackState() const
 {

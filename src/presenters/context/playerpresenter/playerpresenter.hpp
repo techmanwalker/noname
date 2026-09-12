@@ -77,6 +77,8 @@ public:
     double coverMidringLuma() const override;
     double coverBordersLuma() const override;
 
+    double coverLightProbability() const override;
+
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position) override;
     void setVolume (quint8 volume) override;
