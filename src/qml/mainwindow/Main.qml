@@ -28,6 +28,9 @@ T.ApplicationWindow {
     }
 
     Column {
+        // just so the values pop in console
+        
+        visible: false 
         Label {
             text: PlayerPresenter.coverMidringLuma
         }
