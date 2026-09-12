@@ -43,6 +43,8 @@ public:
     Q_PROPERTY(double coverMidringLuma READ coverMidringLuma NOTIFY coverChanged)
     Q_PROPERTY(double coverBordersLuma READ coverBordersLuma NOTIFY coverChanged)
 
+    Q_PROPERTY(double coverLightProbability READ coverLightProbability NOTIFY coverChanged)
+
     explicit PlayerPresenterProxy(QObject *parent = nullptr)
         : QObject(parent),
           m_presenter(s_injectedPresenter) // Copies shared_ptr, incrementing ref count
@@ -73,9 +75,11 @@ public:
     QString album()            const { return m_presenter ?  m_presenter->album()            : QString(); }
     QUrl    cover()            const { return m_presenter ?  m_presenter->cover()            : QUrl();    }
 
-    double  coverCentricLuma() const { return m_presenter ?  m_presenter->coverCentricLuma() : 0.5;       }
-    double  coverMidringLuma() const { return m_presenter ?  m_presenter->coverMidringLuma() : 0.5;       }
-    double  coverBordersLuma() const { return m_presenter ?  m_presenter->coverBordersLuma() : 0.5;       }
+    double coverCentricLuma() const { return m_presenter ?  m_presenter->coverCentricLuma() : 0.5;       }
+    double coverMidringLuma() const { return m_presenter ?  m_presenter->coverMidringLuma() : 0.5;       }
+    double coverBordersLuma() const { return m_presenter ?  m_presenter->coverBordersLuma() : 0.5;       }
+
+    double coverLightProbability() const { return m_presenter ? m_presenter->coverLightProbability() : 0.0; }
 
     quint64 duration_ms()      const { return m_presenter ?  m_presenter->duration_ms()      : 0;         }
     quint64 position_ms()      const { return m_presenter ?  m_presenter->position_ms()      : 0;         }

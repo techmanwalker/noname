@@ -23,4 +23,13 @@ QImage extract_cover (TagLib::File *file, size_t crop_and_resize);
 double percentile_luminance (const QImage &cover, int percentile,
                               double ring_crop_begin = 0.0, double ring_crop_end = 1.0);
 
+// P(this cover wants a light-keyed background | its three ring lumas),
+// fit offline (logistic regression) against a hand-labeled
+// centric/midring/borders survey — see /areas/noname-background-darkener
+// notes. Returns a probability in [0,1]; treat it as a continuous blend
+// weight between a dark-keyed and light-keyed backdrop target, not
+// something to threshold to a bool — the model's own borderline cases
+// (p≈0.5) are exactly where a smooth fade matters most.
+double probability_light (double centric_luma, double borders_luma, double midring_luma);
+
 }
