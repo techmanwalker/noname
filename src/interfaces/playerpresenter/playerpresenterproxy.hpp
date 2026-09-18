@@ -8,6 +8,7 @@
 #include <QtQmlIntegration>
 
 #include <memory>
+#include <qtmetamacros.h>
 
 class PlayerPresenterProxy : public QObject
 {
@@ -39,11 +40,13 @@ public:
 
     Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
 
+    Q_PROPERTY(double coverNuclearLuma READ coverNuclearLuma NOTIFY lumasChanged)
     Q_PROPERTY(double coverCentricLuma READ coverCentricLuma NOTIFY lumasChanged)
     Q_PROPERTY(double coverMidringLuma READ coverMidringLuma NOTIFY lumasChanged)
     Q_PROPERTY(double coverBordersLuma READ coverBordersLuma NOTIFY lumasChanged)
 
     Q_PROPERTY(double coverLightProbability READ coverLightProbability NOTIFY lumasChanged)
+    Q_PROPERTY(double coverPonderedLuma     READ coverPonderedLuma     NOTIFY lumasChanged)
 
     explicit PlayerPresenterProxy(QObject *parent = nullptr)
         : QObject(parent),
@@ -76,11 +79,13 @@ public:
     QString album()            const { return m_presenter ?  m_presenter->album()            : QString(); }
     QUrl    cover()            const { return m_presenter ?  m_presenter->cover()            : QUrl();    }
 
+    double coverNuclearLuma() const { return m_presenter ?  m_presenter->coverNuclearLuma() : 0.5;       }
     double coverCentricLuma() const { return m_presenter ?  m_presenter->coverCentricLuma() : 0.5;       }
     double coverMidringLuma() const { return m_presenter ?  m_presenter->coverMidringLuma() : 0.5;       }
     double coverBordersLuma() const { return m_presenter ?  m_presenter->coverBordersLuma() : 0.5;       }
 
     double coverLightProbability() const { return m_presenter ? m_presenter->coverLightProbability() : 0.0; }
+    double coverPonderedLuma() const     { return m_presenter ? m_presenter->coverPonderedLuma()     : 0.0; }
 
     quint64 duration_ms()      const { return m_presenter ?  m_presenter->duration_ms()      : 0;         }
     quint64 position_ms()      const { return m_presenter ?  m_presenter->position_ms()      : 0;         }

@@ -135,20 +135,51 @@ namespace {
 // hand-labeled ring-luma survey, not hand-tuned like the older curve stops.
 // Refit and replace all four wholesale if the survey grows; don't
 // hand-edit any one of them individually, they only mean anything together.
-constexpr double kWeightCentric = 1.1631627190035592;
-constexpr double kWeightBorders = 2.0557630549973074;
-constexpr double kWeightMidring = 2.8449702280884748;
-constexpr double kBias          = -4.75136611;
+constexpr double kWeightNuclear = 0.06116143501430516;
+constexpr double kWeightCentric = 2.3100586053431216;
+constexpr double kWeightBorders = 2.791788874425741;
+constexpr double kWeightMidring = 2.269232009074724;
+constexpr double kBias          = -5.945269956483219;
 } // anonymous
 
 double
 probability_light (const cover_luma &lumas)
 {
-    const double z = kWeightCentric * lumas.centric_luma
-                    + kWeightBorders * lumas.borders_luma
-                    + kWeightMidring * lumas.midring_luma
+    const double z =  kWeightNuclear * lumas.nuclear_luma.value
+                    + kWeightCentric * lumas.centric_luma.value
+                    + kWeightBorders * lumas.borders_luma.value
+                    + kWeightMidring * lumas.midring_luma.value
                     + kBias;
     return 1.0 / (1.0 + std::exp(-z));
+}
+
+double
+pondered_luma (const cover_luma &lumas)
+{
+    // list all the ring lumas here since reflection still does not exist
+    const luma *rings[] = { &lumas.nuclear_luma, &lumas.centric_luma,
+                             &lumas.midring_luma, &lumas.borders_luma };
+
+    double weighted_sum = 0.0;
+    double total_weight = 0.0;
+
+    for (const luma *ring : rings) {
+        const double begin = std::clamp(ring->ring_crop_begin, 0.0, 1.0);
+        const double end   = std::clamp(ring->ring_crop_end,   0.0, 1.0);
+        // See the header comment: area fraction of a Chebyshev ring is
+        // exactly end^2 - begin^2. max(0, ...) so a malformed ring
+        // (begin >= end) contributes zero weight instead of a negative one.
+        const double weight = std::max(0.0, end * end - begin * begin);
+
+        weighted_sum += ring->value * weight;
+        total_weight += weight;
+    }
+
+    if (total_weight <= 0.0) {
+        return 0.5; // every ring contributed zero area -- neutral over undefined
+    }
+
+    return std::clamp(weighted_sum / total_weight, 0.0, 1.0);
 }
 
 }
