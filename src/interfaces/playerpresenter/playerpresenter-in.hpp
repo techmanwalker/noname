@@ -34,11 +34,13 @@ public:
     // Percentile OkLab lightness of the current cover, in [0,1]. Backs the
     // background darkener's contrast target — see PlayerPresenterLI for
     // how/when it's (re)computed.
+    virtual double coverNuclearLuma() const = 0;
     virtual double coverCentricLuma() const = 0;
     virtual double coverMidringLuma() const = 0;
     virtual double coverBordersLuma() const = 0;
 
     virtual double coverLightProbability() const = 0;
+    virtual double coverPonderedLuma() const = 0;
 
     virtual void setPosition_ms(quint64 position) = 0;
     virtual void setVolume (quint8 volume) = 0;

@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <memory>
+#include <qloggingcategory.h>
 
 Q_LOGGING_CATEGORY(l_playerpresenter, "noname.playerpresenter")
 
@@ -68,14 +69,21 @@ quint64 PlayerPresenterLI::position_ms()   const { return playing->current_posit
 quint8  PlayerPresenterLI::volume()        const { return playing->current_volume();               }
 bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loaded();             }
 
-double PlayerPresenterLI::coverCentricLuma() const { return m_cover_lumas.centric_luma; }
-double PlayerPresenterLI::coverMidringLuma() const { return m_cover_lumas.midring_luma; }
-double PlayerPresenterLI::coverBordersLuma() const { return m_cover_lumas.centric_luma; }
+double PlayerPresenterLI::coverNuclearLuma() const { return m_cover_lumas.nuclear_luma.value; }
+double PlayerPresenterLI::coverCentricLuma() const { return m_cover_lumas.centric_luma.value; }
+double PlayerPresenterLI::coverMidringLuma() const { return m_cover_lumas.midring_luma.value; }
+double PlayerPresenterLI::coverBordersLuma() const { return m_cover_lumas.centric_luma.value; }
 
 double
 PlayerPresenterLI::coverLightProbability() const
 {
     return m_light_cover_probability;
+}
+
+double
+PlayerPresenterLI::coverPonderedLuma() const
+{
+    return m_cover_pondered_luma;
 }
 
 void
@@ -86,22 +94,46 @@ PlayerPresenterLI::recompute_lumas()
     const CoverRef ref(source, 256);
     const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
 
-    auto lumas = covers::live::cover_luma {
-        covers::live::percentile_luminance(thumbnail, 70, 0.0, 0.6),
-        covers::live::percentile_luminance(thumbnail, 60, 0.6, 0.8),
-        covers::live::percentile_luminance(thumbnail, 80, 0.8, 1.0)
+    covers::live::cover_luma lumas {
+        covers::live::luma (
+            covers::live::percentile_luminance(thumbnail, 65, 0.00, 0.15),
+            0.00,
+            0.15
+        ),
+
+        covers::live::luma (
+            covers::live::percentile_luminance(thumbnail, 60, 0.15, 0.60),
+            0.15,
+            0.60
+        ),
+
+        covers::live::luma (
+            covers::live::percentile_luminance(thumbnail, 60, 0.60, 0.80),
+            0.60,
+            0.80
+        ),
+
+        covers::live::luma (
+            covers::live::percentile_luminance(thumbnail, 70, 0.80, 1.00),
+            0.80,
+            1.00
+        )
     };
 
     double light_cover_probability = covers::live::probability_light(lumas);
+    double cover_pondered_luma = covers::live::pondered_luma(lumas);
 
-    qCDebug(l_playerpresenter) << "cover centric luma: " << lumas.centric_luma;
-    qCDebug(l_playerpresenter) << "cover midring luma: " << lumas.midring_luma;
-    qCDebug(l_playerpresenter) << "cover borders luma: " << lumas.borders_luma;
+    qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(lumas.nuclear_luma.value, 'f', 32);
+    qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(lumas.centric_luma.value, 'f', 32);
+    qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(lumas.midring_luma.value, 'f', 32);
+    qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(lumas.borders_luma.value, 'f', 32);
 
     qCDebug(l_playerpresenter) << "prbability of being a light cover: " << light_cover_probability;
+    qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', 32);
 
     m_cover_lumas = std::move(lumas);
     m_light_cover_probability = light_cover_probability;
+    m_cover_pondered_luma = cover_pondered_luma;
 
     emit lumasChanged();
 }
