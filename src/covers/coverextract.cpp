@@ -130,29 +130,6 @@ percentile_luminance (const QImage &cover, int percentile,
     return std::clamp(lightness[static_cast<size_t>(rank)], 0.0, 1.0);
 }
 
-namespace {
-// Fit offline (scikit-learn LogisticRegression) against the initial
-// hand-labeled ring-luma survey, not hand-tuned like the older curve stops.
-// Refit and replace all four wholesale if the survey grows; don't
-// hand-edit any one of them individually, they only mean anything together.
-constexpr double kWeightNuclear = 0.06116143501430516;
-constexpr double kWeightCentric = 2.3100586053431216;
-constexpr double kWeightBorders = 2.791788874425741;
-constexpr double kWeightMidring = 2.269232009074724;
-constexpr double kBias          = -5.945269956483219;
-} // anonymous
-
-double
-probability_light (const cover_luma &lumas)
-{
-    const double z =  kWeightNuclear * lumas.nuclear_luma.value
-                    + kWeightCentric * lumas.centric_luma.value
-                    + kWeightBorders * lumas.borders_luma.value
-                    + kWeightMidring * lumas.midring_luma.value
-                    + kBias;
-    return 1.0 / (1.0 + std::exp(-z));
-}
-
 double
 pondered_luma (const cover_luma &lumas)
 {
