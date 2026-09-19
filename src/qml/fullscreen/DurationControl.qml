@@ -12,8 +12,8 @@ RowLayout {
 
     property bool hideTimestamps: false
 
-    property color accentColor: "white"
-    property color backgroundColor: "#80ffffff"
+    property color accentColor: Theme.dark.slider.accentColor
+    property color backgroundColor: Theme.dark.slider.backgroundColor
 
     // Helper function to format seconds as mm:ss
     function formatTime(ms: double): string {

@@ -93,7 +93,7 @@ ColumnLayout {
 
                     text: root.stateModel.title.length > 0 ? root.stateModel.title : root.noTitleText
 
-                    color: "#dfdfdf"
+                    color: Theme.dark.texts.secondaryText
 
                     elide: Text.ElideRight
 
@@ -105,7 +105,7 @@ ColumnLayout {
 
                     text: metadata.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
 
-                    color: "#afafaf"
+                    color: Theme.dark.texts.tertiaryText
 
                     elide: Text.ElideRight
 

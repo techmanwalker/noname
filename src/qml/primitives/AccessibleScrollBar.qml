@@ -2,12 +2,16 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
+import Player.Primitives
+
 ScrollBar {
     id: root
     policy: ScrollBar.AsNeeded
 
     property int barWidth: 4
     property int logicalWidth: barWidth * 8 
+
+    property bool lightMode: false
 
     // Helper property to simplify ternary logic
     readonly property bool isVertical: orientation === Qt.Vertical
@@ -33,7 +37,9 @@ ScrollBar {
         y: root.isVertical ? 0 : (root.height - height) / 2
         
         radius: root.barWidth / 2
-        color:  "#40ffffff"
+        color:  root.lightMode ?
+            Theme.light.scrollbar.backgroundColor :
+            Theme.dark.scrollbar.backgroundColor
     }
 
     // ── Handle (Controller) ─────────────────────────────────
@@ -47,7 +53,9 @@ ScrollBar {
             y: root.isVertical ? 0 : (parent.height - height) / 2
             
             radius: root.barWidth / 2
-            color:  "#ffffff"
+            color:  root.lightMode ?
+                Theme.light.scrollbar.accentColor :
+                Theme.dark.scrollbar.accentColor
             opacity: root.pressed ? 1.0 : 0.7
         }
     }

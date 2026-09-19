@@ -97,15 +97,13 @@ Item {
 
                     stateModel: PlayerPresenter
 
-                    Binding on accentColor {
-                        value: "black"
-                        when: root.lightMode
-                    }
+                    accentColor: root.lightMode ?
+                        Theme.light.slider.accentColor :
+                        Theme.dark.slider.accentColor
 
-                    Binding on backgroundColor {
-                        value: "#80000000"
-                        when: root.lightMode
-                    }
+                    backgroundColor: root.lightMode ?
+                        Theme.light.slider.backgroundColor :
+                        Theme.dark.slider.backgroundColor
                 }
 
                 // Bottom bar: volume | playback | shuffle+repeat
@@ -123,15 +121,13 @@ Item {
 
                         buttonLightMode: root.lightMode
 
-                        Binding on accentColor {
-                            value: "black"
-                            when: root.lightMode
-                        }
+                        accentColor: root.lightMode ?
+                            Theme.light.slider.accentColor :
+                            Theme.dark.slider.accentColor
 
-                        Binding on backgroundColor {
-                            value: "#80000000"
-                            when: root.lightMode
-                        }
+                        backgroundColor: root.lightMode ?
+                            Theme.light.slider.backgroundColor :
+                            Theme.dark.slider.backgroundColor
                     }
 
                     BasicControls {
@@ -238,7 +234,7 @@ Item {
                     font.pointSize: 13
                     font.weight: Font.Medium
 
-                    color: root.lightMode ? "#000" : "#fff"
+                    color: root.lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                 }
             }
 

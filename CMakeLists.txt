@@ -79,7 +79,7 @@ module_sources(LISTINGS_QMLS    "src/qml/listings/*.qml")
 module_sources(MAINWINDOW_QMLS  "src/qml/mainwindow/*.qml")
 
 # otherwise Qt gets grumpy
-set_source_files_properties("src/qml/primitives/MediaTypes.qml"
+set_source_files_properties("src/qml/primitives/Theme.qml"
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 

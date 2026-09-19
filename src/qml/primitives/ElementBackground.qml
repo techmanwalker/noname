@@ -1,5 +1,7 @@
 import QtQuick
 
+import Player.Primitives
+
 Rectangle {
     id: root
 
@@ -13,13 +15,24 @@ Rectangle {
 
     property bool filled: false
 
+    property bool lightMode: false
+
     property real clickedOpacity: filled ? 1 : .7
     property real hoveredOpacity: filled ? 1 : .4
     property real defaultOpacity: filled ? 1 : ((hoverEnabled || clickable)? 0 : .4)
 
-    property color baseColor: filled ? "#dfdfdf" : "#242424"
-    property color hoveredColor: filled ? "#afafaf" : "#242424"
-    property color clickedColor: "#969696"
+    property color baseColor: root.lightMode 
+        ? (filled ? Theme.light.elementbg.baseFilled : Theme.light.elementbg.base)
+        : (filled ? Theme.dark.elementbg.baseFilled : Theme.dark.elementbg.base)
+
+    property color hoveredColor: root.lightMode 
+        ? (filled ? Theme.light.elementbg.hoveredFilled : Theme.light.elementbg.hovered)
+        : (filled ? Theme.dark.elementbg.hoveredFilled : Theme.dark.elementbg.hovered)
+
+    property color clickedColor: root.lightMode 
+        ? Theme.light.elementbg.clicked 
+        : Theme.dark.elementbg.clicked
+
 
     color: baseColor
 

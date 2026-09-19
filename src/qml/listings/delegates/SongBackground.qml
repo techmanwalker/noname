@@ -1,6 +1,7 @@
 import QtQuick
 
 import Player.Effects
+import Player.Primitives
 
 Item {
     id: root
@@ -15,6 +16,8 @@ Item {
     property real inner_rightstop: .8
     property real outer_rightstop: 1
 
+    property bool lightMode: false
+
     Rectangle {
         id: background
         anchors.fill: parent
@@ -26,7 +29,9 @@ Item {
                 name: "playing"
 
                 PropertyChanges {
-                    background.color: ({ r: 200 / 255, g: 200 / 255, b: 200 / 255, a: .08 })
+                    background.color: root.lightMode ?
+                        Theme.light.elementbg.songPlaying :
+                        Theme.dark.elementbg.songPlaying
                 }
 
                 when: root.playing
@@ -36,7 +41,9 @@ Item {
                 name: "selected"
 
                 PropertyChanges {
-                    background.color: ({ r: 160 / 255, g: 160 / 255, b: 160 / 255, a: .3 })
+                    background.color: root.lightMode ?
+                        Theme.light.elementbg.songSelected :
+                        Theme.dark.elementbg.songSelected
                 }
 
                 when: root.selected
@@ -46,7 +53,9 @@ Item {
                 name: "hovered"
 
                 PropertyChanges {
-                    background.color: ({ r: 160 / 255, g: 160 / 255, b: 160 / 255, a: .08 })
+                    background.color: root.lightMode ?
+                        Theme.light.elementbg.songHovered :
+                        Theme.dark.elementbg.songHovered
                 }
 
                 when: root.hovered

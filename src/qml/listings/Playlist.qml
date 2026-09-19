@@ -108,5 +108,7 @@ ListView {
         logicalWidth: root.scrollBarWidth * 3
 
         policy: ScrollBar.AsNeeded
+
+        lightMode: root.lightMode
     }
 }
