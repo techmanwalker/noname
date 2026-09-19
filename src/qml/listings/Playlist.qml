@@ -11,6 +11,8 @@ import Player.PlayQueue
 ListView {
     id: root
 
+    property bool lightMode: false
+
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
     property int scrollBarWidth: 4
@@ -48,6 +50,8 @@ ListView {
         width: root.width - root.rightMargin
 
         height: 80
+
+        lightMode: root.lightMode
 
         title:      model.title
         cover:      model.cover

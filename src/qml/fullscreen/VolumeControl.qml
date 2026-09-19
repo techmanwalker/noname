@@ -11,6 +11,11 @@ RowLayout {
     
     spacing: muteButton.width / 2
 
+    property color accentColor: "white"
+    property color backgroundColor: "#80ffffff"
+
+    property bool buttonLightMode: false
+
     ResizableButton {
         id: muteButton
         icon.name: volumeSlider.value > 0 ? "audio-volume-high" : "audio-volume-muted"
@@ -18,6 +23,8 @@ RowLayout {
         padding: 0
 
         Layout.alignment: Qt.AlignVCenter
+
+        lightMode: root.buttonLightMode
         
         onClicked: {
             // The slider is bound to this value so both backend and GUI
@@ -47,6 +54,9 @@ RowLayout {
         implicitWidth: 0
         
         orientation: Qt.Horizontal
+
+        accentColor: root.accentColor
+        backgroundColor: root.backgroundColor
     }
 
     height: Math.max(muteButton.height, volumeSlider.height)

@@ -10,6 +10,8 @@ Column {
     property string artist
     property string album
 
+    property bool lightMode: false
+
     signal clicked()
 
     TapHandler {
@@ -21,7 +23,7 @@ Column {
         font.weight: Font.DemiBold
         font.pointSize: 20
 
-        color: "white"
+        color: root.lightMode ? "black" : "white"
 
         visible: root.title.length > 0
 
@@ -39,6 +41,11 @@ Column {
 
         width: parent.width
         elide: Text.ElideRight
+
+        Binding on color {
+            value: "black"
+            when: root.lightMode
+        }
     }
 
     Label {
@@ -46,7 +53,10 @@ Column {
 
         visible: root.album.length > 0
 
-        color: "#afafaf"
+        Binding on color {
+            value: "black"
+            when: root.lightMode
+        }
 
         width: parent.width
         elide: Text.ElideRight

@@ -15,6 +15,9 @@ Label {
     readonly property int baseFontSize: 20
     readonly property int baseFontWeight: Font.Medium
 
+    property color highlightedColor: "#80ffffff"
+    property color unhighlightedColor: "white"
+
     property string wrappedText: ""
 
     text: wrappedText
@@ -27,10 +30,7 @@ Label {
         when: root.highlighted
     }
 
-    Binding on color {
-        value: "white"
-        when: root.highlighted
-    }
+    color: root.highlighted ? root.highlightedColor : root.unhighlightedColor
 
     // Breaks are computed once, against the *unhighlighted* font only —
     // never against `highlighted`. Since the highlighted font is strictly

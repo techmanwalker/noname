@@ -24,18 +24,18 @@ Item {
     // Hermite spline. Tune freely.
 
     property var coverBackLumaStops: [
-        Qt.point(0.00, 0.50),
-        Qt.point(0.15, 0.75),
-        Qt.point(0.20, 0.70),
-        Qt.point(0.30, 0.50),
-        Qt.point(0.40, 0.70),
-        Qt.point(0.50, 0.60),
-        Qt.point(0.60, 0.55),
-        Qt.point(0.71, 0.65),
-        Qt.point(0.75, 0.50),
-        Qt.point(0.80, 0.60),
-        Qt.point(0.90, 0.50),
-        Qt.point(1.00, 0.40)
+        Qt.point(0.00, 1),
+        Qt.point(0.15, 1),
+        Qt.point(0.20, 0.8),
+        Qt.point(0.30, 0.72),
+        Qt.point(0.40, 0.7),
+        Qt.point(0.50, 0.72),
+        Qt.point(0.60, 0.74),
+        Qt.point(0.71, 1.3),
+        Qt.point(0.75, 1.6),
+        Qt.point(0.80, 1),
+        Qt.point(0.90, 1.3),
+        Qt.point(1.00, 1)
     ]
 
     // Used verbatim whenever contentLightness is the "unset" sentinel

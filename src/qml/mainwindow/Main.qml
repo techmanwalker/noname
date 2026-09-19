@@ -54,6 +54,7 @@ T.ApplicationWindow {
     }
 
     Background {
+        id: bg
         source: activeView.currentIndex === 1 ? PlayerPresenter.cover : ""
         anchors.fill: parent
 
@@ -87,6 +88,8 @@ T.ApplicationWindow {
             onSwitchView: activeView.currentIndex = 0
 
             parentWindow: root
+
+            lightMode: PlayerPresenter.coverPonderedLuma > 0.64
         }
     }
 

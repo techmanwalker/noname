@@ -12,6 +12,9 @@ RowLayout {
 
     property bool hideTimestamps: false
 
+    property color accentColor: "white"
+    property color backgroundColor: "#80ffffff"
+
     // Helper function to format seconds as mm:ss
     function formatTime(ms: double): string {
         let totalSeconds = Math.floor(ms / 1000)
@@ -29,6 +32,8 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
 
         visible: !root.hideTimestamps
+
+        color: root.accentColor
     }
 
     AccessibleSlider {
@@ -47,6 +52,9 @@ RowLayout {
             }
         }
 
+        accentColor: root.accentColor
+        backgroundColor: root.backgroundColor
+
         Layout.alignment: Qt.AlignVCenter
         Layout.fillWidth: true
     }
@@ -60,5 +68,7 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
 
         visible: !root.hideTimestamps
+
+        color: root.accentColor
     }
 }
