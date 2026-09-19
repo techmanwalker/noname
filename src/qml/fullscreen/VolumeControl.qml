@@ -11,8 +11,8 @@ RowLayout {
     
     spacing: muteButton.width / 2
 
-    property color accentColor: "white"
-    property color backgroundColor: "#80ffffff"
+    property color accentColor: Theme.dark.slider.accentColor
+    property color backgroundColor: Theme.dark.slider.backgroundColor
 
     property bool buttonLightMode: false
 

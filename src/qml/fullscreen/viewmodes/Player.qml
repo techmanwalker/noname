@@ -49,8 +49,8 @@ Item {
 
             onSwitchToPlayerViewRequested: stack.currentIndex = 0
 
-            highlightedColor: root.lightMode ? "black" : "white"
-            unhighlightedColor: root.lightMode ? "#80000000" : "#80ffffff"
+            highlightedColor:   root.lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
+            unhighlightedColor: root.lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
         }
     }
 

@@ -65,5 +65,7 @@ T.ToolButton {
         down: root.down
 
         filled: root.filled
+
+        lightMode: root.lightMode
     }
 }

@@ -27,7 +27,7 @@ T.TextField {
     rightPadding: leftPadding
 
     placeholderText: qsTr("Search…")
-    placeholderTextColor: "#afafaf"
+    placeholderTextColor: Theme.dark.texts.tertiaryText
 
     color: "white"
     selectionColor: control.palette.highlight

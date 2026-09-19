@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Templates as T
 
+import Player.Primitives
+
 T.Slider {
     id: root
     from: 0
@@ -11,8 +13,8 @@ T.Slider {
     property real  trackHeight:        4
     property real  trackOpacity:       1.0
 
-    property color accentColor: "white"
-    property color backgroundColor: "#80ffffff"
+    property color accentColor: Theme.dark.slider.accentColor
+    property color backgroundColor: Theme.dark.slider.backgroundColor
 
     hoverEnabled: true
 

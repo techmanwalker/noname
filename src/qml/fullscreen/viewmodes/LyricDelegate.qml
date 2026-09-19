@@ -15,8 +15,8 @@ Label {
     readonly property int baseFontSize: 20
     readonly property int baseFontWeight: Font.Medium
 
-    property color highlightedColor: "#80ffffff"
-    property color unhighlightedColor: "white"
+    property color highlightedColor: Theme.dark.texts.unhighlightedLyric
+    property color unhighlightedColor: Theme.dark.texts.highlightedLyric
 
     property string wrappedText: ""
 

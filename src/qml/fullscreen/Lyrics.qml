@@ -19,8 +19,8 @@ StackLayout {
     property real headerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
     property real footerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
 
-    property color unhighlightedColor: "#80ffffff"
-    property color highlightedColor: "white"
+    property color unhighlightedColor: Theme.dark.texts.unhighlightedLyric
+    property color highlightedColor: Theme.dark.texts.highlightedLyric
 
     // also enable first and last rows to be centered too
     property bool centerEdgeLines: true

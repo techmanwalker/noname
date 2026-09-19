@@ -54,6 +54,8 @@ Item {
         inner_leftstop:   root.fadePadding               / Math.max(1, root.width)
         inner_rightstop: (root.width - root.fadePadding) / Math.max(1, root.width)
         outer_rightstop:  1
+
+        lightMode: root.lightMode
     }
 
     HoverHandler {
@@ -120,7 +122,8 @@ Item {
 
                 font.pointSize: root.card ? 14 : -1
                 font.weight: Font.Medium
-                color: root.lightMode ? "black" : "#dfdfdf"
+                
+                color: root.lightMode ? Theme.light.texts.secondaryText: Theme.dark.texts.secondaryText
             }
 
             Label {
@@ -136,10 +139,7 @@ Item {
 
                 visible: root.metadata != ""
 
-                Binding on color {
-                    value: "#000"
-                    when: root.lightMode
-                }
+                color: root.lightMode ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
             }
         }
 
@@ -150,10 +150,7 @@ Item {
 
             visible: !root.hideDuration
 
-            Binding on color {
-                value: "black"
-                when: root.lightMode
-            }
+            color: root.lightMode ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
         }
     }
 }
