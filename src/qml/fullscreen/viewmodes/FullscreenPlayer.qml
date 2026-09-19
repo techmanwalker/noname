@@ -12,6 +12,7 @@ Item {
     id: root
 
     required property bool immersive
+    property bool lightMode: false
 
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
@@ -95,6 +96,16 @@ Item {
                     Layout.fillWidth: true
 
                     stateModel: PlayerPresenter
+
+                    Binding on accentColor {
+                        value: "black"
+                        when: root.lightMode
+                    }
+
+                    Binding on backgroundColor {
+                        value: "#80000000"
+                        when: root.lightMode
+                    }
                 }
 
                 // Bottom bar: volume | playback | shuffle+repeat
@@ -109,11 +120,25 @@ Item {
                         width: 100
 
                         stateModel: PlayerPresenter
+
+                        buttonLightMode: root.lightMode
+
+                        Binding on accentColor {
+                            value: "black"
+                            when: root.lightMode
+                        }
+
+                        Binding on backgroundColor {
+                            value: "#80000000"
+                            when: root.lightMode
+                        }
                     }
 
                     BasicControls {
                         id: basicControls
                         anchors.centerIn: parent
+
+                        lightMode: root.lightMode
                     }
 
                     RowLayout {
@@ -123,10 +148,14 @@ Item {
 
                         ShuffleButton {
                             Layout.alignment: Qt.AlignVCenter
+
+                            lightMode: root.lightMode
                         }
 
                         RepeatButton {
                             Layout.alignment: Qt.AlignVCenter
+
+                            lightMode: root.lightMode
                         }
                     }
                 }
@@ -156,6 +185,8 @@ Item {
                 Layout.rightMargin: Layout.leftMargin
 
                 onClicked: root.immersive = !root.immersive
+
+                lightMode: root.lightMode
             }
 
             // _l = "the loader"
@@ -206,6 +237,8 @@ Item {
                     // MediumLabel
                     font.pointSize: 13
                     font.weight: Font.Medium
+
+                    color: root.lightMode ? "#000" : "#fff"
                 }
             }
 
@@ -223,6 +256,8 @@ Item {
 
                     clip: true
                     reuseItems: true // tons of songs moving
+
+                    lightMode: root.lightMode
 
                     onSongClicked: (song) => {
                         PlayQueue.playhead = PlayQueue.find_by_source(song.source)

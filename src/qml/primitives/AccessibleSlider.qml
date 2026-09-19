@@ -11,6 +11,9 @@ T.Slider {
     property real  trackHeight:        4
     property real  trackOpacity:       1.0
 
+    property color accentColor: "white"
+    property color backgroundColor: "#80ffffff"
+
     hoverEnabled: true
 
     onValueChanged: {
@@ -41,7 +44,7 @@ T.Slider {
         Rectangle {
             anchors.fill: parent
             radius:       height / 2
-            color:        "#80ffffff"
+            color:        root.backgroundColor
             opacity:      root.trackOpacity
         }
 
@@ -50,7 +53,7 @@ T.Slider {
             width:  root.visualPosition * parent.width
             height: parent.height
             radius: height / 2
-            color:  "#ffffff"
+            color:  root.accentColor
             opacity: root.trackOpacity
         }
     }
@@ -62,7 +65,7 @@ T.Slider {
         width:  root.trackHeight * 3
         height: width
         radius: width / 2
-        color:  "#ffffff"
+        color:  root.accentColor
         opacity: root.hovered ? 1 : 0
 
         Behavior on opacity {

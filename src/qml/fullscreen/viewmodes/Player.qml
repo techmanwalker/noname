@@ -19,6 +19,8 @@ Item {
     readonly property alias coverGlobalX: fsp.coverGlobalX
     readonly property alias coverSize: fsp.coverSize
 
+    property bool lightMode: false
+
     StackLayout {
         id: stack
 
@@ -36,6 +38,8 @@ Item {
             }
 
             onSwitchToLyricsViewRequested: stack.currentIndex = 1
+
+            lightMode: root.lightMode
         }
 
         // just so I can see them
@@ -44,6 +48,9 @@ Item {
             highlightedRowIndex: LyricsManifest.highlighted.row
 
             onSwitchToPlayerViewRequested: stack.currentIndex = 0
+
+            highlightedColor: root.lightMode ? "black" : "white"
+            unhighlightedColor: root.lightMode ? "#80000000" : "#80ffffff"
         }
     }
 
@@ -92,6 +99,8 @@ Item {
             window: root.parentWindow
 
             anchors.verticalCenter: parent.verticalCenter
+
+            lightMode: root.lightMode
         }
         
         ResizableButton {
@@ -105,6 +114,8 @@ Item {
             padding: 20
 
             magnify: true
+
+            lightMode: root.lightMode
 
             onClicked: {
                 // if it is in the lyrics view

@@ -23,6 +23,8 @@ T.ToolButton {
 
     property bool filled: false // negative space
 
+    property bool lightMode: false
+
     spacing: magnify ? 12 : 8
 
     hoverEnabled: true
@@ -31,6 +33,7 @@ T.ToolButton {
     
     icon.width: root.iconSize
     icon.height: root.iconSize
+    icon.color: root.filled ? "black" : (root.lightMode ? "black" : "white")
 
     text: root.text
 
@@ -42,10 +45,10 @@ T.ToolButton {
         display: root.display
 
         icon: root.icon
-        defaultIconColor: root.visualFocus ? root.palette.highlight : root.palette.buttonText
+        // defaultIconColor: root.visualFocus ? root.palette.highlight : root.palette.buttonText
         text: root.text
         font: root.font
-        color: root.filled ? "black" : defaultIconColor
+        color: root.icon.color
     }
     
     font.weight: magnify ? Font.Light /*Yagami*/ : Font.Medium

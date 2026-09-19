@@ -7,6 +7,7 @@ Item {
     id: root
 
     property bool card: false
+    property bool lightMode: false
 
     property string title: "Untitled song"
     
@@ -119,7 +120,7 @@ Item {
 
                 font.pointSize: root.card ? 14 : -1
                 font.weight: Font.Medium
-                color: "#dfdfdf"
+                color: root.lightMode ? "black" : "#dfdfdf"
             }
 
             Label {
@@ -134,6 +135,11 @@ Item {
                 wrapMode: Text.WordWrap
 
                 visible: root.metadata != ""
+
+                Binding on color {
+                    value: "#000"
+                    when: root.lightMode
+                }
             }
         }
 
@@ -143,6 +149,11 @@ Item {
             text: root.duration
 
             visible: !root.hideDuration
+
+            Binding on color {
+                value: "black"
+                when: root.lightMode
+            }
         }
     }
 }

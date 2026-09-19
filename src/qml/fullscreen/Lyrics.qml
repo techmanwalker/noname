@@ -19,6 +19,9 @@ StackLayout {
     property real headerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
     property real footerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
 
+    property color unhighlightedColor: "#80ffffff"
+    property color highlightedColor: "white"
+
     // also enable first and last rows to be centered too
     property bool centerEdgeLines: true
 
@@ -36,6 +39,8 @@ StackLayout {
 
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment:   Text.AlignVCenter
+
+        color: root.unhighlightedColor
 
         TapHandler {
             onTapped: root.switchToPlayerViewRequested()
@@ -134,6 +139,9 @@ StackLayout {
 
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
+
+                unhighlightedColor: root.unhighlightedColor
+                highlightedColor: root.highlightedColor
 
                 highlighted: root.highlightedRowIndex === delegateRoot.index
             }
