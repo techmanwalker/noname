@@ -47,10 +47,6 @@ T.ApplicationWindow {
         Label {
             text: PlayerPresenter.coverBordersLuma
         }
-
-        Label {
-            text: PlayerPresenter.coverLightProbability
-        }
     }
 
     Background {

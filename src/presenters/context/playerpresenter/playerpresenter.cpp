@@ -75,12 +75,6 @@ double PlayerPresenterLI::coverMidringLuma() const { return m_cover_lumas.midrin
 double PlayerPresenterLI::coverBordersLuma() const { return m_cover_lumas.centric_luma.value; }
 
 double
-PlayerPresenterLI::coverLightProbability() const
-{
-    return m_light_cover_probability;
-}
-
-double
 PlayerPresenterLI::coverPonderedLuma() const
 {
     return m_cover_pondered_luma;
@@ -120,7 +114,6 @@ PlayerPresenterLI::recompute_lumas()
         )
     };
 
-    double light_cover_probability = covers::live::probability_light(lumas);
     double cover_pondered_luma = covers::live::pondered_luma(lumas);
 
     qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(lumas.nuclear_luma.value, 'f', 32);
@@ -128,11 +121,9 @@ PlayerPresenterLI::recompute_lumas()
     qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(lumas.midring_luma.value, 'f', 32);
     qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(lumas.borders_luma.value, 'f', 32);
 
-    qCDebug(l_playerpresenter) << "prbability of being a light cover: " << light_cover_probability;
     qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', 32);
 
     m_cover_lumas = std::move(lumas);
-    m_light_cover_probability = light_cover_probability;
     m_cover_pondered_luma = cover_pondered_luma;
 
     emit lumasChanged();

@@ -39,7 +39,6 @@ public:
     virtual double coverMidringLuma() const = 0;
     virtual double coverBordersLuma() const = 0;
 
-    virtual double coverLightProbability() const = 0;
     virtual double coverPonderedLuma() const = 0;
 
     virtual void setPosition_ms(quint64 position) = 0;

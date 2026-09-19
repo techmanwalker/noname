@@ -80,7 +80,6 @@ public:
     double coverMidringLuma() const override;
     double coverBordersLuma() const override;
 
-    double coverLightProbability() const override;
     double coverPonderedLuma() const override;
 
     // Setters (normally called from C++ logic when time or song changes)
@@ -136,6 +135,5 @@ private:
     std::atomic_bool m_slider_pressed {false};
 
     covers::live::cover_luma m_cover_lumas;
-    double m_light_cover_probability = 0.5;
     double m_cover_pondered_luma = 0.5;
 };
