@@ -85,7 +85,7 @@ T.ApplicationWindow {
 
             parentWindow: root
 
-            lightMode: PlayerPresenter.coverCentricLuma > 0.75
+            lightMode: PlayerPresenter.coverCentricLuma * bg.cover_back_l > 0.5
         }
     }
 
