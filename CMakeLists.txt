@@ -55,8 +55,8 @@ endfunction()
 
 
 ## C++ sources
-module_sources(MEDIATYPES_SOURCES       "src/presenters/mediatypes/*.cpp")
-module_sources(MEDIASEQUENCES_SOURCES   "src/presenters/sequences/*.cpp")
+module_sources(MEDIATYPES_SOURCES       "src/datamodels/mediatypes/*.cpp")
+module_sources(MEDIASEQUENCES_SOURCES   "src/datamodels/sequences/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
 module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
 module_sources(PLAYQUEUE_SOURCES        "src/presenters/context/playqueue/*.cpp")
@@ -95,7 +95,7 @@ qt_add_qml_module(mediatypes
     URI Player.MediaTypes
 
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/presenters/mediatypes/mediatypes_qml.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/datamodels/mediatypes/mediatypes_qml.hpp"
         ${MEDIATYPES_SOURCES}
 
     # comment on how linking works: anything that does not explicitly import the "Player.MediaTypes"
@@ -113,8 +113,7 @@ target_link_libraries(mediatypes
 
 target_include_directories(mediatypes
     PUBLIC
-        src/presenters/formatters
-        src/presenters/mediatypes
+        src/datamodels/mediatypes
 )
 
 # Concatenation and natural cumulation and flow of basic mediatypes
@@ -139,7 +138,8 @@ target_link_libraries(mediasequences
 
 target_include_directories(mediasequences
     PUBLIC
-        src/presenters/sequences # to make qmltyperegistrar happy
+        src/datamodels/sequences # to make qmltyperegistrar happy
+        src/datamodels/sequences/formatters
 )
 
 # --- Pure I/O Tooling
@@ -236,7 +236,7 @@ add_library(rolecompiler INTERFACE)
 
 target_include_directories(rolecompiler
     INTERFACE 
-        src/presenters/rolecompiler
+        src/datamodels/rolecompiler
 
 )
 
