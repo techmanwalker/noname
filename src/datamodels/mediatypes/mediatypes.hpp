@@ -58,7 +58,7 @@ namespace Types {
         QString  title;
         QString  artist;
         QString  album;
-        quint64  duration; // ms
+        quint64  duration {0}; // ms
         QUrl     source; // to the audio path
 
         // ready to print in qml
