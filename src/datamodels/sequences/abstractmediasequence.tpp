@@ -95,25 +95,23 @@ requires
 QList<QPersistentModelIndex>
 AbstractMediaSequence::batch_append(const Container &items)
 {
-    QList<QPersistentModelIndex> indices; 
-    
-    if (items.empty()) return indices;
+       
+    if (items.empty()) return {};
 
     std::vector<Types::Any> valid_items;
     valid_items.reserve(items.size());
 
-    for (const Types::Any &item : items) {
-        if (
-            std::holds_alternative<Types::Song>(item)
-        &&  !std::get<Types::Song>(item).is_valid())
-        {
-            continue;
+    for (const auto &item : items) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(item)>, Types::Song>) {
+            if (!item.is_valid()) {
+                continue;
+            }
         }
 
         valid_items.push_back(item);
     }
 
-    if (valid_items.empty()) return indices;
+    if (valid_items.empty()) return {};
 
     int first_row = rowCount();
     int last_row = first_row + static_cast<int>(valid_items.size()) - 1;
@@ -121,16 +119,17 @@ AbstractMediaSequence::batch_append(const Container &items)
     beginInsertRows({}, first_row, last_row);
     {
         QWriteLocker locker(&_lock());
-        _items().reserve(_items().size() + valid_items.size());
+        auto &target = _items();
+        target.reserve(target.size() + valid_items.size());
 
-        for (Types::Any &valid_item : valid_items) {
-            _items().push_back(std::move(valid_item));
-        }
+        std::move(valid_items.begin(), valid_items.end(), std::back_inserter(target));
     }
     endInsertRows();
 
+    QList<QPersistentModelIndex> indices; 
+    indices.reserve(valid_items.size());
     for (int r = first_row; r <= last_row; ++r) {
-        indices.append(index(r));
+        indices.emplace_back(index(r));
     }
 
     emit countChanged();
