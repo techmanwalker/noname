@@ -97,7 +97,7 @@ AbstractMediaSequence::append(const Types::Any &item)
 void
 AbstractMediaSequence::remove(size_t index)
 {
-    if (index >= static_cast<int>(m_d->m_items.size())) return;
+    if (static_cast<qsizetype>(index) >= m_d->m_items.size()) return;
     beginRemoveRows({}, index, index);
 
     {
@@ -121,7 +121,7 @@ AbstractMediaSequence::progressive_batch_append (QList<QFuture<Types::Any>> futu
             pending.then(this, [this](const Types::Any &result) {
                     append(result);
                 })
-                .onFailed(this, [this] {
+                .onFailed(this, [] {
                     qCWarning(l_mediasequences) << "Progressive batch append: one item's future failed; skipping it.";
                 })
         );
@@ -191,7 +191,7 @@ std::optional<std::reference_wrapper<Types::Any>>
 AbstractMediaSequence::item_at(size_t index)
 {
     QReadLocker locker (&m_d->m_lock);
-    if (index >= static_cast<int>(m_d->m_items.size())) {
+    if (static_cast<qsizetype>(index) >= m_d->m_items.size()) {
         return std::nullopt;
     };
 

@@ -13,7 +13,7 @@
 */
 
 void
-write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max)
+write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_count_min, int frame_count_max)
 {
     // fetch our buffer from the userdata pointer
     audio_ring_buffer *ring_buf = static_cast<audio_ring_buffer*>(outstream->userdata);
@@ -76,7 +76,7 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
             }
             
             // libsoundio requires us to fill the channels using our own pointers (areas)
-            int float_idx = 0;
+            size_t float_idx = 0;
             for (int frame = 0; frame < frame_count; ++frame) {
                 for (int ch = 0; ch < outstream->layout.channel_count; ++ch) {
                     float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
@@ -121,13 +121,13 @@ write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int fram
 // Error handling
 
 void
-error_callback(struct SoundIoOutStream *outstream, int err)
+error_callback([[maybe_unused]] struct SoundIoOutStream *outstream, int err)
 {
     qCWarning(l_soundio) << "SoundIo outstream error:" << soundio_strerror(err);
 }
 
 void
-underflow_callback (struct SoundIoOutStream *outstream)
+underflow_callback ([[maybe_unused]] struct SoundIoOutStream *outstream)
 {
     qCWarning(l_soundio) << "SoundIo outstream underflow";
 };

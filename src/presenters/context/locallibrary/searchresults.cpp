@@ -99,7 +99,7 @@ SearchResultsLI::performSearch(const QString &query, QList<Types::Song> &song_li
     const double score_thresh = 50.0;
 
     // Execute search directly against the flattened song list
-    for (size_t i = 0; i < song_list.size(); ++i) {
+    for (qsizetype i = 0; i < song_list.size(); ++i) {
         // Pass transPtr to process text instantly without initialization overhead
         const std::string clean_title = nfkd_and_translit(song_list.at(i).title.toStdString(), transPtr);
         double score = scorer.similarity(clean_title.c_str(), score_thresh);
