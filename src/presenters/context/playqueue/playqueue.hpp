@@ -13,7 +13,7 @@ namespace covers::live {
     class cover_provider;
 }
 
-struct PlayQueueLIPrivate;
+class PlayQueueLIPrivate;
 class audio_engine;
 
 // Media that will play up next.

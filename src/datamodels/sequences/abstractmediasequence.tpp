@@ -53,16 +53,16 @@ QStringList
 AbstractMediaSequence::sources (const Container &items)
 {
     QStringList uri_sources;
-    uri_sources.reserve(items.size());
+    uri_sources.reserve(std::ranges::distance(items));
 
-    for (const Types::Any &item : std::as_const(items)) {
+    for (const auto &item : items) {
         std::visit([&uri_sources](const auto &resolved_item) { 
             using T = std::decay_t<decltype(resolved_item)>;
             
             if constexpr (std::is_same_v<T, Types::Song>) {
                 uri_sources.append(resolved_item.source.toLocalFile());
             }
-        }, item);
+        }, Types::Any{item});
     }
 
     return uri_sources;
@@ -74,7 +74,7 @@ AbstractMediaSequence::find(FieldType MediaType::* member, const FieldType &need
 {
     QReadLocker locker (&_lock());
 
-    for (size_t i = 0; i < _items().size(); ++i) {
+    for (qsizetype i = 0; i < _items().size(); ++i) {
         if (const MediaType *actual_media = std::get_if<MediaType>(&_items().at(i))) {
             if (actual_media->*member == needle) {
                 return index(static_cast<int>(i));

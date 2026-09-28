@@ -22,7 +22,7 @@ class LyricsManifest;
 class PlayQueue;
 
 namespace Types {
-    class Song;
+    struct Song;
 }
 
 /**
@@ -125,10 +125,9 @@ public slots:
     void recompute_lumas();
 
 private:
+    std::shared_ptr<configuration::manager> cm; // configuration
     std::shared_ptr<audio_engine> playing; // controller
-
-    std::shared_ptr<PlayQueue> queue;
-    std::shared_ptr<configuration::manager> cm;
+    std::shared_ptr<PlayQueue> queue; // tape roll
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 
