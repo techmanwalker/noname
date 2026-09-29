@@ -161,11 +161,11 @@ target_include_directories(diskio
 )
 
 # Configuration, caching and all settings the player needs to remember from boot time
-add_library(configuration_li STATIC
+add_library(configuration STATIC
     ${CONFIGURATION_SOURCES}
 )
 
-target_link_libraries(configuration_li
+target_link_libraries(configuration
     PUBLIC
         configuration_in
 
@@ -175,7 +175,7 @@ target_link_libraries(configuration_li
         diskio
 )
 
-target_include_directories(configuration_li
+target_include_directories(configuration
     PUBLIC
         src/configuration
 )
@@ -244,11 +244,11 @@ target_include_directories(rolecompiler
 
 ## --- Sound I/O
 
-add_library(audioengine_li STATIC
+add_library(audioengine STATIC
     ${AUDIOENGINE_SOURCES}
 )
 
-target_link_libraries(audioengine_li
+target_link_libraries(audioengine
     PUBLIC 
         audioengine_in # its interface
 
@@ -262,13 +262,13 @@ target_link_libraries(audioengine_li
         FFmpeg::swresample
 )
 
-target_include_directories(audioengine_li
+target_include_directories(audioengine
     PUBLIC
         src/audioengine # enable including its own headers como Qt6:: libraries
 )
 
 if(OpenMP_FOUND)
-    target_link_libraries(audioengine_li PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries(audioengine PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
 
@@ -281,7 +281,7 @@ target_link_libraries(audioengine_in INTERFACE Qt6::Core)
 ## --- Local live storage modules - alive in memory ready to consume
 
 # All of your collection of tracks noname has currently knowledge of
-qt_add_qml_module(locallibrary_li
+qt_add_qml_module(locallibrary
     STATIC
     URI Player.LocalLibrary
     SOURCES
@@ -293,7 +293,7 @@ qt_add_qml_module(locallibrary_li
         "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
 )
 
-target_link_libraries (locallibrary_li
+target_link_libraries (locallibrary
     PUBLIC
         locallibrary_in
         searchresults_in
@@ -315,7 +315,7 @@ target_link_libraries (locallibrary_li
         ICU::uc
 )
 
-target_include_directories(locallibrary_li
+target_include_directories(locallibrary
     PUBLIC
         src/presenters/context/locallibrary
 )
@@ -366,7 +366,7 @@ target_include_directories(covers
 
 # Lyrics manifest - access the lyrics from your playing song anywhere
 
-qt_add_qml_module(lyricsmanifest_li
+qt_add_qml_module(lyricsmanifest
     STATIC
     URI Player.LyricsManifest
     SOURCES
@@ -376,7 +376,7 @@ qt_add_qml_module(lyricsmanifest_li
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
 
-target_link_libraries(lyricsmanifest_li
+target_link_libraries(lyricsmanifest
     PUBLIC 
         lyricsmanifest_in
 
@@ -393,7 +393,7 @@ target_link_libraries(lyricsmanifest_li
         audio
 )
 
-target_include_directories(lyricsmanifest_li
+target_include_directories(lyricsmanifest
     PUBLIC
         src/presenters/context/lyrics
 )
@@ -405,7 +405,7 @@ target_link_libraries(lyricsmanifest_in INTERFACE Qt6::Core)
 
 # What has played, what is playing and what is to be played
 
-qt_add_qml_module(playqueue_li
+qt_add_qml_module(playqueue
     STATIC
     URI Player.PlayQueue
     SOURCES
@@ -414,7 +414,7 @@ qt_add_qml_module(playqueue_li
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayQueue"
 )
 
-target_link_libraries(playqueue_li
+target_link_libraries(playqueue
     PUBLIC
         playqueue_in
         
@@ -425,7 +425,7 @@ target_link_libraries(playqueue_li
         songfactory # qml can drop songs to the play queue graphically, needs to read them
 )
 
-target_include_directories(playqueue_li
+target_include_directories(playqueue
     PUBLIC
         src/presenters/context/playqueue
 )
@@ -437,7 +437,7 @@ target_link_libraries(playqueue_in INTERFACE Qt6::Core)
 
 # Playback presentation - playback control through simple button and indicator bindings
 
-qt_add_qml_module(playerpresenter_li
+qt_add_qml_module(playerpresenter
     STATIC
     URI Player.PlayerPresenter
     SOURCES
@@ -446,7 +446,7 @@ qt_add_qml_module(playerpresenter_li
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
 )
 
-target_link_libraries(playerpresenter_li
+target_link_libraries(playerpresenter
     PUBLIC
         playerpresenter_in
 
@@ -460,7 +460,7 @@ target_link_libraries(playerpresenter_li
         mediatypes
 )
 
-target_include_directories(playerpresenter_li
+target_include_directories(playerpresenter
     PUBLIC
         src/presenters/context/playerpresenter
 )
@@ -605,12 +605,12 @@ qt_add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        audioengine_li # to safely tear it down
-        locallibrary_li # your entire collection
-        lyricsmanifest_li
-        playerpresenter_li
-        playqueue_li
-        configuration_li
+        audioengine # to safely tear it down
+        locallibrary # your entire collection
+        lyricsmanifest
+        playerpresenter
+        playqueue
+        configuration
 
         covers # every executable that features its own cover storage will feature this
 
