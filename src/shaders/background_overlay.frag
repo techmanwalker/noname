@@ -98,6 +98,26 @@ vec2 evalPoints(float x) {
     return result;
 }
 
+bool inGamut(vec3 c) {
+    return all(greaterThanEqual(c, vec3(-1e-4))) &&
+           all(lessThanEqual(c, vec3(1.0 + 1e-4)));
+}
+
+// Reduces chroma (L and H fixed) until the color fits in linear sRGB
+vec3 gamutMapLinear(float L, float C, float H) {
+    vec2 hue = vec2(cos(H), sin(H));
+    vec3 lin = oklabToLinear(vec3(L, C * hue));
+    if (inGamut(lin)) return lin;
+
+    float lo = 0.0, hi = C;
+    for (int i = 0; i < 8; i++) {
+        float mid = 0.5 * (lo + hi);
+        if (inGamut(oklabToLinear(vec3(L, mid * hue)))) lo = mid;
+        else hi = mid;
+    }
+    return oklabToLinear(vec3(L, lo * hue));
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────
 
 void main() {
@@ -119,8 +139,7 @@ void main() {
     C *= lc.y;
 
     // OKLCH → RGB
-    lab = vec3(L, C * cos(H), C * sin(H));
-    vec3 outRgb = linearToSrgb(oklabToLinear(lab));
+    vec3 outRgb = linearToSrgb(gamutMapLinear(L, C, H));
 
     // premultiply again
     fragColor = vec4(outRgb * px.a, px.a) * ubuf.qt_Opacity;
