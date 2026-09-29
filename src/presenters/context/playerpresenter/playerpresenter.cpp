@@ -116,12 +116,14 @@ PlayerPresenterLI::recompute_lumas()
 
     double cover_pondered_luma = covers::live::pondered_luma(lumas);
 
-    qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(lumas.nuclear_luma.value, 'f', 32);
-    qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(lumas.centric_luma.value, 'f', 32);
-    qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(lumas.midring_luma.value, 'f', 32);
-    qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(lumas.borders_luma.value, 'f', 32);
+    constexpr double precision = 17;
 
-    qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', 32);
+    qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(lumas.nuclear_luma.value, 'f', precision);
+    qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(lumas.centric_luma.value, 'f', precision);
+    qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(lumas.midring_luma.value, 'f', precision);
+    qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(lumas.borders_luma.value, 'f', precision);
+
+    qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
 
     m_cover_lumas = std::move(lumas);
     m_cover_pondered_luma = cover_pondered_luma;
