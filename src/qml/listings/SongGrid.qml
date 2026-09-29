@@ -1,8 +1,10 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 
 import Player.Listings
 import Player.MediaTypes
+import Player.Primitives
 
 GridView {
     id: root
@@ -10,6 +12,10 @@ GridView {
     // model: the current folder model with members name, song
     property real songCoverWidth: 72
     property real songCoverHeight: songCoverWidth
+
+    property int scrollBarWidth: 4
+
+    property bool lightMode: false
 
     property real songLateralPadding: (songCoverWidth / 12)
     property real songVerticalPadding: (songCoverWidth / 12)
@@ -29,6 +35,8 @@ GridView {
     // Reduce frame drops while scrolling
     displayMarginBeginning: 1000
     displayMarginEnd: 1000
+
+    rightMargin: scrollbar.logicalWidth
 
     SongContextMenu {
         id: songContextMenu
@@ -104,5 +112,15 @@ GridView {
 
         coverWidth: root.songCoverWidth
         coverHeight: root.songCoverHeight
+    }
+
+    ScrollBar.vertical: AccessibleScrollBar {
+        id: scrollbar
+        barWidth: root.scrollBarWidth
+        logicalWidth: root.scrollBarWidth * 3
+
+        policy: ScrollBar.AsNeeded
+
+        lightMode: root.lightMode
     }
 }

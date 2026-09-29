@@ -153,7 +153,7 @@ GridLayout {
 
             currentIndex: vtabs.tracksIndex // Folders — matches the old sourceComponent: folders default
 
-            Layout.rightMargin: 20 // should be consistent with VTabButton lateral padding
+            Layout.rightMargin: 10 // should be consistent with VTabButton lateral padding
 
             Home {
                 id: homeitem

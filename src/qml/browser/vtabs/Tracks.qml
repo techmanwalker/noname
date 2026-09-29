@@ -68,6 +68,7 @@ ColumnLayout {
         Layout.leftMargin: root.lateralAlignmentPadding
 
         songCoverWidth: 144
+        scrollBarWidth: 4
 
         reuseItems: true
 
