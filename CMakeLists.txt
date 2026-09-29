@@ -83,7 +83,9 @@ set_source_files_properties("src/qml/primitives/Theme.qml"
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
+## Shaders
 
+module_sources(FRAGMENT_SHADERS "src/shaders/*.frag")
 
 
 ### C++ Modules
@@ -493,12 +495,7 @@ qt_add_shaders(playereffects "_shaders"
     PREFIX "/shaders"
     BASE "src/shaders"
     FILES
-        src/shaders/background_overlay.frag
-        src/shaders/edge_fade.frag
-        src/shaders/kawase_down.frag
-        src/shaders/kawase_up.frag
-        src/shaders/noise.frag
-        src/shaders/noise_seed.frag
+        ${FRAGMENT_SHADERS}
 )
 
 # Primitives - basis of the style of the graphical view
