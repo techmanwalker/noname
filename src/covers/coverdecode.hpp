@@ -3,8 +3,10 @@
 #include <QImage>
 
 namespace covers::decode {
-
-QImage crop_largest_square(const QImage &image);
+    
+QImage crop_largest_aspect(const QImage &image,
+                           double aspect_w = 1.0,
+                           double aspect_h = 1.0);
 
 QImage lanczos_resize(const QImage &image, size_t width, size_t height);
 
