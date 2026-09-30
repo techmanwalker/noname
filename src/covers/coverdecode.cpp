@@ -117,22 +117,42 @@ sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
 
 
 QImage
-crop_largest_square(const QImage &image)
+crop_largest_aspect(const QImage &image, double aspect_w, double aspect_h)
 {
     if (image.isNull())
         return {};
 
-    if (image.width() == image.height()) {
-        return image; // it is already a square
+    if (!std::isfinite(aspect_w) || !std::isfinite(aspect_h) ||
+        aspect_w <= 0.0 || aspect_h <= 0.0)
+        return {};
+
+    const int w = image.width();
+    const int h = image.height();
+
+    // (w / h) > (aspect_w / aspect_h)  <=>  w * aspect_h > h * aspect_w
+    // Cross-multiplying avoids a division just to pick the limiting axis.
+    int crop_w;
+    int crop_h;
+    if (w * aspect_h > h * aspect_w) {
+        // Image is wider than the target: height is the limiting axis.
+        crop_h = h;
+        crop_w = std::clamp(static_cast<int>(std::lround(h * aspect_w / aspect_h)), 1, w);
+    } else {
+        // Image is taller than (or matches) the target: width is the limiting axis.
+        crop_w = w;
+        crop_h = std::clamp(static_cast<int>(std::lround(w * aspect_h / aspect_w)), 1, h);
+    }
+
+    if (crop_w == w && crop_h == h) {
+        return image; // it already has the requested aspect ratio
     }
 
     const QImage src = image.convertToFormat(pixelformat_qimage);
-    
-    const int crop_size = std::min(src.width(), src.height());
-    const int crop_x = (src.width() - crop_size) / 2;
-    const int crop_y = (src.height() - crop_size) / 2;
-    
-    return src.copy(crop_x, crop_y, crop_size, crop_size);
+
+    const int crop_x = (w - crop_w) / 2;
+    const int crop_y = (h - crop_h) / 2;
+
+    return src.copy(crop_x, crop_y, crop_w, crop_h);
 }
 
 QImage
@@ -160,7 +180,7 @@ lanczos_resize(const QImage &image, size_t width, size_t height)
 QImage
 lanczos_resize_square(const QImage &image, size_t target_size)
 {
-    const QImage cropped = crop_largest_square(image);
+    const QImage cropped = crop_largest_aspect(image);
     return lanczos_resize(cropped, static_cast<size_t>(target_size), static_cast<size_t>(target_size));
 }
 
