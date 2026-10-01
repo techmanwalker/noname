@@ -4,6 +4,7 @@
 
 #include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
+#include "windowgeometry-in.hpp"
 
 #include "coverextract.hpp"
 
@@ -58,7 +59,8 @@ public:
         QObject *parent,
         std::shared_ptr<configuration::manager> confmanager,
         std::shared_ptr<audio_engine> controller,
-        std::shared_ptr<PlayQueue> pqueue
+        std::shared_ptr<PlayQueue> pqueue,
+        std::shared_ptr<WindowGeometry> wgeometry
     );
     
     using PlayerPresenter::PlaybackState;
@@ -81,6 +83,8 @@ public:
     double coverBordersLuma() const override;
 
     double coverPonderedLuma() const override;
+
+    double backingLumaForRect (QRect rect) const override;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position) override;
@@ -128,6 +132,7 @@ private:
     std::shared_ptr<configuration::manager> cm; // configuration
     std::shared_ptr<audio_engine> playing; // controller
     std::shared_ptr<PlayQueue> queue; // tape roll
+    std::shared_ptr<WindowGeometry> wi; // information about the window
 
     QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 

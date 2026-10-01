@@ -57,11 +57,11 @@ main (int argc, char ** argv)
     auto ae = std::make_shared<audio_engineLI>    (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
-    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq);
+    auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
+    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto sr = std::make_shared<SearchResultsLI>   (nullptr);
-    auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
