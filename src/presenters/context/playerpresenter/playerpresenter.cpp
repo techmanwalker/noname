@@ -3,6 +3,7 @@
 
 #include "audioengine-in.hpp"
 
+#include "coverdecode.hpp"
 #include "manager-in.hpp"
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
@@ -25,12 +26,14 @@ PlayerPresenterLI::PlayerPresenterLI(
     QObject *parent, 
     std::shared_ptr<configuration::manager> confmanager,
     std::shared_ptr<audio_engine> controller,
-    std::shared_ptr<PlayQueue> pqueue
+    std::shared_ptr<PlayQueue> pqueue,
+    std::shared_ptr<WindowGeometry> wgeometry
 )
     : QObject(parent),
       cm(confmanager),
       playing(controller),
-      queue(pqueue)
+      queue(pqueue),
+      wi(wgeometry)
 {
     m_position_poll_timer->setInterval(10);
 
@@ -129,6 +132,47 @@ PlayerPresenterLI::recompute_lumas()
     m_cover_pondered_luma = cover_pondered_luma;
 
     emit lumasChanged();
+}
+
+double
+PlayerPresenterLI::backingLumaForRect (QRect rect) const
+{
+    const QUrl source = playing->current_track().source;
+
+    const CoverRef ref(source, 256);
+    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
+
+    if (thumbnail.isNull())
+        return 0.0; // no cover: pick whatever the "no backing" answer should be
+
+    // `rect` is in surface coordinates, like the surface itself.
+    const QSizeF surface(wi->width(), wi->height());
+
+    // The part of the thumbnail the Background actually shows: the largest
+    // centered region with the surface's aspect ratio. Not cropped, just measured.
+    const QSizeF fit = covers::decode::largest_aspect_size(thumbnail.size(),
+                                           surface.width(), surface.height());
+    if (fit.isEmpty())
+        return 0.0; // zero-sized surface
+
+    const double  scale = fit.width() / surface.width();
+    const QPointF origin((thumbnail.width()  - fit.width())  / 2.0,
+                         (thumbnail.height() - fit.height()) / 2.0);
+
+    const QRectF mapped(origin.x() + rect.x() * scale,
+                        origin.y() + rect.y() * scale,
+                        rect.width()  * scale,
+                        rect.height() * scale);
+
+    // Outward to whole pixels so every touched pixel counts; the intersection
+    // also handles rects that hang past the surface edge.
+    const QRect region = mapped.toAlignedRect().intersected(thumbnail.rect());
+    if (region.isEmpty())
+        return 0.0;
+
+    const QImage backing = thumbnail.copy(region); // only the small sub-region
+
+    return covers::live::percentile_luminance(backing, 55);
 }
 
 PlayerPresenterLI::PlaybackState

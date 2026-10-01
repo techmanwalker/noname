@@ -3,6 +3,10 @@
 #include <QImage>
 
 namespace covers::decode {
+
+QSizeF largest_aspect_size(const QSizeF &bounds,
+                           double aspect_w,
+                           double aspect_h);
     
 QImage crop_largest_aspect(const QImage &image,
                            double aspect_w = 1.0,

@@ -115,6 +115,22 @@ sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
 
 } // namespace
 
+// Largest size with the aspect ratio aspect_w:aspect_h that fits inside
+// `bounds`. Exact (no rounding); returns an empty size on invalid input.
+QSizeF
+largest_aspect_size(const QSizeF &bounds, double aspect_w, double aspect_h)
+{
+    if (bounds.isEmpty() ||
+        !std::isfinite(aspect_w) || !std::isfinite(aspect_h) ||
+        aspect_w <= 0.0 || aspect_h <= 0.0)
+        return {};
+
+    // (bw / bh) > (aw / ah)  <=>  bw * ah > bh * aw
+    if (bounds.width() * aspect_h > bounds.height() * aspect_w)
+        return { bounds.height() * aspect_w / aspect_h, bounds.height() };
+
+    return { bounds.width(), bounds.width() * aspect_h / aspect_w };
+}
 
 QImage
 crop_largest_aspect(const QImage &image, double aspect_w, double aspect_h)
@@ -122,26 +138,15 @@ crop_largest_aspect(const QImage &image, double aspect_w, double aspect_h)
     if (image.isNull())
         return {};
 
-    if (!std::isfinite(aspect_w) || !std::isfinite(aspect_h) ||
-        aspect_w <= 0.0 || aspect_h <= 0.0)
+    const QSizeF fit = largest_aspect_size(image.size(), aspect_w, aspect_h);
+    if (fit.isEmpty())
         return {};
 
     const int w = image.width();
     const int h = image.height();
 
-    // (w / h) > (aspect_w / aspect_h)  <=>  w * aspect_h > h * aspect_w
-    // Cross-multiplying avoids a division just to pick the limiting axis.
-    int crop_w;
-    int crop_h;
-    if (w * aspect_h > h * aspect_w) {
-        // Image is wider than the target: height is the limiting axis.
-        crop_h = h;
-        crop_w = std::clamp(static_cast<int>(std::lround(h * aspect_w / aspect_h)), 1, w);
-    } else {
-        // Image is taller than (or matches) the target: width is the limiting axis.
-        crop_w = w;
-        crop_h = std::clamp(static_cast<int>(std::lround(w * aspect_h / aspect_w)), 1, h);
-    }
+    const int crop_w = std::clamp(static_cast<int>(std::lround(fit.width())),  1, w);
+    const int crop_h = std::clamp(static_cast<int>(std::lround(fit.height())), 1, h);
 
     if (crop_w == w && crop_h == h) {
         return image; // it already has the requested aspect ratio

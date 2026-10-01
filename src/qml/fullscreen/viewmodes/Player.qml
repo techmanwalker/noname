@@ -5,6 +5,7 @@ import Player.App
 import Player.Fullscreen
 import Player.LyricsManifest
 import Player.Primitives
+import Player.PlayerPresenter
 
 Item {
     id: root
@@ -90,6 +91,9 @@ Item {
 
         spacing: windex.squareButtonWidth / 3 * 2
 
+        property bool lightMode: (PlayerPresenter.backingLumaForRect(navBounds.bounds) > 0.55)
+            && PlayerPresenter.coverBordersLuma > 0.7 // context is everything
+
         HoverHandler {
             id: windex_hover
         }
@@ -100,7 +104,7 @@ Item {
 
             anchors.verticalCenter: parent.verticalCenter
 
-            lightMode: root.lightMode
+            lightMode: nav.lightMode
         }
         
         ResizableButton {
@@ -115,7 +119,7 @@ Item {
 
             magnify: true
 
-            lightMode: root.lightMode
+            lightMode: nav.lightMode
 
             onClicked: {
                 // if it is in the lyrics view
@@ -136,6 +140,11 @@ Item {
                 }
             }
         }
+    }
+
+    SceneRect {
+        id: navBounds
+        target: nav
     }
 
 }

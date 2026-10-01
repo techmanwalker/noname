@@ -91,17 +91,20 @@ Item {
                 Layout.maximumWidth: nowplaying_cover.width * .75
                 Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
+                property bool lightMode: (PlayerPresenter.backingLumaForRect(controlsBounds.bounds) > 0.55)
+                    && PlayerPresenter.coverMidringLuma > 0.63
+
                 DurationControl {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.fillWidth: true
 
                     stateModel: PlayerPresenter
 
-                    accentColor: root.lightMode ?
+                    accentColor: controls.lightMode ?
                         Theme.light.slider.accentColor :
                         Theme.dark.slider.accentColor
 
-                    backgroundColor: root.lightMode ?
+                    backgroundColor: controls.lightMode ?
                         Theme.light.slider.backgroundColor :
                         Theme.dark.slider.backgroundColor
                 }
@@ -119,13 +122,13 @@ Item {
 
                         stateModel: PlayerPresenter
 
-                        buttonLightMode: root.lightMode
+                        buttonLightMode: controls.lightMode
 
-                        accentColor: root.lightMode ?
+                        accentColor: controls.lightMode ?
                             Theme.light.slider.accentColor :
                             Theme.dark.slider.accentColor
 
-                        backgroundColor: root.lightMode ?
+                        backgroundColor: controls.lightMode ?
                             Theme.light.slider.backgroundColor :
                             Theme.dark.slider.backgroundColor
                     }
@@ -134,7 +137,7 @@ Item {
                         id: basicControls
                         anchors.centerIn: parent
 
-                        lightMode: root.lightMode
+                        lightMode: controls.lightMode
                     }
 
                     RowLayout {
@@ -145,16 +148,21 @@ Item {
                         ShuffleButton {
                             Layout.alignment: Qt.AlignVCenter
 
-                            lightMode: root.lightMode
+                            lightMode: controls.lightMode
                         }
 
                         RepeatButton {
                             Layout.alignment: Qt.AlignVCenter
 
-                            lightMode: root.lightMode
+                            lightMode: controls.lightMode
                         }
                     }
                 }
+            }
+
+            SceneRect {
+                id: controlsBounds
+                target: controls
             }
         }
 
@@ -182,7 +190,19 @@ Item {
 
                 onClicked: root.immersive = !root.immersive
 
-                lightMode: root.lightMode
+                lightMode: (PlayerPresenter.backingLumaForRect(metadataBounds.bounds) > 0.55)
+                        && ((!root.immersive) ?
+                            (PlayerPresenter.coverMidringLuma > 0.7)
+                          : (PlayerPresenter.coverCentricLuma > 0.7)
+                        ) // context is everything
+            }
+            
+            SceneRect {
+                id: metadataBounds
+                target: metadataContainer
+
+                onBoundsChanged: console.log("header", x, y, width, height + "\n" +
+                    "luma behind: " + PlayerPresenter.backingLumaForRect(metadataBounds.bounds))
             }
 
             // _l = "the loader"
@@ -203,6 +223,9 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
 
                 Layout.topMargin: root.songCoverHeight * .4
+
+                property bool lightMode: (PlayerPresenter.backingLumaForRect(nextQueueBounds.bounds) > 0.55)
+                        && PlayerPresenter.coverCentricLuma > 0.7
 
                 DropArea {
                     anchors.fill: parent
@@ -234,7 +257,7 @@ Item {
                     font.pointSize: 13
                     font.weight: Font.Medium
 
-                    color: root.lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
+                    color: nextQueue_l.lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                 }
             }
 
@@ -253,7 +276,7 @@ Item {
                     clip: true
                     reuseItems: true // tons of songs moving
 
-                    lightMode: root.lightMode
+                    lightMode: nextQueue_l.lightMode
 
                     onSongClicked: (song) => {
                         PlayQueue.playhead = PlayQueue.find_by_source(song.source)
@@ -266,6 +289,11 @@ Item {
                         }
                     ]
                 }
+            }
+
+            SceneRect {
+                id: nextQueueBounds
+                target: nextQueue_l
             }
         }
     }
