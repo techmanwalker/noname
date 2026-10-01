@@ -117,6 +117,14 @@ public:
 
     Q_INVOKABLE void saveVolume() const { if (m_presenter) m_presenter->saveVolume(); }
 
+    Q_INVOKABLE double backingLumaForRect (QRect rect) const {
+        if (m_presenter) {
+            return m_presenter->backingLumaForRect(rect);
+        } else {
+            return 0.5; 
+        }
+    }
+
 signals:
     void titleChanged();
     void artistChanged();
