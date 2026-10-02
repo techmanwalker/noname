@@ -45,10 +45,15 @@ Item {
 
         // just so I can see them
         Lyrics {
+            id: lyrics
+
             model: LyricsManifest
             highlightedRowIndex: LyricsManifest.highlighted.row
 
             onSwitchToPlayerViewRequested: stack.currentIndex = 0
+
+            property bool lightMode: (PlayerPresenter.backingLumaForRect(lyricsBounds.bounds) > 0.55)
+                && PlayerPresenter.coverCentricLuma > 0.7 // context is everything
 
             highlightedColor:   root.lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
             unhighlightedColor: root.lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
@@ -147,4 +152,8 @@ Item {
         target: nav
     }
 
+    SceneRect {
+        id: lyricsBounds
+        target: lyrics
+    }
 }
