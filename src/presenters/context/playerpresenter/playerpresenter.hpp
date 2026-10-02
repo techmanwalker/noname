@@ -2,11 +2,10 @@
 
 #include "audioengine-in.hpp"
 
+#include "coverluminance.hpp"
 #include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
 #include "windowgeometry-in.hpp"
-
-#include "coverextract.hpp"
 
 #include <QLoggingCategory>
 #include <QObject>
@@ -138,6 +137,6 @@ private:
 
     std::atomic_bool m_slider_pressed {false};
 
-    covers::live::cover_luma m_cover_lumas;
+    covers::luminance::cover_luma m_cover_lumas;
     double m_cover_pondered_luma = 0.5;
 };

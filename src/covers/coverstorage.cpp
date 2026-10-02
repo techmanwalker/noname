@@ -1,6 +1,6 @@
-#include "coverdecode.hpp"
 #include "coverextract.hpp"
 #include "coverstorage.hpp"
+#include "covertransform.hpp"
 #include "coveruris.hpp"
 #include "mediatypes.hpp"
 #include "pixelformats.hpp"
@@ -152,12 +152,12 @@ cover_storage::resolve_blocking (
     if (requestedSize.width() == requestedSize.height()) {
         int squareSize = requestedSize.width();
         qCDebug(l_coverprovider) << "Returned a square image of size " << squareSize;
-        return decode::lanczos_resize_square(img, squareSize);
+        return transform::lanczos_resize_square(img, squareSize);
     }
 
     qCDebug(l_coverprovider) << "Returned a non square image of size " << requestedSize.width() << "x" << requestedSize.height();
 
-    return decode::lanczos_resize (
+    return transform::lanczos_resize (
         img,
         static_cast<size_t>(requestedSize.width()),
         static_cast<size_t>(requestedSize.height())
