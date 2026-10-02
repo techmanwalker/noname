@@ -190,19 +190,7 @@ Item {
 
                 onClicked: root.immersive = !root.immersive
 
-                lightMode: (PlayerPresenter.backingLumaForRect(metadataBounds.bounds) > 0.55)
-                        && ((!root.immersive) ?
-                            (PlayerPresenter.coverMidringLuma > 0.7)
-                          : (PlayerPresenter.coverCentricLuma > 0.7)
-                        ) // context is everything
-            }
-            
-            SceneRect {
-                id: metadataBounds
-                target: metadataContainer
-
-                onBoundsChanged: console.log("header", x, y, width, height + "\n" +
-                    "luma behind: " + PlayerPresenter.backingLumaForRect(metadataBounds.bounds))
+                usedInImmersiveMode: root.immersive
             }
 
             // _l = "the loader"
