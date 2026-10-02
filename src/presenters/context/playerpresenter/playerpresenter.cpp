@@ -3,12 +3,12 @@
 
 #include "audioengine-in.hpp"
 
-#include "coverdecode.hpp"
+#include "coverluminance.hpp"
 #include "manager-in.hpp"
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
 
-#include "coverextract.hpp"
+#include "covertransform.hpp"
 #include "thumbnails.hpp"
 
 #include <QImage>
@@ -17,7 +17,6 @@
 
 #include <atomic>
 #include <memory>
-#include <qloggingcategory.h>
 
 Q_LOGGING_CATEGORY(l_playerpresenter, "noname.playerpresenter")
 
@@ -91,33 +90,33 @@ PlayerPresenterLI::recompute_lumas()
     const CoverRef ref(source, 256);
     const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
 
-    covers::live::cover_luma lumas {
-        covers::live::luma (
-            covers::live::percentile_luminance(thumbnail, 65, 0.00, 0.15),
+    covers::luminance::cover_luma lumas {
+        covers::luminance::luma (
+            covers::luminance::percentile_luminance(thumbnail, 65, 0.00, 0.15),
             0.00,
             0.15
         ),
 
-        covers::live::luma (
-            covers::live::percentile_luminance(thumbnail, 60, 0.15, 0.60),
+        covers::luminance::luma (
+            covers::luminance::percentile_luminance(thumbnail, 60, 0.15, 0.60),
             0.15,
             0.60
         ),
 
-        covers::live::luma (
-            covers::live::percentile_luminance(thumbnail, 60, 0.60, 0.80),
+        covers::luminance::luma (
+            covers::luminance::percentile_luminance(thumbnail, 60, 0.60, 0.80),
             0.60,
             0.80
         ),
 
-        covers::live::luma (
-            covers::live::percentile_luminance(thumbnail, 70, 0.80, 1.00),
+        covers::luminance::luma (
+            covers::luminance::percentile_luminance(thumbnail, 70, 0.80, 1.00),
             0.80,
             1.00
         )
     };
 
-    double cover_pondered_luma = covers::live::pondered_luma(lumas);
+    double cover_pondered_luma = covers::luminance::pondered_luma(lumas);
 
     constexpr double precision = 17;
 
@@ -150,7 +149,7 @@ PlayerPresenterLI::backingLumaForRect (QRect rect) const
 
     // The part of the thumbnail the Background actually shows: the largest
     // centered region with the surface's aspect ratio. Not cropped, just measured.
-    const QSizeF fit = covers::decode::largest_aspect_size(thumbnail.size(),
+    const QSizeF fit = covers::transform::largest_aspect_size(thumbnail.size(),
                                            surface.width(), surface.height());
     if (fit.isEmpty())
         return 0.0; // zero-sized surface
@@ -172,7 +171,7 @@ PlayerPresenterLI::backingLumaForRect (QRect rect) const
 
     const QImage backing = thumbnail.copy(region); // only the small sub-region
 
-    return covers::live::percentile_luminance(backing, 55);
+    return covers::luminance::percentile_luminance(backing, 55);
 }
 
 PlayerPresenterLI::PlaybackState

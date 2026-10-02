@@ -2,24 +2,18 @@
 
 #include <QImage>
 
+extern "C" {
+#include <libavutil/pixfmt.h>
+}
+
 namespace covers::decode {
 
-QSizeF largest_aspect_size(const QSizeF &bounds,
-                           double aspect_w,
-                           double aspect_h);
-    
-QImage crop_largest_aspect(const QImage &image,
-                           double aspect_w = 1.0,
-                           double aspect_h = 1.0);
-
-QImage lanczos_resize(const QImage &image, size_t width, size_t height);
-
-QImage lanczos_resize_square(const QImage &image, size_t target_size);
+QImage
+sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
+                             int src_w, int src_h, AVPixelFormat src_fmt,
+                             int dst_w, int dst_h, int flags,
+                             AVPixelFormat dst_fmt, QImage::Format out_format);
 
 QImage decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format);
-
-double srgb_to_linear(uint8_t channel_8bit);
-
-double oklab_lightness(double r_linear, double g_linear, double b_linear);
 
 }
