@@ -60,6 +60,8 @@ read_packet(void *opaque, uint8_t *buf, int buf_size)
     return static_cast<int>(n);
 }
 
+} // namespace
+
 /* Runs sws_scale without ever letting swscale touch the QImage allocation.
    Output goes into an FFmpeg-owned, aligned, padded buffer, then is copied
    row by row into the QImage. */
@@ -112,83 +114,6 @@ sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
     av_freep(&dst_data[0]);
     return img;
 }
-
-} // namespace
-
-// Largest size with the aspect ratio aspect_w:aspect_h that fits inside
-// `bounds`. Exact (no rounding); returns an empty size on invalid input.
-QSizeF
-largest_aspect_size(const QSizeF &bounds, double aspect_w, double aspect_h)
-{
-    if (bounds.isEmpty() ||
-        !std::isfinite(aspect_w) || !std::isfinite(aspect_h) ||
-        aspect_w <= 0.0 || aspect_h <= 0.0)
-        return {};
-
-    // (bw / bh) > (aw / ah)  <=>  bw * ah > bh * aw
-    if (bounds.width() * aspect_h > bounds.height() * aspect_w)
-        return { bounds.height() * aspect_w / aspect_h, bounds.height() };
-
-    return { bounds.width(), bounds.width() * aspect_h / aspect_w };
-}
-
-QImage
-crop_largest_aspect(const QImage &image, double aspect_w, double aspect_h)
-{
-    if (image.isNull())
-        return {};
-
-    const QSizeF fit = largest_aspect_size(image.size(), aspect_w, aspect_h);
-    if (fit.isEmpty())
-        return {};
-
-    const int w = image.width();
-    const int h = image.height();
-
-    const int crop_w = std::clamp(static_cast<int>(std::lround(fit.width())),  1, w);
-    const int crop_h = std::clamp(static_cast<int>(std::lround(fit.height())), 1, h);
-
-    if (crop_w == w && crop_h == h) {
-        return image; // it already has the requested aspect ratio
-    }
-
-    const QImage src = image.convertToFormat(pixelformat_qimage);
-
-    const int crop_x = (w - crop_w) / 2;
-    const int crop_y = (h - crop_h) / 2;
-
-    return src.copy(crop_x, crop_y, crop_w, crop_h);
-}
-
-QImage
-lanczos_resize(const QImage &image, size_t width, size_t height)
-{
-    if (image.isNull()) {
-        return {};
-    }
-    
-    if (width == 0 || height == 0) {
-        return image; // unspecified size = full res
-    }
-
-    const QImage src = image.convertToFormat(pixelformat_qimage);
-    
-    const uint8_t *src_slices[1] = { src.constScanLine(0) };
-    int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
-
-    return sws_convert_to_qimage(src_slices, src_strides,
-                                 src.width(), src.height(), av_format_for_qimage(pixelformat_qimage),
-                                 static_cast<int>(width), static_cast<int>(height), SWS_LANCZOS,
-                                 av_format_for_qimage(pixelformat_qimage), pixelformat_qimage);
-}
-
-QImage
-lanczos_resize_square(const QImage &image, size_t target_size)
-{
-    const QImage cropped = crop_largest_aspect(image);
-    return lanczos_resize(cropped, static_cast<size_t>(target_size), static_cast<size_t>(target_size));
-}
-
 
 QImage
 decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
@@ -288,39 +213,6 @@ decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
     }
 
     return {};
-}
-
-// Colorspace operations
-
-double
-srgb_to_linear (uint8_t channel_8bit)
-{
-    static const std::array<double, 256> lut = [] {
-        std::array<double, 256> table{};
-        for (int i = 0; i < 256; ++i) {
-            const double c = i / 255.0;
-            table[i] = c <= 0.04045 ? c / 12.92 : std::pow((c + 0.055) / 1.055, 2.4);
-        }
-        return table;
-    }();
-
-    return lut[channel_8bit];
-}
-
-double
-oklab_lightness (double r_linear, double g_linear, double b_linear)
-{
-    // Björn Ottosson's OkLab forward transform — L channel only, since
-    // that's all percentile_luminance needs.
-    const double l = 0.4122214708 * r_linear + 0.5363325363 * g_linear + 0.0514459929 * b_linear;
-    const double m = 0.2119034982 * r_linear + 0.6806995451 * g_linear + 0.1073969566 * b_linear;
-    const double s = 0.0883024619 * r_linear + 0.2817188376 * g_linear + 0.6299787005 * b_linear;
-
-    const double l_ = std::cbrt(l);
-    const double m_ = std::cbrt(m);
-    const double s_ = std::cbrt(s);
-
-    return 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
 }
 
 
