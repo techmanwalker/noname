@@ -46,7 +46,7 @@ QtObject {
         texts: TextPalette {
             primaryText: "white"
             secondaryText: "#dfdfdf"
-            tertiaryText: "#afafaf"
+            tertiaryText: "#cfcfcf"
             unhighlightedLyric: "#80ffffff"
             highlightedLyric: "white"
         }
