@@ -74,7 +74,7 @@ bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loa
 double PlayerPresenterLI::coverNuclearLuma() const { return m_cover_lumas.nuclear_luma.value; }
 double PlayerPresenterLI::coverCentricLuma() const { return m_cover_lumas.centric_luma.value; }
 double PlayerPresenterLI::coverMidringLuma() const { return m_cover_lumas.midring_luma.value; }
-double PlayerPresenterLI::coverBordersLuma() const { return m_cover_lumas.centric_luma.value; }
+double PlayerPresenterLI::coverBordersLuma() const { return m_cover_lumas.borders_luma.value; }
 
 double
 PlayerPresenterLI::coverPonderedLuma() const
