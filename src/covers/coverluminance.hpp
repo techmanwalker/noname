@@ -7,17 +7,17 @@ class QImage;
 namespace covers::luminance 
 {
 
-struct luma {
+struct ring_luma {
     double value = 0.5;
     double ring_crop_begin = 0.0;
     double ring_crop_end = 1.0;
 };
 
-struct cover_luma {
-    luma nuclear_luma;
-    luma centric_luma;
-    luma midring_luma;
-    luma borders_luma;
+struct cover_rings {
+    ring_luma nuclear_luma;
+    ring_luma centric_luma;
+    ring_luma midring_luma;
+    ring_luma borders_luma;
 };
 
 double srgb_to_linear(uint8_t channel_8bit);
@@ -54,6 +54,6 @@ double percentile_luminance (const QImage &cover, int percentile,
 // skewing the result. Falls back to 0.5 -- the same "nothing computed
 // yet" placeholder used elsewhere -- only if every ring somehow
 // contributes zero area at once.
-double pondered_luma (const cover_luma &lumas);
+double pondered_luma (const cover_rings &lumas);
 
 }
