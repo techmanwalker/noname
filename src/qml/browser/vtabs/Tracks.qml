@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Player.Browser
 import Player.Listings
 import Player.LocalLibrary
+import Player.MediaTypes
 import Player.PlayQueue
 import Player.Primitives
 
