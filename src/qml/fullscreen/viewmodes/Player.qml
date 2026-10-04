@@ -53,7 +53,7 @@ Item {
             onSwitchToPlayerViewRequested: stack.currentIndex = 0
 
             property bool lightMode: PlayerPresenter.lumaSentinel &&
-                (PlayerPresenter.backingLumaForRect(lyricsBounds.bounds) > 0.55)
+                (PlayerPresenter.backdropLumaForRect(lyricsBounds.bounds) > 0.55)
                     && PlayerPresenter.coverCentricLuma > 0.7 // context is everything
 
             highlightedColor:   root.lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
@@ -98,7 +98,7 @@ Item {
         spacing: windex.squareButtonWidth / 3 * 2
 
         property bool lightMode: PlayerPresenter.lumaSentinel &&
-            (PlayerPresenter.backingLumaForRect(navBounds.bounds) > 0.55)
+            (PlayerPresenter.backdropLumaForRect(navBounds.bounds) > 0.55)
                 && PlayerPresenter.coverBordersLuma > 0.7 // context is everything
 
         HoverHandler {

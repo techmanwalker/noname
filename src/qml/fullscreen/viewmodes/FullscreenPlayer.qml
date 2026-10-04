@@ -92,7 +92,7 @@ Item {
                 Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
                 property bool lightMode: PlayerPresenter.lumaSentinel &&
-                    (PlayerPresenter.backingLumaForRect(controlsBounds.bounds) > 0.55)
+                    (PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) > 0.55)
                         && PlayerPresenter.coverMidringLuma > 0.63
 
                 DurationControl {
@@ -242,7 +242,7 @@ Item {
                         reuseItems: true // tons of songs moving
 
                         lightMode: PlayerPresenter.lumaSentinel &&
-                            (PlayerPresenter.backingLumaForRect(Qt.rect(
+                            (PlayerPresenter.backdropLumaForRect(Qt.rect(
                                 nextQueue_cBounds.x,
                                 nextQueue_cBounds.y,
                                 nextQueue_c.contentWidth,
@@ -277,7 +277,7 @@ Item {
                         font.weight: Font.Medium
 
                         property bool lightMode: PlayerPresenter.lumaSentinel &&
-                            (PlayerPresenter.backingLumaForRect(Qt.rect(
+                            (PlayerPresenter.backdropLumaForRect(Qt.rect(
                                 nextQueue_pBounds.x,
                                 nextQueue_pBounds.y,
                                 nextQueue_p.contentWidth,

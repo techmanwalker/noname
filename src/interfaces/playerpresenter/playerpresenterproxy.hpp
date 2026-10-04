@@ -126,9 +126,9 @@ public:
 
     Q_INVOKABLE void saveVolume() const { if (m_presenter) m_presenter->saveVolume(); }
 
-    Q_INVOKABLE double backingLumaForRect (QRect rect) const {
+    Q_INVOKABLE double backdropLumaForRect (QRect rect) const {
         if (m_presenter) {
-            return m_presenter->backingLumaForRect(rect);
+            return m_presenter->backdropLumaForRect(rect);
         } else {
             return 0.5; 
         }

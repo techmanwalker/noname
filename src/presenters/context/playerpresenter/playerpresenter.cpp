@@ -129,9 +129,9 @@ PlayerPresenterLI::recompute_lumas()
 }
 
 double
-PlayerPresenterLI::backingLumaForRect (QRect rect) const
+PlayerPresenterLI::backdropLumaForRect (QRect rect) const
 {
-    return m_cover_luma_table.backing_luma_for_rect (rect, QSize { wi->width(), wi->height() });
+    return m_cover_luma_table.backdrop_luma_for_rect (rect, QSize { wi->width(), wi->height() });
 }
 
 PlayerPresenterLI::PlaybackState

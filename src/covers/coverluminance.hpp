@@ -67,8 +67,8 @@ struct table_luma {
     // use the table luminance values to find an average or percentile
     // luminance behind rect, given that it is located respect to the
     // corners of reference_surface.
-    [[nodiscard]] double backing_luma_for_rect (QRect rect, QSize reference_surface,
-                                                int percentile = 60) const;
+    [[nodiscard]] double backdrop_luma_for_rect (QRect rect, QSize reference_surface,
+                                                 int percentile = 60) const;
 };
 
 double srgb_to_linear(uint8_t channel_8bit);
