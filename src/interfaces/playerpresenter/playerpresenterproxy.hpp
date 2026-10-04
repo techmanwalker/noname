@@ -134,6 +134,14 @@ public:
         }
     }
 
+    Q_INVOKABLE double ringLumaForRect (QRect rect) const {
+        if (m_presenter) {
+            return m_presenter->ringLumaForRect(rect);
+        } else {
+            return 0.5;
+        }
+    }
+
 signals:
     void titleChanged();
     void artistChanged();

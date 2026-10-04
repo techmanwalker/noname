@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <memory>
+#include <utility>
 
 Q_LOGGING_CATEGORY(l_playerpresenter, "noname.playerpresenter")
 
@@ -132,6 +133,21 @@ double
 PlayerPresenterLI::backdropLumaForRect (QRect rect) const
 {
     return m_cover_luma_table.backdrop_luma_for_rect (rect, QSize { wi->width(), wi->height() });
+}
+
+double
+PlayerPresenterLI::ringLumaForRect (QRect rect) const
+{
+    using namespace covers::luminance;
+
+    const std::optional<luma_types> ring = dominant_ring_for_rect(
+        m_cover_luma_rings,
+        m_cover_luma_table.m_aspect_ratio,
+        rect,
+        QSize { wi->width(), wi->height() });
+
+    // Same "no data" value backdropLumaForRect gives when nothing is visible.
+    return ring ? ring_of(m_cover_luma_rings, *ring).value : 0.0;
 }
 
 PlayerPresenterLI::PlaybackState

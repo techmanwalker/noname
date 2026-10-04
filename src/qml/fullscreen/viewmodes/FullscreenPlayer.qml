@@ -91,9 +91,16 @@ Item {
                 Layout.maximumWidth: nowplaying_cover.width * .75
                 Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
-                property bool lightMode: PlayerPresenter.lumaSentinel &&
-                    (PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) > 0.55)
-                        && PlayerPresenter.coverMidringLuma > 0.63
+                property bool lightMode: PlayerPresenter.lumaSentinel && (
+                    (
+                        (PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) > 0.6)
+                            && (PlayerPresenter.ringLumaForRect(controlsBounds.bounds) > 0.7)
+                    )
+
+                    ||
+
+                    PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) > 0.92
+                )
 
                 DurationControl {
                     Layout.alignment: Qt.AlignHCenter
@@ -164,6 +171,9 @@ Item {
             SceneRect {
                 id: controlsBounds
                 target: controls
+
+                onBoundsChanged: console.log("controls backing luma: " + PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) + ", "
+                    + " ring luma: " + PlayerPresenter.ringLumaForRect(controlsBounds.bounds))
             }
         }
 
@@ -241,14 +251,16 @@ Item {
                         clip: true
                         reuseItems: true // tons of songs moving
 
-                        lightMode: PlayerPresenter.lumaSentinel &&
-                            (PlayerPresenter.backdropLumaForRect(Qt.rect(
+                        property rect globalBounds: Qt.rect(
                                 nextQueue_cBounds.x,
                                 nextQueue_cBounds.y,
                                 nextQueue_c.contentWidth,
                                 nextQueue_c.contentHeight
-                            )) > 0.55)
-                                && PlayerPresenter.coverCentricLuma > 0.7
+                            )
+
+                        lightMode: PlayerPresenter.lumaSentinel &&
+                            (PlayerPresenter.backdropLumaForRect(globalBounds) > 0.55)
+                                && (PlayerPresenter.ringLumaForRect(globalBounds) > 0.7)
 
                         onSongClicked: (song) => {
                             PlayQueue.playhead = PlayQueue.find_by_source(song.source)
@@ -276,14 +288,16 @@ Item {
                         font.pointSize: 13
                         font.weight: Font.Medium
 
-                        property bool lightMode: PlayerPresenter.lumaSentinel &&
-                            (PlayerPresenter.backdropLumaForRect(Qt.rect(
+                        property rect globalBounds: Qt.rect(
                                 nextQueue_pBounds.x,
                                 nextQueue_pBounds.y,
                                 nextQueue_p.contentWidth,
                                 nextQueue_p.contentHeight
-                            )) > 0.55)
-                                && PlayerPresenter.coverCentricLuma > 0.7
+                            )
+
+                        property bool lightMode: PlayerPresenter.lumaSentinel &&
+                            (PlayerPresenter.backdropLumaForRect(globalBounds) > 0.55)
+                                && (PlayerPresenter.ringLumaForRect(globalBounds) > 0.7)
 
                         color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                     }

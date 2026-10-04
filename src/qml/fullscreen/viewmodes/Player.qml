@@ -54,7 +54,7 @@ Item {
 
             property bool lightMode: PlayerPresenter.lumaSentinel &&
                 (PlayerPresenter.backdropLumaForRect(lyricsBounds.bounds) > 0.55)
-                    && PlayerPresenter.coverCentricLuma > 0.7 // context is everything
+                    && (PlayerPresenter.ringLumaForRect(lyricsBounds.bounds) > 0.7) // context is everything
 
             highlightedColor:   root.lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
             unhighlightedColor: root.lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
@@ -99,7 +99,7 @@ Item {
 
         property bool lightMode: PlayerPresenter.lumaSentinel &&
             (PlayerPresenter.backdropLumaForRect(navBounds.bounds) > 0.55)
-                && PlayerPresenter.coverBordersLuma > 0.7 // context is everything
+                && (PlayerPresenter.ringLumaForRect(navBounds.bounds) > 0.7) // context is everything
 
         HoverHandler {
             id: windex_hover

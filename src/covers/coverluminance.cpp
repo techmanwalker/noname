@@ -155,8 +155,12 @@ ring_luma
 percentile_luminance (const QImage &chunk, int percentile,
                       double ring_crop_begin, double ring_crop_end)
 {
+    ring_luma result_ring { .value = 0.5,
+                            .ring_crop_begin = ring_crop_begin,
+                            .ring_crop_end = ring_crop_end };
+
     if (chunk.isNull() || chunk.width() <= 0 || chunk.height() <= 0) {
-        return {};
+        return result_ring;
     }
 
     const int p = std::clamp(percentile, 0, 100);
@@ -164,7 +168,7 @@ percentile_luminance (const QImage &chunk, int percentile,
     const double begin = std::clamp(ring_crop_begin, 0.0, 1.0);
     const double end   = std::clamp(ring_crop_end,   0.0, 1.0);
     if (begin >= end) {
-        return {}; // empty ring
+        return result_ring; // empty ring
     }
 
     // Cover thumbnails are treated as opaque; Format_RGB32 gives a known,
@@ -239,16 +243,14 @@ percentile_luminance (const QImage &chunk, int percentile,
     }
 
     if (count == 0) {
-        return {};
+        return result_ring;
     }
 
     const float result = select_percentile(buffer.get(), count, p);
 
-    return {
-        .value=std::clamp(static_cast<double>(result), 0.0, 1.0),
-        .ring_crop_begin=ring_crop_begin,
-        .ring_crop_end=ring_crop_end
-    };
+    result_ring.value = std::clamp(static_cast<double>(result), 0.0, 1.0);
+
+    return result_ring;
 }
 
 double
@@ -305,6 +307,39 @@ touched_cells (double begin, double end, size_t cells) noexcept
         std::clamp(std::ceil(end - tolerance), static_cast<double>(first + 1), last));
 
     return { first, past };
+}
+
+// How much of the cover's width and height a surface of this size shows when
+// the cover fills it, centered and cropped to the surface's aspect ratio. One
+// of the two is exactly 1.0. Empty if either aspect ratio is degenerate.
+[[nodiscard]] QSizeF
+visible_cover_fraction (transform::ratio cover_aspect, QSize surface) noexcept
+{
+    const auto [aspect_w, aspect_h] = transform::find_aspect_ratio(
+        static_cast<size_t>(surface.width()),
+        static_cast<size_t>(surface.height()));
+
+    const QSizeF cover_area(static_cast<double>(cover_aspect.first),
+                            static_cast<double>(cover_aspect.second));
+
+    const QSizeF fit = transform::largest_aspect_size(cover_area, aspect_w, aspect_h);
+    if (fit.isEmpty()) {
+        return {};
+    }
+
+    return { fit.width() / cover_area.width(), fit.height() / cover_area.height() };
+}
+
+// Area of [left, right) x [top, bottom) that lies inside the box centered on
+// `center` with the given half-extents.
+[[nodiscard]] double
+overlap_with_centered_box (double left, double top, double right, double bottom,
+                           QPointF center, double half_w, double half_h) noexcept
+{
+    const double w = std::min(right,  center.x() + half_w) - std::max(left, center.x() - half_w);
+    const double h = std::min(bottom, center.y() + half_h) - std::max(top,  center.y() - half_h);
+
+    return std::max(0.0, w) * std::max(0.0, h);
 }
 
 }
@@ -413,26 +448,18 @@ table_luma::backdrop_luma_for_rect (QRect rect, QSize reference_surface, int per
         return no_backing;
     }
 
-    // 1. Logically fit the surface inside the table's area. The table
-    //    covers the whole image, so its area is the image's aspect ratio.
-    //    Nothing is cropped or resized: this only computes a size.
-    const auto [aspect_w, aspect_h] = transform::find_aspect_ratio(
-        static_cast<size_t>(reference_surface.width()),
-        static_cast<size_t>(reference_surface.height()));
-
-    const QSizeF table_area(static_cast<double>(m_aspect_ratio.first),
-                            static_cast<double>(m_aspect_ratio.second));
-
-    const QSizeF fit = transform::largest_aspect_size(table_area, aspect_w, aspect_h);
-    if (fit.isEmpty()) {
+    // 1. Logically fit the surface inside the table's area (the image's
+    //    aspect ratio). Nothing is cropped or resized: this only computes
+    //    what fraction of the table the surface shows per axis.
+    const QSizeF shown = visible_cover_fraction(m_aspect_ratio, reference_surface);
+    if (shown.isEmpty()) {
         return no_backing; // default-constructed table (ratio 0:0)
     }
 
     // 2. Express the fitted surface in cell units. The grid spans the whole
-    //    table, so the fitted surface is a fraction of it per axis (one of
-    //    the two is exactly 1.0), centered like in the drawing.
-    const double cells_w = fit.width()  / table_area.width()  * s_columns;
-    const double cells_h = fit.height() / table_area.height() * s_rows;
+    //    table, centered like in the drawing.
+    const double cells_w = shown.width()  * s_columns;
+    const double cells_h = shown.height() * s_rows;
 
     const double origin_x = (static_cast<double>(s_columns) - cells_w) / 2.0;
     const double origin_y = (static_cast<double>(s_rows)    - cells_h) / 2.0;
@@ -474,6 +501,65 @@ table_luma::backdrop_luma_for_rect (QRect rect, QSize reference_surface, int per
     std::nth_element(values.begin(), values.begin() + rank, values.end());
 
     return values[static_cast<size_t>(rank)];
+}
+
+std::optional<luma_types>
+dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
+                        QRect rect, QSize reference_surface)
+{
+    if (reference_surface.isEmpty()) {
+        return std::nullopt;
+    }
+
+    // Clip to bounds: only the part of rect on the surface shows the cover.
+    const QRect visible = rect.intersected(QRect(QPoint(0, 0), reference_surface));
+    if (visible.isEmpty()) {
+        return std::nullopt;
+    }
+
+    const QSizeF shown = visible_cover_fraction(cover_aspect, reference_surface);
+    if (shown.isEmpty()) {
+        return std::nullopt;
+    }
+
+    // Ring bounds are Chebyshev distances in the cover's own normalized axes
+    // (center = 0, edge = 1), but the surface only shows `shown` of the cover
+    // per axis. So a ring at distance s is a box centered on the surface with
+    // half-extents s * (half the surface) / shown.
+    const QPointF center(reference_surface.width() / 2.0, reference_surface.height() / 2.0);
+    const double px_per_unit_x = center.x() / shown.width();
+    const double px_per_unit_y = center.y() / shown.height();
+
+    const double left   = visible.x();
+    const double top    = visible.y();
+    const double right  = left + visible.width();   // exclusive edge
+    const double bottom = top  + visible.height();
+
+    // area of the visible rect inside the box at Chebyshev distance s
+    auto area_within = [&](double s) {
+        return overlap_with_centered_box(left, top, right, bottom, center,
+                                         s * px_per_unit_x, s * px_per_unit_y);
+    };
+
+    std::optional<luma_types> best;
+    double best_area = 0.0;
+
+    for (size_t i = 0; i < rings.size(); ++i) {
+        const double begin = std::clamp(rings[i].ring_crop_begin, 0.0, 1.0);
+        const double end   = std::clamp(rings[i].ring_crop_end,   0.0, 1.0);
+
+        // Rings are nested boxes: this ring = box(end) minus box(begin). A
+        // malformed ring (begin >= end) gets zero area, as in pondered_luma.
+        const double area = std::max(0.0, area_within(end) - area_within(begin));
+
+        // Strict >: on an exact tie the earlier (inner) ring wins.
+        if (area > best_area) {
+            best_area = area;
+            best = static_cast<luma_types>(i);
+        }
+    }
+
+    return best;
 }
 
 }

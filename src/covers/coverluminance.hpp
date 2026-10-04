@@ -107,6 +107,16 @@ ring_luma percentile_luminance (const QImage &chunk, int percentile,
 // contributes zero area at once.
 double pondered_luma (const cover_rings &lumas);
 
+// Which ring covers the largest part of `rect`. rect is relative to the
+// top-left corner of `reference_surface`, the surface the cover fills (cropped
+// to the surface's aspect ratio, as in table_luma::backdrop_luma_for_rect).
+// The part of rect outside the surface is ignored. Ties go to the innermost
+// ring. nullopt if no ring covers any visible part of rect: rect outside the
+// surface, empty surface, or a cover without an aspect ratio yet.
+[[nodiscard]] std::optional<luma_types>
+dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
+                        QRect rect, QSize reference_surface);
+
 // Divides `image` into s_rows x s_columns cells and stores the percentile
 // luminance of each one. Cell edges are rounded, but every pixel belongs to
 // at least one cell. A null image yields an all-zero table with ratio {0, 0}.

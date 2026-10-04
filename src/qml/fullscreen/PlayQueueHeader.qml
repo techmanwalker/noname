@@ -15,10 +15,7 @@ Column {
 
     function lightModeForBounds (bounds: rect) : bool {
         return PlayerPresenter.lumaSentinel && (PlayerPresenter.backdropLumaForRect(bounds) > 0.55)
-                        && ((!usedInImmersiveMode) ?
-                            (PlayerPresenter.coverMidringLuma > 0.7)
-                          : (PlayerPresenter.coverCentricLuma > 0.7)
-                        ) // context is everything
+                        && (PlayerPresenter.ringLumaForRect(bounds) > 0.7) // context is everything
     }
 
     signal clicked()
