@@ -138,5 +138,6 @@ private:
     std::atomic_bool m_slider_pressed {false};
 
     covers::luminance::cover_rings m_cover_luma_rings;
+    covers::luminance::table_luma  m_cover_luma_table;
     double m_cover_pondered_luma = 0.5;
 };

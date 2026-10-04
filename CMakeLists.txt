@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration LinguistTools)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 ShaderTools QmlIntegration LinguistTools Concurrent)
 
 find_package(SoundIo REQUIRED)
 
@@ -345,6 +345,7 @@ target_link_libraries(covers
 
     PRIVATE
         Qt6::Gui
+        Qt6::Concurrent
 
         diskio
         mediatypes

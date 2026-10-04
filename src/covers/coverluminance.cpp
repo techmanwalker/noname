@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include <QImage>
+#include <QtConcurrent/QtConcurrent>
 
 namespace covers::luminance
 {
@@ -41,12 +42,11 @@ oklab_lightness (double r_linear, double g_linear, double b_linear)
     return 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
 }
 
-// after
 double
-percentile_luminance (const QImage &cover, int percentile,
+percentile_luminance (const QImage &chunk, int percentile,
                        double ring_crop_begin, double ring_crop_end)
 {
-    if (cover.isNull() || cover.width() <= 0 || cover.height() <= 0) {
+    if (chunk.isNull() || chunk.width() <= 0 || chunk.height() <= 0) {
         return 0.0;
     }
 
@@ -60,9 +60,9 @@ percentile_luminance (const QImage &cover, int percentile,
 
     // Cover thumbnails are treated as opaque; Format_RGB32 gives a known,
     // tightly-packed 0xffRRGGBB layout we can walk with a raw pointer.
-    const QImage rgb = cover.format() == QImage::Format_RGB32
-        ? cover
-        : cover.convertToFormat(QImage::Format_RGB32);
+    const QImage rgb = chunk.format() == QImage::Format_RGB32
+        ? chunk
+        : chunk.convertToFormat(QImage::Format_RGB32);
 
     const int full_w = rgb.width();
     const int full_h = rgb.height();
@@ -146,6 +146,178 @@ pondered_luma (const cover_rings &lumas)
     }
 
     return std::clamp(weighted_sum / total_weight, 0.0, 1.0);
+}
+
+namespace
+{
+
+// Pixel boundary of the index-th of `cells` equal divisions of `extent`.
+// edge(0) == 0 and edge(cells) == extent, so [edge(i), edge(i+1)) tile
+// [0, extent) exactly; neighbouring cells differ by at most one pixel.
+[[nodiscard]] constexpr int
+cell_edge (size_t index, size_t cells, size_t extent) noexcept
+{
+    return static_cast<int>(static_cast<uint64_t>(index) * extent / cells);
+}
+
+// Half-open range of whole cells touched by [begin, end), given in cell
+// units. Rounds outward so every touched cell counts. The tolerance keeps an
+// interval that is cell-aligned up to floating-point noise from dragging in
+// a neighbouring cell. The result is never empty and stays inside [0, cells].
+[[nodiscard]] std::pair<size_t, size_t>
+touched_cells (double begin, double end, size_t cells) noexcept
+{
+    constexpr double tolerance = 1e-9;
+    const auto last = static_cast<double>(cells);
+
+    const auto first = static_cast<size_t>(
+        std::clamp(std::floor(begin + tolerance), 0.0, last - 1.0));
+    const auto past = static_cast<size_t>(
+        std::clamp(std::ceil(end - tolerance), static_cast<double>(first + 1), last));
+
+    return { first, past };
+}
+
+}
+
+table_luma
+luma_table_of_image (const QImage &image, int percentile)
+{
+    // Zeroed: the same "no data" value percentile_luminance gives an empty chunk.
+    table_luma table{};
+
+    if (image.isNull() || image.width() <= 0 || image.height() <= 0) {
+        return table;
+    }
+
+    table.m_aspect_ratio = transform::find_aspect_ratio(
+        static_cast<size_t>(image.width()),
+        static_cast<size_t>(image.height()));
+
+    // Convert once. Every cell view below is already Format_RGB32, so
+    // percentile_luminance skips its own per-call conversion.
+    const QImage rgb = image.format() == QImage::Format_RGB32
+        ? image
+        : image.convertToFormat(QImage::Format_RGB32);
+
+    const size_t     width  = static_cast<size_t>(rgb.width());
+    const size_t     height = static_cast<size_t>(rgb.height());
+    const uchar     *base   = rgb.constBits();
+    const qsizetype  stride = rgb.bytesPerLine();
+
+    // One task = one table row. Each task writes only its own row of
+    // m_table, so there is nothing to lock.
+    auto evaluate_row = [&](int row_index) {
+        const auto row = static_cast<size_t>(row_index);
+
+        const int y0 = cell_edge(row, table_luma::s_rows, height);
+        const int y1 = std::max(cell_edge(row + 1, table_luma::s_rows, height), y0 + 1);
+
+        for (size_t column = 0; column < table_luma::s_columns; ++column) {
+            const int x0 = cell_edge(column, table_luma::s_columns, width);
+            const int x1 = std::max(cell_edge(column + 1, table_luma::s_columns, width), x0 + 1);
+
+            // Zero-copy, read-only view into `rgb`; no pixels are duplicated.
+            const uchar *origin = base + y0 * stride
+                                       + x0 * static_cast<qsizetype>(sizeof(QRgb));
+
+            const QImage cell(origin, x1 - x0, y1 - y0, stride, QImage::Format_RGB32);
+
+            table.m_table[row][column] = percentile_luminance(cell, percentile);
+        }
+    };
+
+    std::array<int, table_luma::s_rows> rows;
+    std::iota(rows.begin(), rows.end(), 0);
+
+    // Blocks until every row is done, so `rgb` outlives all the views.
+    QtConcurrent::blockingMap(rows.begin(), rows.end(), evaluate_row);
+
+    return table;
+}
+
+double
+table_luma::backing_luma_for_rect (QRect rect, QSize reference_surface, int percentile) const
+{
+    // Same "no data" value percentile_luminance gives an empty chunk.
+    constexpr double no_backing = 0.0;
+
+    if (reference_surface.isEmpty()) {
+        return no_backing;
+    }
+
+    // NOTE: rect.x() and rect.y() are relative to the top-left corner of
+    // reference_surface, NOT of the table. (0, 0) is the surface's corner.
+    // The surface only covers part of the table (see below), so mixing up
+    // the two origins is what shifts every lookup.
+    //
+    // Only the part of rect inside the surface has a visible backdrop.
+    const QRect visible = rect.intersected(QRect(QPoint(0, 0), reference_surface));
+    if (visible.isEmpty()) {
+        return no_backing;
+    }
+
+    // 1. Logically fit the surface inside the table's area. The table
+    //    covers the whole image, so its area is the image's aspect ratio.
+    //    Nothing is cropped or resized: this only computes a size.
+    const auto [aspect_w, aspect_h] = transform::find_aspect_ratio(
+        static_cast<size_t>(reference_surface.width()),
+        static_cast<size_t>(reference_surface.height()));
+
+    const QSizeF table_area(static_cast<double>(m_aspect_ratio.first),
+                            static_cast<double>(m_aspect_ratio.second));
+
+    const QSizeF fit = transform::largest_aspect_size(table_area, aspect_w, aspect_h);
+    if (fit.isEmpty()) {
+        return no_backing; // default-constructed table (ratio 0:0)
+    }
+
+    // 2. Express the fitted surface in cell units. The grid spans the whole
+    //    table, so the fitted surface is a fraction of it per axis (one of
+    //    the two is exactly 1.0), centered like in the drawing.
+    const double cells_w = fit.width()  / table_area.width()  * s_columns;
+    const double cells_h = fit.height() / table_area.height() * s_rows;
+
+    const double origin_x = (static_cast<double>(s_columns) - cells_w) / 2.0;
+    const double origin_y = (static_cast<double>(s_rows)    - cells_h) / 2.0;
+
+    // surface pixels -> cells
+    const double cells_per_px_x = cells_w / reference_surface.width();
+    const double cells_per_px_y = cells_h / reference_surface.height();
+
+    // 3. Locate rect from the surface's corner, then shift by the surface's
+    //    own offset inside the table.
+    const double left   = visible.x();
+    const double top    = visible.y();
+    const double right  = left + visible.width();   // exclusive edge
+    const double bottom = top  + visible.height();
+
+    const auto [col_begin, col_end] = touched_cells(origin_x + left  * cells_per_px_x,
+                                                    origin_x + right * cells_per_px_x,
+                                                    s_columns);
+    const auto [row_begin, row_end] = touched_cells(origin_y + top    * cells_per_px_y,
+                                                    origin_y + bottom * cells_per_px_y,
+                                                    s_rows);
+
+    // 4. Percentile of the spanned cells (not the mean: 1 1 1 1 0 0 0 must
+    //    not average into a gray that matches neither side).
+    std::vector<double> values;
+    values.reserve((row_end - row_begin) * (col_end - col_begin));
+
+    for (size_t r = row_begin; r < row_end; ++r) {
+        for (size_t c = col_begin; c < col_end; ++c) {
+            values.push_back(m_table[r][c]);
+        }
+    }
+
+    // Same rank formula as percentile_luminance. `values` is never empty.
+    const int p = std::clamp(percentile, 0, 100);
+    const auto rank = static_cast<std::ptrdiff_t>(
+        (values.size() - 1) * static_cast<size_t>(p) / 100);
+
+    std::nth_element(values.begin(), values.begin() + rank, values.end());
+
+    return values[static_cast<size_t>(rank)];
 }
 
 }

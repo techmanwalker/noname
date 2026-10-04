@@ -3,12 +3,12 @@
 
 #include "audioengine-in.hpp"
 
+#include "coverlogging.hpp"
 #include "coverluminance.hpp"
 #include "manager-in.hpp"
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
 
-#include "covertransform.hpp"
 #include "thumbnails.hpp"
 
 #include <QImage>
@@ -128,6 +128,8 @@ PlayerPresenterLI::recompute_lumas()
     qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
 
     m_cover_luma_rings = std::move(rings);
+    m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);
+
     m_cover_pondered_luma = cover_pondered_luma;
 
     emit lumasChanged();
@@ -136,42 +138,7 @@ PlayerPresenterLI::recompute_lumas()
 double
 PlayerPresenterLI::backingLumaForRect (QRect rect) const
 {
-    const QUrl source = playing->current_track().source;
-
-    const CoverRef ref(source, 256);
-    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
-
-    if (thumbnail.isNull())
-        return 0.0; // no cover: pick whatever the "no backing" answer should be
-
-    // `rect` is in surface coordinates, like the surface itself.
-    const QSizeF surface(wi->width(), wi->height());
-
-    // The part of the thumbnail the Background actually shows: the largest
-    // centered region with the surface's aspect ratio. Not cropped, just measured.
-    const QSizeF fit = covers::transform::largest_aspect_size(thumbnail.size(),
-                                           surface.width(), surface.height());
-    if (fit.isEmpty())
-        return 0.0; // zero-sized surface
-
-    const double  scale = fit.width() / surface.width();
-    const QPointF origin((thumbnail.width()  - fit.width())  / 2.0,
-                         (thumbnail.height() - fit.height()) / 2.0);
-
-    const QRectF mapped(origin.x() + rect.x() * scale,
-                        origin.y() + rect.y() * scale,
-                        rect.width()  * scale,
-                        rect.height() * scale);
-
-    // Outward to whole pixels so every touched pixel counts; the intersection
-    // also handles rects that hang past the surface edge.
-    const QRect region = mapped.toAlignedRect().intersected(thumbnail.rect());
-    if (region.isEmpty())
-        return 0.0;
-
-    const QImage backing = thumbnail.copy(region); // only the small sub-region
-
-    return covers::luminance::percentile_luminance(backing, 55);
+    return m_cover_luma_table.backing_luma_for_rect (rect, QSize { wi->width(), wi->height() });
 }
 
 PlayerPresenterLI::PlaybackState

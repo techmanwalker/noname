@@ -1,5 +1,12 @@
 #pragma once 
 
+#include "covertransform.hpp"
+
+#include <QRect>
+#include <QSize>
+
+#include <array>
+#include <cstddef>
 #include <cstdint>
 
 class QImage;
@@ -20,12 +27,39 @@ struct cover_rings {
     ring_luma borders_luma;
 };
 
+/*  NxM table + aspect ratio representing equally sized chunks of an image
+    (cover), each value corresponds to its luma at a given percentile.
+
+    [N][M] = [row][column]
+*/
+struct table_luma {
+    // NxM size
+    static constexpr size_t s_rows = 128, s_columns = 128;
+
+    // percentile luminance of each equally sized region
+    std::array<
+        std::array <
+            double,
+            s_columns
+        >,
+        s_rows
+    > m_table {};
+
+    transform::ratio m_aspect_ratio; // of the original image buffer
+
+    // use the table luminance values to find an average or percentile
+    // luminance behind rect, given that it is located respect to the
+    // corners of reference_surface.
+    [[nodiscard]] double backing_luma_for_rect (QRect rect, QSize reference_surface,
+                                                int percentile = 60) const;
+};
+
 double srgb_to_linear(uint8_t channel_8bit);
 
 double oklab_lightness(double r_linear, double g_linear, double b_linear);
 
-// Percentile of OkLab lightness (L, in [0,1]) sampled from a *ring* of
-// `cover`. Deliberately not the mean, for the same reason as always — the
+// Percentile of OkLab lightness (L, in [0,1]) sampled from a *ring* or *cell*
+// of `cover`. Deliberately not the mean, for the same reason as always — the
 // mean gets dragged around by large flat regions, which this exists to
 // avoid. percentile is 0-100. ring_crop_begin/ring_crop_end (each 0-1)
 // bound the ring by Chebyshev distance from the image's own center: 0 is
@@ -35,7 +69,7 @@ double oklab_lightness(double r_linear, double g_linear, double b_linear);
 // only the outer border frame. Adjacent rings never share a pixel — the
 // interval is half-open on the high end ([begin, end)) except at the true
 // outer edge, where end == 1 includes the literal edge pixels too.
-double percentile_luminance (const QImage &cover, int percentile,
+double percentile_luminance (const QImage &chunk, int percentile,
                               double ring_crop_begin = 0.0, double ring_crop_end = 1.0);
 
 // Area-weighted mean of the four ring lumas in `lumas`, condensed to a
@@ -55,5 +89,10 @@ double percentile_luminance (const QImage &cover, int percentile,
 // yet" placeholder used elsewhere -- only if every ring somehow
 // contributes zero area at once.
 double pondered_luma (const cover_rings &lumas);
+
+// Divides `image` into s_rows x s_columns cells and stores the percentile
+// luminance of each one. Cell edges are rounded, but every pixel belongs to
+// at least one cell. A null image yields an all-zero table with ratio {0, 0}.
+table_luma luma_table_of_image (const QImage &image, int percentile);
 
 }
