@@ -12,8 +12,8 @@ class WindowGeometryProxy : public QObject
     QML_SINGLETON
 
 public:
-    Q_PROPERTY(int width READ width NOTIFY widthChanged)
-    Q_PROPERTY(int height READ height NOTIFY heightChanged)
+    Q_PROPERTY(int width  READ width  WRITE poll_width  NOTIFY sizeChanged)
+    Q_PROPERTY(int height READ height WRITE poll_height NOTIFY sizeChanged)
 
     explicit WindowGeometryProxy (QObject *parent = nullptr)        
         : QObject(parent),
@@ -24,8 +24,7 @@ public:
         // casts FROM a QObject). This is a genuine cross-cast between sibling
         // bases of the same PlayerPresenterLI object, hence dynamic_cast here.
         if (auto *concrete = dynamic_cast<QObject*>(m_geometry.get())) {
-            connect(concrete, SIGNAL(widthChanged()),         this, SIGNAL(widthChanged()));
-            connect(concrete, SIGNAL(heightChanged()),        this, SIGNAL(heightChanged()));
+            connect(concrete, SIGNAL(sizeChanged()), this, SIGNAL(sizeChanged()));
         }
     }
 
@@ -36,7 +35,7 @@ public:
     int width ()  { 
         if (!m_geometry) return 0;
 
-        return m_geometry->width();
+        return m_geometry->width();;
     }
 
     int height () {
@@ -45,11 +44,22 @@ public:
         return m_geometry->height();
     }
 
-    Q_INVOKABLE void save(int width, int height) { if (m_geometry) m_geometry->save(width, height); }
+    void poll_width (int width) {
+        if (!m_geometry) return;
+
+        m_geometry->poll_width(width);
+    }
+
+    void poll_height (int height) {
+        if (!m_geometry) return;
+
+        m_geometry->poll_height(height);
+    }
+
+    Q_INVOKABLE void poll_and_save_to_disk (int width, int height) { if (m_geometry) m_geometry->poll_and_save_to_disk(width, height); }
 
 signals:
-    void widthChanged ();
-    void heightChanged ();
+    void sizeChanged();
 
 private:
     std::shared_ptr<WindowGeometry> m_geometry;

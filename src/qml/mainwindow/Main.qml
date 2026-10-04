@@ -16,14 +16,17 @@ T.ApplicationWindow {
     title: "noname"
     color: "#000"
 
+    flags: Qt.Window | Qt.FramelessWindowHint
+
     width: WindowGeometry.width
     height: WindowGeometry.height
 
-    flags: Qt.Window | Qt.FramelessWindowHint
+    onWidthChanged:  WindowGeometry.width  = width;
+    onHeightChanged: WindowGeometry.height = height;
 
     onClosing: {
         // save last used values
-        WindowGeometry.save(width, height);
+        WindowGeometry.poll_and_save_to_disk(width, height);
         PlayerPresenter.saveVolume();
     }
 

@@ -2,6 +2,7 @@
 #include "windowgeometry.hpp"
 
 #include <memory>
+#include <qtypes.h>
 
 using configuration::conf_file_type;
 
@@ -20,22 +21,26 @@ WindowGeometryLI::WindowGeometryLI(QObject *parent, std::shared_ptr<configuratio
         // Never trust a stored size blindly — a corrupt/hand-edited
         // value here should fall back to defaults, not brick the window
         if (wOk && hOk && w >= MIN_WIDTH && h >= MIN_HEIGHT) {
-            m_width = w;
-            m_height = h;
+            m_size = {w, h};
         }
     }
 }
 
+int WindowGeometryLI::width()  const { return m_size.width();  }
+int WindowGeometryLI::height() const { return m_size.height(); }
+
+void WindowGeometryLI::poll_width  (int width)  { m_size.setWidth(width);   }
+void WindowGeometryLI::poll_height (int height) { m_size.setHeight(height); }
+
 void
-WindowGeometryLI::save(int width, int height)
+WindowGeometryLI::poll_and_save_to_disk (int width, int height)
 {
     if (width < MIN_WIDTH || height < MIN_HEIGHT) return;
+
+    m_size = {width, height};
 
     cm->write_lines(
         conf_file_type::window_geometry,
         { QString::number(width), QString::number(height) }
     );
 }
-
-int WindowGeometryLI::width()  const { return m_width;  }
-int WindowGeometryLI::height() const { return m_height; }
