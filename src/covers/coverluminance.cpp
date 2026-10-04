@@ -1,7 +1,13 @@
 #include "coverluminance.hpp"
 
+#include <algorithm>
 #include <array>
+#include <bit>
+#include <cassert>
 #include <cmath>
+#include <memory>
+#include <numeric>
+#include <vector>
 
 #include <QImage>
 #include <QtConcurrent/QtConcurrent>
@@ -9,21 +15,40 @@
 namespace covers::luminance
 {
 
+namespace {
+
+struct srgb_tables {
+    std::array<double, 256> linear_d{};
+    std::array<float, 256>  linear_f{};
+
+    srgb_tables () noexcept
+    {
+        for (size_t i = 0; i < 256; ++i) {
+            const double c = static_cast<double>(i) / 255.0;
+            const double v = c <= 0.04045 ? c / 12.92 : std::pow((c + 0.055) / 1.055, 2.4);
+            linear_d[i] = v;
+            linear_f[i] = static_cast<float>(v);
+        }
+    }
+};
+
+[[nodiscard]] const srgb_tables &
+srgb ()
+{
+    // safe to call from other static initializers and from any worker thread
+    static const srgb_tables tables;
+    return tables;
+}
+
+
+}
+
 // Colorspace operations
 
 double
 srgb_to_linear (uint8_t channel_8bit)
 {
-    static const std::array<double, 256> lut = [] {
-        std::array<double, 256> table{};
-        for (int i = 0; i < 256; ++i) {
-            const double c = i / 255.0;
-            table[i] = c <= 0.04045 ? c / 12.92 : std::pow((c + 0.055) / 1.055, 2.4);
-        }
-        return table;
-    }();
-
-    return lut[channel_8bit];
+    return srgb().linear_d[channel_8bit];
 }
 
 double
@@ -40,6 +65,60 @@ oklab_lightness (double r_linear, double g_linear, double b_linear)
     const double s_ = std::cbrt(s);
 
     return 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+}
+
+namespace
+{
+
+// x > 0. FreeBSD cbrtf bit-trick seed (~3% error) + one Halley step.
+[[nodiscard]] inline float
+cbrt_halley (float x) noexcept
+{
+    const float y  = std::bit_cast<float>(std::bit_cast<uint32_t>(x) / 3u + 709958130u);
+    const float y3 = y * y * y;
+    return y * (y3 + 2.0f * x) / (2.0f * y3 + x);
+}
+
+// Branch-free OkLab L for n contiguous Format_RGB32 pixels.
+void
+lightness_run (const QRgb *__restrict px, float *__restrict out, int n) noexcept
+{
+    const float *lut = srgb().linear_f.data();
+
+    for (int i = 0; i < n; ++i) {
+        const float r = lut[qRed(px[i])];
+        const float g = lut[qGreen(px[i])];
+        const float b = lut[qBlue(px[i])];
+
+        // Same constants as oklab_lightness(); that one stays as the reference.
+        // The floor keeps cbrt_halley away from 0, where y^3 goes subnormal and
+        // 0/0 becomes NaN under FTZ.
+        const float l = std::max(0.4122214708f * r + 0.5363325363f * g + 0.0514459929f * b, 1e-20f);
+        const float m = std::max(0.2119034982f * r + 0.6806995451f * g + 0.1073969566f * b, 1e-20f);
+        const float s = std::max(0.0883024619f * r + 0.2817188376f * g + 0.6299787005f * b, 1e-20f);
+
+        out[i] = 0.2104542553f * cbrt_halley(l)
+               + 0.7936177850f * cbrt_halley(m)
+               - 0.0040720468f * cbrt_halley(s);
+    }
+}
+
+// Value at the given percentile of [first, first + count). Requires count > 0.
+// Reorders the range. Same rank formula as before, now in one place.
+template <typename T>
+[[nodiscard]] T
+select_percentile (T *first, size_t count, int percentile) noexcept
+{
+    const int p = std::clamp(percentile, 0, 100);
+    const auto rank = static_cast<std::ptrdiff_t>((count - 1) * static_cast<size_t>(p) / 100);
+
+    std::nth_element(first, first + rank, first + count);
+    return first[rank];
+}
+
+struct run     { int x_begin = 0, x_end = 0; };
+struct run_set { std::array<run, 2> r{}; int n = 0; };
+
 }
 
 double
@@ -81,42 +160,61 @@ percentile_luminance (const QImage &chunk, int percentile,
     const double inv_half_w = half_w > 0.0 ? 1.0 / half_w : 0.0;
     const double inv_half_h = half_h > 0.0 ? 1.0 / half_h : 0.0;
 
-    std::vector<double> lightness;
-    lightness.reserve(static_cast<size_t>(w) * static_cast<size_t>(h));
+        // Column runs passing the x-side of the ring test. lo is the lower bound
+    // on nx: `begin` for rows that cross the centre hole (ny < begin), 0 for
+    // rows already beyond it. Half-open [begin, end) semantics, with end == 1
+    // keeping the literal edge pixels, are preserved exactly.
+    auto column_runs = [&](double lo) {
+        run_set set;
+        int start = -1;
+        for (int x = x0; x <= x0 + w; ++x) {
+            bool in = false;
+            if (x < x0 + w) {
+                const double nx = std::abs(x - half_w) * inv_half_w;
+                in = nx >= lo && (end >= 1.0 || nx < end);
+            }
+            if (in && start < 0) {
+                start = x;
+            } else if (!in && start >= 0) {
+                assert(set.n < 2); // monotone in |x - half_w| => at most two runs
+                set.r[set.n++] = { start, x };
+                start = -1;
+            }
+        }
+        return set;
+    };
+
+    const run_set runs_hole = column_runs(begin); // rows with ny <  begin
+    const run_set runs_full = column_runs(0.0);   // rows with ny >= begin
+
+    // Upper bound, left uninitialised: lightness_run writes before nth_element reads.
+    const auto buffer = std::make_unique_for_overwrite<float[]>(
+        static_cast<size_t>(w) * static_cast<size_t>(h));
+    size_t count = 0;
 
     for (int y = y0; y < y0 + h; ++y) {
+        const double ny = std::abs(y - half_h) * inv_half_h;
+        if (end < 1.0 && ny >= end) {
+            continue; // t >= ny >= end: the whole row is outside the ring
+        }
+
+        const run_set &runs = ny < begin ? runs_hole : runs_full;
         const auto *row = reinterpret_cast<const QRgb *>(rgb.constScanLine(y));
-        const double ny = std::abs(y - half_h) * inv_half_h; // hoisted out of the x loop
-        for (int x = x0; x < x0 + w; ++x) {
-            const double nx = std::abs(x - half_w) * inv_half_w;
-            const double t  = std::max(nx, ny);
 
-            // half-open [begin, end) — except end == 1 must still keep the
-            // literal outer-edge pixels, or a "borders" ring would exclude
-            // its own border.
-            if (t < begin || (end < 1.0 && t >= end)) {
-                continue;
-            }
-
-            const QRgb px = row[x];
-            const double r = srgb_to_linear(static_cast<uint8_t>(qRed(px)));
-            const double g = srgb_to_linear(static_cast<uint8_t>(qGreen(px)));
-            const double b = srgb_to_linear(static_cast<uint8_t>(qBlue(px)));
-            lightness.push_back(oklab_lightness(r, g, b));
+        for (int i = 0; i < runs.n; ++i) {
+            const int len = runs.r[i].x_end - runs.r[i].x_begin;
+            lightness_run(row + runs.r[i].x_begin, buffer.get() + count, len);
+            count += static_cast<size_t>(len);
         }
     }
 
-    if (lightness.empty()) {
+    if (count == 0) {
         return 0.0;
     }
 
-    // nth_element is O(n) average — reading one rank doesn't justify an
-    // O(n log n) full sort.
-    const auto rank = static_cast<std::vector<double>::difference_type>(
-        (lightness.size() - 1) * static_cast<size_t>(p) / 100);
-    std::nth_element(lightness.begin(), lightness.begin() + rank, lightness.end());
+    const float result = select_percentile(buffer.get(), count, p);
 
-    return std::clamp(lightness[static_cast<size_t>(rank)], 0.0, 1.0);
+    return std::clamp(static_cast<double>(result), 0.0, 1.0);
 }
 
 double
@@ -194,8 +292,7 @@ luma_table_of_image (const QImage &image, int percentile)
         static_cast<size_t>(image.width()),
         static_cast<size_t>(image.height()));
 
-    // Convert once. Every cell view below is already Format_RGB32, so
-    // percentile_luminance skips its own per-call conversion.
+    // Convert once, so every task can walk the pixels as a raw 0xffRRGGBB buffer.
     const QImage rgb = image.format() == QImage::Format_RGB32
         ? image
         : image.convertToFormat(QImage::Format_RGB32);
@@ -205,32 +302,60 @@ luma_table_of_image (const QImage &image, int percentile)
     const uchar     *base   = rgb.constBits();
     const qsizetype  stride = rgb.bytesPerLine();
 
+    // Widest cell of any table row: ceil(width / s_columns) <= width / s_columns + 1.
+    const size_t max_cell_w = width / table_luma::s_columns + 1;
+
     // One task = one table row. Each task writes only its own row of
-    // m_table, so there is nothing to lock.
+    // m_table and owns its buffers, so there is nothing to lock.
     auto evaluate_row = [&](int row_index) {
         const auto row = static_cast<size_t>(row_index);
 
         const int y0 = cell_edge(row, table_luma::s_rows, height);
         const int y1 = std::max(cell_edge(row + 1, table_luma::s_rows, height), y0 + 1);
+        const size_t band_h = static_cast<size_t>(y1 - y0);
+
+        // 1. Lightness of the whole pixel band of this table row, computed once.
+        //    Full-width scanlines are long contiguous runs, which is what the
+        //    vectorized kernel needs. The cells never overlap, so no pixel is
+        //    converted twice.
+        const auto band = std::make_unique_for_overwrite<float[]>(band_h * width);
+
+        for (size_t y = 0; y < band_h; ++y) {
+            const auto *src = reinterpret_cast<const QRgb *>(
+                base + (static_cast<qsizetype>(y0) + static_cast<qsizetype>(y)) * stride);
+
+            lightness_run(src, band.get() + y * width, static_cast<int>(width));
+        }
+
+        // 2. One percentile per cell, gathered from the band. nth_element
+        //    reorders its input, so each cell is copied into a scratch buffer
+        //    that is allocated once per task and reused for all of its cells.
+        const auto scratch = std::make_unique_for_overwrite<float[]>(band_h * max_cell_w);
 
         for (size_t column = 0; column < table_luma::s_columns; ++column) {
             const int x0 = cell_edge(column, table_luma::s_columns, width);
             const int x1 = std::max(cell_edge(column + 1, table_luma::s_columns, width), x0 + 1);
+            const auto cell_w = static_cast<size_t>(x1 - x0);
 
-            // Zero-copy, read-only view into `rgb`; no pixels are duplicated.
-            const uchar *origin = base + y0 * stride
-                                       + x0 * static_cast<qsizetype>(sizeof(QRgb));
+            float *out = scratch.get();
+            for (size_t y = 0; y < band_h; ++y) {
+                const float *line = band.get() + y * width + static_cast<size_t>(x0);
+                out = std::copy_n(line, cell_w, out);
+            }
 
-            const QImage cell(origin, x1 - x0, y1 - y0, stride, QImage::Format_RGB32);
+            const size_t count = band_h * cell_w; // >= 1: both extents are forced to >= 1 pixel
 
-            table.m_table[row][column] = percentile_luminance(cell, percentile);
+            // Same [0, 1] clamp percentile_luminance applies to its result.
+            table.m_table[row][column] = std::clamp(
+                static_cast<double>(select_percentile(scratch.get(), count, percentile)),
+                0.0, 1.0);
         }
     };
 
     std::array<int, table_luma::s_rows> rows;
     std::iota(rows.begin(), rows.end(), 0);
 
-    // Blocks until every row is done, so `rgb` outlives all the views.
+    // Blocks until every row is done, so `rgb` outlives all the raw pointers.
     QtConcurrent::blockingMap(rows.begin(), rows.end(), evaluate_row);
 
     return table;
