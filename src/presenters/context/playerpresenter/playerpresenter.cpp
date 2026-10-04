@@ -71,10 +71,16 @@ quint64 PlayerPresenterLI::position_ms()   const { return playing->current_posit
 quint8  PlayerPresenterLI::volume()        const { return playing->current_volume();               }
 bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loaded();             }
 
-double PlayerPresenterLI::coverNuclearLuma() const { return m_cover_luma_rings.nuclear_luma.value; }
-double PlayerPresenterLI::coverCentricLuma() const { return m_cover_luma_rings.centric_luma.value; }
-double PlayerPresenterLI::coverMidringLuma() const { return m_cover_luma_rings.midring_luma.value; }
-double PlayerPresenterLI::coverBordersLuma() const { return m_cover_luma_rings.borders_luma.value; }
+double
+PlayerPresenterLI::luma_of_ring (covers::luminance::luma_types ring) const
+{
+    return covers::luminance::ring_of(m_cover_luma_rings, ring).value;
+}
+
+double PlayerPresenterLI::coverNuclearLuma() const { return luma_of_ring(covers::luminance::luma_types::nuclear);  }
+double PlayerPresenterLI::coverCentricLuma() const { return luma_of_ring(covers::luminance::luma_types::centric);; }
+double PlayerPresenterLI::coverMidringLuma() const { return luma_of_ring(covers::luminance::luma_types::midring);; }
+double PlayerPresenterLI::coverBordersLuma() const { return luma_of_ring(covers::luminance::luma_types::borders);; }
 
 double
 PlayerPresenterLI::coverPonderedLuma() const
@@ -90,25 +96,29 @@ PlayerPresenterLI::recompute_lumas()
     const CoverRef ref(source, 256);
     const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
 
-    covers::luminance::cover_rings rings {
-        covers::luminance::percentile_luminance(thumbnail, 65, 0.00, 0.15),
-        covers::luminance::percentile_luminance(thumbnail, 60, 0.15, 0.60),
-        covers::luminance::percentile_luminance(thumbnail, 60, 0.60, 0.80),
-        covers::luminance::percentile_luminance(thumbnail, 70, 0.80, 1.00)
-    };
+    using namespace covers::luminance;
+    using enum luma_types;
+
+    covers::luminance::cover_rings rings;
+    ring_of(rings, nuclear) = percentile_luminance(thumbnail, 65, 0.00, 0.15);
+    ring_of(rings, centric) = percentile_luminance(thumbnail, 60, 0.15, 0.60);
+    ring_of(rings, midring) = percentile_luminance(thumbnail, 60, 0.60, 0.80);
+    ring_of(rings, borders) = percentile_luminance(thumbnail, 70, 0.80, 1.00);
 
     double cover_pondered_luma = covers::luminance::pondered_luma(rings);
 
-    /*
-    constexpr double precision = 17;
     
-    qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(rings.nuclear_luma.value, 'f', precision);
-    qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(rings.centric_luma.value, 'f', precision);
-    qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(rings.midring_luma.value, 'f', precision);
-    qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(rings.borders_luma.value, 'f', precision);
+    constexpr double precision = 17;
+
+    using covers::luminance::luma_types;
+    
+    qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(ring_of(rings, nuclear).value, 'f', precision);
+    qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(ring_of(rings, centric).value, 'f', precision);
+    qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(ring_of(rings, midring).value, 'f', precision);
+    qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(ring_of(rings, borders).value, 'f', precision);
 
     qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
-    */
+    
 
     m_cover_luma_rings = std::move(rings);
     m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);

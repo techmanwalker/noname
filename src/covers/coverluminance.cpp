@@ -254,22 +254,19 @@ percentile_luminance (const QImage &chunk, int percentile,
 double
 pondered_luma (const cover_rings &lumas)
 {
-    // list all the ring lumas here since reflection still does not exist
-    const ring_luma *rings[] = { &lumas.nuclear_luma, &lumas.centric_luma,
-                             &lumas.midring_luma, &lumas.borders_luma };
-
     double weighted_sum = 0.0;
     double total_weight = 0.0;
 
-    for (const ring_luma *ring : rings) {
-        const double begin = std::clamp(ring->ring_crop_begin, 0.0, 1.0);
-        const double end   = std::clamp(ring->ring_crop_end,   0.0, 1.0);
+    for (const ring_luma &ring : lumas) {
+        const double begin = std::clamp(ring.ring_crop_begin, 0.0, 1.0);
+        const double end   = std::clamp(ring.ring_crop_end,   0.0, 1.0);
+
         // See the header comment: area fraction of a Chebyshev ring is
         // exactly end^2 - begin^2. max(0, ...) so a malformed ring
         // (begin >= end) contributes zero weight instead of a negative one.
         const double weight = std::max(0.0, end * end - begin * begin);
 
-        weighted_sum += ring->value * weight;
+        weighted_sum += ring.value * weight;
         total_weight += weight;
     }
 
