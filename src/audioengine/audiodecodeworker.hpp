@@ -19,7 +19,8 @@ class audio_decode_worker : public QObject
     Q_OBJECT
 
 public:
-    explicit audio_decode_worker (QObject *parent = nullptr);
+    explicit audio_decode_worker (std::optional<size_t> sample_rate = std::nullopt,
+                                  QObject *parent = nullptr);
     ~audio_decode_worker() override;
 
 public slots:

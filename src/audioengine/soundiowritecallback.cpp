@@ -18,6 +18,11 @@ write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_co
     // fetch our buffer from the userdata pointer
     audio_ring_buffer *ring_buf = static_cast<audio_ring_buffer*>(outstream->userdata);
     
+    // The ring buffer is the engine's fixed contract: interleaved stereo float32.
+    // The device's channel count only decides how we map it, never how much we pop.
+    constexpr int ring_channels = 2;
+    const int out_channels = outstream->layout.channel_count;
+
     int frames_left = frame_count_max;
 
     // Evaluate handshake status at the start of the callback
@@ -33,9 +38,10 @@ write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_co
     
     // remaining frames yet to decode
     while (frames_left > 0) {
-        // temp_buf is a fixed 8192-float stack array — never request more
-        // than it can hold for this device's channel count.
-        int frame_count = std::min(frames_left, 8192 / outstream->layout.channel_count);
+        // temp_buf holds 8192 floats of ring data (stereo), so the chunk limit
+        // depends on the ring's channel count, not the device's.
+        int frame_count = std::min(frames_left, 8192 / ring_channels);
+
         struct SoundIoChannelArea *areas;
         
         if (execute_soundio(soundio_outstream_begin_write,
@@ -61,8 +67,9 @@ write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_co
             float temp_buf[8192] = {0.0f}; 
             
             // Extract interleaved data (L-R-L-R) from our ring buffer
-            size_t floats_to_read = frame_count * outstream->layout.channel_count;
+            size_t floats_to_read = size_t(frame_count) * ring_channels;
             size_t floats_read = ring_buf->pop(temp_buf, floats_to_read);
+            size_t frames_read = floats_read / ring_channels;
 
             // detect true end of playback
             if (floats_read < floats_to_read && ring_buf->eof_decoded.load(std::memory_order_acquire)) {
@@ -76,16 +83,18 @@ write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_co
             }
             
             // libsoundio requires us to fill the channels using our own pointers (areas)
-            size_t float_idx = 0;
             for (int frame = 0; frame < frame_count; ++frame) {
-                for (int ch = 0; ch < outstream->layout.channel_count; ++ch) {
+                const bool has_data = size_t(frame) < frames_read;
+                const float l = has_data ? temp_buf[frame * ring_channels]     : 0.0f;
+                const float r = has_data ? temp_buf[frame * ring_channels + 1] : 0.0f;
+
+                for (int ch = 0; ch < out_channels; ++ch) {
                     float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
-                    
-                    if (float_idx < floats_read) {
-                        *ptr = temp_buf[float_idx++];
-                    } else {
-                        *ptr = 0.0f; // if no data, add silence
-                    }
+
+                    if (out_channels == 1)  *ptr = 0.5f * (l + r); // mono device: downmix
+                    else if (ch == 0)       *ptr = l;
+                    else if (ch == 1)       *ptr = r;
+                    else                    *ptr = 0.0f;           // extra channels: silence
                 }
             }
 
