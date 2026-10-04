@@ -91,8 +91,9 @@ Item {
                 Layout.maximumWidth: nowplaying_cover.width * .75
                 Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
-                property bool lightMode: (PlayerPresenter.backingLumaForRect(controlsBounds.bounds) > 0.55)
-                    && PlayerPresenter.coverMidringLuma > 0.63
+                property bool lightMode: PlayerPresenter.lumaSentinel &&
+                    (PlayerPresenter.backingLumaForRect(controlsBounds.bounds) > 0.55)
+                        && PlayerPresenter.coverMidringLuma > 0.63
 
                 DurationControl {
                     Layout.alignment: Qt.AlignHCenter
@@ -212,7 +213,8 @@ Item {
 
                 Layout.topMargin: root.songCoverHeight * .4
 
-                property bool lightMode: (PlayerPresenter.backingLumaForRect(nextQueueBounds.bounds) > 0.55)
+                property bool lightMode: PlayerPresenter.lumaSentinel &&
+                    (PlayerPresenter.backingLumaForRect(nextQueueBounds.bounds) > 0.55)
                         && PlayerPresenter.coverCentricLuma > 0.7
 
                 DropArea {

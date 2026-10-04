@@ -14,7 +14,7 @@ Column {
     property bool usedInImmersiveMode
 
     function lightModeForBounds (bounds: rect) : bool {
-        return (PlayerPresenter.backingLumaForRect(bounds) > 0.55)
+        return PlayerPresenter.lumaSentinel && (PlayerPresenter.backingLumaForRect(bounds) > 0.55)
                         && ((!usedInImmersiveMode) ?
                             (PlayerPresenter.coverMidringLuma > 0.7)
                           : (PlayerPresenter.coverCentricLuma > 0.7)

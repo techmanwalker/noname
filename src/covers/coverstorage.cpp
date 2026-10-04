@@ -8,9 +8,6 @@
 #include <qhashfunctions.h>
 #include <qloggingcategory.h>
 
-Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
-
-
 namespace covers::live {
 
 
