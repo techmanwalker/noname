@@ -11,9 +11,9 @@ extern "C" {
 
 // The Decoding workhorse
 
-audio_decode_worker::audio_decode_worker (QObject *parent)
+audio_decode_worker::audio_decode_worker (std::optional<size_t> sample_rate, QObject *parent)
     : QObject(parent),
-      m_ring_buffer() 
+      m_ring_buffer(sample_rate)
 {
 }
 

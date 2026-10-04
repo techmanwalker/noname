@@ -8,8 +8,7 @@
 
 audio_internal_controller::audio_internal_controller(QObject *parent)
     : QObject(parent),
-      m_audio_decoding_thread(new QThread(this)),
-      m_decoder_worker(new audio_decode_worker())
+      m_audio_decoding_thread(new QThread(this))
 {
     m_soundio = soundio_create();
 
@@ -35,14 +34,25 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
     qCDebug(l_audioengine) << "SoundIO connected to audio backend:" << backend_name;
 
     int default_out_device_index = soundio_default_output_device_index(m_soundio);
+
     m_device = soundio_get_output_device(m_soundio, default_out_device_index);
 
+    // Format negotiation: the engine contract is fixed (interleaved stereo float32 in
+    // the ring buffer). The device adapts to us; the sound server remaps/resamples.
+    constexpr int preferred_rate = 48000;
+    int negotiated_rate = soundio_device_nearest_sample_rate(m_device, preferred_rate);
+    if (negotiated_rate <= 0) negotiated_rate = preferred_rate;
+
+    // decoder resamples to the ring buffer's rate, so it must exist after negotiation
+    m_decoder_worker = new audio_decode_worker(negotiated_rate);
+
     m_outstream = soundio_outstream_create(m_device);
-    m_outstream->format = SoundIoFormatFloat32NE; 
-    m_outstream->sample_rate = m_decoder_worker->get_ring_buffer()->get_sample_rate();
+    m_outstream->format = SoundIoFormatFloat32NE;
+    m_outstream->sample_rate = negotiated_rate;
+
     m_outstream->software_latency = 0.15;
 
-    m_outstream->layout = m_device->current_layout;
+    m_outstream->layout = *soundio_channel_layout_get_default(2); // stereo, always
 
     m_outstream->userdata = m_decoder_worker->get_ring_buffer();
     m_decoder_worker->get_ring_buffer()->rt_notify_target = this; // reachable from write_callback via userdata
@@ -52,7 +62,20 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
 
     m_outstream->underflow_callback = underflow_callback;
 
-    execute_soundio(soundio_outstream_open, m_outstream);
+    if (execute_soundio(soundio_outstream_open, m_outstream) == 0) {
+        qCInfo(l_audioengine) << "outstream negotiated:"
+            << "backend" << soundio_backend_name(m_soundio->current_backend)
+            << "rate" << m_outstream->sample_rate
+            << "channels" << m_outstream->layout.channel_count
+            << "device channels" << m_device->current_layout.channel_count;
+
+        if (m_outstream->layout_error)
+            qCWarning(l_audioengine) << "layout not honoured exactly:" << soundio_strerror(m_outstream->layout_error);
+
+        if (uint64_t(m_outstream->sample_rate) != m_decoder_worker->get_ring_buffer()->get_sample_rate())
+            qCCritical(l_audioengine) << "backend changed sample rate; decoder and stream disagree";
+    }
+
     execute_soundio(soundio_outstream_start, m_outstream);
 
     m_decoder_worker->get_ring_buffer()->is_paused.store(true);
