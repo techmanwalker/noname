@@ -69,8 +69,8 @@ double oklab_lightness(double r_linear, double g_linear, double b_linear);
 // only the outer border frame. Adjacent rings never share a pixel — the
 // interval is half-open on the high end ([begin, end)) except at the true
 // outer edge, where end == 1 includes the literal edge pixels too.
-double percentile_luminance (const QImage &chunk, int percentile,
-                              double ring_crop_begin = 0.0, double ring_crop_end = 1.0);
+ring_luma percentile_luminance (const QImage &chunk, int percentile,
+                                double ring_crop_begin = 0.0, double ring_crop_end = 1.0);
 
 // Area-weighted mean of the four ring lumas in `lumas`, condensed to a
 // single [0,1] scalar -- the input the future dark-keyed/light-keyed

@@ -91,41 +91,24 @@ PlayerPresenterLI::recompute_lumas()
     const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
 
     covers::luminance::cover_rings rings {
-        covers::luminance::ring_luma (
-            covers::luminance::percentile_luminance(thumbnail, 65, 0.00, 0.15),
-            0.00,
-            0.15
-        ),
-
-        covers::luminance::ring_luma (
-            covers::luminance::percentile_luminance(thumbnail, 60, 0.15, 0.60),
-            0.15,
-            0.60
-        ),
-
-        covers::luminance::ring_luma (
-            covers::luminance::percentile_luminance(thumbnail, 60, 0.60, 0.80),
-            0.60,
-            0.80
-        ),
-
-        covers::luminance::ring_luma (
-            covers::luminance::percentile_luminance(thumbnail, 70, 0.80, 1.00),
-            0.80,
-            1.00
-        )
+        covers::luminance::percentile_luminance(thumbnail, 65, 0.00, 0.15),
+        covers::luminance::percentile_luminance(thumbnail, 60, 0.15, 0.60),
+        covers::luminance::percentile_luminance(thumbnail, 60, 0.60, 0.80),
+        covers::luminance::percentile_luminance(thumbnail, 70, 0.80, 1.00)
     };
 
     double cover_pondered_luma = covers::luminance::pondered_luma(rings);
 
+    /*
     constexpr double precision = 17;
-
+    
     qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(rings.nuclear_luma.value, 'f', precision);
     qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(rings.centric_luma.value, 'f', precision);
     qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(rings.midring_luma.value, 'f', precision);
     qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(rings.borders_luma.value, 'f', precision);
 
     qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
+    */
 
     m_cover_luma_rings = std::move(rings);
     m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);

@@ -21,7 +21,7 @@ kernel_L (int r, int g, int b)
 {
     QImage img(1, 1, QImage::Format_RGB32);
     img.setPixel(0, 0, qRgb(r, g, b));
-    return percentile_luminance(img, 50);
+    return percentile_luminance(img, 50).value;
 }
 
 int

@@ -40,6 +40,36 @@ srgb ()
     return tables;
 }
 
+namespace oklab
+{
+
+// M1: linear sRGB -> LMS cone responses. Rows are L, M, S; columns are R, G, B.
+template <typename T>
+inline constexpr std::array<std::array<T, 3>, 3> lms_from_linear_srgb {{
+    { T(0.4122214708), T(0.5363325363), T(0.0514459929) },
+    { T(0.2119034982), T(0.6806995451), T(0.1073969566) },
+    { T(0.0883024619), T(0.2817188376), T(0.6299787005) },
+}};
+
+// First row of M2: cube-rooted LMS -> OkLab L. The a and b rows are not needed.
+template <typename T>
+inline constexpr std::array<T, 3> lightness_from_lms_cbrt {
+    T(0.2104542553), T(0.7936177850), T(-0.0040720468)
+};
+
+template <typename T>
+[[nodiscard]] constexpr T
+dot3 (const std::array<T, 3> &k, T x, T y, T z) noexcept
+{
+    return k[0] * x + k[1] * y + k[2] * z;
+}
+
+// Floor for an LMS response before the cube root: keeps cbrt_halley away from 0,
+// where y^3 goes subnormal and 0/0 becomes NaN under FTZ.
+inline constexpr float min_lms_response = 1e-20f;
+
+}
+
 
 }
 
@@ -56,15 +86,14 @@ oklab_lightness (double r_linear, double g_linear, double b_linear)
 {
     // Björn Ottosson's OkLab forward transform — L channel only, since
     // that's all percentile_luminance needs.
-    const double l = 0.4122214708 * r_linear + 0.5363325363 * g_linear + 0.0514459929 * b_linear;
-    const double m = 0.2119034982 * r_linear + 0.6806995451 * g_linear + 0.1073969566 * b_linear;
-    const double s = 0.0883024619 * r_linear + 0.2817188376 * g_linear + 0.6299787005 * b_linear;
+    using namespace oklab;
+    const auto &M1 = lms_from_linear_srgb<double>;
 
-    const double l_ = std::cbrt(l);
-    const double m_ = std::cbrt(m);
-    const double s_ = std::cbrt(s);
+    const double l_ = std::cbrt(dot3(M1[0], r_linear, g_linear, b_linear));
+    const double m_ = std::cbrt(dot3(M1[1], r_linear, g_linear, b_linear));
+    const double s_ = std::cbrt(dot3(M1[2], r_linear, g_linear, b_linear));
 
-    return 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+    return dot3(lightness_from_lms_cbrt<double>, l_, m_, s_);
 }
 
 namespace
@@ -83,23 +112,24 @@ cbrt_halley (float x) noexcept
 void
 lightness_run (const QRgb *__restrict px, float *__restrict out, int n) noexcept
 {
+    using namespace oklab;
     const float *lut = srgb().linear_f.data();
+    const auto &M1 = lms_from_linear_srgb<float>;
 
     for (int i = 0; i < n; ++i) {
         const float r = lut[qRed(px[i])];
         const float g = lut[qGreen(px[i])];
         const float b = lut[qBlue(px[i])];
 
-        // Same constants as oklab_lightness(); that one stays as the reference.
-        // The floor keeps cbrt_halley away from 0, where y^3 goes subnormal and
-        // 0/0 becomes NaN under FTZ.
-        const float l = std::max(0.4122214708f * r + 0.5363325363f * g + 0.0514459929f * b, 1e-20f);
-        const float m = std::max(0.2119034982f * r + 0.6806995451f * g + 0.1073969566f * b, 1e-20f);
-        const float s = std::max(0.0883024619f * r + 0.2817188376f * g + 0.6299787005f * b, 1e-20f);
+        using namespace oklab;
 
-        out[i] = 0.2104542553f * cbrt_halley(l)
-               + 0.7936177850f * cbrt_halley(m)
-               - 0.0040720468f * cbrt_halley(s);
+        // Same constants as oklab_lightness(); that one stays as the reference.z
+        const float l = std::max(dot3(M1[0], r, g, b), min_lms_response);
+        const float m = std::max(dot3(M1[1], r, g, b), min_lms_response);
+        const float s = std::max(dot3(M1[2], r, g, b), min_lms_response);
+
+        out[i] = dot3(lightness_from_lms_cbrt<float>,
+                      cbrt_halley(l), cbrt_halley(m), cbrt_halley(s));
     }
 }
 
@@ -121,12 +151,12 @@ struct run_set { std::array<run, 2> r{}; int n = 0; };
 
 }
 
-double
+ring_luma
 percentile_luminance (const QImage &chunk, int percentile,
-                       double ring_crop_begin, double ring_crop_end)
+                      double ring_crop_begin, double ring_crop_end)
 {
     if (chunk.isNull() || chunk.width() <= 0 || chunk.height() <= 0) {
-        return 0.0;
+        return {};
     }
 
     const int p = std::clamp(percentile, 0, 100);
@@ -134,7 +164,7 @@ percentile_luminance (const QImage &chunk, int percentile,
     const double begin = std::clamp(ring_crop_begin, 0.0, 1.0);
     const double end   = std::clamp(ring_crop_end,   0.0, 1.0);
     if (begin >= end) {
-        return 0.0; // empty ring
+        return {}; // empty ring
     }
 
     // Cover thumbnails are treated as opaque; Format_RGB32 gives a known,
@@ -209,12 +239,16 @@ percentile_luminance (const QImage &chunk, int percentile,
     }
 
     if (count == 0) {
-        return 0.0;
+        return {};
     }
 
     const float result = select_percentile(buffer.get(), count, p);
 
-    return std::clamp(static_cast<double>(result), 0.0, 1.0);
+    return {
+        .value=std::clamp(static_cast<double>(result), 0.0, 1.0),
+        .ring_crop_begin=ring_crop_begin,
+        .ring_crop_end=ring_crop_end
+    };
 }
 
 double
