@@ -393,7 +393,7 @@ luma_table_of_image (const QImage &image, int percentile)
 }
 
 double
-table_luma::backing_luma_for_rect (QRect rect, QSize reference_surface, int percentile) const
+table_luma::backdrop_luma_for_rect (QRect rect, QSize reference_surface, int percentile) const
 {
     // Same "no data" value percentile_luminance gives an empty chunk.
     constexpr double no_backing = 0.0;

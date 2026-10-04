@@ -42,7 +42,7 @@ public:
     virtual double coverPonderedLuma() const = 0;
 
     // get the luma of the pixels behind this rect from the cover
-    virtual double backingLumaForRect (QRect rect) const = 0;
+    virtual double backdropLumaForRect (QRect rect) const = 0;
 
     virtual void setPosition_ms(quint64 position) = 0;
     virtual void setVolume (quint8 volume) = 0;

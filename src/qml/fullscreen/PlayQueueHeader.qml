@@ -14,7 +14,7 @@ Column {
     property bool usedInImmersiveMode
 
     function lightModeForBounds (bounds: rect) : bool {
-        return PlayerPresenter.lumaSentinel && (PlayerPresenter.backingLumaForRect(bounds) > 0.55)
+        return PlayerPresenter.lumaSentinel && (PlayerPresenter.backdropLumaForRect(bounds) > 0.55)
                         && ((!usedInImmersiveMode) ?
                             (PlayerPresenter.coverMidringLuma > 0.7)
                           : (PlayerPresenter.coverCentricLuma > 0.7)
@@ -81,20 +81,20 @@ Column {
         id: titleBounds
         target: title
 
-        // onBoundsChanged: console.log("title luma: " + PlayerPresenter.backingLumaForRect(titleBounds))
+        // onBoundsChanged: console.log("title luma: " + PlayerPresenter.backdropLumaForRect(titleBounds))
     }
 
     SceneRect {
         id: artistBounds
         target: artist
 
-        // onBoundsChanged: console.log("artist luma: " + PlayerPresenter.backingLumaForRect(artistBounds))
+        // onBoundsChanged: console.log("artist luma: " + PlayerPresenter.backdropLumaForRect(artistBounds))
     }
 
     SceneRect {
         id: albumBounds
         target: album
 
-        // onBoundsChanged: console.log("album luma: " + PlayerPresenter.backingLumaForRect(albumBounds))
+        // onBoundsChanged: console.log("album luma: " + PlayerPresenter.backdropLumaForRect(albumBounds))
     }
 }
