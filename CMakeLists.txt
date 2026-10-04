@@ -661,6 +661,15 @@ if(NONAME_BUILD_TESTS)
         PUBLIC
             fullscreenplayer
     )
+
+    qt_add_executable(luminancetest
+        src/tests/luminance.cpp
+    )
+
+    target_link_libraries(luminancetest
+        PUBLIC
+            covers
+    )
 endif()
 
 option(NONAME_ENABLE_QML_PROFILING "Enable QML debugging and profiling globally" OFF)
