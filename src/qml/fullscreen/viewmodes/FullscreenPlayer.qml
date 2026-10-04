@@ -194,96 +194,110 @@ Item {
                 usedInImmersiveMode: root.immersive
             }
 
-            // _l = "the loader"
+            // _d = "the drop area"
+            // _s = "the stack"
             // _c = "the content"
             // _p = "the placeholder"
 
-            Loader {
-                id: nextQueue_l
+            DropArea {
+                id: nextQueue_d
 
-                // set whatever source component is correct right at boot
-                sourceComponent: PlayQueue.count === 0 ? nextQueue_p : nextQueue_c
+                keys: ["text/uri-list"]
 
                 visible: !root.immersive
 
                 Layout.fillHeight: true
-                Layout.preferredWidth: (leftCol.width * .6) + (parent.scrollBarWidth * 6)
+                Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)
 
                 Layout.alignment: Qt.AlignVCenter
 
                 Layout.topMargin: root.songCoverHeight * .4
 
-                property bool lightMode: PlayerPresenter.lumaSentinel &&
-                    (PlayerPresenter.backingLumaForRect(nextQueueBounds.bounds) > 0.55)
-                        && PlayerPresenter.coverCentricLuma > 0.7
+                onDropped: (drop) => {
+                    if (drop.hasUrls) {
+                        PlayQueue.batch_append(drop.urls)
 
-                DropArea {
+                        drop.acceptProposedAction()
+                    }
+                }
+
+                StackLayout {
+                    id: nextQueue_s
+
                     anchors.fill: parent
 
-                    keys: ["text/uri-list"]
+                    // set whatever source component is correct right at boot
+                    currentIndex: PlayQueue.count === 0 ? 1 : 0
 
-                    onDropped: (drop) => {
-                        if (drop.hasUrls) {
-                            PlayQueue.batch_append(drop.urls)
+                    Playlist {
+                        id: nextQueue_c
+                        model: PlayQueue
 
-                            drop.acceptProposedAction()
+                        scrollBarWidth: rightCol.scrollBarWidth
+
+                        songCoverWidth: root.songCoverWidth
+                        songInnerSpacing: root.songInnerSpacing
+
+                        clip: true
+                        reuseItems: true // tons of songs moving
+
+                        lightMode: PlayerPresenter.lumaSentinel &&
+                            (PlayerPresenter.backingLumaForRect(Qt.rect(
+                                nextQueue_cBounds.x,
+                                nextQueue_cBounds.y,
+                                nextQueue_c.contentWidth,
+                                nextQueue_c.contentHeight
+                            )) > 0.55)
+                                && PlayerPresenter.coverCentricLuma > 0.7
+
+                        onSongClicked: (song) => {
+                            PlayQueue.playhead = PlayQueue.find_by_source(song.source)
                         }
-                    }
-                }
-            }
 
-            Component {
-                id: nextQueue_p
-
-                Label {
-                    text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
-
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment:   Text.AlignVCenter
-
-                    wrapMode: Text.WordWrap
-
-                    // MediumLabel
-                    font.pointSize: 13
-                    font.weight: Font.Medium
-
-                    color: nextQueue_l.lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
-                }
-            }
-
-            Component {
-                id: nextQueue_c
-
-                Playlist {
-                    id: nextQueue
-                    model: PlayQueue
-
-                    scrollBarWidth: rightCol.scrollBarWidth
-
-                    songCoverWidth: root.songCoverWidth
-                    songInnerSpacing: root.songInnerSpacing
-
-                    clip: true
-                    reuseItems: true // tons of songs moving
-
-                    lightMode: nextQueue_l.lightMode
-
-                    onSongClicked: (song) => {
-                        PlayQueue.playhead = PlayQueue.find_by_source(song.source)
+                        additionalMenuActions: [
+                            {
+                                text: qsTr("Clear queue"),
+                                action: () => PlayQueue.clear()
+                            }
+                        ]
                     }
 
-                    additionalMenuActions: [
-                        {
-                            text: qsTr("Clear queue"),
-                            action: () => PlayQueue.clear()
-                        }
-                    ]
+                    Label {
+                        id: nextQueue_p
+
+                        text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
+
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment:   Text.AlignVCenter
+
+                        wrapMode: Text.WordWrap
+
+                        // MediumLabel
+                        font.pointSize: 13
+                        font.weight: Font.Medium
+
+                        property bool lightMode: PlayerPresenter.lumaSentinel &&
+                            (PlayerPresenter.backingLumaForRect(Qt.rect(
+                                nextQueue_pBounds.x,
+                                nextQueue_pBounds.y,
+                                nextQueue_p.contentWidth,
+                                nextQueue_p.contentHeight
+                            )) > 0.55)
+                                && PlayerPresenter.coverCentricLuma > 0.7
+
+                        color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
+                    }
                 }
             }
 
             SceneRect {
-                id: nextQueueBounds
-                target: nextQueue_l
+                id: nextQueue_cBounds
+                target: nextQueue_c
+            }
+
+            SceneRect {
+                id: nextQueue_pBounds
+                target: nextQueue_p
             }
         }
     }
