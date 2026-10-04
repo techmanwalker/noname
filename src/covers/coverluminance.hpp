@@ -34,7 +34,7 @@ struct cover_rings {
 */
 struct table_luma {
     // NxM size
-    static constexpr size_t s_rows = 128, s_columns = 128;
+    static constexpr size_t s_rows = 512, s_columns = 512;
 
     // percentile luminance of each equally sized region
     std::array<
