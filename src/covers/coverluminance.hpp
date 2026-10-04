@@ -20,12 +20,29 @@ struct ring_luma {
     double ring_crop_end = 1.0;
 };
 
-struct cover_rings {
-    ring_luma nuclear_luma;
-    ring_luma centric_luma;
-    ring_luma midring_luma;
-    ring_luma borders_luma;
+// to identify which ring is each value of
+enum class luma_types : uint8_t {
+    nuclear,
+    centric,
+    midring,
+    borders,
+    count /* sentinel */
 };
+
+// one ring_luma per luma_types, always accessed through ring_of()
+using cover_rings = std::array<ring_luma, static_cast<size_t>(luma_types::count)>;
+
+[[nodiscard]] constexpr ring_luma &
+ring_of (cover_rings &rings, luma_types type) noexcept
+{
+    return rings[static_cast<size_t>(type)];
+}
+
+[[nodiscard]] constexpr const ring_luma &
+ring_of (const cover_rings &rings, luma_types type) noexcept
+{
+    return rings[static_cast<size_t>(type)];
+}
 
 /*  NxM table + aspect ratio representing equally sized chunks of an image
     (cover), each value corresponds to its luma at a given percentile.

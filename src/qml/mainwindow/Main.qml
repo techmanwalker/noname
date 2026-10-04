@@ -32,8 +32,8 @@ T.ApplicationWindow {
 
     Column {
         // just so the values pop in console
-
-        visible: false 
+        
+        visible: false
 
         Label {
             text: PlayerPresenter.coverNuclearLuma
@@ -49,6 +49,10 @@ T.ApplicationWindow {
 
         Label {
             text: PlayerPresenter.coverBordersLuma
+        }
+
+        Label {
+            text: PlayerPresenter.coverPonderedLuma
         }
     }
 
