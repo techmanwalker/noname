@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 #include <QUrl>
+#include <QtCore>
 
 namespace Types {
     struct Song;
@@ -43,6 +44,9 @@ public:
 
     // get the luma of the pixels behind this rect from the cover
     virtual double backdropLumaForRect (QRect rect) const = 0;
+
+    // luma of the ring that spans the bigger part of the area of this rect
+    virtual double ringLumaForRect (QRect rect) const = 0;
 
     virtual void setPosition_ms(quint64 position) = 0;
     virtual void setVolume (quint8 volume) = 0;

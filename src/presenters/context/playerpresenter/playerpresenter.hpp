@@ -84,6 +84,7 @@ public:
     double coverPonderedLuma() const override;
 
     double backdropLumaForRect (QRect rect) const override;
+    double ringLumaForRect     (QRect rect) const override;
 
     // Setters (normally called from C++ logic when time or song changes)
     void setPosition_ms(quint64 position) override;
