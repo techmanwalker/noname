@@ -108,7 +108,7 @@ PlayerPresenterLI::recompute_lumas()
 
     double cover_pondered_luma = covers::luminance::pondered_luma(rings);
 
-    
+    /*
     constexpr double precision = 17;
 
     using covers::luminance::luma_types;
@@ -119,7 +119,7 @@ PlayerPresenterLI::recompute_lumas()
     qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(ring_of(rings, borders).value, 'f', precision);
 
     qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
-    
+    */
 
     m_cover_luma_rings = std::move(rings);
     m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);

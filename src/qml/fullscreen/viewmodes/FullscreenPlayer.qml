@@ -12,7 +12,7 @@ Item {
     id: root
 
     required property bool immersive
-    property bool lightMode: false
+    property Background background
 
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
@@ -37,6 +37,22 @@ Item {
     )
 
     signal switchToLyricsViewRequested () // request
+
+    function lightModeForBounds (bounds: rect, name: string) : bool {
+
+        // use the multiplier values background uses
+        let multiplier = root.background.lumaMultiplierAtCenter (bounds);
+
+        let m_backdrop = PlayerPresenter.backdropLumaForRect(bounds) * multiplier;
+        let m_ring     = PlayerPresenter.ringLumaForRect(bounds)     * multiplier;
+
+        // console.log ("name: " + name + " ; multiplier: " + multiplier + " ; multiplied backdrop luma: " + m_backdrop + " ; ring luma: " + m_ring)
+
+        if (m_backdrop > 0.92) return true;   // always light
+        if (m_backdrop < 0.05) return false;  // always dark (redundant while the gate below is 0.48)
+
+        return m_backdrop > 0.7 && m_ring > 0.6;
+    }
 
     // ── Layout ─────────────────────────────────────────────────────────────
 
@@ -91,16 +107,7 @@ Item {
                 Layout.maximumWidth: nowplaying_cover.width * .75
                 Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
-                property bool lightMode: PlayerPresenter.lumaSentinel && (
-                    (
-                        (PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) > 0.6)
-                            && (PlayerPresenter.ringLumaForRect(controlsBounds.bounds) > 0.7)
-                    )
-
-                    ||
-
-                    PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) > 0.92
-                )
+                property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(controlsBounds.bounds)
 
                 DurationControl {
                     Layout.alignment: Qt.AlignHCenter
@@ -172,8 +179,10 @@ Item {
                 id: controlsBounds
                 target: controls
 
+                /*
                 onBoundsChanged: console.log("controls backing luma: " + PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) + ", "
                     + " ring luma: " + PlayerPresenter.ringLumaForRect(controlsBounds.bounds))
+                */
             }
         }
 
@@ -201,6 +210,7 @@ Item {
 
                 onClicked: root.immersive = !root.immersive
 
+                background: root.background
                 usedInImmersiveMode: root.immersive
             }
 
@@ -258,9 +268,7 @@ Item {
                                 nextQueue_c.contentHeight
                             )
 
-                        lightMode: PlayerPresenter.lumaSentinel &&
-                            (PlayerPresenter.backdropLumaForRect(globalBounds) > 0.55)
-                                && (PlayerPresenter.ringLumaForRect(globalBounds) > 0.7)
+                        lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
 
                         onSongClicked: (song) => {
                             PlayQueue.playhead = PlayQueue.find_by_source(song.source)
@@ -295,9 +303,7 @@ Item {
                                 nextQueue_p.contentHeight
                             )
 
-                        property bool lightMode: PlayerPresenter.lumaSentinel &&
-                            (PlayerPresenter.backdropLumaForRect(globalBounds) > 0.55)
-                                && (PlayerPresenter.ringLumaForRect(globalBounds) > 0.7)
+                        property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
 
                         color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                     }
