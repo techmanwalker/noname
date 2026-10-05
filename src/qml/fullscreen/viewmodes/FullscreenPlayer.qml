@@ -210,8 +210,16 @@ Item {
 
                 onClicked: root.immersive = !root.immersive
 
-                background: root.background
                 usedInImmersiveMode: root.immersive
+
+                property rect globalBounds: ({
+                    x: metadataContainerBounds.x,
+                    y: metadataContainerBounds.y,
+                    width: metadataContainer.textContentWidth,
+                    height: metadataContainer.textContentHeight
+                })
+
+                lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
             }
 
             // _d = "the drop area"
@@ -318,6 +326,11 @@ Item {
             SceneRect {
                 id: nextQueue_pBounds
                 target: nextQueue_p
+            }
+
+            SceneRect {
+                id: metadataContainerBounds
+                target: metadataContainer
             }
         }
     }
