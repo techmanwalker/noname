@@ -67,35 +67,53 @@ vec3 oklabToLinear(vec3 lab) {
 
 // ── Interpolation between checkpoints ─────────────────────────────────
 
+// Cubic Hermite spline with Catmull-Rom-style finite-difference tangents:
+// the same curve as curveValue() in Background.qml (keep them in sync).
+// C1-continuous, so there is no slope jump at the control points.
+
+// One segment p1 -> p2; p0 and p3 only supply the tangents. .x is the
+// position, .yz the (L_mult, C_mult) pair, interpolated together.
+vec2 hermiteSegment(float x, vec3 p0, vec3 p1, vec3 p2, vec3 p3) {
+    float h = p2.x - p1.x;
+    if (h <= 1e-6) return p1.yz; // zero-length segment
+
+    float t = (x - p1.x) / h;
+
+    // If the neighbours coincide in x, fall back to the segment's own width,
+    // like curveValue does.
+    float d1 = p2.x - p0.x;
+    float d2 = p3.x - p1.x;
+    vec2 m1 = (p2.yz - p0.yz) / (d1 != 0.0 ? d1 : h);
+    vec2 m2 = (p3.yz - p1.yz) / (d2 != 0.0 ? d2 : h);
+
+    float t2 = t * t;
+    float t3 = t2 * t;
+
+    return ( 2.0 * t3 - 3.0 * t2 + 1.0) * p1.yz
+         + (       t3 - 2.0 * t2 + t  ) * h * m1
+         + (-2.0 * t3 + 3.0 * t2      ) * p2.yz
+         + (       t3 -       t2      ) * h * m2;
+}
+
 vec2 evalPoints(float x) {
-    // vec4.yz = (L_mult, C_mult)
-    vec2 lc0 = ubuf.pointA.yz,  lc1 = ubuf.pointPA.yz;
-    vec2 lc2 = ubuf.pointCA.yz, lc3 = ubuf.pointCB.yz;
-    vec2 lc4 = ubuf.pointPB.yz, lc5 = ubuf.pointB.yz;
+    vec3 a  = ubuf.pointA,  pa = ubuf.pointPA, ca = ubuf.pointCA;
+    vec3 cb = ubuf.pointCB, pb = ubuf.pointPB, b  = ubuf.pointB;
 
-    float x0 = ubuf.pointA.x,  x1 = ubuf.pointPA.x;
-    float x2 = ubuf.pointCA.x, x3 = ubuf.pointCB.x;
-    float x4 = ubuf.pointPB.x, x5 = ubuf.pointB.x;
+    float cx = clamp(x, a.x, b.x);
 
-    vec2 result = lc0;
+    // Same segment pick as curveValue(): the first segment whose right end
+    // is >= cx. The end points are repeated at the borders, as curveValue
+    // does, which makes the outermost tangents one-sided.
+    vec2 lc;
+    if      (cx <= pa.x) lc = hermiteSegment(cx, a,  a,  pa, ca);
+    else if (cx <= ca.x) lc = hermiteSegment(cx, a,  pa, ca, cb);
+    else if (cx <= cb.x) lc = hermiteSegment(cx, pa, ca, cb, pb);
+    else if (cx <= pb.x) lc = hermiteSegment(cx, ca, cb, pb, b);
+    else                 lc = hermiteSegment(cx, cb, pb, b,  b);
 
-    float t;
-    t = clamp((x - x0) / max(x1 - x0, 1e-5), 0.0, 1.0);
-    result = mix(result, mix(lc0, lc1, t), step(x0, x));
-
-    t = clamp((x - x1) / max(x2 - x1, 1e-5), 0.0, 1.0);
-    result = mix(result, mix(lc1, lc2, t), step(x1, x));
-
-    t = clamp((x - x2) / max(x3 - x2, 1e-5), 0.0, 1.0);
-    result = mix(result, mix(lc2, lc3, t), step(x2, x));
-
-    t = clamp((x - x3) / max(x4 - x3, 1e-5), 0.0, 1.0);
-    result = mix(result, mix(lc3, lc4, t), step(x3, x));
-
-    t = clamp((x - x4) / max(x5 - x4, 1e-5), 0.0, 1.0);
-    result = mix(result, mix(lc4, lc5, t), step(x4, x));
-
-    return result;
+    // The spline can undershoot; a negative multiplier would invert L or flip
+    // the hue (negative chroma), so floor it.
+    return max(lc, 0.0);
 }
 
 bool inGamut(vec3 c) {
