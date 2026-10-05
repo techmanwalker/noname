@@ -107,6 +107,30 @@ Item {
         return h00 * p1.y + h10 * h * m1 + h01 * p2.y + h11 * h * m2
     }
 
+    // Luma multiplier the overlay shader applies at the horizontal center of
+    // `region`. `region` is in this item's own coordinates (x = 0 is
+    // Background's left edge); only its x and width matter. Both are divided
+    // by this item's real width, not maximumWidth, so they land on the same
+    // 0-1 axis the shader uses. The part of the segment outside the item is
+    // ignored, so the center is that of the visible part.
+    function lumaMultiplierAtCenter (region: rect) : real {
+        if (root.width <= 0) return 1; // identity multiplier; nothing is drawn at zero width anyway
+
+        const left  = root.clamp(region.x / root.width);
+        const right = root.clamp((region.x + region.width) / root.width);
+
+        // Read the points straight from the overlay: these are the very
+        // values the shader receives, so they cannot drift.
+        const points = [
+            bgOverlay.pointA,  bgOverlay.pointPA, bgOverlay.pointCA,
+            bgOverlay.pointCB, bgOverlay.pointPB, bgOverlay.pointB
+        ];
+
+        // Same curve as evalPoints() in background_overlay.frag, including
+        // its floor at 0.
+        return Math.max(0, root.curveValue(points, (left + right) / 2));
+    }
+    
     Image {
         id: img
         anchors.fill: parent
