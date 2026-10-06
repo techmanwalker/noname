@@ -20,6 +20,8 @@ class PlayQueueProxy : public QIdentityProxyModel
     Q_PROPERTY(QModelIndex playhead READ playhead  WRITE qml_switch_to NOTIFY trackChanged)
     Q_PROPERTY(qsizetype   count    READ itemCount NOTIFY countChanged)
 
+    Q_PROPERTY(bool shuffle READ shuffled WRITE set_shuffle NOTIFY shuffleChanged)
+
 public:
     explicit PlayQueueProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
@@ -31,6 +33,7 @@ public:
 
             connect(m_queue.get(), SIGNAL(trackChanged()), this, SIGNAL(trackChanged()));
             connect(m_queue.get(), SIGNAL(countChanged()), this, SIGNAL(countChanged()));
+            connect(m_queue.get(), SIGNAL(shuffleChanged()), this, SIGNAL(shuffleChanged()));
         }
     }
 
@@ -56,6 +59,9 @@ public:
         if (!src_idx.isValid()) return {};
         return QPersistentModelIndex(mapFromSource(src_idx)); // -> this proxy's space
     }
+
+    bool shuffled() const { return m_iface && m_iface->shuffled(); }
+    void set_shuffle(bool enabled) { if (m_iface) m_iface->set_shuffle(enabled); }
 
     Q_INVOKABLE void qml_switch_to(const QModelIndex &index) {
         if (!m_iface) return; 
@@ -103,6 +109,7 @@ public:
 signals:
     void trackChanged();
     void countChanged();
+    void shuffleChanged();
 
 private:
     std::shared_ptr<QAbstractItemModel> m_queue;

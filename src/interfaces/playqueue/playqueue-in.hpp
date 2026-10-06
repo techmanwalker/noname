@@ -26,6 +26,9 @@ public:
     virtual QFuture<void> batch_append (const QList<QUrl> &sources) = 0;
     
     virtual void respawn_queue (const QStringList &sources) = 0;
+
+    virtual bool shuffled () const = 0;
+    virtual void set_shuffle (bool enabled) = 0;
 };
 
 Q_DECLARE_INTERFACE(PlayQueue, "com.noname.PlayQueue")

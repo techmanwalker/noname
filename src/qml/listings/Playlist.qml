@@ -55,7 +55,7 @@ ListView {
 
         title:      model.title
         cover:      model.cover
-        metadata:     model.printable_joint_metadata
+        metadata:   model.printable_joint_metadata
         duration:   model.duration_mmss
 
         coverWidth: root.songCoverWidth
