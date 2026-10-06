@@ -164,6 +164,11 @@ Item {
                             Layout.alignment: Qt.AlignVCenter
 
                             lightMode: controls.lightMode
+
+                            onCurrentModeChanged: {
+                                let mode = currentMode == ShuffleButton.ShuffleMode.ShuffleTracks
+                                PlayQueue.shuffle = mode
+                            }
                         }
 
                         RepeatButton {

@@ -55,12 +55,16 @@ public:
 
     Q_INVOKABLE QFuture<void> batch_append (const QList<QUrl> &sources) override;
 
+    bool shuffled () const override;
+    void set_shuffle (bool enabled) override;
+
     void respawn_queue (const QList<Types::Song> &new_queue);
     Q_INVOKABLE void respawn_queue (const QStringList &sources) override;
 
 signals:
     void trackChanged ();
     void countChanged ();
+    void shuffleChanged ();
 
 public slots:
     void preload_next_track_whenever_possible ();
@@ -68,6 +72,12 @@ public slots:
     void handle_track_changed ();
 
 private:
+    // PlayQueueLI space <-> PlaylistSequence space (two hops through ShuffleProxy)
+    QModelIndex           to_sequence   (const QModelIndex &mine) const;
+    QPersistentModelIndex from_sequence (const QModelIndex &seq)  const;
+
+    // what comes after `mine` in the order the user *sees*
+    QPersistentModelIndex successor_of (const QPersistentModelIndex &mine) const;
 
     std::unique_ptr<PlayQueueLIPrivate> m_d;
 };
