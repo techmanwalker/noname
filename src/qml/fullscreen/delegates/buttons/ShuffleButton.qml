@@ -8,7 +8,7 @@ ResizableButton {
 
     enum ShuffleMode {
         ShuffleTracks,
-        ShuffleAlbums,
+        // ShuffleAlbums, unsupported
         Off
     }
 
@@ -18,7 +18,7 @@ ResizableButton {
     function getShuffleIcon(mode : int) : string {
         switch (mode) {
             case ShuffleButton.ShuffleMode.ShuffleTracks: return "media-playlist-shuffle";
-            case ShuffleButton.ShuffleMode.ShuffleAlbums: return "media-random-albums-amarok";
+            // case ShuffleButton.ShuffleMode.ShuffleAlbums: return "media-random-albums-amarok";
             default:                                     return "media-playlist-no-shuffle";
         }
     }
@@ -28,7 +28,7 @@ ResizableButton {
     // Advance to next mode
     onClicked: {
         // Cyclical switching
-        const totalModes = 3; // Just hardcode them, QML won't help ya
+        const totalModes = 2; // Just hardcode them, QML won't help ya
         root.currentMode = ( (root.currentMode + 1 >= totalModes) ? 0 : root.currentMode + 1);
     }
 
@@ -37,7 +37,7 @@ ResizableButton {
         text: {
             switch (root.currentMode) {
                 case ShuffleButton.ShuffleMode.ShuffleTracks:    return qsTr("Shuffle tracks")
-                case ShuffleButton.ShuffleMode.ShuffleAlbums:    return qsTr("Shuffle albums")
+                // case ShuffleButton.ShuffleMode.ShuffleAlbums:    return qsTr("Shuffle albums")
                 default:                                         return qsTr("No shuffle")
             }
         }
