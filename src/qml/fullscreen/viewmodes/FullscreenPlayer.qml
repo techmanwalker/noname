@@ -17,7 +17,7 @@ Item {
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
 
-    readonly property alias coverGlobalX: nowplaying_cover_bounds.x
+    readonly property alias coverGlobalBounds: nowplaying_cover_bounds.bounds
 
     // ── Cover sizing ───────────────────────────────────────────────────────
 

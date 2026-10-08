@@ -68,10 +68,10 @@ T.ApplicationWindow {
 
         // Math.max(1, root.width) prevents zero-division errors during
         // the brief moment when the window is still being constructed
-        playerLeft:  0
-        coverLeft:   fullscreenPlayer.coverGlobalX                                 / Math.max(1, root.width)
-        coverRight:  (fullscreenPlayer.coverGlobalX + fullscreenPlayer.coverSize)  / Math.max(1, root.width)
-        playerRight: 1
+        playerLeft:   stack_player.playerGlobalBounds.x                                          / Math.max(1, root.width)
+        coverLeft:    stack_player.coverGlobalBounds.x                                           / Math.max(1, root.width)
+        coverRight:  (stack_player.coverGlobalBounds.x  + stack_player.coverGlobalBounds.width)  / Math.max(1, root.width)
+        playerRight:  stack_player.playerGlobalBounds.x + stack_player.playerGlobalBounds.width  / Math.max(1, root.width)
     }
 
     StackLayout {
@@ -87,7 +87,7 @@ T.ApplicationWindow {
         }
 
         Player {
-            id: fullscreenPlayer
+            id: stack_player
             onSwitchView: activeView.currentIndex = 0
 
             parentWindow: root
