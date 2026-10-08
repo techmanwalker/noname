@@ -17,7 +17,7 @@ Item {
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
 
-    readonly property real coverGlobalX: mainRow.x + leftCol.x + nowplaying_cover.x
+    readonly property alias coverGlobalX: nowplaying_cover_bounds.x
 
     // ── Cover sizing ───────────────────────────────────────────────────────
 
@@ -97,6 +97,11 @@ Item {
 
                 // bind to maximum possible size to avoid flicker on resizing
                 sourceSize: Qt.size(root.coverIdealSize, root.coverIdealSize)
+            }
+
+            SceneRect {
+                id: nowplaying_cover_bounds
+                target: nowplaying_cover
             }
 
             ColumnLayout {
