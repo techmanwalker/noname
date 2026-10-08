@@ -18,7 +18,8 @@ Item {
     signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
 
     // readonly, to set the background light anchors
-    readonly property alias coverGlobalX: fsp.coverGlobalX
+    readonly property alias playerGlobalBounds: stackBounds.bounds
+    readonly property alias coverGlobalBounds:  fsp.coverGlobalBounds
     readonly property alias coverSize: fsp.coverSize
 
     function lightModeForBounds (bounds: rect, name: string) : bool {
@@ -71,6 +72,11 @@ Item {
             highlightedColor:   lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
             unhighlightedColor: lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
         }
+    }
+
+    SceneRect {
+        id: stackBounds
+        target: stack
     }
 
     // ── Navigation ─────────────────────────────────────────────────────────

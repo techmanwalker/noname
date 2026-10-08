@@ -10,6 +10,8 @@ Item {
     property real maximumHeight: Screen.height
 
     // x coordinates from 0 to 1
+    // edges points are always 0 and 1 and never changed
+    // none of the below represents the edges location
     property real playerLeft:  .15
     property real coverLeft:   .25
     property real coverRight:  .75
@@ -45,13 +47,13 @@ Item {
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
-    property real outer_player_l: root.cover_back_l * 0.1
-    property real inner_player_l: root.cover_back_l * 0.5
+    property real edges_player_l: root.cover_back_l * 0.0
+    property real inner_player_l: root.cover_back_l * 0.1
     property real cover_back_l:   root.contentLightness < 0
         ? root.coverBackLumaFallback
         : root.clamp(root.curveValue(root.coverBackLumaStops, root.contentLightness))
         
-    property real outer_player_c: root.outer_player_l * 1.4
+    property real edges_player_c: root.edges_player_l * 1.4
     property real inner_player_c: root.inner_player_l * 1.3
     property real cover_back_c:   root.cover_back_l   * 1.2
 
@@ -155,8 +157,8 @@ Item {
         visible: false
 
         pointA.x: 0.00
-        pointA.y: root.outer_player_l
-        pointA.z: root.outer_player_c
+        pointA.y: root.edges_player_l
+        pointA.z: root.edges_player_c
 
         pointPA.x: root.clamp(root.playerLeft)
         pointPA.y: root.inner_player_l // luma multiplier
@@ -175,8 +177,8 @@ Item {
         pointCB.z: root.cover_back_c
 
         pointB.x: 1.00
-        pointB.y: root.outer_player_l
-        pointB.z: root.outer_player_c
+        pointB.y: root.edges_player_l
+        pointB.z: root.edges_player_c
     }
 
     DualKawaseBlur {
