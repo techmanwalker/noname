@@ -47,8 +47,8 @@ Item {
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
-    property real edges_player_l: root.cover_back_l * 0.0
-    property real inner_player_l: root.cover_back_l * 0.1
+    property real edges_player_l: root.cover_back_l * 0.4
+    property real inner_player_l: root.cover_back_l * 0.7
     property real cover_back_l:   root.contentLightness < 0
         ? root.coverBackLumaFallback
         : root.clamp(root.curveValue(root.coverBackLumaStops, root.contentLightness))
