@@ -14,6 +14,9 @@ GridLayout {
 
     property Window parentWindow // to inset window decorations
 
+    readonly property real minimumWindowHeight:
+        windexRow.height + rowSpacing + Math.max(leftCol.implicitHeight, nowplayingbar.implicitHeight)
+
     signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
 
     // Empty space ftm, window handle
@@ -98,10 +101,14 @@ GridLayout {
         Layout.preferredWidth: implicitWidth // create an alignment on the left limits of the elements
         Layout.maximumWidth: parent.width / 6 - searchBar.leftPadding
 
+        Layout.minimumHeight: 0
+
         ArrangementList {
             id: vtabs
 
             Layout.alignment: Qt.AlignTop
+
+            Layout.minimumHeight: 0
 
             stack: activeView
             homeIndex: 0
@@ -144,12 +151,15 @@ GridLayout {
 
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.minimumHeight: 0
 
         StackLayout {
             id: activeView
 
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 0
+            clip: true
 
             currentIndex: vtabs.tracksIndex // Folders — matches the old sourceComponent: folders default
 
@@ -179,7 +189,7 @@ GridLayout {
             bottomPadding: topPadding
 
             // this match may explain why this drifts below the window when it is too small
-            Layout.preferredHeight: 48
+            Layout.preferredHeight: implicitHeight
             coverWidth: 48
 
             visible: stateModel.isMediaLoaded
