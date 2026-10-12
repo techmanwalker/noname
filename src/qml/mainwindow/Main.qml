@@ -22,6 +22,8 @@ T.ApplicationWindow {
     width: WindowGeometry.width
     height: WindowGeometry.height
 
+    minimumHeight: browser.minimumWindowHeight
+
     onWidthChanged:  WindowGeometry.width  = width;
     onHeightChanged: WindowGeometry.height = height;
 
