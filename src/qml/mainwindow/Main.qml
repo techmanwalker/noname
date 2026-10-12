@@ -7,6 +7,7 @@ import Player.App
 import Player.Browser
 import Player.Fullscreen
 import Player.PlayerPresenter
+import Player.LyricsManifest
 import Player.Primitives
 
 T.ApplicationWindow {
@@ -27,7 +28,7 @@ T.ApplicationWindow {
     onClosing: {
         // save last used values
         WindowGeometry.poll_and_save_to_disk(width, height);
-        PlayerPresenter.saveVolume();
+        PlayerPresenter.save_volume();
     }
 
     Column {
@@ -53,6 +54,10 @@ T.ApplicationWindow {
 
         Label {
             text: PlayerPresenter.coverPonderedLuma
+        }
+
+        Label {
+            text: LyricsManifest.count
         }
     }
 

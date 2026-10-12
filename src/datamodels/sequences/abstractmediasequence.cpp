@@ -13,7 +13,7 @@ public:
     AbstractMediaSequencePrivate(const std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> &role_defs)
         : m_roles(role_defs) {}
 
-    CompiledRoleSet<Types::Any> m_roles;
+    compiled_role_set<Types::Any> m_roles;
     QList<Types::Any> m_items;
     mutable QReadWriteLock m_lock;
 };
@@ -44,12 +44,6 @@ AbstractMediaSequence::rowCount(
     return static_cast<int>(m_d->m_items.size());
 }
 
-int
-AbstractMediaSequence::itemCount() const
-{
-    return static_cast<int>(m_d->m_items.size());
-}
-
 QVariant
 AbstractMediaSequence::data(
     const QModelIndex &index,
@@ -68,21 +62,21 @@ AbstractMediaSequence::data(
 QHash<int, QByteArray>
 AbstractMediaSequence::roleNames() const
 {
-    return m_d->m_roles.roleNames();
+    return m_d->m_roles.role_names();
 }
 
 std::optional<int>
-AbstractMediaSequence::roleNumber(const QByteArray &role) const
+AbstractMediaSequence::role_number(const QByteArray &role) const
 {
-    return m_d->m_roles.roleNumber(role);
+    return m_d->m_roles.role_number(role);
 }
 
 QVariant
-AbstractMediaSequence::readRole(qsizetype row, const QByteArray &role) const
+AbstractMediaSequence::read_role(qsizetype row, const QByteArray &role) const
 {
     if (row < 0 || row >= rowCount()) return {};
 
-    const std::optional<int> role_n = roleNumber(role);
+    const std::optional<int> role_n = role_number(role);
     if (!role_n.has_value()) return {};
 
     return data(index(static_cast<int>(row)), role_n.value());
@@ -107,7 +101,7 @@ AbstractMediaSequence::remove(size_t index)
 
     endRemoveRows();
 
-    emit countChanged();
+    emit count_changed();
 }
 
 QFuture<void>
@@ -172,7 +166,7 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
         i = j;
     }
 
-    emit countChanged();
+    emit count_changed();
 }
 
 void
@@ -184,7 +178,7 @@ AbstractMediaSequence::clear()
         m_d->m_items.clear();
     }
     endResetModel();
-    emit countChanged();
+    emit count_changed();
 }
 
 std::optional<std::reference_wrapper<Types::Any>>

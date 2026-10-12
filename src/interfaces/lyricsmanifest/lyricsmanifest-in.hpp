@@ -10,7 +10,7 @@ public:
 
     virtual QFuture<void> repopulate_with_lyrics_for_file(const QString &source) = 0;
 
-    virtual int itemCount () const = 0;
+    virtual size_t line_count () const = 0;
 
     virtual void clear () = 0;
 

@@ -9,7 +9,7 @@ class PlayQueue
 public: 
     virtual ~PlayQueue () = default;
 
-    virtual int itemCount () const = 0;
+    virtual int item_count () const = 0;
 
     virtual QPersistentModelIndex playhead () = 0;
 

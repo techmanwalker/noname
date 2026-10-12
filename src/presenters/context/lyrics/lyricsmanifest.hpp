@@ -25,14 +25,14 @@ public:
     explicit LyricsManifestLI(QObject *parent, std::shared_ptr<audio_engine> position_tracker);
     ~LyricsManifestLI() override; // explicitly required for std::unique_ptr with incomplete types
 
-    QFuture<void> repopulate_with_lyrics_for_file(const QString &source) override;
-
     // Required QAbstractListModel implementations
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    int itemCount () const override;
+    QFuture<void> repopulate_with_lyrics_for_file(const QString &source) override;
+
+    size_t line_count () const override;
 
     std::vector<std::string> current_lines() const;
 
@@ -42,13 +42,12 @@ public:
 
     QModelIndex index_of_lyric_to_highlight() const override;
 
-    // Q_INVOKABLE makes them callable from QML
     Q_INVOKABLE void clear() override;
 
 signals:
-    void linesChanged();
-    void highlightedRowChanged();
-    void countChanged();
+    void lines_changed();
+    void highlighted_row_changed();
+    void count_changed();
 
 public slots:
     QFuture<void> load_current_track_lyrics ();

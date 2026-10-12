@@ -38,12 +38,12 @@ PlayerPresenterLI::PlayerPresenterLI(
     m_position_poll_timer->setInterval(10);
 
     connect(m_position_poll_timer, &QTimer::timeout, 
-            this, &PlayerPresenterLI::positionChanged);
+            this, &PlayerPresenterLI::position_changed);
         
-    connect(this, &PlayerPresenterLI::sliderPressedChanged,
-            this, &PlayerPresenterLI::handleSliderPressedChanged);
+    connect(this, &PlayerPresenterLI::slider_pressed_changed,
+            this, &PlayerPresenterLI::handle_slider_pressed_changed);
 
-    connect(this, &PlayerPresenterLI::coverChanged,
+    connect(this, &PlayerPresenterLI::cover_changed,
             this, &PlayerPresenterLI::recompute_lumas);
 
     // load volume from conf file
@@ -57,7 +57,7 @@ PlayerPresenterLI::PlayerPresenterLI(
 
         if (vOK) {
             // audioengine will clamp it or manage however it is to be done
-            setVolume(volume);
+            set_volume(volume);
         }
     }
 }
@@ -70,7 +70,7 @@ QUrl    PlayerPresenterLI::cover()         const { return playing->current_track
 quint64 PlayerPresenterLI::duration_ms()   const { return playing->current_track().duration;       }
 quint64 PlayerPresenterLI::position_ms()   const { return playing->current_position_ms();          }
 quint8  PlayerPresenterLI::volume()        const { return playing->current_volume();               }
-bool    PlayerPresenterLI::isMediaLoaded() const { return playing->is_a_song_loaded();             }
+bool    PlayerPresenterLI::is_media_loaded() const { return playing->is_a_song_loaded();             }
 
 double
 PlayerPresenterLI::luma_of_ring (covers::luminance::luma_types ring) const
@@ -78,16 +78,12 @@ PlayerPresenterLI::luma_of_ring (covers::luminance::luma_types ring) const
     return covers::luminance::ring_of(m_cover_luma_rings, ring).value;
 }
 
-double PlayerPresenterLI::coverNuclearLuma() const { return luma_of_ring(covers::luminance::luma_types::nuclear);  }
-double PlayerPresenterLI::coverCentricLuma() const { return luma_of_ring(covers::luminance::luma_types::centric);; }
-double PlayerPresenterLI::coverMidringLuma() const { return luma_of_ring(covers::luminance::luma_types::midring);; }
-double PlayerPresenterLI::coverBordersLuma() const { return luma_of_ring(covers::luminance::luma_types::borders);; }
+double PlayerPresenterLI::cover_nuclear_luma() const { return luma_of_ring(covers::luminance::luma_types::nuclear); }
+double PlayerPresenterLI::cover_centric_luma() const { return luma_of_ring(covers::luminance::luma_types::centric); }
+double PlayerPresenterLI::cover_midring_luma() const { return luma_of_ring(covers::luminance::luma_types::midring); }
+double PlayerPresenterLI::cover_borders_luma() const { return luma_of_ring(covers::luminance::luma_types::borders); }
 
-double
-PlayerPresenterLI::coverPonderedLuma() const
-{
-    return m_cover_pondered_luma;
-}
+double PlayerPresenterLI::cover_pondered_luma() const { return m_cover_pondered_luma; }
 
 void
 PlayerPresenterLI::recompute_lumas()
@@ -126,17 +122,17 @@ PlayerPresenterLI::recompute_lumas()
 
     m_cover_pondered_luma = cover_pondered_luma;
 
-    emit lumasChanged();
+    emit lumas_changed();
 }
 
 double
-PlayerPresenterLI::backdropLumaForRect (QRect rect) const
+PlayerPresenterLI::backdrop_luma_for_rect (QRect rect) const
 {
     return m_cover_luma_table.backdrop_luma_for_rect (rect, QSize { wi->width(), wi->height() });
 }
 
 double
-PlayerPresenterLI::ringLumaForRect (QRect rect) const
+PlayerPresenterLI::ring_luma_for_rect (QRect rect) const
 {
     using namespace covers::luminance;
 
@@ -146,12 +142,12 @@ PlayerPresenterLI::ringLumaForRect (QRect rect) const
         rect,
         QSize { wi->width(), wi->height() });
 
-    // Same "no data" value backdropLumaForRect gives when nothing is visible.
+    // Same "no data" value backdrop_luma_for_rect gives when nothing is visible.
     return ring ? ring_of(m_cover_luma_rings, *ring).value : 0.0;
 }
 
 PlayerPresenterLI::PlaybackState
-PlayerPresenterLI::playbackState() const
+PlayerPresenterLI::playback_state() const
 {
     using ae = audio_engine::playback_state;
 
@@ -166,20 +162,20 @@ PlayerPresenterLI::playbackState() const
 
 
 void
-PlayerPresenterLI::setPosition_ms(quint64 position)
+PlayerPresenterLI::set_position_ms(quint64 position)
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
     playing->set_position(position);
 }
 
 void
-PlayerPresenterLI::setVolume(quint8 volume)
+PlayerPresenterLI::set_volume(quint8 volume)
 {
     playing->set_volume(volume);
 }
 
 void
-PlayerPresenterLI::saveVolume () const
+PlayerPresenterLI::save_volume () const
 {
     
     cm->write_lines(
@@ -194,7 +190,7 @@ PlayerPresenterLI::saveVolume () const
 // Proxies for QML to be able to perform play, pause and more actions
 void
 PlayerPresenterLI::play() const {
-    if (!queue->playhead().isValid() && queue->itemCount() > 0) {
+    if (!queue->playhead().isValid() && queue->item_count() > 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
         queue->next();
     }
@@ -242,7 +238,7 @@ PlayerPresenterLI::notify_slider_pressed_change (bool pressed)
 {
     m_slider_pressed.store(pressed);
 
-    emit sliderPressedChanged ();
+    emit slider_pressed_changed ();
 }
 
 void
@@ -263,30 +259,30 @@ PlayerPresenterLI::gate_poll_timer ()
 // --- Signal handlers
 
 void
-PlayerPresenterLI::handleTrackChanged()
+PlayerPresenterLI::handle_track_changed()
 {
     // note: only to update the ui
     
     // Suddenly awake the QML declarative tree
-    emit titleChanged();
-    emit artistChanged();
-    emit albumChanged();
-    emit coverChanged();
-    emit durationChanged();
-    emit positionChanged();
-    emit mediaLoadedChanged();
+    emit title_changed();
+    emit artist_changed();
+    emit album_changed();
+    emit cover_changed();
+    emit duration_changed();
+    emit position_changed();
+    emit media_loaded_changed();
 }
 
 void
-PlayerPresenterLI::handlePlaybackStateChanged()
+PlayerPresenterLI::handle_playback_state_changed()
 {
-    emit playbackStateChanged();
+    emit playback_state_changed();
 
     gate_poll_timer();
 }
 
 void
-PlayerPresenterLI::handleSliderPressedChanged()
+PlayerPresenterLI::handle_slider_pressed_changed()
 {
     // write only from qml so no need to emit signal here
 

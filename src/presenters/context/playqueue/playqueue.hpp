@@ -37,7 +37,7 @@ public:
     // all items
     QList<Types::Song> items() const;
 
-    int itemCount () const override;
+    int item_count () const override;
 
     // controls
     void switch_to (const Types::Song &song, bool play_afterwards = false);
@@ -62,9 +62,9 @@ public:
     Q_INVOKABLE void respawn_queue (const QStringList &sources) override;
 
 signals:
-    void trackChanged ();
-    void countChanged ();
-    void shuffleChanged ();
+    void track_changed ();
+    void count_changed ();
+    void shuffle_changed ();
 
 public slots:
     void preload_next_track_whenever_possible ();

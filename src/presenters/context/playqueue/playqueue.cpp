@@ -36,10 +36,10 @@ PlayQueueLI::PlayQueueLI (
     m_d->order.setSourceModel(&m_d->sequence);
     setSourceModel(&m_d->order);
     
-    connect (&m_d->sequence, &PlaylistSequence::countChanged,
-            this, &PlayQueueLI::countChanged);
+    connect (&m_d->sequence, &PlaylistSequence::count_changed,
+            this, &PlayQueueLI::count_changed);
             
-    connect (this, &PlayQueueLI::countChanged,
+    connect (this, &PlayQueueLI::count_changed,
             this, &PlayQueueLI::preload_next_track_whenever_possible);
 }
 
@@ -53,9 +53,9 @@ PlayQueueLI::items () const
 }
 
 int
-PlayQueueLI::itemCount () const
+PlayQueueLI::item_count () const
 {
-    return m_d->sequence.itemCount();
+    return m_d->sequence.rowCount();
 }
 
 void
@@ -224,7 +224,7 @@ PlayQueueLI::find_by_source(const QString &needle)
 void
 PlayQueueLI::handle_track_changed ()
 {
-    emit trackChanged();
+    emit track_changed();
     preload_next_track_whenever_possible();
 }
 
@@ -268,7 +268,7 @@ PlayQueueLI::set_shuffle (bool enabled)
 
     m_d->order.setShuffled(enabled, pinned);
 
-    emit shuffleChanged();
-    emit trackChanged(); // same track, different row: QML must re-read PlayQueue.playhead
+    emit shuffle_changed();
+    emit track_changed(); // same track, different row: QML must re-read PlayQueue.playhead
     preload_next_track_whenever_possible(); // the upcoming track changed
 }

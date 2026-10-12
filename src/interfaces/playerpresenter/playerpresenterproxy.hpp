@@ -33,22 +33,23 @@ public:
     Q_PROPERTY(QString album       READ album       NOTIFY albumChanged)
     Q_PROPERTY(QUrl    cover       READ cover       NOTIFY coverChanged)
     Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY durationChanged)
-    Q_PROPERTY(quint64 position_ms READ position_ms WRITE setPosition_ms NOTIFY positionChanged)
 
-    Q_PROPERTY(quint8  volume      READ volume      WRITE setVolume      NOTIFY volumeChanged)
-    Q_PROPERTY(bool isMediaLoaded  READ isMediaLoaded NOTIFY mediaLoadedChanged)
+    Q_PROPERTY(quint64 position_ms READ position_ms WRITE  set_position_ms NOTIFY positionChanged)
+    Q_PROPERTY(quint8  volume      READ volume      WRITE set_volume      NOTIFY volumeChanged)
 
-    Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
+    Q_PROPERTY(bool isMediaLoaded  READ is_media_loaded NOTIFY mediaLoadedChanged)
 
-    Q_PROPERTY(double coverNuclearLuma READ coverNuclearLuma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverCentricLuma READ coverCentricLuma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverMidringLuma READ coverMidringLuma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverBordersLuma READ coverBordersLuma NOTIFY lumasChanged)
+    Q_PROPERTY(PlaybackState playbackState READ playback_state NOTIFY playbackStateChanged)
 
-    Q_PROPERTY(double coverPonderedLuma     READ coverPonderedLuma     NOTIFY lumasChanged)
+    Q_PROPERTY(double coverNuclearLuma READ cover_nuclear_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverCentricLuma READ cover_centric_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverMidringLuma READ cover_midring_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverBordersLuma READ cover_borders_luma NOTIFY lumasChanged)
+
+    Q_PROPERTY(double coverPonderedLuma     READ cover_pondered_luma     NOTIFY lumasChanged)
 
     // trigger to reevaluate backingLumaForRect
-    Q_PROPERTY(bool   lumaSentinel READ lumaSentinel NOTIFY lumasChanged)
+    Q_PROPERTY(bool   lumaSentinel READ luma_sentinel NOTIFY lumasChanged)
 
     explicit PlayerPresenterProxy(QObject *parent = nullptr)
         : QObject(parent),
@@ -59,16 +60,16 @@ public:
         // casts FROM a QObject). This is a genuine cross-cast between sibling
         // bases of the same PlayerPresenterLI object, hence dynamic_cast here.
         if (auto *concrete = dynamic_cast<QObject*>(m_presenter.get())) {
-            connect(concrete, SIGNAL(titleChanged()),         this, SIGNAL(titleChanged()));
-            connect(concrete, SIGNAL(artistChanged()),        this, SIGNAL(artistChanged()));
-            connect(concrete, SIGNAL(albumChanged()),         this, SIGNAL(albumChanged()));
-            connect(concrete, SIGNAL(coverChanged()),         this, SIGNAL(coverChanged()));
-            connect(concrete, SIGNAL(lumasChanged()),         this, SIGNAL(lumasChanged()));
-            connect(concrete, SIGNAL(durationChanged()),      this, SIGNAL(durationChanged()));
-            connect(concrete, SIGNAL(positionChanged()),      this, SIGNAL(positionChanged()));
-            connect(concrete, SIGNAL(volumeChanged()),        this, SIGNAL(volumeChanged()));
-            connect(concrete, SIGNAL(playbackStateChanged()), this, SIGNAL(playbackStateChanged()));
-            connect(concrete, SIGNAL(mediaLoadedChanged()),   this, SIGNAL(mediaLoadedChanged()));
+            connect(concrete, SIGNAL(title_changed()),         this, SIGNAL(titleChanged()));
+            connect(concrete, SIGNAL(artist_changed()),        this, SIGNAL(artistChanged()));
+            connect(concrete, SIGNAL(album_changed()),         this, SIGNAL(albumChanged()));
+            connect(concrete, SIGNAL(cover_changed()),         this, SIGNAL(coverChanged()));
+            connect(concrete, SIGNAL(lumas_changed()),         this, SIGNAL(lumasChanged()));
+            connect(concrete, SIGNAL(duration_changed()),      this, SIGNAL(durationChanged()));
+            connect(concrete, SIGNAL(position_changed()),      this, SIGNAL(positionChanged()));
+            connect(concrete, SIGNAL(volume_changed()),        this, SIGNAL(volumeChanged()));
+            connect(concrete, SIGNAL(playback_state_changed()), this, SIGNAL(playbackStateChanged()));
+            connect(concrete, SIGNAL(media_loaded_changed()),   this, SIGNAL(mediaLoadedChanged()));
         }
     }
 
@@ -81,29 +82,25 @@ public:
     QString album()            const { return m_presenter ?  m_presenter->album()            : QString(); }
     QUrl    cover()            const { return m_presenter ?  m_presenter->cover()            : QUrl();    }
 
-    double coverNuclearLuma() const { return m_presenter ?  m_presenter->coverNuclearLuma() : 0.5;       }
-    double coverCentricLuma() const { return m_presenter ?  m_presenter->coverCentricLuma() : 0.5;       }
-    double coverMidringLuma() const { return m_presenter ?  m_presenter->coverMidringLuma() : 0.5;       }
-    double coverBordersLuma() const { return m_presenter ?  m_presenter->coverBordersLuma() : 0.5;       }
+    double cover_nuclear_luma() const { return m_presenter ?  m_presenter->cover_nuclear_luma() : 0.5;       }
+    double cover_centric_luma() const { return m_presenter ?  m_presenter->cover_centric_luma() : 0.5;       }
+    double cover_midring_luma() const { return m_presenter ?  m_presenter->cover_midring_luma() : 0.5;       }
+    double cover_borders_luma() const { return m_presenter ?  m_presenter->cover_borders_luma() : 0.5;       }
 
-    double coverPonderedLuma() const     { return m_presenter ? m_presenter->coverPonderedLuma()     : 0.0; }
+    double cover_pondered_luma() const     { return m_presenter ? m_presenter->cover_pondered_luma()  : 0.0; }
 
     quint64 duration_ms()      const { return m_presenter ?  m_presenter->duration_ms()      : 0;         }
     quint64 position_ms()      const { return m_presenter ?  m_presenter->position_ms()      : 0;         }
     quint8  volume()           const { return m_presenter ?  m_presenter->volume()           : 0;         }
-    bool    isMediaLoaded()    const { return m_presenter && m_presenter->isMediaLoaded();                }
+    bool    is_media_loaded()  const { return m_presenter && m_presenter->is_media_loaded();              }
 
-    static consteval bool
-    lumaSentinel () noexcept
-    {
-        return true;
-    }
+    static consteval bool luma_sentinel () noexcept { return true; }
 
-    PlaybackState playbackState() const {
+    PlaybackState playback_state() const {
         if (!m_presenter) return PlaybackState::stopped;
 
         using pp = PlayerPresenter::PlaybackState;
-        switch (m_presenter->playbackState()) {
+        switch (m_presenter->playback_state()) {
             case pp::paused:  return PlaybackState::paused;
             case pp::playing: return PlaybackState::playing;
             case pp::stopped: return PlaybackState::stopped;
@@ -111,8 +108,8 @@ public:
         Q_UNREACHABLE();
     }
 
-    void setPosition_ms(quint64 position) { if (m_presenter) m_presenter->setPosition_ms(position); }
-    void setVolume(quint8 volume)         { if (m_presenter) m_presenter->setVolume(volume); }
+    void set_position_ms(quint64 position) { if (m_presenter) m_presenter->set_position_ms(position); }
+    void set_volume(quint8 volume)         { if (m_presenter) m_presenter->set_volume(volume); }
 
     Q_INVOKABLE void play()  const { if (m_presenter) m_presenter->play();  }
     Q_INVOKABLE void pause() const { if (m_presenter) m_presenter->pause(); }
@@ -124,19 +121,19 @@ public:
         if (m_presenter) m_presenter->notify_slider_pressed_change(pressed);
     }
 
-    Q_INVOKABLE void saveVolume() const { if (m_presenter) m_presenter->saveVolume(); }
+    Q_INVOKABLE void save_volume() const { if (m_presenter) m_presenter->save_volume(); }
 
-    Q_INVOKABLE double backdropLumaForRect (QRect rect) const {
+    Q_INVOKABLE double backdrop_luma_for_rect (QRect rect) const {
         if (m_presenter) {
-            return m_presenter->backdropLumaForRect(rect);
+            return m_presenter->backdrop_luma_for_rect(rect);
         } else {
             return 0.5; 
         }
     }
 
-    Q_INVOKABLE double ringLumaForRect (QRect rect) const {
+    Q_INVOKABLE double ring_luma_for_rect (QRect rect) const {
         if (m_presenter) {
-            return m_presenter->ringLumaForRect(rect);
+            return m_presenter->ring_luma_for_rect(rect);
         } else {
             return 0.5;
         }
