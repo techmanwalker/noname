@@ -18,7 +18,7 @@ class PlayQueueProxy : public QIdentityProxyModel
     QML_SINGLETON
 
     Q_PROPERTY(QModelIndex playhead READ playhead  WRITE qml_switch_to NOTIFY trackChanged)
-    Q_PROPERTY(qsizetype   count    READ itemCount NOTIFY countChanged)
+    Q_PROPERTY(qsizetype   count    READ item_count NOTIFY countChanged)
 
     Q_PROPERTY(bool shuffle READ shuffled WRITE set_shuffle NOTIFY shuffleChanged)
 
@@ -31,9 +31,9 @@ public:
         if (m_queue) {
             setSourceModel(m_queue.get());
 
-            connect(m_queue.get(), SIGNAL(trackChanged()), this, SIGNAL(trackChanged()));
-            connect(m_queue.get(), SIGNAL(countChanged()), this, SIGNAL(countChanged()));
-            connect(m_queue.get(), SIGNAL(shuffleChanged()), this, SIGNAL(shuffleChanged()));
+            connect(m_queue.get(), SIGNAL(track_changed()), this, SIGNAL(trackChanged()));
+            connect(m_queue.get(), SIGNAL(count_changed()), this, SIGNAL(countChanged()));
+            connect(m_queue.get(), SIGNAL(shuffle_changed()), this, SIGNAL(shuffleChanged()));
         }
     }
 
@@ -44,10 +44,10 @@ public:
         s_injectedQueue = queue; // Ref count incremented, caller's instance unaffected
     }
 
-    int itemCount() const {
+    int item_count() const {
         if (!m_iface) return 0;
         
-        return m_iface->itemCount();
+        return m_iface->item_count();
     }
 
     // Same QObject* -> interface* direction as LocalLibrary/LyricsManifest — qobject_cast

@@ -73,22 +73,22 @@ public:
     quint64 duration_ms() const override;
     quint64 position_ms() const override;
     quint8 volume() const override;
-    PlaybackState playbackState() const override;
-    bool isMediaLoaded() const override;
+    PlaybackState playback_state() const override;
+    bool is_media_loaded() const override;
 
-    double coverNuclearLuma() const override;
-    double coverCentricLuma() const override;
-    double coverMidringLuma() const override;
-    double coverBordersLuma() const override;
+    double cover_nuclear_luma() const override;
+    double cover_centric_luma() const override;
+    double cover_midring_luma() const override;
+    double cover_borders_luma() const override;
 
-    double coverPonderedLuma() const override;
+    double cover_pondered_luma() const override;
 
-    double backdropLumaForRect (QRect rect) const override;
-    double ringLumaForRect     (QRect rect) const override;
+    double backdrop_luma_for_rect (QRect rect) const override;
+    double ring_luma_for_rect     (QRect rect) const override;
 
     // Setters (normally called from C++ logic when time or song changes)
-    void setPosition_ms(quint64 position) override;
-    void setVolume (quint8 volume) override;
+    void set_position_ms (quint64 position) override;
+    void set_volume (quint8 volume) override;
 
     // Call forwardings
     void load(Types::Song &song) const override;
@@ -104,27 +104,27 @@ public:
     Q_INVOKABLE void notify_slider_pressed_change (bool pressed) override;
 
     // save volume level to disk on demand
-    Q_INVOKABLE void saveVolume () const override;
+    Q_INVOKABLE void save_volume () const override;
     
 signals:
     // Needed signals for QML to be reactive
-    void titleChanged();
-    void artistChanged();
-    void albumChanged();
-    void coverChanged();
-    void durationChanged();
-    void positionChanged();
-    void volumeChanged();
-    void playbackStateChanged();
-    void mediaLoadedChanged();
-    void sliderPressedChanged();
-    void lumasChanged();
+    void title_changed();
+    void artist_changed();
+    void album_changed();
+    void cover_changed();
+    void duration_changed();
+    void position_changed();
+    void volume_changed();
+    void playback_state_changed();
+    void media_loaded_changed();
+    void slider_pressed_changed();
+    void lumas_changed();
 
 public slots:
     // Formally expose as a metadata block receiver
-    void handleTrackChanged();
-    void handlePlaybackStateChanged();
-    void handleSliderPressedChanged(); // diff between seek and playback state change
+    void handle_track_changed();
+    void handle_playback_state_changed();
+    void handle_slider_pressed_changed(); // diff between seek and playback state change
     void gate_poll_timer();
     void recompute_lumas();
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "lyricsmanifest-in.hpp"
-#include "lyrictypes.hpp"
 
 #include <QIdentityProxyModel>
 
@@ -16,7 +15,7 @@ class LyricsManifestProxy : public QIdentityProxyModel
     QML_SINGLETON
 
     Q_PROPERTY(QModelIndex highlighted READ index_of_lyric_to_highlight NOTIFY highlightedRowChanged)
-    Q_PROPERTY(qsizetype   count       READ itemCount NOTIFY countChanged)
+    Q_PROPERTY(qsizetype   count       READ item_count NOTIFY countChanged)
 
 public:
 
@@ -29,10 +28,10 @@ public:
             setSourceModel(m_manifest.get());
         }
 
-        connect(m_manifest.get(), SIGNAL(highlightedRowChanged()),
+        connect(m_manifest.get(), SIGNAL(highlighted_row_changed()),
                         this, SIGNAL(highlightedRowChanged()));
 
-        connect(m_manifest.get(), SIGNAL(countChanged()), this, SIGNAL(countChanged()));
+        connect(m_manifest.get(), SIGNAL(count_changed()), this, SIGNAL(countChanged()));
     }
 
     // Non-destructive injection via const reference
@@ -40,10 +39,10 @@ public:
         s_injectedManifest = manifest; // Ref count incremented, caller's instance unaffected
     }
 
-    int itemCount() const {
+    int item_count() const {
         if (!m_iface) return 0;
         
-        return m_iface->itemCount();
+        return static_cast<int>(m_iface->line_count());
     }
 
     // Respect and expose the public Q_INVOKABLE interface using the abstraction

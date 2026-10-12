@@ -5,7 +5,7 @@
 
 /// Role definition. Enables automatic QML role generation for any data type.
 template <typename T>
-struct CompiledRole {
+struct compiled_role {
     int number;
     QByteArray name;
     std::function<QVariant(const T &)> extractor;
@@ -21,16 +21,16 @@ struct CompiledRole {
     writing back to the source or bidirectional QML assignments through itself.
 */
 template <typename T>
-using RoleExtractor = std::function<QVariant(const T &)>;
+using role_extractor = std::function<QVariant(const T &)>;
 
 /**
     @brief Gives the developer simplified controls to define roles.
 */
 template <typename T>
-using RoleDefinition  = std::pair<QByteArray, RoleExtractor<T>>;
+using role_definition  = std::pair<QByteArray, role_extractor<T>>;
 
 template <typename T>
-using RoleDefinitions = std::vector<RoleDefinition<T>>;
+using role_definitions = std::vector<role_definition<T>>;
 
 /**
     @brief Compiles a RoleDefinitions list into sequential Qt roles once, and answers
@@ -38,23 +38,23 @@ using RoleDefinitions = std::vector<RoleDefinition<T>>;
     role → extracted value. 
 */
 template <typename T>
-class CompiledRoleSet
+class compiled_role_set
 {
 public:
     // pipe your custom role definitions to this to get your compiled roles ready to use
-    explicit CompiledRoleSet(const RoleDefinitions<T> &role_defs);
+    explicit compiled_role_set(const role_definitions<T> &role_defs);
 
     // get your newly compiled role names
-    QHash<int, QByteArray> roleNames() const;
+    QHash<int, QByteArray> role_names() const;
 
     // get the role number corresponding to this name
-    std::optional<int> roleNumber(const QByteArray &role) const;
+    std::optional<int> role_number(const QByteArray &role) const;
 
     // get the value contained by this role
     QVariant extract(int role, const T &item) const;
 
 private:
-    std::vector<CompiledRole<T>> m_compiledroles;
+    std::vector<compiled_role<T>> m_compiledroles;
 };
 
 // Type trait to identify std::variant
@@ -79,8 +79,8 @@ constexpr auto make_visitor = [](auto&& projector) {
 
 // Enable concatenation of role definition lists
 template <typename T>
-inline RoleDefinitions<T> operator+(
-    const RoleDefinitions<T> &a,
-    const RoleDefinitions<T> &b);
+inline role_definitions<T> operator+(
+    const role_definitions<T> &a,
+    const role_definitions<T> &b);
 
 #include "rolecompiler.tpp"

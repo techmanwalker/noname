@@ -5,11 +5,11 @@
 
 namespace song_factory {
 
-template <Container_T Container>
+template <list_of_sources sl>
 QList<QFuture<Types::Song>>
-progressive_extract (const Container &sources, attributes a)
+progressive_extract (const sl &sources, attributes a)
 {
-    using value_type = typename Container::value_type;
+    using value_type = typename sl::value_type;
 
     QList<QUrl> sources_to_read;
 
@@ -24,11 +24,11 @@ progressive_extract (const Container &sources, attributes a)
     return progressive_extract(sources_to_read, a);
 }
 
-template <Container_T Container>
+template <list_of_sources sl>
 QFuture<QList<Types::Song>>
-batch_extract (const Container &sources, attributes a)
+batch_extract (const sl &sources, attributes a)
 {
-    using value_type = typename Container::value_type;
+    using value_type = typename sl::value_type;
 
     QList<QUrl> sources_to_read;
 

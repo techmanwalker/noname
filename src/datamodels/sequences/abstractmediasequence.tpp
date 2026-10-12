@@ -4,38 +4,42 @@
 #include "mediatypes.hpp"
 
 #include <QList>
+#include <qabstractitemmodel.h>
+#include <qlist.h>
 
 // --- readers
 
-template <typename media_type>
-QList<media_type> 
+template <media_type T>
+QList<T> 
 AbstractMediaSequence::items() const 
 {
-    QList<media_type> filtered_list;
+    QList<T> filtered_list;
 
     QReadLocker locker (&_lock());
     
     filtered_list.reserve(_items().size());
 
     for (const Types::Any &item : _items()) {
-        if (std::holds_alternative<media_type>(item)) {
-            filtered_list.append(std::get<media_type>(item));
+        if (std::holds_alternative<T>(item)) {
+            filtered_list.append(std::get<T>(item));
         }
     }
 
     return filtered_list;
 }
 
-template <typename media_type>
-QStringList 
+template <media_type T>
+QStringList
 AbstractMediaSequence::sources() const
 {
     QReadLocker locker(&_lock());
     QStringList uri_sources;
 
+    uri_sources.reserve(static_cast<qsizetype>(_items().size()));
+
     for (const Types::Any &item : _items()) {
-        if (const auto *resolved = std::get_if<media_type>(&item)) {
-            if constexpr (std::is_same_v<media_type, Types::Song>) {
+        if (const auto *resolved = std::get_if<T>(&item)) {
+            if constexpr (std::is_same_v<T, Types::Song>) {
                 uri_sources.append(resolved->source.toLocalFile());
             }
         }
@@ -44,13 +48,11 @@ AbstractMediaSequence::sources() const
     return uri_sources;
 }
 
+
 // proxy for both sources
-template <typename Container>
-requires
-    std::ranges::forward_range<Container>
-&&  std::convertible_to<typename Container::value_type, Types::Any>
+template <media_sequence container>
 QStringList
-AbstractMediaSequence::sources (const Container &items)
+AbstractMediaSequence::sources (const container &items)
 {
     QStringList uri_sources;
     uri_sources.reserve(std::ranges::distance(items));
@@ -88,12 +90,9 @@ AbstractMediaSequence::find(FieldType MediaType::* member, const FieldType &need
 
 // --- writers
 
-template <typename Container>
-requires
-    std::ranges::forward_range<Container>
-&&  std::convertible_to<typename Container::value_type, Types::Any>
+template <media_sequence container>
 QList<QPersistentModelIndex>
-AbstractMediaSequence::batch_append(const Container &items)
+AbstractMediaSequence::batch_append(const container &items)
 {
        
     if (items.empty()) return {};
@@ -132,7 +131,7 @@ AbstractMediaSequence::batch_append(const Container &items)
         indices.emplace_back(index(r));
     }
 
-    emit countChanged();
+    emit count_changed();
 
     return indices;
 }

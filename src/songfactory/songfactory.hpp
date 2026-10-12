@@ -13,7 +13,7 @@ namespace covers::live {
 namespace song_factory {
 
 template <typename T>
-concept Container_T = 
+concept list_of_sources = 
     std::ranges::forward_range<T> && // Any type of list of sources
 
     // any uri or path
@@ -24,14 +24,14 @@ concept Container_T =
 QFuture<Types::Song> extract(const QUrl &source, attributes a);
 
 
-template <Container_T Container>
+template <list_of_sources sl>
 QList<QFuture<Types::Song>>
-progressive_extract (const Container &sources, attributes a);
+progressive_extract (const sl &sources, attributes a);
 
 // Any type of list of sources, wait for them all to finish extracting
-template <Container_T Container>
+template <list_of_sources sl>
 QFuture<QList<Types::Song>>
-batch_extract (const Container &sources, attributes a);
+batch_extract (const sl &sources, attributes a);
 
 // non template overloads to hide songfactoryimpl.hpp
 

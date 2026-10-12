@@ -90,25 +90,25 @@ main (int argc, char ** argv)
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and
     // main.cpp is the one place allowed to wire concrete-to-concrete connections.
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
-            pp.get(), &PlayerPresenterLI::handleTrackChanged);
+            pp.get(), &PlayerPresenterLI::handle_track_changed);
 
     // Both the PlayerPresenter and the LyricsManifest need to be aware
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
             lm.get(), &LyricsManifestLI::load_current_track_lyrics);
 
     QObject::connect(ae.get(), &audio_engineLI::playback_state_changed,
-            pp.get(), &PlayerPresenterLI::handlePlaybackStateChanged);
+            pp.get(), &PlayerPresenterLI::handle_playback_state_changed);
 
     QObject::connect(ae.get(), &audio_engineLI::seek_finished,
-            pp.get(), &PlayerPresenterLI::positionChanged);
+            pp.get(), &PlayerPresenterLI::position_changed);
 
     QObject::connect(ae.get(), &audio_engineLI::volume_changed,
-            pp.get(), &PlayerPresenterLI::volumeChanged);
+            pp.get(), &PlayerPresenterLI::volume_changed);
 
     QObject::connect (ae.get(), &audio_engineLI::seek_finished,
             pp.get(), &PlayerPresenterLI::gate_poll_timer);
 
-    QObject::connect(pp.get(), &PlayerPresenterLI::positionChanged,
+    QObject::connect(pp.get(), &PlayerPresenterLI::position_changed,
             lm.get(), &LyricsManifestLI::poll_highlighted_line_change);
 
 

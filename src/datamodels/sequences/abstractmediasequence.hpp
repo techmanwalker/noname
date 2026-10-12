@@ -12,6 +12,17 @@
 
 #include <functional>
 #include <memory>
+#include <qabstractitemmodel.h>
+#include <type_traits>
+
+template <typename T>
+concept media_type =
+    std::convertible_to<std::remove_cvref_t<T>, Types::Any>;
+
+template <typename T>
+concept media_sequence = 
+    std::ranges::forward_range<T> && 
+    media_type<typename T::value_type>;
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
@@ -29,7 +40,7 @@ class AbstractMediaSequence : public QAbstractListModel
     Q_OBJECT
     QML_ANONYMOUS
 
-    Q_PROPERTY (qsizetype count READ rowCount NOTIFY countChanged)
+    Q_PROPERTY (qsizetype count READ rowCount NOTIFY count_changed)
 
 public:
     // rolecompiler.hpp dropped by utilizing std::function directly
@@ -40,22 +51,19 @@ public:
     QVariant               data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames()                                                const override;
 
-    std::optional<int>     roleNumber(const QByteArray &role) const;
+    std::optional<int>     role_number(const QByteArray &role) const;
 
     const QList<Types::Any> & items() const;
 
     // fetch sources of any input list
-    template <typename Container>
-    requires
-        std::ranges::forward_range<Container> // Any type of list
-    &&  std::convertible_to<typename Container::value_type, Types::Any> // that can be contained by internal list
-    static QStringList sources (const Container &items);
+    template <media_sequence container>
+    static QStringList sources (const container &items);
 
     // fetch the source of every element
     QStringList sources () const;
 
     // fetch the source of every element convertible to media_type
-    template <typename media_type>
+    template <media_type T>
     QStringList sources() const;
 
     // position solvers
@@ -69,32 +77,27 @@ public:
     // Access to the raw item for inherited classes that need extra roles
     std::optional<std::reference_wrapper<Types::Any>> item_at(size_t index);
 
-    int itemCount() const;
-
     // read a role directly
-    Q_INVOKABLE QVariant readRole(qsizetype row, const QByteArray &role) const;
+    Q_INVOKABLE QVariant read_role(qsizetype row, const QByteArray &role) const;
 
     // items that can be converted to certain type
-    template <typename media_type>
-    QList<media_type> items() const;
+    template <media_type T>
+    QList<T> items() const;
 
     // Find an item whose pointed member matches the needle, returns invalid if not found
     template <typename MediaType, typename FieldType>
     QPersistentModelIndex find(FieldType MediaType::* member, const FieldType &needle) const;
 
 signals:
-    void countChanged();
+    void count_changed();
 
 protected:
     // Inherited models call these to manipulate the container
     QPersistentModelIndex append(const Types::Any &item);
 
-    template <typename Container>
-    requires
-        std::ranges::forward_range<Container>
-    &&  std::convertible_to<typename Container::value_type, Types::Any>
+    template <media_sequence container>
     QList<QPersistentModelIndex>
-    batch_append(const Container &items);
+    batch_append(const container &items);
 
     QFuture<void> progressive_batch_append (QList<QFuture<Types::Any>> futures);
 

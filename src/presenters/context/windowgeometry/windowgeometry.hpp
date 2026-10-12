@@ -25,7 +25,7 @@ public:
     Q_INVOKABLE void poll_and_save_to_disk (int width, int height) override;
 
 signals:
-    void sizeChanged();
+    void size_changed();
 
 private:
 

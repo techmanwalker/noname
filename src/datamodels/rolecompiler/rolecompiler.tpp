@@ -2,10 +2,10 @@
 
 #include "rolecompiler.hpp"
 
-// CompiledRoleSet definitions
+// compiled_role_set definitions
 
 template <typename T>
-CompiledRoleSet<T>::CompiledRoleSet(const RoleDefinitions<T> &role_defs)
+compiled_role_set<T>::compiled_role_set(const role_definitions<T> &role_defs)
 {
     int n = Qt::UserRole + 1;
     for (const auto &[name, extractor] : role_defs) {
@@ -15,10 +15,10 @@ CompiledRoleSet<T>::CompiledRoleSet(const RoleDefinitions<T> &role_defs)
 
 template <typename T>
 QHash<int, QByteArray>
-CompiledRoleSet<T>::roleNames() const
+compiled_role_set<T>::role_names() const
 {
     QHash<int, QByteArray> hash;
-    for (const CompiledRole<T> &r : m_compiledroles) {
+    for (const compiled_role<T> &r : m_compiledroles) {
         hash.insert(r.number, r.name);
     }
     return hash;
@@ -26,9 +26,9 @@ CompiledRoleSet<T>::roleNames() const
 
 template <typename T>
 std::optional<int> 
-CompiledRoleSet<T>::roleNumber(const QByteArray &role) const
+compiled_role_set<T>::role_number(const QByteArray &role) const
 {
-    for (const CompiledRole<T> &r : m_compiledroles) {
+    for (const compiled_role<T> &r : m_compiledroles) {
         if (r.name == role) {
             return r.number;
         }
@@ -38,9 +38,9 @@ CompiledRoleSet<T>::roleNumber(const QByteArray &role) const
 
 template <typename T>
 QVariant 
-CompiledRoleSet<T>::extract(int role, const T &item) const
+compiled_role_set<T>::extract(int role, const T &item) const
 {
-    for (const CompiledRole<T> &r : m_compiledroles) {
+    for (const compiled_role<T> &r : m_compiledroles) {
         if (r.number == role) {
             return r.extractor(item);
         }
@@ -50,13 +50,13 @@ CompiledRoleSet<T>::extract(int role, const T &item) const
 
 // Enable concatenation of role definition lists
 template <typename T>
-inline RoleDefinitions<T>
+inline role_definitions<T>
 operator+(
-    const RoleDefinitions<T> &a,
-    const RoleDefinitions<T> &b
+    const role_definitions<T> &a,
+    const role_definitions<T> &b
 )
 {
-    RoleDefinitions<T> result;
+    role_definitions<T> result;
     result.reserve(a.size() + b.size());
     result.insert(result.end(), a.begin(), a.end());
     result.insert(result.end(), b.begin(), b.end());

@@ -24,7 +24,7 @@ public:
         // casts FROM a QObject). This is a genuine cross-cast between sibling
         // bases of the same PlayerPresenterLI object, hence dynamic_cast here.
         if (auto *concrete = dynamic_cast<QObject*>(m_geometry.get())) {
-            connect(concrete, SIGNAL(sizeChanged()), this, SIGNAL(sizeChanged()));
+            connect(concrete, SIGNAL(size_changed()), this, SIGNAL(sizeChanged()));
         }
     }
 

@@ -12,7 +12,7 @@
     @details These are mostly basic getters/setters for each role. Defines a list of roles that
     are shared across most of models that inherit the Abstract Model.
 */
-static const RoleDefinitions<Types::Any> container_roles = {
+static const role_definitions<Types::Any> container_roles = {
 
     /*  Whole-gadget role: lets a QML delegate declare a statically typed
     `required property song model` / `required property directory model`
@@ -30,6 +30,7 @@ static const RoleDefinitions<Types::Any> container_roles = {
         return QVariant::fromValue(x);
     })},
 
+    // reflection still missing
     { "type", make_visitor([](const auto &x) {
         using T = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<T, Types::Song>)      return "Song";

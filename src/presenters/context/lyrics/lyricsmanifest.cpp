@@ -39,7 +39,7 @@ to_lyric_gadget(const __syrinc_lyric &x)
     });
 }
 
-static const RoleDefinitions<__syrinc_lyric> lyrics_roles = {
+static const role_definitions<__syrinc_lyric> lyrics_roles = {
     // Whole-gadget role: lets LyricDelegate.qml declare
     // `required property lyric model`, mirroring container_roles's
     // "model"/"modelData" for Types::Any.
@@ -81,14 +81,14 @@ public:
     LyricsManifestPrivate() : m_roles(lyrics_roles) {}
 
     std::vector<__syrinc_lyric> m_lyrics;
-    CompiledRoleSet<__syrinc_lyric> m_roles;
+    compiled_role_set<__syrinc_lyric> m_roles;
     mutable QReadWriteLock m_lock;
 
     // Purely a diff-check for highlightedRowChanged — never consulted as
     // ground truth. index_of_last_highlighted_row() always recomputes
     // fresh, so a stale value here can cause at worst one skipped/extra
     // notify, self-correcting on the next poll. Nothing reads it as fact.
-    int m_lastHighlightedRow = -1;
+    int m_last_highlighted_row = -1;
 
     QFuture<filelines> read_from_metadata_tag(const QString &source) {
         if (!QFile::exists(source)) {
@@ -124,13 +124,13 @@ LyricsManifestLI::rowCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    return static_cast<int>(m_d->m_lyrics.size());
+    return static_cast<int>(line_count());
 }
 
-int
-LyricsManifestLI::itemCount () const
+size_t
+LyricsManifestLI::line_count() const
 {
-    return rowCount();
+    return static_cast<size_t>(m_d->m_lyrics.size());
 }
 
 QVariant
@@ -148,7 +148,7 @@ LyricsManifestLI::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray>
 LyricsManifestLI::roleNames() const
 {
-    return m_d->m_roles.roleNames();
+    return m_d->m_roles.role_names();
 }
 
 std::vector<std::string>
@@ -210,11 +210,11 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 
         endResetModel();
 
-        emit countChanged();
+        emit count_changed();
 
-        if (m_d->m_lastHighlightedRow != -1) {
-            m_d->m_lastHighlightedRow = -1;
-            emit highlightedRowChanged();
+        if (m_d->m_last_highlighted_row != -1) {
+            m_d->m_last_highlighted_row = -1;
+            emit highlighted_row_changed();
         }
     });
 }
@@ -238,9 +238,9 @@ LyricsManifestLI::clear()
     }
     endResetModel();
 
-    if (m_d->m_lastHighlightedRow != -1) {
-        m_d->m_lastHighlightedRow = -1;
-        emit highlightedRowChanged();
+    if (m_d->m_last_highlighted_row != -1) {
+        m_d->m_last_highlighted_row = -1;
+        emit highlighted_row_changed();
     }
 }
 
@@ -293,11 +293,11 @@ LyricsManifestLI::index_of_lyric_to_highlight() const
 void
 LyricsManifestLI::poll_highlighted_line_change()
 {
-    const int newRow = index_of_lyric_to_highlight().row(); // -1 if none
+    const int new_row = index_of_lyric_to_highlight().row(); // -1 if none
 
-    if (newRow == m_d->m_lastHighlightedRow)
+    if (new_row == m_d->m_last_highlighted_row)
         return;
 
-    m_d->m_lastHighlightedRow = newRow;
-    emit highlightedRowChanged();
+    m_d->m_last_highlighted_row = new_row;
+    emit highlighted_row_changed();
 }

@@ -43,8 +43,8 @@ Item {
         // use the multiplier values background uses
         let multiplier = root.background.lumaMultiplierAtCenter (bounds);
 
-        let m_backdrop = PlayerPresenter.backdropLumaForRect(bounds) * multiplier;
-        let m_ring     = PlayerPresenter.ringLumaForRect(bounds)     * multiplier;
+        let m_backdrop = PlayerPresenter.backdrop_luma_for_rect(bounds) * multiplier;
+        let m_ring     = PlayerPresenter.ring_luma_for_rect(bounds)     * multiplier;
 
         // console.log ("name: " + name + " ; multiplier: " + multiplier + " ; multiplied backdrop luma: " + m_backdrop + " ; ring luma: " + m_ring)
 
@@ -190,8 +190,8 @@ Item {
                 target: controls
 
                 /*
-                onBoundsChanged: console.log("controls backing luma: " + PlayerPresenter.backdropLumaForRect(controlsBounds.bounds) + ", "
-                    + " ring luma: " + PlayerPresenter.ringLumaForRect(controlsBounds.bounds))
+                onBoundsChanged: console.log("controls backing luma: " + PlayerPresenter.backdrop_luma_for_rect(controlsBounds.bounds) + ", "
+                    + " ring luma: " + PlayerPresenter.ring_luma_for_rect(controlsBounds.bounds))
                 */
             }
         }
