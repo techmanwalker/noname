@@ -41,21 +41,26 @@ Item {
     StackLayout {
         id: stack
 
-        // anchors.fill: parent
-
         // anchors.margins: 20 // leave space for the handles
 
-        FullscreenPlayer {
-            id: fsp
+        anchors.fill: parent
 
-            background: root.background
-            immersive: root.immersive
+        Item {
+            FullscreenPlayer {
+                id: fsp
 
-            onImmersiveChanged: {
-                root.immersive = immersive
+                anchors.centerIn: parent
+
+                background: root.background
+                immersive: root.immersive
+                availableHeight: root.height
+
+                onImmersiveChanged: {
+                    root.immersive = immersive
+                }
+
+                onSwitchToLyricsViewRequested: stack.currentIndex = 1
             }
-
-            onSwitchToLyricsViewRequested: stack.currentIndex = 1
         }
 
         // just so I can see them
