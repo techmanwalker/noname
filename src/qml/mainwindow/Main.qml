@@ -78,7 +78,7 @@ T.ApplicationWindow {
         playerLeft:   stack_player.playerGlobalBounds.x                                          / Math.max(1, root.width)
         coverLeft:    stack_player.coverGlobalBounds.x                                           / Math.max(1, root.width)
         coverRight:  (stack_player.coverGlobalBounds.x  + stack_player.coverGlobalBounds.width)  / Math.max(1, root.width)
-        playerRight:  stack_player.playerGlobalBounds.x + stack_player.playerGlobalBounds.width  / Math.max(1, root.width)
+        playerRight: (stack_player.playerGlobalBounds.x + stack_player.playerGlobalBounds.width) / Math.max(1, root.width)
     }
 
     StackLayout {

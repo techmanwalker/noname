@@ -8,11 +8,12 @@ import Player.PlayerPresenter
 import Player.PlayQueue
 import Player.Primitives
 
-Item {
+Row {
     id: root
 
     required property bool immersive
     property Background background
+    required property real availableHeight // granted by the parent view, never derived from this item's own size
 
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
@@ -31,10 +32,10 @@ Item {
 
     
     // Actual size: shrinks when the window is too small, floats freely otherwise
-    readonly property real coverSize: Math.min(
+    readonly property real coverSize: Math.max(0, Math.min(
         coverIdealSize,
-        root.height - controlsHeight - verticalPadding
-    )
+        availableHeight - controlsHeight - verticalPadding
+    ))
 
     signal switchToLyricsViewRequested () // request
 
@@ -61,61 +62,84 @@ Item {
     property real songInnerSpacing: 8
     property real songFadePadding: 20
 
-    Row {
-        spacing: root.songCoverWidth
+    spacing: root.songCoverWidth
 
-        // Left column: cover + controls
+    // Left column: cover + controls
+    ColumnLayout {
+        id: leftCol
+        spacing: basicControls.height
+
+        height: nowplaying_cover.height + controls.height + spacing
+
+        anchors.verticalCenter: parent.verticalCenter
+
+        HoverHandler {
+            id: leftCol_hover
+        }
+
+        Cover {
+            id: nowplaying_cover
+            source: PlayerPresenter.cover
+
+            Layout.preferredWidth:  root.coverSize
+            Layout.preferredHeight: root.coverSize
+            Layout.alignment: Qt.AlignHCenter
+
+            TapHandler {
+                onTapped: root.switchToLyricsViewRequested ()
+            }
+
+            mipmap: true
+            smooth: true
+
+            // bind to maximum possible size to avoid flicker on resizing
+            sourceSize: Qt.size(root.coverIdealSize, root.coverIdealSize)
+        }
+
+        SceneRect {
+            id: nowplaying_cover_bounds
+            target: nowplaying_cover
+        }
+
         ColumnLayout {
-            id: leftCol
-            spacing: basicControls.height
+            id: controls
 
-            height: nowplaying_cover.height + controls.height + spacing
+            visible: !root.immersive || leftCol_hover.hovered
 
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.maximumWidth: nowplaying_cover.width * .75
+            Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
-            HoverHandler {
-                id: leftCol_hover
-            }
+            property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(controlsBounds.bounds)
 
-            Cover {
-                id: nowplaying_cover
-                source: PlayerPresenter.cover
-
-                Layout.preferredWidth:  root.coverSize
-                Layout.preferredHeight: root.coverSize
+            DurationControl {
                 Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
 
-                TapHandler {
-                    onTapped: root.switchToLyricsViewRequested ()
-                }
+                stateModel: PlayerPresenter
 
-                mipmap: true
-                smooth: true
+                accentColor: controls.lightMode ?
+                    Theme.light.slider.accentColor :
+                    Theme.dark.slider.accentColor
 
-                // bind to maximum possible size to avoid flicker on resizing
-                sourceSize: Qt.size(root.coverIdealSize, root.coverIdealSize)
+                backgroundColor: controls.lightMode ?
+                    Theme.light.slider.backgroundColor :
+                    Theme.dark.slider.backgroundColor
             }
 
-            SceneRect {
-                id: nowplaying_cover_bounds
-                target: nowplaying_cover
-            }
+            // Bottom bar: volume | playback | shuffle+repeat
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: basicControls.height
 
-            ColumnLayout {
-                id: controls
-
-                visible: !root.immersive || leftCol_hover.hovered
-
-                Layout.maximumWidth: nowplaying_cover.width * .75
-                Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-
-                property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(controlsBounds.bounds)
-
-                DurationControl {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.fillWidth: true
+                VolumeControl {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    
+                    width: 100
 
                     stateModel: PlayerPresenter
+
+                    buttonLightMode: controls.lightMode
 
                     accentColor: controls.lightMode ?
                         Theme.light.slider.accentColor :
@@ -126,219 +150,194 @@ Item {
                         Theme.dark.slider.backgroundColor
                 }
 
-                // Bottom bar: volume | playback | shuffle+repeat
-                Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: basicControls.height
+                BasicControls {
+                    id: basicControls
+                    anchors.centerIn: parent
 
-                    VolumeControl {
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        
-                        width: 100
+                    lightMode: controls.lightMode
+                }
 
-                        stateModel: PlayerPresenter
+                RowLayout {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 5
 
-                        buttonLightMode: controls.lightMode
+                    ShuffleButton {
+                        Layout.alignment: Qt.AlignVCenter
 
-                        accentColor: controls.lightMode ?
-                            Theme.light.slider.accentColor :
-                            Theme.dark.slider.accentColor
+                        lightMode: controls.lightMode
 
-                        backgroundColor: controls.lightMode ?
-                            Theme.light.slider.backgroundColor :
-                            Theme.dark.slider.backgroundColor
+                        onCurrentModeChanged: {
+                            let mode = currentMode == ShuffleButton.ShuffleMode.ShuffleTracks
+                            PlayQueue.shuffle = mode
+                        }
                     }
 
-                    BasicControls {
-                        id: basicControls
-                        anchors.centerIn: parent
+                    RepeatButton {
+                        Layout.alignment: Qt.AlignVCenter
 
                         lightMode: controls.lightMode
                     }
-
-                    RowLayout {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 5
-
-                        ShuffleButton {
-                            Layout.alignment: Qt.AlignVCenter
-
-                            lightMode: controls.lightMode
-
-                            onCurrentModeChanged: {
-                                let mode = currentMode == ShuffleButton.ShuffleMode.ShuffleTracks
-                                PlayQueue.shuffle = mode
-                            }
-                        }
-
-                        RepeatButton {
-                            Layout.alignment: Qt.AlignVCenter
-
-                            lightMode: controls.lightMode
-                        }
-                    }
                 }
-            }
-
-            SceneRect {
-                id: controlsBounds
-                target: controls
-
-                /*
-                onBoundsChanged: console.log("controls backing luma: " + PlayerPresenter.backdrop_luma_for_rect(controlsBounds.bounds) + ", "
-                    + " ring luma: " + PlayerPresenter.ring_luma_for_rect(controlsBounds.bounds))
-                */
             }
         }
 
-        // Right column: metadata + upcoming queue
+        SceneRect {
+            id: controlsBounds
+            target: controls
 
-        // enables pushing the metadata container to the vertical
-        // center when the play queue is not visible
-        ColumnLayout {
-            id: rightCol
-            height: leftCol.height
+            /*
+            onBoundsChanged: console.log("controls backing luma: " + PlayerPresenter.backdrop_luma_for_rect(controlsBounds.bounds) + ", "
+                + " ring luma: " + PlayerPresenter.ring_luma_for_rect(controlsBounds.bounds))
+            */
+        }
+    }
 
-            // + scrollbar padding
-            property int scrollBarWidth: 4
-            width: (leftCol.width * .6) + (scrollBarWidth * 6)
+    // Right column: metadata + upcoming queue
 
-            PlayQueueHeader {
-                id: metadataContainer
-                title:  PlayerPresenter.title
-                artist: PlayerPresenter.artist
-                album:  PlayerPresenter.album
+    // enables pushing the metadata container to the vertical
+    // center when the play queue is not visible
+    ColumnLayout {
+        id: rightCol
+        height: leftCol.height
 
-                Layout.fillWidth: true
-                Layout.leftMargin: 15 // playlist song lateral padding
-                Layout.rightMargin: Layout.leftMargin
+        // + scrollbar padding
+        property int scrollBarWidth: 4
+        width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
-                onClicked: root.immersive = !root.immersive
+        PlayQueueHeader {
+            id: metadataContainer
+            title:  PlayerPresenter.title
+            artist: PlayerPresenter.artist
+            album:  PlayerPresenter.album
 
-                usedInImmersiveMode: root.immersive
+            Layout.fillWidth: true
+            Layout.leftMargin: 15 // playlist song lateral padding
+            Layout.rightMargin: Layout.leftMargin
 
-                property rect globalBounds: ({
-                    x: metadataContainerBounds.x,
-                    y: metadataContainerBounds.y,
-                    width: metadataContainer.textContentWidth,
-                    height: metadataContainer.textContentHeight
-                })
+            onClicked: root.immersive = !root.immersive
 
-                lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
+            usedInImmersiveMode: root.immersive
+
+            property rect globalBounds: ({
+                x: metadataContainerBounds.x,
+                y: metadataContainerBounds.y,
+                width: metadataContainer.textContentWidth,
+                height: metadataContainer.textContentHeight
+            })
+
+            lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
+        }
+
+        // _d = "the drop area"
+        // _s = "the stack"
+        // _c = "the content"
+        // _p = "the placeholder"
+
+        DropArea {
+            id: nextQueue_d
+
+            keys: ["text/uri-list"]
+
+            visible: !root.immersive
+
+            Layout.fillHeight: true
+            Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)
+
+            Layout.alignment: Qt.AlignVCenter
+
+            Layout.topMargin: root.songCoverHeight * .4
+
+            onDropped: (drop) => {
+                if (drop.hasUrls) {
+                    PlayQueue.batch_append(drop.urls)
+
+                    drop.acceptProposedAction()
+                }
             }
 
-            // _d = "the drop area"
-            // _s = "the stack"
-            // _c = "the content"
-            // _p = "the placeholder"
+            StackLayout {
+                id: nextQueue_s
 
-            DropArea {
-                id: nextQueue_d
+                anchors.fill: parent
 
-                keys: ["text/uri-list"]
+                // set whatever source component is correct right at boot
+                currentIndex: PlayQueue.count === 0 ? 1 : 0
 
-                visible: !root.immersive
+                Playlist {
+                    id: nextQueue_c
+                    model: PlayQueue
 
-                Layout.fillHeight: true
-                Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)
+                    scrollBarWidth: rightCol.scrollBarWidth
 
-                Layout.alignment: Qt.AlignVCenter
+                    songCoverWidth: root.songCoverWidth
+                    songInnerSpacing: root.songInnerSpacing
 
-                Layout.topMargin: root.songCoverHeight * .4
+                    clip: true
+                    reuseItems: true // tons of songs moving
 
-                onDropped: (drop) => {
-                    if (drop.hasUrls) {
-                        PlayQueue.batch_append(drop.urls)
+                    property rect globalBounds: Qt.rect(
+                            nextQueue_cBounds.x,
+                            nextQueue_cBounds.y,
+                            nextQueue_c.contentWidth,
+                            nextQueue_c.contentHeight
+                        )
 
-                        drop.acceptProposedAction()
+                    lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
+
+                    onSongClicked: (song) => {
+                        PlayQueue.playhead = PlayQueue.find_by_source(song.source)
                     }
-                }
 
-                StackLayout {
-                    id: nextQueue_s
-
-                    anchors.fill: parent
-
-                    // set whatever source component is correct right at boot
-                    currentIndex: PlayQueue.count === 0 ? 1 : 0
-
-                    Playlist {
-                        id: nextQueue_c
-                        model: PlayQueue
-
-                        scrollBarWidth: rightCol.scrollBarWidth
-
-                        songCoverWidth: root.songCoverWidth
-                        songInnerSpacing: root.songInnerSpacing
-
-                        clip: true
-                        reuseItems: true // tons of songs moving
-
-                        property rect globalBounds: Qt.rect(
-                                nextQueue_cBounds.x,
-                                nextQueue_cBounds.y,
-                                nextQueue_c.contentWidth,
-                                nextQueue_c.contentHeight
-                            )
-
-                        lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
-
-                        onSongClicked: (song) => {
-                            PlayQueue.playhead = PlayQueue.find_by_source(song.source)
+                    additionalMenuActions: [
+                        {
+                            text: qsTr("Clear queue"),
+                            action: () => PlayQueue.clear()
                         }
+                    ]
+                }
 
-                        additionalMenuActions: [
-                            {
-                                text: qsTr("Clear queue"),
-                                action: () => PlayQueue.clear()
-                            }
-                        ]
-                    }
+                Label {
+                    id: nextQueue_p
 
-                    Label {
-                        id: nextQueue_p
+                    text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
 
-                        text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment:   Text.AlignVCenter
 
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment:   Text.AlignVCenter
+                    wrapMode: Text.WordWrap
 
-                        wrapMode: Text.WordWrap
+                    // MediumLabel
+                    font.pointSize: 13
+                    font.weight: Font.Medium
 
-                        // MediumLabel
-                        font.pointSize: 13
-                        font.weight: Font.Medium
+                    property rect globalBounds: Qt.rect(
+                            nextQueue_pBounds.x,
+                            nextQueue_pBounds.y,
+                            nextQueue_p.contentWidth,
+                            nextQueue_p.contentHeight
+                        )
 
-                        property rect globalBounds: Qt.rect(
-                                nextQueue_pBounds.x,
-                                nextQueue_pBounds.y,
-                                nextQueue_p.contentWidth,
-                                nextQueue_p.contentHeight
-                            )
+                    property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
 
-                        property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
-
-                        color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
-                    }
+                    color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                 }
             }
+        }
 
-            SceneRect {
-                id: nextQueue_cBounds
-                target: nextQueue_c
-            }
+        SceneRect {
+            id: nextQueue_cBounds
+            target: nextQueue_c
+        }
 
-            SceneRect {
-                id: nextQueue_pBounds
-                target: nextQueue_p
-            }
+        SceneRect {
+            id: nextQueue_pBounds
+            target: nextQueue_p
+        }
 
-            SceneRect {
-                id: metadataContainerBounds
-                target: metadataContainer
-            }
+        SceneRect {
+            id: metadataContainerBounds
+            target: metadataContainer
         }
     }
 }
