@@ -29,6 +29,12 @@ StackLayout {
     
     signal switchToPlayerViewRequested ()
 
+    signal clickedOnEmptySpace ()
+
+    onClickedOnEmptySpace: {
+        root.switchToPlayerViewRequested()
+    }
+
     Label {
         text: qsTr("No lyrics.")
 
@@ -43,7 +49,7 @@ StackLayout {
         color: root.unhighlightedColor
 
         TapHandler {
-            onTapped: root.switchToPlayerViewRequested()
+            onTapped: root.clickedOnEmptySpace()
         }
     }
 
@@ -118,36 +124,53 @@ StackLayout {
             id: delegateRoot
 
             width: root.width
-            height: del.height
+            height: delegateWidth.height
 
             required property lyric modelData
             required property int index
 
-            LyricDelegate {
-                id: del
+            TapHandler {
+                onTapped: (eventPoint, button) => {
+                    // eventPoint.position is in delegateRoot coordinates
+                    const onLyric = delegateWidth.contains(delegateWidth.mapFromItem(delegateRoot, eventPoint.position))
 
-                model: delegateRoot.modelData
+                    if (onLyric)
+                        PlayerPresenter.position_ms = del.model.timestamp
+                    else
+                        root.clickedOnEmptySpace()
+                }
+            }
 
-                // Feeds only the break computation now — the item's
-                // actual on-screen width is implicit, so it's free to
-                // grow past this when highlighted.
-                wrapWidth: parent.width / 10 * 4
-                topPadding: highlighted ? 20 : 10
-                bottomPadding: topPadding
+            Item {
+                id: delegateWidth 
+
+                width: parent.width / 10 * 6
+                height: del.height
 
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+                LyricDelegate {
+                    id: del
 
-                unhighlightedColor: root.unhighlightedColor
-                highlightedColor: root.highlightedColor
+                    model: delegateRoot.modelData
 
-                highlighted: root.highlightedRowIndex === delegateRoot.index
-            }
+                    // Feeds only the break computation now — the item's
+                    // actual on-screen width is implicit, so it's free to
+                    // grow past this when highlighted.
+                    wrapWidth: delegateRoot.width / 10 * 4
+                    topPadding: highlighted ? 20 : 10
+                    bottomPadding: topPadding
 
-            TapHandler {
-                onTapped: PlayerPresenter.position_ms = del.model.timestamp
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+
+                    unhighlightedColor: root.unhighlightedColor
+                    highlightedColor: root.highlightedColor
+
+                    highlighted: root.highlightedRowIndex === delegateRoot.index
+                }
             }
         }
     }

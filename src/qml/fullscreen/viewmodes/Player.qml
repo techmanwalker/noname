@@ -62,8 +62,7 @@ Item {
                 onSwitchToLyricsViewRequested: stack.currentIndex = 1
             }
         }
-
-        // just so I can see them
+        
         Lyrics {
             id: lyrics
 
