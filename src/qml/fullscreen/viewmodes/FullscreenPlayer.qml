@@ -62,10 +62,7 @@ Item {
     property real songFadePadding: 20
 
     Row {
-        id: mainRow
         spacing: root.songCoverWidth
-
-        anchors.centerIn: parent
 
         // Left column: cover + controls
         ColumnLayout {

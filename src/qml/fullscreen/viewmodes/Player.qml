@@ -41,9 +41,9 @@ Item {
     StackLayout {
         id: stack
 
-        anchors.fill: parent
+        // anchors.fill: parent
 
-        anchors.margins: 20 // leave space for the handles
+        // anchors.margins: 20 // leave space for the handles
 
         FullscreenPlayer {
             id: fsp
