@@ -54,8 +54,14 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
 
     m_outstream->layout = *soundio_channel_layout_get_default(2); // stereo, always
 
-    m_outstream->userdata = m_decoder_worker->get_ring_buffer();
-    m_decoder_worker->get_ring_buffer()->rt_notify_target = this; // reachable from write_callback via userdata
+    auto ring = m_decoder_worker->get_ring_buffer();
+
+    m_outstream->userdata = ring;
+
+    m_rt_pump = new rt_event_pump(ring->rt_events, this);
+    connect(m_rt_pump, &rt_event_pump::playlist_finished,      this, &audio_internal_controller::playlist_finished);
+    connect(m_rt_pump, &rt_event_pump::track_boundary_crossed, this, &audio_internal_controller::track_boundary_crossed);
+
     m_outstream->write_callback = write_callback;
 
     m_outstream->error_callback = error_callback;
@@ -72,13 +78,13 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
         if (m_outstream->layout_error)
             qCWarning(l_audioengine) << "layout not honoured exactly:" << soundio_strerror(m_outstream->layout_error);
 
-        if (uint64_t(m_outstream->sample_rate) != m_decoder_worker->get_ring_buffer()->get_sample_rate())
+        if (uint64_t(m_outstream->sample_rate) != ring->get_sample_rate())
             qCCritical(l_audioengine) << "backend changed sample rate; decoder and stream disagree";
     }
 
     execute_soundio(soundio_outstream_start, m_outstream);
 
-    m_decoder_worker->get_ring_buffer()->is_paused.store(true);
+    ring->is_paused.store(true);
 
     m_decoder_worker->moveToThread(m_audio_decoding_thread);
 
@@ -100,6 +106,11 @@ audio_internal_controller::~audio_internal_controller()
         soundio_outstream_destroy(m_outstream);
         m_outstream = nullptr;
     }
+
+    // the callback can no longer post. drop the pump BEFORE the ring (and the eventfd
+    // it listens on) is destroyed together with the worker.
+    delete m_rt_pump;
+    m_rt_pump = nullptr;
 
     // safely destroy
     QMetaObject::invokeMethod(m_decoder_worker, [worker = m_decoder_worker]() {

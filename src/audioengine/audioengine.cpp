@@ -16,13 +16,11 @@ audio_engineLI::audio_engineLI(QObject *parent)
     connect(m_internal.get(), &audio_internal_controller::seeked,
             this, &audio_engineLI::seek_finished);
             
-    /*  Explicit Qt::QueuedConnection, not AutoConnection: both m_internal and `this`
-        nominally live on the main thread, so AutoConnection would resolve to a Direct
-        connection — but these two signals are actually emitted from write_callback,
-        running on libsoundio's own RT thread, which has no Qt thread affinity at all.
-        Direct-connection semantics run the slot synchronously on whichever thread
-        called emit, so without forcing Queued here, process_track_boundary()/
-        process_playlist_finished() would execute ON the audio callback thread. */
+    /*  Explicit Qt::QueuedConnection, kept on purpose: these signals are emitted by
+        rt_event_pump on the main thread (never from the RT callback), so thread safety no
+        longer depends on it. Queued still defers the slots out of the pump's drain loop,
+        so UI work done in process_track_boundary()/process_playlist_finished() (and
+        anything it triggers, like load()) can't re-enter the drain. */
     connect(m_internal.get(), &audio_internal_controller::track_boundary_crossed,
             this, &audio_engineLI::process_track_boundary, Qt::QueuedConnection);
 
