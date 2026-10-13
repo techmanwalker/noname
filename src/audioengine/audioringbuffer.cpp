@@ -1,5 +1,8 @@
 #include "audioringbuffer.hpp"
 
+#include <algorithm>
+#include <thread>
+
 // The Ring buffer
 
 audio_ring_buffer::audio_ring_buffer (std::optional<size_t> requested_sample_rate)
@@ -35,9 +38,15 @@ audio_ring_buffer::push_blocking(const float* data, size_t count)
 
     std::unique_lock<std::mutex> lock(m_mutex);
     
-    m_cv.wait(lock, [this, count] {
-        return m_cancelled.load() || writable_size() >= count;
-    });
+    // Nobody wakes us when the device frees space (the RT callback must not make syscalls),
+    // so nap for as long as the device needs to drain the missing space, then re-check.
+    // Every wait is bounded and the predicate is re-evaluated after it, so there is no
+    // wakeup to lose. cancel_blocking_push() still wakes us instantly.
+    while (!m_cancelled.load()) {
+        const size_t room = writable_size();
+        if (room >= count) break;
+        m_cv.wait_for(lock, nap_for(count - room));
+    }
     
     if (m_cancelled.load()) return false;
     
@@ -50,7 +59,7 @@ audio_ring_buffer::push_blocking(const float* data, size_t count)
 
     // track absolute decoded frames for track boundaries.
     // count is the number of floats; divide by 2 for stereo frames.
-    absolute_frames_decoded.fetch_add(count / 2, std::memory_order_relaxed);
+    absolute_frames_decoded.fetch_add(count / k_channels, std::memory_order_relaxed);
 
     return true;
 }
@@ -91,18 +100,19 @@ audio_ring_buffer::pop(float* dest, size_t count) {
 
     // update the tail only once at the end
     tail.store((t + to_read) % capacity, std::memory_order_release);
-
-    if (to_read > 0) {
-        m_cv.notify_one();
-    }
-
+    
     return to_read;
 }
 
 void
 audio_ring_buffer::cancel_blocking_push()
 {
-    m_cancelled.store(true);
+    {
+        // The mutex orders this store against the waiter's predicate check: no window
+        // where the decoder checked, we notified, and only then it went to sleep.
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_cancelled.store(true);
+    }
     m_cv.notify_one();
 }
 
@@ -161,4 +171,35 @@ uint64_t
 audio_ring_buffer::get_sample_rate () const
 {
     return sample_rate;
+}
+
+std::chrono::microseconds
+audio_ring_buffer::nap_for (size_t missing_samples) const
+{
+    using namespace std::chrono;
+    using namespace std::chrono_literals;
+
+    // Device not draining: the ring is full, so there are seconds of audio of slack.
+    if (is_paused.load(std::memory_order_relaxed)) return 250ms;
+
+    // Time the device needs to consume the missing space.
+    const microseconds drain(static_cast<int64_t>(missing_samples * 1'000'000 / (sample_rate * k_channels)));
+
+    return std::clamp<microseconds>(drain, 1ms, 50ms);
+}
+
+void
+audio_ring_buffer::begin_rt_quiesce ()
+{
+    flush_request.store(true, std::memory_order_seq_cst);
+
+    // Bounded by ONE callback's duration, and zero if no callback is running
+    // (paused/stopped/dead stream): it can no longer wait for something that never comes.
+    while (rt_active.load(std::memory_order_seq_cst)) std::this_thread::yield();
+}
+
+void
+audio_ring_buffer::end_rt_quiesce ()
+{
+    flush_request.store(false, std::memory_order_release);
 }

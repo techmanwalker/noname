@@ -5,6 +5,7 @@
 
 #include "audiodecodeworker.hpp"
 
+#include "audiortpump.hpp"
 #include "mediatypes.hpp"
 
 // log simplifier, avoids super verbose function calls
@@ -39,8 +40,8 @@ public:
 
 signals:
     void seeked();
-    void track_boundary_crossed(); // relayed (queued) from the RT audio thread on a track boundary
-    void playlist_finished();      // relayed (queued) from the RT audio thread when the queue drains
+    void track_boundary_crossed(); // emitted by rt_event_pump (this thread) on a track boundary
+    void playlist_finished();      // emitted by rt_event_pump (this thread) when the queue drains
 
 private:
     QThread *m_audio_decoding_thread = nullptr;
@@ -49,6 +50,8 @@ private:
     struct SoundIo *m_soundio = nullptr;
     struct SoundIoDevice *m_device = nullptr;
     struct SoundIoOutStream *m_outstream = nullptr;
+
+    rt_event_pump *m_rt_pump = nullptr;
 };
 
 #include "prettyerrors.tpp" // IWYU pragma: keep

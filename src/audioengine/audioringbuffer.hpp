@@ -1,11 +1,13 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <mutex>
 #include <optional>
 #include <vector>
 
-class audio_internal_controller;
+#include "audiortevents.hpp"
 
 // sndio
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);
@@ -20,7 +22,13 @@ class audio_ring_buffer
 
     const uint64_t sample_rate; // by default
 
-    size_t capacity = sample_rate * 10 * 2; // ~5s of stereo audio
+    // TEMPORARY until the ring is format-generic: interleaved stereo.
+    static constexpr size_t k_channels = 2;
+
+    size_t capacity = sample_rate * 10 * k_channels; // 10 s of audio
+
+    // How long push_blocking() sleeps before re-checking for room (see audioringbuffer.cpp)
+    std::chrono::microseconds nap_for (size_t missing_samples) const;
 
     // not deque so it does not move
     std::vector<float> buffer;
@@ -90,9 +98,17 @@ public:
     // Governed by a perceptual volume control that rescales logarithmic values back for soundio
     std::atomic<float> volume_multiplier{1.0f};
     
-    // Handshake sequence to safely reset head/tail without clobbering
+    // Flush protocol, decoder thread <-> RT callback (Dekker-style, all seq_cst):
+    //   decoder: flush_request = true;  then waits while rt_active == true
+    //   RT:      rt_active = true;      then reads flush_request
+    // Whoever loses the race is guaranteed to see the other's store, so once
+    // begin_rt_quiesce() returns, the RT thread cannot touch head/tail until
+    // end_rt_quiesce(), and nobody ever waits on a callback that isn't running.
     std::atomic_bool flush_request{false};
-    std::atomic_bool flush_ack{false};
+    std::atomic_bool rt_active{false};
+
+    void begin_rt_quiesce();
+    void end_rt_quiesce();
 
     std::mutex boundary_mutex;
     bool has_upcoming_boundary{false};
@@ -101,10 +117,9 @@ public:
     // Target frame count for the next upcoming track boundary (UINT64_MAX when none)
     std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
 
-    // Non-owning. Set once by audio_internal_controller's constructor, before
-    // soundio_outstream_start() — same "set-once, then read-only on the RT thread"
-    // contract as sample_rate/capacity above, so no atomic needed here either.
-    audio_internal_controller *rt_notify_target = nullptr;
+    // RT thread -> Qt thread events (playlist finished, track boundary, stream error/underflow).
+    // See audiortevents.hpp; the Qt side is rt_event_pump.
+    rt_event_mailbox rt_events;
 
     bool check_for_boundary_and_advance();
 };

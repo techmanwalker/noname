@@ -225,7 +225,10 @@ audio_decode_worker::decode_step ()
                 // Immediately loop again to start decoding the new file
                 m_decode_timer->setInterval(0); 
             } else {
-                // Next file failed to open, handle gracefully
+                // Next file failed to open, handle gracefully. Nothing is decodable now:
+                // without this, the next decode_step() reads from a null/half-open context.
+                close_ffmpeg_contexts();
+                m_song_loaded.store(false);
                 m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
             }
         } else {
@@ -262,11 +265,9 @@ audio_decode_worker::seek(uint64_t position_ms) {
     // decode and seek are mutually exclusive
     std::lock_guard<std::mutex> lock (m_decoder_mutex);
 
-    // hndshake with the RT thread to safely lock it into a flush state
-    m_ring_buffer.flush_request.store(true, std::memory_order_release);
-    while (!m_ring_buffer.flush_ack.load(std::memory_order_acquire)) {
-        QThread::yieldCurrentThread(); 
-    }
+    // After this returns the RT thread cannot touch head/tail until end_rt_quiesce().
+    // Never waits on a callback that isn't running.
+    m_ring_buffer.begin_rt_quiesce();
 
     // we are now in a safe zone where the RT thread will NOT touch head or tail
 
@@ -309,11 +310,8 @@ audio_decode_worker::seek(uint64_t position_ms) {
         emit seeked();
     }
 
-    // release the RT thread flush handshake
-    m_ring_buffer.flush_request.store(false, std::memory_order_release);
-    while (m_ring_buffer.flush_ack.load(std::memory_order_acquire)) {
-        QThread::yieldCurrentThread();
-    }
+    // release the RT thread (must stay BEFORE pending_seeks is decremented, as before)
+    m_ring_buffer.end_rt_quiesce();
 
     // mark seek as complete so actual audio playback can safely resume
     m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
@@ -380,6 +378,9 @@ audio_decode_worker::clean ()
         swr_ctx = nullptr;
     }
 
+    // The RT thread may be inside pop(): same flush protocol as seek()
+    m_ring_buffer.begin_rt_quiesce();
+
     // empty buffer
     m_ring_buffer.head.store (0);
     m_ring_buffer.tail.store (0);
@@ -409,6 +410,8 @@ audio_decode_worker::clean ()
     // also reset eof state
     m_ring_buffer.eof_decoded.store(false);
     m_ring_buffer.eof_played.store(false);
+
+    m_ring_buffer.end_rt_quiesce();
 
     // mark no loaded song
     m_song_loaded.store(false);

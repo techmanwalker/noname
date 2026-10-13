@@ -1,6 +1,10 @@
-#include "l_audioengine.hpp" // logging categories only
-#include "audiointernalcontroller.hpp"
 #include "audioringbuffer.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <limits>
+#include <type_traits>
 
 #include <soundio/soundio.h>
 
@@ -70,23 +74,19 @@ store_sample (char *slot, float v)
 }
 
 // --- notifications (RT → rest of the app)
-// The ONLY two places the RT thread talks to Qt. See the note below on why
-// they are isolated.
+// The ONLY two places the RT thread reports events. They only post to the mailbox
+// (audiortevents.hpp); signals and logs are emitted by rt_event_pump on the Qt thread.
 
 RT_INLINE void
 notify_playlist_finished (audio_ring_buffer &ring)
 {
-    if (ring.rt_notify_target) {
-        emit ring.rt_notify_target->playlist_finished();
-    }
+    ring.rt_events.post(rt_event::playlist_finished);
 }
 
 RT_INLINE void
 notify_track_boundary (audio_ring_buffer &ring)
 {
-    if (ring.rt_notify_target) {
-        emit ring.rt_notify_target->track_boundary_crossed();
-    }
+    ring.rt_events.post(rt_event::track_boundary);
 }
 
 // --- decoder handshake
@@ -97,18 +97,28 @@ struct transport_snapshot
     bool seek_pending;    // a seek is in flight
 };
 
-// Run exactly once per callback, BEFORE any pop(). Publishing the ack at the start of
-// a callback proves the previous callback has fully returned, so the decoder may reset
-// head/tail while we keep feeding silence from the snapshot.
-RT_INLINE transport_snapshot
-handshake_with_decoder (audio_ring_buffer &ring)
+// "The RT thread is inside a callback". Constructed first thing in write_callback,
+// destroyed on every exit path. Other half of audio_ring_buffer's flush protocol:
+// the decoder only touches head/tail once it has seen flush_request set AND rt_active clear.
+struct rt_activity_scope
 {
-    const bool flush = ring.flush_request.load(std::memory_order_acquire);
-    const bool seek  = ring.pending_seeks.load(std::memory_order_acquire) > 0;
+    audio_ring_buffer &ring;
 
-    ring.flush_ack.store(flush, std::memory_order_release);
+    explicit rt_activity_scope (audio_ring_buffer &r) : ring(r)
+    { ring.rt_active.store(true, std::memory_order_seq_cst); }
 
-    return { flush, seek };
+    ~rt_activity_scope ()
+    { ring.rt_active.store(false, std::memory_order_seq_cst); }
+};
+
+// Call once per callback, after rt_activity_scope is up and BEFORE any pop().
+RT_INLINE transport_snapshot
+read_transport (audio_ring_buffer &ring)
+{
+    return {
+        ring.flush_request.load(std::memory_order_seq_cst),
+        ring.pending_seeks.load(std::memory_order_acquire) > 0
+    };
 }
 
 // --- ring side
@@ -227,11 +237,22 @@ output_is_muted (const write_ctx &c)
 }
 
 // false = error or no room; libsoundio's contract says: do NOT call end_write then.
+// Deliberately NOT execute_soundio(): its failure path logs with qCWarning (allocates).
 RT_INLINE bool
-begin_chunk (SoundIoOutStream *out, SoundIoChannelArea **areas, int &frames)
+begin_chunk (const write_ctx &c, SoundIoChannelArea **areas, int &frames)
 {
-    if (execute_soundio(soundio_outstream_begin_write, out, areas, &frames) != 0) return false;
+    if (const int err = soundio_outstream_begin_write(c.out, areas, &frames)) {
+        c.ring.rt_events.post_error(rt_event::begin_write_failed, err);
+        return false;
+    }
     return frames > 0;
+}
+
+RT_INLINE void
+end_chunk (const write_ctx &c)
+{
+    if (const int err = soundio_outstream_end_write(c.out))
+        c.ring.rt_events.post_error(rt_event::end_write_failed, err);
 }
 
 template <typename In, typename Out>
@@ -253,7 +274,7 @@ write_loop (const write_ctx &c)
         int frames = std::min(frames_left, chunk_max);
         SoundIoChannelArea *areas;
 
-        if (!begin_chunk(c.out, &areas, frames)) break;
+        if (!begin_chunk(c, &areas, frames)) break;
 
         if (output_is_muted(c)) {
             feed_silence<Out>(areas, out_ch, 0, frames);
@@ -268,7 +289,7 @@ write_loop (const write_ctx &c)
             check_track_boundary(c.ring, count_played_frames(c.ring, frames));
         }
 
-        execute_soundio(soundio_outstream_end_write, c.out);
+        end_chunk(c);
         frames_left -= frames;
     }
 }
@@ -310,9 +331,8 @@ write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_co
 {
     auto &ring = *static_cast<audio_ring_buffer*>(outstream->userdata);
 
-    // Runs on every callback, even if the format below turns out to be unsupported,
-    // otherwise seek() would spin forever waiting for the ack.
-    const transport_snapshot snap = handshake_with_decoder(ring);
+    rt_activity_scope in_callback(ring);                   // 1. announce we're inside
+    const transport_snapshot snap = read_transport(ring);   // 2. then look at the decoder's request
 
     dispatch_ring_format({ outstream, ring, snap, ring_format_of(ring), frame_count_max });
 }
@@ -321,13 +341,13 @@ write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_co
 // Error handling
 
 void
-error_callback([[maybe_unused]] struct SoundIoOutStream *outstream, int err)
+error_callback(struct SoundIoOutStream *outstream, int err)
 {
-    qCWarning(l_soundio) << "SoundIo outstream error:" << soundio_strerror(err);
+    static_cast<audio_ring_buffer*>(outstream->userdata)->rt_events.post_error(rt_event::stream_error, err);
 }
 
 void
-underflow_callback ([[maybe_unused]] struct SoundIoOutStream *outstream)
+underflow_callback(struct SoundIoOutStream *outstream)
 {
-    qCWarning(l_soundio) << "SoundIo outstream underflow";
-};
+    static_cast<audio_ring_buffer*>(outstream->userdata)->rt_events.post(rt_event::underflow);
+}
