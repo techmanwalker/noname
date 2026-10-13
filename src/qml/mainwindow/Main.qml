@@ -48,6 +48,27 @@ T.ApplicationWindow {
         playerRight: (stack_player.playerGlobalBounds.x + stack_player.playerGlobalBounds.width) / Math.max(1, root.width)
     }
 
+    StackLayout {
+        id: activeView
+
+        anchors.fill: parent
+
+        anchors.topMargin: currentIndex === 0 ? windexRow.height : 0
+
+        Browser {
+            id: browser
+            onRequestTheaterMode: activeView.currentIndex = 1
+
+            searchBar: searchBox
+        }
+
+        Player {
+            id: stack_player
+
+            background: bg
+        }
+    }
+
     RowLayout {
         id: navbar
 
@@ -174,28 +195,6 @@ T.ApplicationWindow {
     SceneRect {
         id: windexBounds
         target: windex
-    }
-
-    StackLayout {
-        id: activeView
-
-        anchors.top: navbar.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-
-        Browser {
-            id: browser
-            onRequestTheaterMode: activeView.currentIndex = 1
-
-            searchBar: searchBox
-        }
-
-        Player {
-            id: stack_player
-
-            background: bg
-        }
     }
 
 
