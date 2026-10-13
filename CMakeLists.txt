@@ -57,11 +57,11 @@ endfunction()
 ## C++ sources
 module_sources(MEDIATYPES_SOURCES       "src/datamodels/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/datamodels/sequences/*.cpp")
-module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/context/lyrics/*.cpp")
-module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/context/playerpresenter/*.cpp")
-module_sources(PLAYQUEUE_SOURCES        "src/presenters/context/playqueue/*.cpp")
-module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/context/windowgeometry/*.cpp")
-module_sources(LOCALLIBRARY_SOURCES     "src/presenters/context/locallibrary/*.cpp")
+module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/lyrics/*.cpp")
+module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/playerpresenter/*.cpp")
+module_sources(PLAYQUEUE_SOURCES        "src/presenters/playqueue/*.cpp")
+module_sources(WINDOWGEOMETRY_SOURCES   "src/presenters/windowgeometry/*.cpp")
+module_sources(LOCALLIBRARY_SOURCES     "src/presenters/locallibrary/*.cpp")
 module_sources(AUDIOENGINE_SOURCES      "src/audioengine/*.cpp" "src/audioengine/*.hpp")
 module_sources(COVERS_SOURCES           "src/covers/*.cpp")
 module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
@@ -319,7 +319,7 @@ target_link_libraries (locallibrary
 
 target_include_directories(locallibrary
     PUBLIC
-        src/presenters/context/locallibrary
+        src/presenters/locallibrary
 )
 
 add_library(locallibrary_in INTERFACE)
@@ -398,7 +398,7 @@ target_link_libraries(lyricsmanifest
 
 target_include_directories(lyricsmanifest
     PUBLIC
-        src/presenters/context/lyrics
+        src/presenters/lyrics
 )
 
 add_library(lyricsmanifest_in INTERFACE)
@@ -430,7 +430,7 @@ target_link_libraries(playqueue
 
 target_include_directories(playqueue
     PUBLIC
-        src/presenters/context/playqueue
+        src/presenters/playqueue
 )
 
 add_library(playqueue_in INTERFACE)
@@ -465,7 +465,7 @@ target_link_libraries(playerpresenter
 
 target_include_directories(playerpresenter
     PUBLIC
-        src/presenters/context/playerpresenter
+        src/presenters/playerpresenter
 )
 
 
@@ -642,7 +642,7 @@ target_link_libraries(mainwindow
 
 target_include_directories(mainwindow
     PUBLIC
-        src/presenters/context/windowgeometry
+        src/presenters/windowgeometry
 )
 
 qt_add_translations(${PROJECT_NAME}
