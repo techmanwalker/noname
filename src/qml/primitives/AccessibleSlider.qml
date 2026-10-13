@@ -13,6 +13,8 @@ T.Slider {
     property real  trackHeight:        4
     property real  trackOpacity:       1.0
 
+    property real  logicalHeight:      trackHeight * 6
+
     property color accentColor: Theme.dark.slider.accentColor
     property color backgroundColor: Theme.dark.slider.backgroundColor
 
@@ -29,7 +31,7 @@ T.Slider {
         x:      0
         y:      (root.height - height) / 2
         width:  root.width
-        height: root.trackHeight * 6
+        height: root.logicalHeight
     }
 
     containmentMask: interactionRect

@@ -60,12 +60,15 @@ ScrollBar {
         }
     }
 
-    // ── Interaction area ────────────────────────────────────
-    containmentMask: Item {
+    Item {
+        id: contmask
+
         width:  root.isVertical ? root.logicalWidth : root.width
         height: root.isVertical ? root.height       : root.logicalWidth
         
-        x: root.isVertical ? (root.width  - width)  / 2 : 0
-        y: root.isVertical ? 0 : (root.height - height) / 2
+        anchors.centerIn: root
     }
+
+    // ── Interaction area ────────────────────────────────────
+    containmentMask: contmask
 }
