@@ -66,6 +66,8 @@ T.ApplicationWindow {
             id: stack_player
 
             background: bg
+
+            onBackToBrowser: activeView.currentIndex = 0
         }
     }
 
