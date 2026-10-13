@@ -126,7 +126,7 @@ T.ApplicationWindow {
 
             Layout.alignment: Qt.AlignVCenter
 
-            property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(windexBounds) // context is everything
+            property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
 
             ResizableButton {
                 id: fullscreenToggle
@@ -165,6 +165,8 @@ T.ApplicationWindow {
                 Layout.fillWidth: true
 
                 anchors.verticalCenter: parent.verticalCenter
+
+                lightMode: windex.lightMode
             }
         }
     }
@@ -227,20 +229,6 @@ T.ApplicationWindow {
     ResizeHandle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.topMargin: 20; anchors.bottomMargin: 20; width: 20; edges: Qt.LeftEdge; cursorShape: Qt.SizeHorCursor }
     ResizeHandle { anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.topMargin: 20; anchors.bottomMargin: 20; width: 20; edges: Qt.RightEdge; cursorShape: Qt.SizeHorCursor }
     */
-
-    function lightModeForBounds (bounds: rect) : bool {
-
-        // use the multiplier values background uses
-        let multiplier = bg.lumaMultiplierAtCenter (bounds);
-
-        let m_backdrop = PlayerPresenter.backdrop_luma_for_rect(bounds) * multiplier;
-        let m_ring     = PlayerPresenter.ring_luma_for_rect(bounds)     * multiplier;
-
-        if (m_backdrop > 0.92) return true;   // always light
-        if (m_backdrop < 0.05) return false;  // always dark (redundant while the gate below is 0.48)
-
-        return m_backdrop > 0.7 && m_ring > 0.6;
-    }
 
     // Four corners
     ResizeHandle { anchors.top: parent.top; anchors.left: parent.left; width: 20; height: 20; edges: Qt.TopEdge | Qt.LeftEdge; cursorShape: Qt.SizeFDiagCursor }

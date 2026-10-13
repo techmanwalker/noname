@@ -39,22 +39,6 @@ Row {
 
     signal switchToLyricsViewRequested () // request
 
-    function lightModeForBounds (bounds: rect, name: string) : bool {
-
-        // use the multiplier values background uses
-        let multiplier = root.background.lumaMultiplierAtCenter (bounds);
-
-        let m_backdrop = PlayerPresenter.backdrop_luma_for_rect(bounds) * multiplier;
-        let m_ring     = PlayerPresenter.ring_luma_for_rect(bounds)     * multiplier;
-
-        // console.log ("name: " + name + " ; multiplier: " + multiplier + " ; multiplied backdrop luma: " + m_backdrop + " ; ring luma: " + m_ring)
-
-        if (m_backdrop > 0.92) return true;   // always light
-        if (m_backdrop < 0.05) return false;  // always dark (redundant while the gate below is 0.48)
-
-        return m_backdrop > 0.7 && m_ring > 0.6;
-    }
-
     // ── Layout ─────────────────────────────────────────────────────────────
 
     property real songCoverWidth: 48
@@ -109,7 +93,7 @@ Row {
             Layout.maximumWidth: nowplaying_cover.width * .75
             Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
-            property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(controlsBounds.bounds)
+            property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
 
             DurationControl {
                 Layout.alignment: Qt.AlignHCenter
@@ -226,7 +210,7 @@ Row {
                 height: metadataContainer.textContentHeight
             })
 
-            lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
+            lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
         }
 
         // _d = "the drop area"
@@ -283,7 +267,7 @@ Row {
                             nextQueue_c.contentHeight
                         )
 
-                    lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
+                    lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                     onSongClicked: (song) => {
                         PlayQueue.playhead = PlayQueue.find_by_source(song.source)
@@ -318,7 +302,7 @@ Row {
                             nextQueue_p.contentHeight
                         )
 
-                    property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(globalBounds)
+                    property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                     color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                 }

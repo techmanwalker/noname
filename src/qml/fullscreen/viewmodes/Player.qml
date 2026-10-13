@@ -21,22 +21,6 @@ Item {
     readonly property alias coverGlobalBounds:  fsp.coverGlobalBounds
     readonly property alias coverSize: fsp.coverSize
 
-    function lightModeForBounds (bounds: rect, name: string) : bool {
-
-        // use the multiplier values background uses
-        let multiplier = root.background.lumaMultiplierAtCenter (bounds);
-
-        let m_backdrop = PlayerPresenter.backdrop_luma_for_rect(bounds) * multiplier;
-        let m_ring     = PlayerPresenter.ring_luma_for_rect(bounds)     * multiplier;
-
-        // console.log ("name: " + name + " ; multiplier: " + multiplier + " ; multiplied backdrop luma: " + m_backdrop + " ; ring luma: " + m_ring)
-
-        if (m_backdrop > 0.92) return true;   // always light
-        if (m_backdrop < 0.05) return false;  // always dark (redundant while the gate below is 0.48)
-
-        return m_backdrop > 0.7 && m_ring > 0.6;
-    }
-
     StackLayout {
         id: stack
 
@@ -70,7 +54,7 @@ Item {
 
             onSwitchToPlayerViewRequested: stack.currentIndex = 0
 
-            property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(lyricsBounds) // context is everything
+            property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(lyricsBounds, root.background, PlayerPresenter) // context is everything
 
             highlightedColor:   lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
             unhighlightedColor: lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
