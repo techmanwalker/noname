@@ -10,12 +10,11 @@ import Player.PlayerPresenter
 Item {
     id: root
 
-    property Window     parentWindow   // to inset window decorations
     property Background background // to adapt the contents to the current lighting
 
     property bool immersive: false // hide all controls and buttons, leave you only with the music
 
-    signal switchView() // to other specific view, currently leaving empty means "switch to fullscreen player"
+    property alias playerLyrics: stack.currentIndex // 0 = player, 1 = lyrics
 
     // readonly, to set the background light anchors
     readonly property alias playerGlobalBounds: stackBounds.bounds
@@ -81,95 +80,6 @@ Item {
     SceneRect {
         id: stackBounds
         target: stack
-    }
-
-    // ── Navigation ─────────────────────────────────────────────────────────
-
-    Row {
-        id: nav
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-
-        opacity: 1
-
-        states: [
-            State {
-                name: "hidden"
-
-                PropertyChanges {
-                    nav.opacity: 0
-                }
-
-                when: root.immersive && !windex_hover.hovered
-            },
-
-            State {
-                name: "partiallyVisible"
-
-                PropertyChanges {
-                    nav.opacity: 0.4
-                }
-
-                when: !root.immersive && stack.currentIndex == 1 && !windex_hover.hovered
-            }
-        ]
-
-        layoutDirection: Qt.RightToLeft
-
-        spacing: windex.squareButtonWidth / 3 * 2
-
-        HoverHandler {
-            id: windex_hover
-        }
-
-        WindowDecorations {
-            id: windex 
-            window: root.parentWindow
-
-            anchors.verticalCenter: parent.verticalCenter
-
-            lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(windexBounds, "windex") // context is everything
-        }
-        
-        ResizableButton {
-            id: fullscreenToggle
-            iconName: "arrow-left"
-
-            anchors.verticalCenter: parent.verticalCenter
-
-            text: qsTr("Back")
-
-            padding: 20
-
-            magnify: true
-
-            lightMode: windex.lightMode
-
-            onClicked: {
-                // if it is in the lyrics view
-                if (stack.currentIndex === 1) {
-                    stack.currentIndex = 0;
-                } else {
-                    root.switchView()
-                }
-            }
-        }
-
-        DragHandler {
-            target: null
-            
-            onActiveChanged: {
-                if (active) {
-                    root.parentWindow.startSystemMove();
-                }
-            }
-        }
-    }
-
-    SceneRect {
-        id: windexBounds
-        target: windex
     }
 
     SceneRect {

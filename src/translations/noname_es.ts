@@ -37,20 +37,19 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="134"/>
+        <location filename="../qml/browser/Browser.qml" line="46"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="66"/>
         <source>Clear</source>
-        <translation>Borrar</translation>
+        <translation type="vanished">Borrar</translation>
     </message>
 </context>
 <context>
     <name>Folders</name>
     <message>
-        <location filename="../qml/browser/vtabs/Folders.qml" line="24"/>
+        <location filename="../qml/browser/vtabs/Folders.qml" line="21"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
@@ -62,7 +61,7 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="233"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="294"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -71,7 +70,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="199"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="303"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -79,7 +78,7 @@
 <context>
     <name>Home</name>
     <message>
-        <location filename="../qml/browser/vtabs/Home.qml" line="21"/>
+        <location filename="../qml/browser/vtabs/Home.qml" line="18"/>
         <source>Shortcuts</source>
         <translation>Accesos directos</translation>
     </message>
@@ -87,9 +86,22 @@
 <context>
     <name>Lyrics</name>
     <message>
-        <location filename="../qml/fullscreen/Lyrics.qml" line="20"/>
+        <location filename="../qml/fullscreen/Lyrics.qml" line="39"/>
         <source>No lyrics.</source>
         <translation>Sin letras.</translation>
+    </message>
+</context>
+<context>
+    <name>Main</name>
+    <message>
+        <location filename="../qml/mainwindow/Main.qml" line="90"/>
+        <source>Clear</source>
+        <translation>Borrar</translation>
+    </message>
+    <message>
+        <location filename="../qml/mainwindow/Main.qml" line="139"/>
+        <source>Back</source>
+        <translation>Atrás</translation>
     </message>
 </context>
 <context>
@@ -112,9 +124,8 @@
 <context>
     <name>Player</name>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/Player.qml" line="78"/>
         <source>Back</source>
-        <translation>Atrás</translation>
+        <translation type="vanished">Atrás</translation>
     </message>
 </context>
 <context>
@@ -158,9 +169,8 @@
         <translation>Mezclar pistas</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="40"/>
         <source>Shuffle albums</source>
-        <translation>Mezclar álbumes</translation>
+        <translation type="vanished">Mezclar álbumes</translation>
     </message>
     <message>
         <location filename="../qml/fullscreen/delegates/buttons/ShuffleButton.qml" line="41"/>
@@ -188,12 +198,12 @@
 <context>
     <name>Tracks</name>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="45"/>
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="80"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="76"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>

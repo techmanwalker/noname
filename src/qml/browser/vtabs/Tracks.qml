@@ -14,9 +14,6 @@ ColumnLayout {
     property real shortcutCoverWidth: 144
     property real shortcutCoverHeight: shortcutCoverWidth
 
-    // align with SearchBar text
-    property real lateralAlignmentPadding: 0
-
     required property SearchBar searchBarItem
 
     Connections {
@@ -47,7 +44,6 @@ ColumnLayout {
 
         text: qsTr("Your library")
 
-        Layout.leftMargin: root.lateralAlignmentPadding
         Layout.bottomMargin: root.shortcutCoverHeight / 16
     }
 
@@ -65,8 +61,6 @@ ColumnLayout {
 
         Layout.fillWidth: true
         Layout.fillHeight: true
-
-        Layout.leftMargin: root.lateralAlignmentPadding
 
         songCoverWidth: 144
         scrollBarWidth: 4
