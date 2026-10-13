@@ -21,6 +21,8 @@ Item {
     readonly property alias coverGlobalBounds:  fsp.coverGlobalBounds
     readonly property alias coverSize: fsp.coverSize
 
+    signal backToBrowser()
+
     StackLayout {
         id: stack
 
@@ -29,6 +31,16 @@ Item {
         anchors.fill: parent
 
         Item {
+            TapHandler {
+                onTapped: (eventPoint, button) => {
+                    // eventPoint.position is in delegateRoot coordinates
+                    const onPlayer = fsp.contains(fsp.mapFromItem(parent, eventPoint.position))
+
+                    if (!onPlayer)
+                        root.backToBrowser()
+                }
+            }
+
             FullscreenPlayer {
                 id: fsp
 
