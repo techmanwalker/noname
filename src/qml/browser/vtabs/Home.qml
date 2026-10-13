@@ -12,15 +12,11 @@ ColumnLayout {
     property real shortcutCoverWidth: 144
     property real shortcutCoverHeight: shortcutCoverWidth
 
-    // align with SearchBar text
-    property real lateralAlignmentPadding: 0
-
     SectionHeading {
         id: shortcutsHeading
 
         text: qsTr("Shortcuts")
 
-        Layout.leftMargin: root.lateralAlignmentPadding
         Layout.bottomMargin: root.shortcutCoverHeight / 16
     }
 
@@ -29,8 +25,6 @@ ColumnLayout {
         model: ShortcutsList
 
         Layout.fillWidth: true
-
-        Layout.leftMargin: root.lateralAlignmentPadding
 
         shortcutCoverWidth: root.shortcutCoverWidth
         shortcutCoverHeight: root.shortcutCoverHeight

@@ -7,7 +7,6 @@ import Player.App
 import Player.Browser
 import Player.Fullscreen
 import Player.PlayerPresenter
-import Player.LyricsManifest
 import Player.Primitives
 
 T.ApplicationWindow {
@@ -22,8 +21,6 @@ T.ApplicationWindow {
     width: WindowGeometry.width
     height: WindowGeometry.height
 
-    minimumHeight: browser.minimumWindowHeight
-
     onWidthChanged:  WindowGeometry.width  = width;
     onHeightChanged: WindowGeometry.height = height;
 
@@ -31,36 +28,6 @@ T.ApplicationWindow {
         // save last used values
         WindowGeometry.poll_and_save_to_disk(width, height);
         PlayerPresenter.save_volume();
-    }
-
-    Column {
-        // just so the values pop in console
-        
-        visible: false
-
-        Label {
-            text: PlayerPresenter.coverNuclearLuma
-        }
-
-        Label {
-            text: PlayerPresenter.coverCentricLuma
-        }
-
-        Label {
-            text: PlayerPresenter.coverMidringLuma
-        }
-
-        Label {
-            text: PlayerPresenter.coverBordersLuma
-        }
-
-        Label {
-            text: PlayerPresenter.coverPonderedLuma
-        }
-
-        Label {
-            text: LyricsManifest.count
-        }
     }
 
     Background {
@@ -81,23 +48,149 @@ T.ApplicationWindow {
         playerRight: (stack_player.playerGlobalBounds.x + stack_player.playerGlobalBounds.width) / Math.max(1, root.width)
     }
 
+    RowLayout {
+        id: navbar
+
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        opacity: (activeView.currentIndex === 0 || !stack_player.immersive || navbar_hover.hovered) ? 1 : 0
+
+        HoverHandler {
+            id: navbar_hover
+        }
+
+        Item {
+            Layout.preferredWidth: browser.vtabsColWidth - searchBox.leftPadding
+        }
+
+        RowLayout {
+            id: windexRow
+
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+
+            SearchBar {
+                id: searchBox
+
+                Layout.preferredWidth: width
+                Layout.preferredHeight: height
+
+                Layout.alignment: Qt.AlignVCenter
+
+                onTextEdited: browser.activeVtab = 1 // Tracks
+
+                // to still take space
+                enabled: activeView.currentIndex === 0
+                opacity: enabled ? 1 : 0
+            }
+
+            ResizableButton {
+                text: qsTr("Clear")
+                onClicked: {
+                    searchBox.text = ""
+                    searchBox.textEdited()
+                }
+
+                leftPadding: searchBox.leftPadding / 2
+                rightPadding: searchBox.rightPadding / 2
+
+                visible: searchBox.visible && searchBox.text !== ""
+
+                filled: true
+
+                magnify: false
+
+                Layout.preferredHeight: searchBox.height
+                Layout.alignment: Qt.AlignVCenter
+            }
+        }
+
+        DragHandler {
+            target: null
+            
+            onActiveChanged: {
+                if (active) {
+                    root.startSystemMove();
+                }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        Row {
+            id: windex
+
+            Layout.alignment: Qt.AlignVCenter
+
+            property bool lightMode: PlayerPresenter.lumaSentinel && root.lightModeForBounds(windexBounds) // context is everything
+
+            ResizableButton {
+                id: fullscreenToggle
+                iconName: "arrow-left"
+
+                visible: activeView.currentIndex === 1
+
+                anchors.verticalCenter: parent.verticalCenter
+
+                text: qsTr("Back")
+
+                leftPadding: 10
+                rightPadding: 10
+
+                magnify: true
+
+                lightMode: windex.lightMode
+
+                onClicked: {
+                    // if we are in the player
+                    if (activeView.currentIndex === 1) {
+
+                        // if it is in the lyrics view
+                        if (stack_player.playerLyrics === 1) {
+                            stack_player.playerLyrics = 0;
+                        } else {
+                            activeView.currentIndex = 0
+                        }
+                    }
+                }
+            }
+            
+            WindowDecorations {
+                window: root
+
+                Layout.fillWidth: true
+
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+    }
+
+    SceneRect {
+        id: windexBounds
+        target: windex
+    }
+
     StackLayout {
         id: activeView
 
-        anchors.fill: parent
+        anchors.top: navbar.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
 
         Browser {
             id: browser
-            onSwitchView: activeView.currentIndex = 1
+            onRequestTheaterMode: activeView.currentIndex = 1
 
-            parentWindow: root
+            searchBar: searchBox
         }
 
         Player {
             id: stack_player
-            onSwitchView: activeView.currentIndex = 0
-
-            parentWindow: root
 
             background: bg
         }
@@ -134,6 +227,20 @@ T.ApplicationWindow {
     ResizeHandle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.topMargin: 20; anchors.bottomMargin: 20; width: 20; edges: Qt.LeftEdge; cursorShape: Qt.SizeHorCursor }
     ResizeHandle { anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.topMargin: 20; anchors.bottomMargin: 20; width: 20; edges: Qt.RightEdge; cursorShape: Qt.SizeHorCursor }
     */
+
+    function lightModeForBounds (bounds: rect) : bool {
+
+        // use the multiplier values background uses
+        let multiplier = bg.lumaMultiplierAtCenter (bounds);
+
+        let m_backdrop = PlayerPresenter.backdrop_luma_for_rect(bounds) * multiplier;
+        let m_ring     = PlayerPresenter.ring_luma_for_rect(bounds)     * multiplier;
+
+        if (m_backdrop > 0.92) return true;   // always light
+        if (m_backdrop < 0.05) return false;  // always dark (redundant while the gate below is 0.48)
+
+        return m_backdrop > 0.7 && m_ring > 0.6;
+    }
 
     // Four corners
     ResizeHandle { anchors.top: parent.top; anchors.left: parent.left; width: 20; height: 20; edges: Qt.TopEdge | Qt.LeftEdge; cursorShape: Qt.SizeFDiagCursor }
