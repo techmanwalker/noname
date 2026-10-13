@@ -51,7 +51,7 @@ Row {
     // Left column: cover + controls
     ColumnLayout {
         id: leftCol
-        spacing: basicControls.height
+        spacing: controls.basicControlsHeight
 
         height: nowplaying_cover.height + controls.height + spacing
 
@@ -85,85 +85,15 @@ Row {
             target: nowplaying_cover
         }
 
-        ColumnLayout {
+        PlaybackControls {
             id: controls
+
+            lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
 
             visible: !root.immersive || leftCol_hover.hovered
 
             Layout.maximumWidth: nowplaying_cover.width * .75
             Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-
-            property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
-
-            DurationControl {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillWidth: true
-
-                stateModel: PlayerPresenter
-
-                accentColor: controls.lightMode ?
-                    Theme.light.slider.accentColor :
-                    Theme.dark.slider.accentColor
-
-                backgroundColor: controls.lightMode ?
-                    Theme.light.slider.backgroundColor :
-                    Theme.dark.slider.backgroundColor
-            }
-
-            // Bottom bar: volume | playback | shuffle+repeat
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: basicControls.height
-
-                VolumeControl {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    
-                    width: 100
-
-                    stateModel: PlayerPresenter
-
-                    buttonLightMode: controls.lightMode
-
-                    accentColor: controls.lightMode ?
-                        Theme.light.slider.accentColor :
-                        Theme.dark.slider.accentColor
-
-                    backgroundColor: controls.lightMode ?
-                        Theme.light.slider.backgroundColor :
-                        Theme.dark.slider.backgroundColor
-                }
-
-                BasicControls {
-                    id: basicControls
-                    anchors.centerIn: parent
-
-                    lightMode: controls.lightMode
-                }
-
-                RowLayout {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 5
-
-                    ShuffleButton {
-                        Layout.alignment: Qt.AlignVCenter
-
-                        lightMode: controls.lightMode
-
-                        onCurrentModeChanged: {
-                            let mode = currentMode == ShuffleButton.ShuffleMode.ShuffleTracks
-                            PlayQueue.shuffle = mode
-                        }
-                    }
-
-                    RepeatButton {
-                        Layout.alignment: Qt.AlignVCenter
-
-                        lightMode: controls.lightMode
-                    }
-                }
-            }
         }
 
         SceneRect {
