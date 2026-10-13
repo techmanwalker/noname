@@ -45,6 +45,8 @@ RowLayout {
         to: 100
         value: root.stateModel.volume
 
+        logicalHeight: root.height
+
         Layout.fillWidth: true
 
         Layout.alignment: Qt.AlignVCenter

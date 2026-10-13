@@ -119,6 +119,8 @@ ColumnLayout {
             stateModel: root.stateModel
 
             Layout.preferredWidth: thiscover.width * 2
+
+            Layout.preferredHeight: parent.height
         }
     }
 }

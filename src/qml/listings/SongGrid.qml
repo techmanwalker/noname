@@ -117,7 +117,7 @@ GridView {
     ScrollBar.vertical: AccessibleScrollBar {
         id: scrollbar
         barWidth: root.scrollBarWidth
-        logicalWidth: root.scrollBarWidth * 3
+        logicalWidth: root.scrollBarWidth * 12
 
         policy: ScrollBar.AsNeeded
 
