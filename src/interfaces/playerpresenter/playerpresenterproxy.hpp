@@ -70,6 +70,7 @@ public:
             connect(concrete, SIGNAL(volume_changed()),        this, SIGNAL(volumeChanged()));
             connect(concrete, SIGNAL(playback_state_changed()), this, SIGNAL(playbackStateChanged()));
             connect(concrete, SIGNAL(media_loaded_changed()),   this, SIGNAL(mediaLoadedChanged()));
+            connect(concrete, SIGNAL(seek_finished()), this, SIGNAL(seekFinished()));
         }
     }
 
@@ -150,6 +151,7 @@ signals:
     void playbackStateChanged();
     void mediaLoadedChanged();
     void lumasChanged();
+    void seekFinished();
 
 private:
     std::shared_ptr<PlayerPresenter> m_presenter;
