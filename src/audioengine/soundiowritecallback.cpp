@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <limits>
 #include <type_traits>
@@ -14,18 +15,31 @@
 
 namespace {
 
+// What every RT kernel in this TU silently relies on.
+template <typename S>
+concept pcm_sample =
+       std::is_trivially_copyable_v<S>
+    && (   (std::floating_point<S> && sizeof(S) <= 8)    // float, double
+        || (std::signed_integral<S> && sizeof(S) <= 4))  // exact through apply_gain's double
+    ;                                                    // unsigned (u8) is excluded on purpose: silence is 0x80
+
+// A format this TU can play: the traits yield a native type (audiostreamformat.hpp)
+// AND the kernels can operate on that type.
+template <sample_format F>
+concept playable_format = has_native_type<F> && pcm_sample<sample_type_t<F>>;
+
 constexpr size_t scratch_bytes = 32 * 1024; // stack scratch per callback (was 8192 floats)
 
 // --- sample conversion (pivot: float)
 
-template <typename S>
+template <pcm_sample S>
 RT_INLINE S &
 sample_at (const SoundIoChannelArea &area, int frame)
 {
     return *reinterpret_cast<S *>(area.ptr + static_cast<ptrdiff_t>(area.step) * frame);
 }
 
-template <typename S>
+template <pcm_sample S>
 RT_INLINE S
 apply_gain (S v, float gain)
 {
@@ -90,7 +104,7 @@ read_transport (audio_ring_buffer &ring)
 // --- ring side
 
 // Seam between "ring speaks floats" and "ring speaks frames of any format".
-template <typename S>
+template <pcm_sample S>
 RT_INLINE int
 pop_frames (audio_ring_buffer &ring, S *dst, int frames)
 {
@@ -111,7 +125,7 @@ handle_end_of_playback (audio_ring_buffer &ring, bool underran)
 
 // --- device side
 
-template <typename S>
+template <pcm_sample S>
 RT_INLINE void
 feed_silence (const SoundIoChannelArea *areas, int ch, int first, int last)
 {
@@ -122,7 +136,7 @@ feed_silence (const SoundIoChannelArea *areas, int ch, int first, int last)
 
 // Ring channels == device channels (validated at stream open). Mono/surround
 // adaptation is the decoder's swresample job, not an RT concern.
-template <typename S>
+template <pcm_sample S>
 RT_INLINE void
 write_to_device (const S *src, int ch, int frames, float gain, const SoundIoChannelArea *areas)
 {
@@ -196,10 +210,12 @@ end_chunk (const write_ctx &c)
         c.ring.rt_events.post_error(rt_event::end_write_failed, err);
 }
 
-template <typename S>
+template <sample_format F>
 RT_INLINE void
-write_loop (const write_ctx &c)
+write_loop (const write_ctx &c) requires playable_format<F>
 {
+    using S = sample_type_t<F>;
+
     constexpr size_t scratch_samples = scratch_bytes / sizeof(S);
 
     const int ch        = c.ring.format().channels;
@@ -242,10 +258,10 @@ RT_INLINE void
 dispatch_format (const write_ctx &c)
 {
     switch (c.ring.format().sample) {
-    case f32ne: write_loop<float>(c);   break;
-    case f64ne: write_loop<double>(c);  break;
-    case s32ne: write_loop<int32_t>(c); break;
-    case s16ne: write_loop<int16_t>(c); break;
+    case f32ne: write_loop<f32ne>(c); break;
+    case f64ne: write_loop<f64ne>(c); break;
+    case s32ne: write_loop<s32ne>(c); break;
+    case s16ne: write_loop<s16ne>(c); break;
     default: break; // refused at negotiation, not discovered here
     }
 }
