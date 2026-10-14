@@ -2,6 +2,9 @@
 #include "audioringbuffer.hpp"
 #include "l_audioengine.hpp"
 
+#include <cerrno>
+#include <optional>
+
 #include <QLoggingCategory>
 #include <QThread>
 
@@ -9,11 +12,28 @@ extern "C" {
 #include <libavutil/frame.h>
 }
 
+namespace {
+// Formats swr can produce directly. s24 = S32 >> 8, *_be = bswap, s8/companded: post-steps
+// that don't exist yet. They fail loudly at open instead of playing garbage.
+std::optional<AVSampleFormat>
+to_ffmpeg (sample_format f)
+{
+    switch (f) {
+    case sample_format::u8: return AV_SAMPLE_FMT_U8;
+    case s16ne:             return AV_SAMPLE_FMT_S16;
+    case s32ne:             return AV_SAMPLE_FMT_S32;
+    case f32ne:             return AV_SAMPLE_FMT_FLT;
+    case f64ne:             return AV_SAMPLE_FMT_DBL;
+    default:                return std::nullopt;
+    }
+}
+}
+
 // The Decoding workhorse
 
-audio_decode_worker::audio_decode_worker (std::optional<size_t> sample_rate, QObject *parent)
+audio_decode_worker::audio_decode_worker (stream_format out_format, QObject *parent)
     : QObject(parent),
-      m_ring_buffer(sample_rate)
+      m_ring_buffer(out_format)
 {
 }
 
@@ -70,30 +90,44 @@ audio_decode_worker::open_file_internal(const QString &file_path)
         avcodec_parameters_to_context(codec_ctx, params);
         avcodec_open2(codec_ctx, codec, nullptr);
 
-        AVChannelLayout out_ch_layout = AV_CHANNEL_LAYOUT_STEREO;
-        AVChannelLayout in_ch_layout = codec_ctx->ch_layout;
+        const stream_format &out = m_ring_buffer.format();
+        const std::optional<AVSampleFormat> out_av = to_ffmpeg(out.sample);
 
-        swr_ctx = nullptr; // reset
-        int ret = swr_alloc_set_opts2(
-            &swr_ctx,
-            &out_ch_layout, AV_SAMPLE_FMT_FLT, get_ring_buffer()->sample_rate,
-            &in_ch_layout,  codec_ctx->sample_fmt, codec_ctx->sample_rate, 
-            0, nullptr
-        );
+        AVChannelLayout out_ch_layout {};
+        av_channel_layout_default(&out_ch_layout, out.channels);
+        const AVChannelLayout &in_ch_layout = codec_ctx->ch_layout;
+
+        // Convert only what differs. swr is skipped entirely when sample format (incl. packed
+        // vs planar), rate and layout already match: frames go to the ring untouched.
+        m_out_av_fmt  = out_av.value_or(AV_SAMPLE_FMT_NONE);
+        m_passthrough = out_av
+            && codec_ctx->sample_fmt == *out_av
+            && uint32_t(codec_ctx->sample_rate) == out.rate
+            && av_channel_layout_compare(&in_ch_layout, &out_ch_layout) == 0;
+
+        int ret = out_av ? 0 : AVERROR(ENOTSUP);
+        if (ret == 0 && !m_passthrough) {
+            swr_ctx = nullptr;
+            ret = swr_alloc_set_opts2(&swr_ctx,
+                                      &out_ch_layout, *out_av, int(out.rate),
+                                      &in_ch_layout, codec_ctx->sample_fmt, codec_ctx->sample_rate,
+                                      0, nullptr);
+            if (ret == 0) ret = swr_init(swr_ctx);
+        }
+        av_channel_layout_uninit(&out_ch_layout);
 
         if (ret < 0) {
             char err_buf[AV_ERROR_MAX_STRING_SIZE];
             av_strerror(ret, err_buf, AV_ERROR_MAX_STRING_SIZE);
-            qCFatal(l_ffmpeg) << "Critical error in SwrContext: " << err_buf;
+            qCCritical(l_ffmpeg) << "Cannot convert this track to the ring format:" << err_buf;
 
             close_ffmpeg_contexts();
-            
+
             QString err_q = QString::fromUtf8(err_buf);
             emit song_load_failed(err_q);
             return false;
         }
 
-        swr_init(swr_ctx);
         m_song_loaded = true;
         return true;
     } 
@@ -150,34 +184,15 @@ audio_decode_worker::decode_step ()
             // 4. receive next raw frame from file (mp3, flac, etc)
             //    a packet can produce more than a frame; drain
             while (avcodec_receive_frame(codec_ctx, frame) == 0) {
-
-                // resample to match audio server expectations
-
-                float *pcm_output;
-                int samples_out = convert_to_float(frame, &pcm_output);
-                
-                // 5. Push to the ring buffer
-                if (samples_out > 0 && pcm_output != nullptr) {
-                    /* BLOCKING push: decoder thread sleeps here until
-                       the audio callback drains enough buffer space.
-                       Returns false only if seek cancelled us. */
-                    bool pushed = m_ring_buffer.push_blocking(pcm_output, samples_out);
-
-                    if (!pushed) {
-                        // Seek cancelled this push — bail out cleanly.
-                        // The seek will reset the codec and ring buffer.
-                        av_freep(&pcm_output);
-                        av_frame_unref(frame);
-                        av_packet_free(&pkt);
-                        av_frame_free(&frame);
-                        return;
-                    }
-                }
-
-                av_freep(&pcm_output);
-                
-                // clean for next use
+                // Seek/stop cancelled the push: bail out, they will reset codec and ring.
+                const bool pushed = push_frame(frame);
                 av_frame_unref(frame);
+
+                if (!pushed) {
+                    av_packet_free(&pkt);
+                    av_frame_free(&frame);
+                    return;
+                }
             }
         }
 
@@ -185,19 +200,34 @@ audio_decode_worker::decode_step ()
         m_decode_timer->setInterval(0);
 
     } else if (read_ret == AVERROR_EOF && !m_ring_buffer.eof_decoded.load()) {
-        // 1. Send a flush packet and drain the remaining frames
         avcodec_send_packet(codec_ctx, nullptr);
         while (avcodec_receive_frame(codec_ctx, frame) == 0) {
-            float *pcm_output;
-            int samples_out = convert_to_float(frame, &pcm_output);
-            if (samples_out > 0 && pcm_output != nullptr) {
-                if (!m_ring_buffer.push_blocking(pcm_output, samples_out)) {
-                    av_freep(&pcm_output);
-                    break;
-                }
-            }
-            av_freep(&pcm_output);
+            const bool pushed = push_frame(frame);
             av_frame_unref(frame);
+
+            // Cancelled mid-drain: do NOT fall through to the gapless handoff (see notes below)
+            if (!pushed) {
+                av_packet_free(&pkt);
+                av_frame_free(&frame);
+                return;
+            }
+        }
+
+        // Rate conversion keeps a tail inside swr: flush it or every track loses its last few ms
+        if (swr_ctx) {
+            uint8_t *tail = nullptr;
+            const int cap = swr_get_out_samples(swr_ctx, 0);
+            if (cap > 0 && av_samples_alloc(&tail, nullptr, m_ring_buffer.format().channels,
+                                            cap, m_out_av_fmt, 0) >= 0) {
+                const int got = swr_convert(swr_ctx, &tail, cap, nullptr, 0);
+                if (got > 0 && !m_ring_buffer.push_blocking(reinterpret_cast<const std::byte *>(tail), size_t(got))) {
+                    av_freep(&tail);
+                    av_packet_free(&pkt);
+                    av_frame_free(&frame);
+                    return;
+                }
+                av_freep(&tail);
+            }
         }
 
         // 2. GAPLESS HANDOFF CHECK
@@ -334,30 +364,40 @@ audio_decode_worker::clear_queued_song()
 }
 
 int
-audio_decode_worker::convert_to_float (AVFrame *frame, float **output)
+audio_decode_worker::convert_to_ring (AVFrame *frame, uint8_t **output)
 {
-    // Calculate needed frames for output
-    int dst_nb_samples = av_rescale_rnd(
+    const stream_format &out = m_ring_buffer.format();
+
+    const int dst_frames = av_rescale_rnd(
         swr_get_delay(swr_ctx, frame->sample_rate) + frame->nb_samples,
-        get_ring_buffer()->get_sample_rate(), frame->sample_rate, AV_ROUND_UP
-    );
+        out.rate, frame->sample_rate, AV_ROUND_UP);
 
-    // Assign memory for the converted data
-    uint8_t *converted_data = nullptr;
-    av_samples_alloc(&converted_data, nullptr, 2, dst_nb_samples, AV_SAMPLE_FMT_FLT, 0);
+    uint8_t *converted = nullptr;
+    int ret = av_samples_alloc(&converted, nullptr, out.channels, dst_frames, m_out_av_fmt, 0);
+    if (ret < 0) return ret;
 
-    // Convert the audio to the standard format
-    int samples_out = swr_convert(
-        swr_ctx, &converted_data, dst_nb_samples,
-        (const uint8_t **)frame->data, frame->nb_samples
-    );
+    const int got = swr_convert(swr_ctx, &converted, dst_frames,
+                                (const uint8_t **)frame->data, frame->nb_samples);
+    if (got < 0) { av_freep(&converted); return got; }
 
-    // Assign the pointer to the float* the ring_buffer needs
-    *output = (float*)converted_data;
-    
-    // NOTE: remember to free converted_data after doing push()
-    // in the main thread with av_freep(&converted_data);
-    return samples_out * 2; // * 2 for 2 channels (stereo)
+    *output = converted;
+    return got; // frames: no more "* 2"
+}
+
+bool
+audio_decode_worker::push_frame (AVFrame *frame)
+{
+    if (m_passthrough)
+        return m_ring_buffer.push_blocking(reinterpret_cast<const std::byte *>(frame->data[0]),
+                                           size_t(frame->nb_samples));
+
+    uint8_t *pcm = nullptr;
+    const int frames = convert_to_ring(frame, &pcm);
+    if (frames <= 0) { av_freep(&pcm); return true; } // nothing to push is not a cancel
+
+    const bool ok = m_ring_buffer.push_blocking(reinterpret_cast<const std::byte *>(pcm), size_t(frames));
+    av_freep(&pcm);
+    return ok;
 }
 
 void

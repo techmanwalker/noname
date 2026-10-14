@@ -1,40 +1,38 @@
 #include "audioringbuffer.hpp"
 
 #include <algorithm>
+#include <cmath>
+#include <cstring>
 #include <thread>
+
+#include <QObject>
 
 // The Ring buffer
 
-audio_ring_buffer::audio_ring_buffer (std::optional<size_t> requested_sample_rate)
-    :  sample_rate (requested_sample_rate.value_or(48000)),
-       buffer(capacity)
-    
+namespace {
+// +1: one slot stays free to tell full from empty, so the usable space is exactly `duration`
+size_t
+frames_for (uint32_t rate, audio_ring_buffer::seconds duration)
 {
+    return static_cast<size_t>(std::ceil(duration.count() * rate)) + 1;
+}
+}
+
+audio_ring_buffer::audio_ring_buffer (stream_format fmt, seconds capacity)
+    : m_format(fmt),
+      m_frame_bytes(fmt.bytes_per_frame()),
+      m_capacity_frames(frames_for(fmt.rate, capacity)),
+      buffer(m_capacity_frames * m_frame_bytes)
+{
+    // rate == 0 or channels == 0 would divide by zero in nap_for()/playback_position_ms()
+    Q_ASSERT(fmt.rate > 0 && fmt.channels > 0); // or std::assert / a thrown error, your call
 }
 
 bool
-audio_ring_buffer::__push_unlocked (const float* data, size_t count)
-{
-    // what do h and next_h contain here?
-    size_t h = head.load(std::memory_order_relaxed);
-    size_t next_h = (h + count) % capacity;
-    
-    // verify if there is enough space
-    if ((next_h + capacity - tail.load(std::memory_order_acquire)) % capacity < count)
-        return false; // full buffer
-
-    // copy data
-    for(size_t i = 0; i < count; ++i) buffer[(h + i) % capacity] = data[i];
-    
-    head.store(next_h, std::memory_order_release);
-    return true;
-}
-
-bool
-audio_ring_buffer::push_blocking(const float* data, size_t count)
+audio_ring_buffer::push_blocking(const std::byte* data, size_t count)
 {
     // A request larger than the buffer can ever hold would deadlock
-    if (count >= capacity) return false;
+    if (count >= m_capacity_frames) return false;
 
     std::unique_lock<std::mutex> lock(m_mutex);
     
@@ -50,58 +48,35 @@ audio_ring_buffer::push_blocking(const float* data, size_t count)
     
     if (m_cancelled.load()) return false;
     
-    // guaranteed to succeed - do the push
-    size_t h = head.load(std::memory_order_relaxed);
-    for(size_t i = 0; i < count; ++i) {
-        buffer[(h + i) % capacity] = data[i];
-    }
-    head.store((h + count) % capacity, std::memory_order_release);
+    // guaranteed to succeed - do the push (two memcpys instead of a per-sample modulo loop)
+    const size_t h     = head.load(std::memory_order_relaxed);
+    const size_t first = std::min(count, m_capacity_frames - h);
+    std::memcpy(buffer.data() + h * m_frame_bytes, data, first * m_frame_bytes);
+    if (count > first)
+        std::memcpy(buffer.data(), data + first * m_frame_bytes, (count - first) * m_frame_bytes);
+    head.store((h + count) % m_capacity_frames, std::memory_order_release);
 
-    // track absolute decoded frames for track boundaries.
-    // count is the number of floats; divide by 2 for stereo frames.
-    absolute_frames_decoded.fetch_add(count / k_channels, std::memory_order_relaxed);
+    absolute_frames_decoded.fetch_add(count, std::memory_order_relaxed);
 
     return true;
 }
 
 size_t
-audio_ring_buffer::pop(float* dest, size_t count) {
-    // what do h and t contain here?
-    size_t t = tail.load(std::memory_order_relaxed);
-    size_t h = head.load(std::memory_order_acquire);
-    
-    // available what? to read what?
-    size_t available = (h + capacity - t) % capacity; // available samples ready to be consumed
-    size_t to_read = std::min(count, available); // samples we'll read this pop
+audio_ring_buffer::pop(std::byte* dest, size_t max_frames)
+{
+    const size_t t = tail.load(std::memory_order_relaxed);
+    const size_t h = head.load(std::memory_order_acquire);
 
-    // apply the recalculated linear volume multiplier
-    float current_vol = volume_multiplier.load(std::memory_order_relaxed);
+    const size_t available = (h + m_capacity_frames - t) % m_capacity_frames;
+    const size_t n         = std::min(max_frames, available);
+    const size_t first     = std::min(n, m_capacity_frames - t);
 
-    // calculate how many elements we can read in a row before reaching the buffer end
-    size_t first_chunk = std::min(to_read, capacity - t);
-    size_t second_chunk = to_read - first_chunk;
+    std::memcpy(dest, buffer.data() + t * m_frame_bytes, first * m_frame_bytes);
+    if (n > first)
+        std::memcpy(dest + first * m_frame_bytes, buffer.data(), (n - first) * m_frame_bytes);
 
-    float* __restrict__ d = dest;
-    const float* __restrict__ b = buffer.data();
-
-    // loop 1: read in a single pass till the buffer end (or until finishing to read)
-    #pragma omp simd // compiler hint
-    for (size_t i = 0; i < first_chunk; ++i) {
-        d[i] = b[t + i] * current_vol; 
-    }
-
-    // if anything was left, wrap around and read from the beginning (index 0)
-    if (second_chunk > 0) {
-        #pragma omp simd
-        for (size_t i = 0; i < second_chunk; ++i) {
-            d[first_chunk + i] = b[i] * current_vol;
-        }
-    }
-
-    // update the tail only once at the end
-    tail.store((t + to_read) % capacity, std::memory_order_release);
-    
-    return to_read;
+    tail.store((t + n) % m_capacity_frames, std::memory_order_release);
+    return n;
 }
 
 void
@@ -132,11 +107,8 @@ audio_ring_buffer::writable_size() const {
     size_t h = head.load(std::memory_order_acquire);
     size_t t = tail.load(std::memory_order_acquire);
 
-    // How much data is currently stored
-    size_t used = (h + capacity - t) % capacity;
-
-    // Total usable space is capacity - 1 (one slot reserved to distinguish empty from full)
-    return (capacity - 1) - used;
+    size_t used = (h + m_capacity_frames - t) % m_capacity_frames;
+    return (m_capacity_frames - 1) - used;
 }
 
 // have we crossed yet?
@@ -162,19 +134,17 @@ audio_ring_buffer::playback_position_ms() const
     uint64_t frames  = frames_played.load(std::memory_order_relaxed);
     uint64_t base_ms = playback_base_ms.load(std::memory_order_relaxed);
 
-    if (sample_rate == 0) return base_ms; // stream not open yet
-
-    return base_ms + (frames * 1000) / sample_rate;
+    return base_ms + (frames * 1000) / m_format.rate;
 }
 
 uint64_t
 audio_ring_buffer::get_sample_rate () const
 {
-    return sample_rate;
+    return m_format.rate;
 }
 
 std::chrono::microseconds
-audio_ring_buffer::nap_for (size_t missing_samples) const
+audio_ring_buffer::nap_for (size_t missing_frames) const
 {
     using namespace std::chrono;
     using namespace std::chrono_literals;
@@ -183,7 +153,7 @@ audio_ring_buffer::nap_for (size_t missing_samples) const
     if (is_paused.load(std::memory_order_relaxed)) return 250ms;
 
     // Time the device needs to consume the missing space.
-    const microseconds drain(static_cast<int64_t>(missing_samples * 1'000'000 / (sample_rate * k_channels)));
+        const microseconds drain(static_cast<int64_t>(missing_frames * 1'000'000 / m_format.rate));
 
     return std::clamp<microseconds>(drain, 1ms, 50ms);
 }

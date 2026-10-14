@@ -19,8 +19,7 @@ class audio_decode_worker : public QObject
     Q_OBJECT
 
 public:
-    explicit audio_decode_worker (std::optional<size_t> sample_rate = std::nullopt,
-                                  QObject *parent = nullptr);
+    explicit audio_decode_worker (stream_format out_format, QObject *parent = nullptr);
     ~audio_decode_worker() override;
 
 public slots:
@@ -59,7 +58,15 @@ private:
 
     friend class audio_engine;
 
-    int convert_to_float (AVFrame *frame, float **output);
+    // swr -> ring format. Returns FRAMES (not samples), or <0 on error. Caller av_freep()s *output.
+    int  convert_to_ring (AVFrame *frame, uint8_t **output);
+
+    // false = the push was cancelled (seek/stop/load): the caller must bail out
+    bool push_frame (AVFrame *frame);
+
+    // true when the decoder's output already IS the ring format: no swr, no per-frame malloc
+    bool           m_passthrough = false;
+    AVSampleFormat m_out_av_fmt  = AV_SAMPLE_FMT_NONE;
 
     audio_ring_buffer m_ring_buffer;
 
