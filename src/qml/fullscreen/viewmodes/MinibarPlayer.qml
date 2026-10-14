@@ -74,7 +74,7 @@ ColumnLayout {
 
                 Layout.alignment: Qt.AlignVCenter
 
-                source: PlayerPresenter.cover
+                source: root.stateModel.cover
 
                 sourceSize: Qt.size(root.coverWidth, root.coverHeight)
             }

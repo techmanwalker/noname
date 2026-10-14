@@ -6,5 +6,7 @@ import Player.PlayerPresenter
 ResizableButton {
     icon.name: "media-skip-backward"
 
-    onClicked: PlayerPresenter.prev()
+    property PlayerPresenter stateModel: PlayerPresenter
+
+    onClicked: stateModel.prev()
 }
