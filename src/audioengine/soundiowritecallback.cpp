@@ -16,61 +16,27 @@ namespace {
 
 constexpr size_t scratch_bytes = 32 * 1024; // stack scratch per callback (was 8192 floats)
 
-// --- formats
-
-// What the ring holds. Today: interleaved float32 stereo, hard-wired.
-// ring_format_of() is the ONE place that changes when the ring becomes format-generic.
-enum class sample_format : uint8_t { f32 };
-
-struct ring_format
-{
-    sample_format format;
-    int           channels;
-};
-
-RT_INLINE ring_format
-ring_format_of ([[maybe_unused]] const audio_ring_buffer &ring)
-{
-    return { sample_format::f32, 2 };
-}
-
 // --- sample conversion (pivot: float)
 
-template <typename T>
-RT_INLINE float
-to_float (T v)
+template <typename S>
+RT_INLINE S &
+sample_at (const SoundIoChannelArea &area, int frame)
 {
-    if constexpr (std::is_floating_point_v<T>) {
-        return static_cast<float>(v);
+    return *reinterpret_cast<S *>(area.ptr + static_cast<ptrdiff_t>(area.step) * frame);
+}
+
+template <typename S>
+RT_INLINE S
+apply_gain (S v, float gain)
+{
+    if constexpr (std::is_floating_point_v<S>) {
+        return static_cast<S>(v * gain);
     } else {
-        constexpr double inv = 1.0 / (double(std::numeric_limits<T>::max()) + 1.0);
-        return static_cast<float>(double(v) * inv);
+        // double on purpose: an s32 does not fit float's 24-bit mantissa
+        constexpr double lo = double(std::numeric_limits<S>::min());
+        constexpr double hi = double(std::numeric_limits<S>::max());
+        return static_cast<S>(std::lrint(std::clamp(double(v) * double(gain), lo, hi)));
     }
-}
-
-template <typename T>
-RT_INLINE T
-from_float (float v)
-{
-    if constexpr (std::is_floating_point_v<T>) {
-        return static_cast<T>(v);
-    } else {
-        constexpr double scale = double(std::numeric_limits<T>::max());
-        return static_cast<T>(std::lrint(std::clamp(double(v), -1.0, 1.0) * scale));
-    }
-}
-
-RT_INLINE char *
-sample_slot (const SoundIoChannelArea &area, int frame)
-{
-    return area.ptr + static_cast<ptrdiff_t>(area.step) * frame;
-}
-
-template <typename Out>
-RT_INLINE void
-store_sample (char *slot, float v)
-{
-    *reinterpret_cast<Out *>(slot) = from_float<Out>(v);
 }
 
 // --- notifications (RT → rest of the app)
@@ -124,15 +90,11 @@ read_transport (audio_ring_buffer &ring)
 // --- ring side
 
 // Seam between "ring speaks floats" and "ring speaks frames of any format".
-template <typename In>
+template <typename S>
 RT_INLINE int
-pop_frames (audio_ring_buffer &ring, In *dst, int frames, int channels)
+pop_frames (audio_ring_buffer &ring, S *dst, int frames)
 {
-    static_assert(std::is_same_v<In, float>,
-                  "audio_ring_buffer::pop() only produces float today: extend this seam "
-                  "when the ring becomes format-generic");
-    // Invariant: the ring only ever holds whole frames (push sizes are multiples of channels).
-    return static_cast<int>(ring.pop(dst, size_t(frames) * channels) / size_t(channels));
+    return static_cast<int>(ring.pop(reinterpret_cast<std::byte *>(dst), size_t(frames)));
 }
 
 // A short read while the decoder has flushed its last frame is the true end of playback.
@@ -149,48 +111,27 @@ handle_end_of_playback (audio_ring_buffer &ring, bool underran)
 
 // --- device side
 
-// Silence on frames [first, last). Valid for every supported format (all signed/float: 0 == silence).
-template <typename Out>
+template <typename S>
 RT_INLINE void
-feed_silence (const SoundIoChannelArea *areas, int out_ch, int first, int last)
+feed_silence (const SoundIoChannelArea *areas, int ch, int first, int last)
 {
     for (int f = first; f < last; ++f)
-        for (int ch = 0; ch < out_ch; ++ch)
-            store_sample<Out>(sample_slot(areas[ch], f), 0.0f);
+        for (int c = 0; c < ch; ++c)
+            sample_at<S>(areas[c], f) = S{}; // signed/float: 0 is silence (u8 will need 0x80)
 }
 
-// Channel policy, in one place (replace with a mixing matrix when >2 channels matter):
-//   N -> 1 : equal-gain average (stereo: exactly 0.5 * (L + R), as before)
-//   1 -> N : duplicate to every device channel
-//   else   : channel i -> channel i; surplus device channels silent, surplus ring channels dropped
-template <typename In, typename Out>
+// Ring channels == device channels (validated at stream open). Mono/surround
+// adaptation is the decoder's swresample job, not an RT concern.
+template <typename S>
 RT_INLINE void
-write_to_device (const In *src, int in_ch, int frames, const SoundIoChannelArea *areas, int out_ch)
+write_to_device (const S *src, int ch, int frames, float gain, const SoundIoChannelArea *areas)
 {
-    if (out_ch == 1) {
-        const float gain = 1.0f / float(in_ch);
-        for (int f = 0; f < frames; ++f) {
-            const In *s = src + size_t(f) * in_ch;
-            float acc = 0.0f;
-            for (int c = 0; c < in_ch; ++c) acc += to_float(s[c]);
-            store_sample<Out>(sample_slot(areas[0], f), acc * gain);
+    const bool unity = gain == 1.0f; // plain copy: this is the bit-perfect path
+    for (int f = 0; f < frames; ++f)
+        for (int c = 0; c < ch; ++c) {
+            const S v = src[size_t(f) * ch + c];
+            sample_at<S>(areas[c], f) = unity ? v : apply_gain(v, gain);
         }
-    } else if (in_ch == 1) {
-        for (int f = 0; f < frames; ++f) {
-            const float v = to_float(src[f]);
-            for (int ch = 0; ch < out_ch; ++ch)
-                store_sample<Out>(sample_slot(areas[ch], f), v);
-        }
-    } else {
-        const int shared = std::min(in_ch, out_ch);
-        for (int f = 0; f < frames; ++f) {
-            const In *s = src + size_t(f) * in_ch;
-            for (int ch = 0; ch < shared; ++ch)
-                store_sample<Out>(sample_slot(areas[ch], f), to_float(s[ch]));
-            for (int ch = shared; ch < out_ch; ++ch)
-                store_sample<Out>(sample_slot(areas[ch], f), 0.0f);
-        }
-    }
 }
 
 // --- clocks
@@ -223,7 +164,7 @@ struct write_ctx
     SoundIoOutStream  *out;
     audio_ring_buffer &ring;
     transport_snapshot snap;
-    ring_format        ring_fmt;
+    float              gain;
     int                frames_max;
 };
 
@@ -255,19 +196,19 @@ end_chunk (const write_ctx &c)
         c.ring.rt_events.post_error(rt_event::end_write_failed, err);
 }
 
-template <typename In, typename Out>
+template <typename S>
 RT_INLINE void
 write_loop (const write_ctx &c)
 {
-    constexpr size_t scratch_samples = scratch_bytes / sizeof(In);
+    constexpr size_t scratch_samples = scratch_bytes / sizeof(S);
 
-    const int in_ch     = c.ring_fmt.channels;
-    const int out_ch    = c.out->layout.channel_count;
-    const int chunk_max = in_ch > 0 ? int(scratch_samples) / in_ch : 0;
+    const int ch        = c.ring.format().channels;
+    const int chunk_max = ch > 0 ? int(scratch_samples) / ch : 0;
 
-    if (in_ch < 1 || out_ch < 1 || chunk_max < 1) return; // malformed format: never spin on the RT thread
+    // ring and stream must agree (checked at stream open): never spin on the RT thread
+    if (ch < 1 || c.out->layout.channel_count != ch || chunk_max < 1) return;
 
-    In scratch[scratch_samples]; // intentionally uninitialised: only the `got` frames are ever read
+    S scratch[scratch_samples]; // intentionally uninitialised: only the `got` frames are ever read
 
     int frames_left = c.frames_max;
     while (frames_left > 0) {
@@ -277,14 +218,14 @@ write_loop (const write_ctx &c)
         if (!begin_chunk(c, &areas, frames)) break;
 
         if (output_is_muted(c)) {
-            feed_silence<Out>(areas, out_ch, 0, frames);
+            feed_silence<S>(areas, ch, 0, frames);
         } else {
-            const int got = pop_frames(c.ring, scratch, frames, in_ch);
+            const int got = pop_frames(c.ring, scratch, frames);
 
             handle_end_of_playback(c.ring, got < frames);
 
-            write_to_device<In, Out>(scratch, in_ch, got, areas, out_ch);
-            feed_silence<Out>(areas, out_ch, got, frames); // pad the underrun tail
+            write_to_device(scratch, ch, got, c.gain, areas);
+            feed_silence<S>(areas, ch, got, frames); // pad the underrun tail
 
             check_track_boundary(c.ring, count_played_frames(c.ring, frames));
         }
@@ -296,25 +237,16 @@ write_loop (const write_ctx &c)
 
 // --- format dispatch: one switch per callback, never per sample
 
-template <typename In>
+// One switch per callback. The ring format IS the device format (validated at stream open).
 RT_INLINE void
-dispatch_device_format (const write_ctx &c)
+dispatch_format (const write_ctx &c)
 {
-    switch (c.out->format) {
-    case SoundIoFormatFloat32NE: write_loop<In, float>(c);   break;
-    case SoundIoFormatFloat64NE: write_loop<In, double>(c);  break;
-    case SoundIoFormatS32NE:     write_loop<In, int32_t>(c); break;
-    case SoundIoFormatS16NE:     write_loop<In, int16_t>(c); break;
-    default: break; // must be rejected when the stream is opened, not discovered here
-    }
-}
-
-RT_INLINE void
-dispatch_ring_format (const write_ctx &c)
-{
-    switch (c.ring_fmt.format) {
-    case sample_format::f32: dispatch_device_format<float>(c); break;
-    // new ring format = one enum value + one case here (+ pop_frames)
+    switch (c.ring.format().sample) {
+    case f32ne: write_loop<float>(c);   break;
+    case f64ne: write_loop<double>(c);  break;
+    case s32ne: write_loop<int32_t>(c); break;
+    case s16ne: write_loop<int16_t>(c); break;
+    default: break; // refused at negotiation, not discovered here
     }
 }
 
@@ -334,7 +266,8 @@ write_callback(struct SoundIoOutStream *outstream, [[maybe_unused]] int frame_co
     rt_activity_scope in_callback(ring);                   // 1. announce we're inside
     const transport_snapshot snap = read_transport(ring);   // 2. then look at the decoder's request
 
-    dispatch_ring_format({ outstream, ring, snap, ring_format_of(ring), frame_count_max });
+    dispatch_format({ outstream, ring, snap,
+                      ring.volume_multiplier.load(std::memory_order_relaxed), frame_count_max });
 }
 
 

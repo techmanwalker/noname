@@ -6,6 +6,49 @@
 
 #include <soundio/soundio.h>
 
+namespace {
+
+constexpr SoundIoFormat
+to_soundio (sample_format f) noexcept
+{
+    switch (f) {
+    case sample_format::u8:    return SoundIoFormatU8;
+    case sample_format::s8:    return SoundIoFormatS8;
+    case sample_format::s16le: return SoundIoFormatS16LE;
+    case sample_format::s16be: return SoundIoFormatS16BE;
+    case sample_format::s24le: return SoundIoFormatS24LE;
+    case sample_format::s24be: return SoundIoFormatS24BE;
+    case sample_format::s32le: return SoundIoFormatS32LE;
+    case sample_format::s32be: return SoundIoFormatS32BE;
+    case sample_format::f32le: return SoundIoFormatFloat32LE;
+    case sample_format::f32be: return SoundIoFormatFloat32BE;
+    case sample_format::f64le: return SoundIoFormatFloat64LE;
+    case sample_format::f64be: return SoundIoFormatFloat64BE;
+    case sample_format::mulaw:
+    case sample_format::alaw:  break; // libsoundio has no companded formats
+    }
+    return SoundIoFormatInvalid;
+}
+
+// Shared-server mode: the device decides, we adapt. Only formats with an RT kernel are
+// candidates, best first (float: no precision loss from the decoder, nothing to dither).
+stream_format
+negotiate_stream_format (SoundIoDevice *dev, int preferred_rate)
+{
+    stream_format fmt { f32ne, 48000, 2 }; // what we try when the device tells us nothing
+    if (!dev) return fmt;
+
+    for (const sample_format candidate : { f32ne, s32ne, s16ne, f64ne })
+        if (soundio_device_supports_format(dev, to_soundio(candidate))) { fmt.sample = candidate; break; }
+
+    if (const int rate = soundio_device_nearest_sample_rate(dev, preferred_rate); rate > 0)
+        fmt.rate = uint32_t(rate);
+
+    return fmt;
+}
+
+} // namespace
+
 audio_internal_controller::audio_internal_controller(QObject *parent)
     : QObject(parent),
       m_audio_decoding_thread(new QThread(this))
@@ -37,22 +80,17 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
 
     m_device = soundio_get_output_device(m_soundio, default_out_device_index);
 
-    // Format negotiation: the engine contract is fixed (interleaved stereo float32 in
-    // the ring buffer). The device adapts to us; the sound server remaps/resamples.
-    constexpr int preferred_rate = 48000;
-    int negotiated_rate = soundio_device_nearest_sample_rate(m_device, preferred_rate);
-    if (negotiated_rate <= 0) negotiated_rate = preferred_rate;
-
-    // decoder resamples to the ring buffer's rate, so it must exist after negotiation
-    m_decoder_worker = new audio_decode_worker(negotiated_rate);
+    // the ring/decoder are built FROM the negotiated format, so negotiation comes first
+    const stream_format negotiated = negotiate_stream_format(m_device, 48000);
+    m_decoder_worker = new audio_decode_worker(negotiated);
 
     m_outstream = soundio_outstream_create(m_device);
-    m_outstream->format = SoundIoFormatFloat32NE;
-    m_outstream->sample_rate = negotiated_rate;
+    m_outstream->format      = to_soundio(negotiated.sample);
+    m_outstream->sample_rate = int(negotiated.rate);
 
     m_outstream->software_latency = 0.15;
 
-    m_outstream->layout = *soundio_channel_layout_get_default(2); // stereo, always
+    m_outstream->layout = *soundio_channel_layout_get_default(negotiated.channels);
 
     auto ring = m_decoder_worker->get_ring_buffer();
 
@@ -78,8 +116,10 @@ audio_internal_controller::audio_internal_controller(QObject *parent)
         if (m_outstream->layout_error)
             qCWarning(l_audioengine) << "layout not honoured exactly:" << soundio_strerror(m_outstream->layout_error);
 
-        if (uint64_t(m_outstream->sample_rate) != ring->get_sample_rate())
-            qCCritical(l_audioengine) << "backend changed sample rate; decoder and stream disagree";
+        if (m_outstream->format != to_soundio(negotiated.sample)
+            || uint32_t(m_outstream->sample_rate) != negotiated.rate
+            || m_outstream->layout.channel_count != negotiated.channels)
+            qCCritical(l_audioengine) << "backend changed the stream format; ring and device disagree";
     }
 
     execute_soundio(soundio_outstream_start, m_outstream);

@@ -3,11 +3,12 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
-#include <optional>
 #include <vector>
 
 #include "audiortevents.hpp"
+#include "audiostreamformat.hpp"
 
 // sndio
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);
@@ -20,37 +21,37 @@ class audio_ring_buffer
 {
     friend class audio_decode_worker;
 
-    const uint64_t sample_rate; // by default
+    // immutable for the ring's whole life: a format/rate change builds a new ring.
+    // declaration order matters (initialiser list).
+    const stream_format m_format;
+    const size_t        m_frame_bytes;     // m_format.bytes_per_frame()
+    const size_t        m_capacity_frames; // slots; one stays free, usable = capacity - 1
 
-    // TEMPORARY until the ring is format-generic: interleaved stereo.
-    static constexpr size_t k_channels = 2;
+    // how long push_blocking() sleeps before re-checking for room (see audioringbuffer.cpp)
+    std::chrono::microseconds nap_for (size_t missing_frames) const;
 
-    size_t capacity = sample_rate * 10 * k_channels; // 10 s of audio
+    // raw bytes: the ring is a transport, it never interprets samples.
+    std::vector<std::byte> buffer;
 
-    // How long push_blocking() sleeps before re-checking for room (see audioringbuffer.cpp)
-    std::chrono::microseconds nap_for (size_t missing_samples) const;
-
-    // not deque so it does not move
-    std::vector<float> buffer;
-
-    std::atomic<size_t> head{0}; // where FFmpeg writes
-    std::atomic<size_t> tail{0}; // where libsoundio reads
+    std::atomic<size_t> head{0}; // in FRAMES: where FFmpeg writes
+    std::atomic<size_t> tail{0}; // in FRAMES: where libsoundio reads
 
     // synchronization for a blocking push, fundamental to avoid skim decoding
     std::mutex m_mutex;
     std::condition_variable m_cv;
     std::atomic_bool m_cancelled{false};
 
-    // internal push to ring buffer
-    bool __push_unlocked (const float* data, size_t count);
-
 public:
 
-    audio_ring_buffer (std::optional<size_t> requested_sample_rate = std::nullopt);
+    using seconds = std::chrono::duration<double>;
 
-    // called by the ffmpeg thread to write to the output sound pipe
-    // blocking push - guaranteed to succeed unless cancelled
-    bool push_blocking(const float* data, size_t count);
+    explicit audio_ring_buffer (stream_format fmt, seconds capacity = std::chrono::seconds(10));
+
+    const stream_format &format () const noexcept { return m_format; }
+
+    // called by the ffmpeg thread. `frames` are FRAMES (one sample per channel), interleaved,
+    // already in format(). Blocking - guaranteed to succeed unless cancelled.
+    bool push_blocking(const std::byte* data, size_t frames);
 
     // cancel an in-flight blocking push (call before seek/reset)
     void cancel_blocking_push();
@@ -58,8 +59,8 @@ public:
     // re-arm after cancel
     void reset_cancel();
 
-    // called by libsoundio write_callback
-    size_t pop (float* dest, size_t count);
+    // called by libsoundio write_callback. Raw frames, NO gain: volume belongs to the device side.
+    size_t pop (std::byte* dest, size_t max_frames);
 
     bool is_full () const;
     size_t writable_size() const;
