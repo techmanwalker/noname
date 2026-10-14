@@ -15,6 +15,8 @@ Row {
     property Background background
     required property real availableHeight // granted by the parent view, never derived from this item's own size
 
+    property PlayerPresenter stateModel: PlayerPresenter
+
     // ── Gradient ───────────────────────────────────────────────────────────
     property real gradientMargin: 50
 
@@ -63,7 +65,7 @@ Row {
 
         Cover {
             id: nowplaying_cover
-            source: PlayerPresenter.cover
+            source: root.stateModel.cover
 
             Layout.preferredWidth:  root.coverSize
             Layout.preferredHeight: root.coverSize
@@ -88,7 +90,7 @@ Row {
         PlaybackControls {
             id: controls
 
-            lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
+            lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
 
             visible: !root.immersive || leftCol_hover.hovered
 
@@ -101,8 +103,8 @@ Row {
             target: controls
 
             /*
-            onBoundsChanged: console.log("controls backing luma: " + PlayerPresenter.backdrop_luma_for_rect(controlsBounds.bounds) + ", "
-                + " ring luma: " + PlayerPresenter.ring_luma_for_rect(controlsBounds.bounds))
+            onBoundsChanged: console.log("controls backing luma: " + root.stateModel.backdrop_luma_for_rect(controlsBounds.bounds) + ", "
+                + " ring luma: " + root.stateModel.ring_luma_for_rect(controlsBounds.bounds))
             */
         }
     }
@@ -121,9 +123,9 @@ Row {
 
         PlayQueueHeader {
             id: metadataContainer
-            title:  PlayerPresenter.title
-            artist: PlayerPresenter.artist
-            album:  PlayerPresenter.album
+            title:  root.stateModel.title
+            artist: root.stateModel.artist
+            album:  root.stateModel.album
 
             Layout.fillWidth: true
             Layout.leftMargin: 15 // playlist song lateral padding
@@ -140,7 +142,7 @@ Row {
                 height: metadataContainer.textContentHeight
             })
 
-            lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+            lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
         }
 
         // _d = "the drop area"
@@ -197,7 +199,7 @@ Row {
                             nextQueue_c.contentHeight
                         )
 
-                    lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                    lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                     onSongClicked: (song) => {
                         PlayQueue.playhead = PlayQueue.find_by_source(song.source)
@@ -232,7 +234,7 @@ Row {
                             nextQueue_p.contentHeight
                         )
 
-                    property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                    property bool lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                     color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                 }

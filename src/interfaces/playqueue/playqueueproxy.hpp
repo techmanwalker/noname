@@ -91,9 +91,9 @@ public:
         m_iface->clear();
     }
 
-    Q_INVOKABLE QPersistentModelIndex find_by_source (const QString &needle) {
+    Q_INVOKABLE QModelIndex find_by_source (const QString &needle) {
         if (!m_iface) return QPersistentModelIndex();
-        return QPersistentModelIndex(mapFromSource(m_iface->find_by_source(needle)));
+        return mapFromSource(m_iface->find_by_source(needle));
     }
 
     Q_INVOKABLE QFuture<void> batch_append(const QList<QUrl> &sources) {

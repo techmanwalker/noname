@@ -3,6 +3,7 @@ import QtQuick.Layouts
 
 import Player.Browser
 import Player.Fullscreen
+import Player.PlayerPresenter
 
 RowLayout {
     id: root
@@ -91,6 +92,8 @@ RowLayout {
             // this match may explain why this drifts below the window when it is too small
             Layout.preferredHeight: implicitHeight
             coverWidth: 48
+
+            stateModel: PlayerPresenter
 
             visible: stateModel.isMediaLoaded
 
