@@ -102,6 +102,9 @@ main (int argc, char ** argv)
     QObject::connect(ae.get(), &audio_engineLI::seek_finished,
             pp.get(), &PlayerPresenterLI::position_changed);
 
+    QObject::connect(ae.get(), &audio_engineLI::seek_finished,
+            pp.get(), &PlayerPresenterLI::seek_finished);
+
     QObject::connect(ae.get(), &audio_engineLI::volume_changed,
             pp.get(), &PlayerPresenterLI::volume_changed);
 

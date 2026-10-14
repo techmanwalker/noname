@@ -119,6 +119,7 @@ signals:
     void media_loaded_changed();
     void slider_pressed_changed();
     void lumas_changed();
+    void seek_finished();
 
 public slots:
     // Formally expose as a metadata block receiver

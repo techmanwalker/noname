@@ -7,8 +7,12 @@ import Player.Primitives
 import Player.Fullscreen
 import Player.LyricsManifest
 
-StackLayout {
+ColumnLayout {
     id: root
+
+    required property bool immersive // fed from Player
+    required property Background background
+    property PlayerPresenter stateModel: PlayerPresenter
 
     required property LyricsManifest model
     required property int highlightedRowIndex
@@ -16,8 +20,8 @@ StackLayout {
     // whether to follow the lyrics by scrolling the list
     property bool autoscrollEnabled: true
 
-    property real headerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
-    property real footerHeight: root.autoscrollEnabled ? Window.height / 2 : 0
+    property real headerHeight: autoscrollEnabled ? Window.height / 2 : 0
+    property real footerHeight: autoscrollEnabled ? Window.height / 2 : 0
 
     property color unhighlightedColor: Theme.dark.texts.unhighlightedLyric
     property color highlightedColor: Theme.dark.texts.highlightedLyric
@@ -25,8 +29,6 @@ StackLayout {
     // also enable first and last rows to be centered too
     property bool centerEdgeLines: true
 
-    currentIndex: listView.count > 0 ? 1 : 0
-    
     signal switchToPlayerViewRequested ()
 
     signal clickedOnEmptySpace ()
@@ -35,143 +37,182 @@ StackLayout {
         root.switchToPlayerViewRequested()
     }
 
-    Label {
-        text: qsTr("No lyrics.")
+    StackLayout {
+        id: stack
 
-        font.pointSize: 32
-        font.weight: Font.Light
+        currentIndex: listView.count > 0 ? 1 : 0
 
-        opacity: 0.4
+        clip: true
 
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment:   Text.AlignVCenter
+        Label {
+            text: qsTr("No lyrics.")
 
-        color: root.unhighlightedColor
+            font.pointSize: 32
+            font.weight: Font.Light
 
-        TapHandler {
-            onTapped: root.clickedOnEmptySpace()
-        }
-    }
+            opacity: 0.4
 
-    ListView {
-        id: listView
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment:   Text.AlignVCenter
 
-        model: root.model
-
-        // Extra scroll room so row 0 / the last row can reach dead
-        // center too, same as any line in the middle of the list.
-
-        header: Item {
-            height: root.headerHeight
-            width: listView.width
-        }
-
-        footer: Item {
-            height: root.footerHeight
-            width: listView.width
-        }
-
-        function scrollToHighlighted() : void {
-            const index = root.highlightedRowIndex
-            if (index < 0 || index >= count)
-                return
-
-            const fromY = contentY
-            positionViewAtIndex(index, ListView.Center)
-            const toY = contentY
-            contentY = fromY
-
-            scrollAnimation.to = toY
-            scrollAnimation.restart()
-        }
-
-        NumberAnimation {
-            id: scrollAnimation
-            target: listView
-            property: "contentY"
-            duration: 125
-            easing.type: Easing.InOutCubic
-        }
-        
-        readonly property bool doAutoscroll: !(moving || cooldownTimer.running || !root.autoscrollEnabled)
-
-        onDoAutoscrollChanged: if (doAutoscroll) scrollToHighlighted()
-
-        onMovingChanged: if (!moving) cooldownTimer.restart()
-
-        onTopMarginChanged: if (doAutoscroll) scrollToHighlighted()
-
-        Timer {
-            id: cooldownTimer
-            interval: 5000
-            running: root.autoscrollEnabled
-        }
-        TapHandler {
-            id: holdTracker
-            target: null
-            acceptedButtons: Qt.AllButtons
-        }
-
-        Connections {
-            target: root
-            function onHighlightedRowIndexChanged() {
-                if (listView.doAutoscroll)
-                    listView.scrollToHighlighted()
-            }
-        }
-        
-        delegate: Item {
-            id: delegateRoot
-
-            width: root.width
-            height: delegateWidth.height
-
-            required property lyric modelData
-            required property int index
+            color: root.unhighlightedColor
 
             TapHandler {
-                onTapped: (eventPoint, button) => {
-                    // eventPoint.position is in delegateRoot coordinates
-                    const onLyric = delegateWidth.contains(delegateWidth.mapFromItem(delegateRoot, eventPoint.position))
+                onTapped: root.clickedOnEmptySpace()
+            }
+        }
 
-                    if (onLyric)
-                        PlayerPresenter.position_ms = del.model.timestamp
-                    else
-                        root.clickedOnEmptySpace()
+        ListView {
+            id: listView
+
+            model: root.model
+
+            // Extra scroll room so row 0 / the last row can reach dead
+            // center too, same as any line in the middle of the list.
+
+            header: Item {
+                height: root.headerHeight
+                width: listView.width
+            }
+
+            footer: Item {
+                height: root.footerHeight
+                width: listView.width
+            }
+
+            function scrollToHighlighted() : void {
+                const index = root.highlightedRowIndex
+
+                if (index >= count)
+                    return
+
+                const fromY = contentY
+
+                // No active line yet (position precedes the first timestamp):
+                // rest at the very top, so the header space is what's on screen.
+                if (index < 0)
+                    positionViewAtBeginning()
+                else
+                    positionViewAtIndex(index, ListView.Center)
+
+                const toY = contentY // center to screen
+                contentY = fromY
+
+                scrollAnimation.to = toY
+                scrollAnimation.restart()
+            }
+
+            NumberAnimation {
+                id: scrollAnimation
+                target: listView
+                property: "contentY"
+                duration: 125
+                easing.type: Easing.InOutCubic
+            }
+            
+            readonly property bool doAutoscroll: !(moving || cooldownTimer.running || !root.autoscrollEnabled)
+
+            onDoAutoscrollChanged: if (doAutoscroll) scrollToHighlighted()
+
+            onMovingChanged: if (!moving) cooldownTimer.restart()
+
+            Timer {
+                id: cooldownTimer
+                interval: 5000
+                running: root.autoscrollEnabled
+            }
+            TapHandler {
+                id: holdTracker
+                target: null
+                acceptedButtons: Qt.AllButtons
+            }
+
+            Connections {
+                target: root
+                function onHighlightedRowIndexChanged() {
+                    if (listView.doAutoscroll)
+                        listView.scrollToHighlighted()
                 }
             }
 
-            Item {
-                id: delegateWidth 
+            readonly property int interactiveWidth: root.width * 0.6
+            readonly property int wrapWidth: root.width * 0.4
+            
+            delegate: Item {
+                id: delegateRoot
 
-                width: parent.width / 10 * 6
-                height: del.height
+                width: root.width
+                height: delegateWidth.height
 
-                anchors.horizontalCenter: parent.horizontalCenter
+                required property lyric modelData
+                required property int index
 
-                LyricDelegate {
-                    id: del
+                TapHandler {
+                    onTapped: (eventPoint, button) => {
+                        // eventPoint.position is in delegateRoot coordinates
+                        const onLyric = delegateWidth.contains(delegateWidth.mapFromItem(delegateRoot, eventPoint.position))
 
-                    model: delegateRoot.modelData
+                        if (onLyric)
+                            root.stateModel.position_ms = del.model.timestamp
+                        else
+                            root.clickedOnEmptySpace()
+                    }
+                }
 
-                    // Feeds only the break computation now — the item's
-                    // actual on-screen width is implicit, so it's free to
-                    // grow past this when highlighted.
-                    wrapWidth: delegateRoot.width / 10 * 4
-                    topPadding: highlighted ? 20 : 10
-                    bottomPadding: topPadding
+                Item {
+                    id: delegateWidth 
+
+                    width: listView.interactiveWidth
+                    height: del.height
 
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                    LyricDelegate {
+                        id: del
 
-                    unhighlightedColor: root.unhighlightedColor
-                    highlightedColor: root.highlightedColor
+                        model: delegateRoot.modelData
 
-                    highlighted: root.highlightedRowIndex === delegateRoot.index
+                        // Feeds only the break computation now — the item's
+                        // actual on-screen width is implicit, so it's free to
+                        // grow past this when highlighted.
+                        wrapWidth: listView.wrapWidth
+                        topPadding: highlighted ? 20 : 10
+                        bottomPadding: topPadding
+
+                        anchors.horizontalCenter: parent.horizontalCenter
+
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+
+                        unhighlightedColor: root.unhighlightedColor
+                        highlightedColor: root.highlightedColor
+
+                        highlighted: root.highlightedRowIndex === delegateRoot.index
+                    }
                 }
             }
         }
+    }
+
+    PlaybackControls {
+        id: controls
+
+        lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel)
+
+        visible: !root.immersive
+
+        Layout.maximumWidth: listView.wrapWidth
+        Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+    }
+
+    Connections {
+        target: root.stateModel
+
+        function onSeekFinished () {listView.scrollToHighlighted() } // this is not an autoscroll event
+    }
+
+    SceneRect {
+        id: controlsBounds
+        target: controls
     }
 }
