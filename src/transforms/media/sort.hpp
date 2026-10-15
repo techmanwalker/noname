@@ -18,4 +18,4 @@ namespace Prettifiers {
     QList<MediaType> sortBy (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending = false);
 }
 
-#include "prettifiers.tpp"
+#include "sort.tpp"

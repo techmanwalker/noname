@@ -13,7 +13,7 @@
 #include "lyricsmanifest.hpp"
 #include "playqueue.hpp"
 #include "playqueueproxy.hpp"
-#include "mediafilter.hpp"
+#include "filter.hpp"
 #include "shortcutslist.hpp"
 #include "shortcutslistproxy.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
