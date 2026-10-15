@@ -1,6 +1,6 @@
-#include "mediafilter.hpp"
+#include "filter.hpp"
 #include "abstractmediasequence.hpp"
-#include "prettifiers.hpp" // IWYU pragma: keep this provides prettifiers.tpp
+#include "sort.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
 #include "locallibrary-in.hpp" // IWYU pragma: keep for qobject_cast<LocalLibrary*>
 

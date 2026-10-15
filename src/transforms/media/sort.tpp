@@ -1,6 +1,6 @@
 #pragma once
 
-#include "prettifiers.hpp"
+#include "sort.hpp"
 
 namespace Prettifiers {
 

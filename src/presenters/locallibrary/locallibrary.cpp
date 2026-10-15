@@ -4,7 +4,7 @@
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
-#include "prettifiers.hpp" // IWYU pragma: keep needs prettifiers.tpp
+#include "sort.hpp" // IWYU pragma: keep needs sort.tpp
 #include "songfactory.hpp"
 
 QList<Types::Song>
