@@ -2,7 +2,7 @@
 
 #include "sort.hpp"
 
-namespace Prettifiers {
+namespace MediaTransforms {
 
 template <typename FieldType, typename MediaType>
 requires (
@@ -13,7 +13,7 @@ requires (
     )
 )
 QList<MediaType>
-sortBy (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending)
+sort_by (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending)
 {
     // passed by value, returned by value
 

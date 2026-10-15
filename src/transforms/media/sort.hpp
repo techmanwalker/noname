@@ -5,7 +5,7 @@
 
 // Formatters, sorters, etc.
 
-namespace Prettifiers {
+namespace MediaTransforms {
 
     template <typename FieldType, typename MediaType>
     requires (
@@ -15,7 +15,7 @@ namespace Prettifiers {
         ||  std::is_convertible_v<FieldType, quint64>
         )
     )
-    QList<MediaType> sortBy (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending = false);
+    QList<MediaType> sort_by (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending = false);
 }
 
 #include "sort.tpp"

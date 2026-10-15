@@ -12,5 +12,5 @@ class MediaFilter
 public: 
     virtual ~MediaFilter () = default;
 
-    virtual QList<Types::Song> performSearch(const QString &query, QObject *sourceModel) = 0;
+    virtual QList<Types::Song> search (const QString &query, QObject *sourceModel) = 0;
 };
