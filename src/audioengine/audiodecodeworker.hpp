@@ -68,6 +68,13 @@ private:
     bool           m_passthrough = false;
     AVSampleFormat m_out_av_fmt  = AV_SAMPLE_FMT_NONE;
 
+    // Path currently open in fmt_ctx; empty whenever no context is open. This, not the
+    // engine's current_track, is the truth for "is this file already open?"
+    QString m_open_path;
+
+    // Body shared by seek() and load()'s same-file rewind. false = av_seek_frame failed.
+    bool rewind_in_place (uint64_t position_ms);
+
     audio_ring_buffer m_ring_buffer;
 
     AVFormatContext *fmt_ctx = nullptr;

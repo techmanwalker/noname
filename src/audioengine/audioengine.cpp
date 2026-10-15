@@ -64,6 +64,8 @@ audio_engineLI::load(const Types::Song &song)
     if (!song.is_valid()) return;
 
     m_current_transaction_id++;
+
+    // The decoder decides between rewind and reopen: it knows what is actually open
     m_internal->load(song.source.toLocalFile());
     
     m_current_track = song;
@@ -166,7 +168,7 @@ void
 audio_engineLI::handle_track_changed()
 {
     emit duration_changed();
-    emit seek_finished(); 
+    emit seek_finished(); // to 0
     emit playback_state_changed();
 }
 
