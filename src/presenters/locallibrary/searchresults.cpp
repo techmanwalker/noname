@@ -1,10 +1,13 @@
 #include "searchresults.hpp"
+#include "abstractmediasequence.hpp"
 #include "prettifiers.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
 #include "locallibrary.hpp" // IWYU pragma: keep for qobject_cast<LocalLibrary*>
 
 #include <QIdentityProxyModel>
 #include <QList>
+
+#include <memory>
 
 #include <rapidfuzz/fuzz.hpp>
 #include <unicode/translit.h>
@@ -14,15 +17,34 @@
 // bridge icu and icu_<version> safely
 using namespace U_ICU_NAMESPACE; 
 
+namespace {
+
+std::shared_ptr<Transliterator>
+make_transliterator()
+{
+    UErrorCode status = U_ZERO_ERROR;
+    std::shared_ptr<Transliterator> translit(Transliterator::createInstance(
+        "Any-Lower; Any-Latin; NFKD; [:Nonspacing Mark:] Remove", UTRANS_FORWARD, status));
+
+    if (U_FAILURE(status) || !translit) {
+        qCWarning(l_mediasequences) << "ICU Transliterator failed to initialize:" << u_errorName(status);
+        return nullptr;
+    }
+    return translit;
+}
+
+} // namespace
 
 SearchResultsLI::SearchResultsLI(QObject *parent)
-    : PlaylistSequence(parent)
+    : PlaylistSequence(parent),
+      m_translit(make_transliterator())
 {
 }
 
 std::string
-SearchResultsLI::nfkd_and_translit(const std::string& input, Transliterator* transliterator) {
+SearchResultsLI::nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> transliterator) {
     if (!transliterator) {
+        qCDebug(l_mediasequences) << "The transliterator pointer arrived nullptr. Returning original query.";
         return input;
     }
     UnicodeString uText = UnicodeString::fromUTF8(input);
@@ -78,30 +100,18 @@ SearchResultsLI::performSearch(const QString &query, QList<Types::Song> &song_li
         return;
     }
 
-    // Initialize ICU Transliterator ONCE per search execution
-    UErrorCode status = U_ZERO_ERROR;
-    std::unique_ptr<Transliterator> transliterator(
-        Transliterator::createInstance("Any-Lower; Any-Latin; NFKD; [:Nonspacing Mark:] Remove", UTRANS_FORWARD, status)
-    );
-
-    // Fallback indicator if ICU initialization fails
-    Transliterator* transPtr = U_SUCCESS(status) ? transliterator.get() : nullptr;
-    if (!transPtr) {
-        qCWarning(l_mediasequences) << "ICU Transliterator failed to initialize:" << u_errorName(status);
-    }
-
     using rankable_item = std::pair<size_t, double>;
     std::vector<rankable_item> rankable;
 
     // Clean query once using the local transliterator instance
-    const std::string clean_keywords = nfkd_and_translit(query.toStdString(), transPtr);
+    const std::string clean_keywords = nfkd_and_translit(query.toStdString(), m_translit);
     rapidfuzz::fuzz::CachedPartialRatio<char> scorer(clean_keywords.c_str());
     const double score_thresh = 50.0;
 
     // Execute search directly against the flattened song list
     for (qsizetype i = 0; i < song_list.size(); ++i) {
         // Pass transPtr to process text instantly without initialization overhead
-        const std::string clean_title = nfkd_and_translit(song_list.at(i).title.toStdString(), transPtr);
+        const std::string clean_title = nfkd_and_translit(song_list.at(i).title.toStdString(), m_translit);
         double score = scorer.similarity(clean_title.c_str(), score_thresh);
 
         if (score >= score_thresh) {
