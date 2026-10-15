@@ -52,6 +52,8 @@ main (int argc, char ** argv)
         double-ownership with Qt's parent/child teardown, hence all initialized
         with nullptr.
     */
+    using MediaTransforms::MediaFilterLI;
+    
     auto cm = std::make_shared<configuration::managerLI> (nullptr);
 
     auto ae = std::make_shared<audio_engineLI>    (nullptr);

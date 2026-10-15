@@ -4,6 +4,9 @@
 #include <functional>
 #include <numeric>
 
+namespace MediaTransforms
+{
+
 ShuffleProxy::ShuffleProxy(QObject *parent) : QAbstractProxyModel(parent) {}
 
 void
@@ -228,4 +231,6 @@ ShuffleProxy::on_source_data_changed(const QModelIndex &top_left, const QModelIn
         const QModelIndex changed = mapFromSource(sourceModel()->index(row, top_left.column()));
         if (changed.isValid()) emit dataChanged(changed, changed, roles);
     }
+}
+
 }

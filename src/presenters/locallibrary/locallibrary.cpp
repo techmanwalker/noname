@@ -132,7 +132,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             // display order so QML reading Directory::songs directly
             // (required property directory model -> model.songs) never
             // needs a role-side sort on every access.
-            target_dir.songs = Prettifiers::sortBy(&Types::Song::title, target_dir.songs);
+            target_dir.songs = MediaTransforms::sort_by(&Types::Song::title, target_dir.songs);
 
             emit dataChanged(dir_index_to_refresh, dir_index_to_refresh);
         })

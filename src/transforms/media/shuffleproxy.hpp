@@ -5,6 +5,9 @@
 #include <random>
 #include <vector>
 
+namespace MediaTransforms
+{
+
 /// Flat-list proxy: presents its source in source order, or as a random
 /// permutation of it. Rows are never copied; data() is read live from the source.
 class ShuffleProxy : public QAbstractProxyModel
@@ -48,3 +51,5 @@ private:
     std::mt19937 m_rng {std::random_device{}()};
     QList<QMetaObject::Connection> m_connections;
 };
+
+}

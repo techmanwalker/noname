@@ -14,8 +14,8 @@
 class PlayQueueLIPrivate 
 {
 public: 
-    PlaylistSequence sequence;
-    ShuffleProxy     order;
+    PlaylistSequence              sequence;
+    MediaTransforms::ShuffleProxy order;
     std::shared_ptr<audio_engine> playing;
 
     PlayQueueLIPrivate(

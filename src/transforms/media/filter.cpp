@@ -60,16 +60,19 @@ nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> tran
 
 } // namespace
 
+
+namespace MediaTransforms
+{
+
+// The Search proxy
+
 MediaFilterLI::MediaFilterLI()
     : m_internal ( std::make_shared<MediaFilterLIPrivate>(make_transliterator()) )
 {
 }
 
-
-// The Search proxy
-
 QList<Types::Song>
-MediaFilterLI::performSearch(const QString &query, QObject *sourceModel)
+MediaFilterLI::search(const QString &query, QObject *sourceModel)
 {
     QList<Types::Song> all_songs;
 
@@ -100,14 +103,14 @@ MediaFilterLI::performSearch(const QString &query, QObject *sourceModel)
     }
 
     // Execute RapidFuzz search logic on 'all_songs' and return the list (...)
-    return performSearch(query, all_songs); 
+    return search (query, all_songs); 
 }
 
 QList<Types::Song>
-MediaFilterLI::performSearch(const QString &query, QList<Types::Song> &song_list)
+MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
 {
     if (query.isEmpty()) {
-        return Prettifiers::sortBy(&Types::Song::title, song_list);
+        return sort_by (&Types::Song::title, song_list);
     }
 
     using rankable_item = std::pair<size_t, double>;
@@ -141,4 +144,6 @@ MediaFilterLI::performSearch(const QString &query, QList<Types::Song> &song_list
     }
 
     return matching_songs;
+}
+
 }

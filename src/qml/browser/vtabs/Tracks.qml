@@ -22,7 +22,7 @@ ColumnLayout {
         target: LocalLibrary // qmllint disable
 
         function onRefreshFinished() {
-            root.displayedTracks = MediaFilter.performSearch("", LocalLibrary);
+            root.displayedTracks = MediaFilter.search("", LocalLibrary);
             libraryChanges.enabled = true; // start reacting to dataChanged from now on
             target = null; // one-shot: stop listening after the first refresh completes
         }
@@ -35,7 +35,7 @@ ColumnLayout {
 
         function onDataChanged() {
             if (root.searchBarItem.text === "") {
-                root.displayedTracks = MediaFilter.performSearch("", LocalLibrary);
+                root.displayedTracks = MediaFilter.search("", LocalLibrary);
             }
         }
     }
@@ -54,7 +54,7 @@ ColumnLayout {
 
         function onTextChanged() {
             
-            root.displayedTracks = MediaFilter.performSearch(root.searchBarItem.text, LocalLibrary);
+            root.displayedTracks = MediaFilter.search(root.searchBarItem.text, LocalLibrary);
         }
     }
 
