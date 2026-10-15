@@ -131,6 +131,9 @@ qt_add_qml_module(mediasequences
 target_link_libraries(mediasequences
     PUBLIC
         mediatypes
+
+        mediafilter_in
+        locallibrary_in # for the shortcut in mediafilter_in
         
     PRIVATE
         Qt6::Core
@@ -141,8 +144,12 @@ target_link_libraries(mediasequences
 target_include_directories(mediasequences
     PUBLIC
         src/datamodels/sequences # to make qmltyperegistrar happy
-        src/datamodels/sequences/formatters
+        src/datamodels/sequences/filters
 )
+
+add_library(mediafilter_in INTERFACE)
+target_include_directories(mediafilter_in INTERFACE src/interfaces/mediafilter)
+target_link_libraries(mediafilter_in INTERFACE Qt6::Core mediatypes)
 
 # --- Pure I/O Tooling
 
@@ -298,7 +305,6 @@ qt_add_qml_module(locallibrary
 target_link_libraries (locallibrary
     PUBLIC
         locallibrary_in
-        mediafilter_in
         shortcutslist_in
         
         mediasequences
@@ -326,13 +332,10 @@ add_library(locallibrary_in INTERFACE)
 target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
 target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
 
-add_library(mediafilter_in INTERFACE)
-target_include_directories(mediafilter_in INTERFACE src/interfaces/mediafilter)
-target_link_libraries(mediafilter_in INTERFACE Qt6::Core mediatypes)
-
 add_library(shortcutslist_in INTERFACE)
 target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)
 target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes)
+
 
 # Covers - where your vision lives, use the interface to register your cover on memory cache to display on any QML
 add_library(covers STATIC
