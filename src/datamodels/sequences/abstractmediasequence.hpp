@@ -24,6 +24,16 @@ concept media_sequence =
     std::ranges::forward_range<T> && 
     media_type<typename T::value_type>;
 
+template <typename... Ts>
+struct all_distinct : std::true_type {};
+
+template <typename T, typename... Rest>
+struct all_distinct<T, Rest...>
+    : std::bool_constant<(!std::same_as<T, Rest> && ...) && all_distinct<Rest...>::value> {};
+
+template <typename... Ts>
+inline constexpr bool all_distinct_v = all_distinct<Ts...>::value;
+
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
 class AbstractMediaSequencePrivate;
@@ -80,9 +90,14 @@ public:
     // read a role directly
     Q_INVOKABLE QVariant read_role(qsizetype row, const QByteArray &role) const;
 
-    // items that can be converted to certain type
+    // items that can be converted to certain types
+    // returns one QList per requested type, in the order requested, in a single pass
     template <media_type T>
-    QList<T> items() const;
+    QList<T> items () const;
+
+    template <media_type... Ts>
+        requires (sizeof...(Ts) > 0) && all_distinct_v<Ts...>
+    std::tuple<QList<Ts>...> items_of_types() const;
 
     // Find an item whose pointed member matches the needle, returns invalid if not found
     template <typename MediaType, typename FieldType>

@@ -11,21 +11,31 @@
 
 template <media_type T>
 QList<T> 
-AbstractMediaSequence::items() const 
+AbstractMediaSequence::items () const
 {
-    QList<T> filtered_list;
+    auto [list] = items_of_types<T>();
+
+    return list;
+}
+
+template <media_type... Ts>
+    requires (sizeof...(Ts) > 0) && all_distinct_v<Ts...>
+std::tuple<QList<Ts>...>
+AbstractMediaSequence::items_of_types () const
+{
+    std::tuple<QList<Ts>...> result;
 
     QReadLocker locker (&_lock());
-    
-    filtered_list.reserve(_items().size());
 
     for (const Types::Any &item : _items()) {
-        if (std::holds_alternative<T>(item)) {
-            filtered_list.append(std::get<T>(item));
-        }
+        std::visit([&]<typename V>(const V &value) {
+            if constexpr ((std::same_as<V, Ts> || ...)) {
+                std::get<QList<V>>(result).append(value);
+            }
+        }, item);
     }
 
-    return filtered_list;
+    return result;
 }
 
 template <media_type T>
