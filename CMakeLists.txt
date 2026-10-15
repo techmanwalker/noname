@@ -442,11 +442,11 @@ target_link_libraries(playqueue_in INTERFACE Qt6::Core)
 
 qt_add_qml_module(playerpresenter
     STATIC
-    URI Player.PlayerPresenter
+    URI Player.Presenter
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playerpresenter/playerpresenterproxy.hpp"
         ${PLAYERPRESENTER_SOURCES}
-    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayerPresenter"
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/Presenter"
 )
 
 target_link_libraries(playerpresenter

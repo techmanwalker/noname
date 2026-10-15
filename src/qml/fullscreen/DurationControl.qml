@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 
 import Player.Primitives
-import Player.PlayerPresenter
+import Player.Presenter
 
 RowLayout {
     id: root

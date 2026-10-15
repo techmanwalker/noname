@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 import Player.Browser
 import Player.Fullscreen
-import Player.PlayerPresenter
+import Player.Presenter
 
 RowLayout {
     id: root

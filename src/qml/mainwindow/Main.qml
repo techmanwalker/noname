@@ -6,7 +6,7 @@ import QtQuick.Layouts
 import Player.App
 import Player.Browser
 import Player.Fullscreen
-import Player.PlayerPresenter
+import Player.Presenter
 import Player.Primitives
 
 T.ApplicationWindow {

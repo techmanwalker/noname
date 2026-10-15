@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 import Player.Fullscreen
 import Player.Listings
-import Player.PlayerPresenter
+import Player.Presenter
 import Player.PlayQueue
 import Player.Primitives
 

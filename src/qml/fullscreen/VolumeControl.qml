@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-import Player.PlayerPresenter
+import Player.Presenter
 import Player.Primitives
 
 RowLayout {
