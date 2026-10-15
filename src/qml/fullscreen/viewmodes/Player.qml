@@ -5,7 +5,7 @@ import Player.App
 import Player.Fullscreen
 import Player.LyricsManifest
 import Player.Primitives
-import Player.PlayerPresenter
+import Player.Presenter
 
 Item {
     id: root

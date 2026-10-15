@@ -1,7 +1,7 @@
 import QtQuick
 
 import Player.Primitives
-import Player.PlayerPresenter
+import Player.Presenter
 
 ResizableButton {
     id: root

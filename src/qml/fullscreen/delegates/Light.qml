@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 
 import Player.Fullscreen
-import Player.PlayerPresenter
+import Player.Presenter
 
 QtObject {
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter) : bool {

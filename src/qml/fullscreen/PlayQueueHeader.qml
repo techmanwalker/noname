@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 import Player.Fullscreen
-import Player.PlayerPresenter
+import Player.Presenter
 import Player.Primitives
 
 Column {
