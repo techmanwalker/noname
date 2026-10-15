@@ -3,46 +3,46 @@ import QtQuick
 
 QtObject {
     component TextPalette: QtObject {
-        required property color primaryText
-        required property color secondaryText
-        required property color tertiaryText
-        required property color unhighlightedLyric
-        required property color highlightedLyric
+        required final property color primaryText
+        required final property color secondaryText
+        required final property color tertiaryText
+        required final property color unhighlightedLyric
+        required final property color highlightedLyric
     }
 
     component SliderPalette: QtObject {
-        required property color accentColor
-        required property color backgroundColor
+        required final property color accentColor
+        required final property color backgroundColor
     }
 
     component ScrollbarPalette: QtObject {
-        required property color accentColor
-        required property color backgroundColor
+        required final property color accentColor
+        required final property color backgroundColor
     }
 
     component ElementBackgroundPalette: QtObject {
-        required property color base
-        required property color baseFilled
-        required property color hovered
-        required property color hoveredFilled
-        required property color clicked
+        required final property color base
+        required final property color baseFilled
+        required final property color hovered
+        required final property color hoveredFilled
+        required final property color clicked
 
-        required property color songPlaying
-        required property color songSelected
-        required property color songHovered
+        required final property color songPlaying
+        required final property color songSelected
+        required final property color songHovered
 
-        required property color folder
+        required final property color folder
     }
 
     component Palette: QtObject {
-        required property TextPalette texts
-        required property SliderPalette slider
-        required property ScrollbarPalette scrollbar
-        required property ElementBackgroundPalette elementbg
-        required property color iconColor
+        required final property TextPalette texts
+        required final property SliderPalette slider
+        required final property ScrollbarPalette scrollbar
+        required final property ElementBackgroundPalette elementbg
+        required final property color iconColor
     }
 
-    readonly property Palette dark: Palette {
+    final readonly property Palette dark: Palette {
         texts: TextPalette {
             primaryText: "white"
             secondaryText: "#dfdfdf"
@@ -65,16 +65,16 @@ QtObject {
             hoveredFilled: "#afafaf"
             clicked: "#969696"
 
-            songPlaying:  ({ r: 200 / 255, g: 200 / 255, b: 200 / 255, a: .08 })
-            songSelected: ({ r: 160 / 255, g: 160 / 255, b: 160 / 255, a: .3 })
-            songHovered:  ({ r: 160 / 255, g: 160 / 255, b: 160 / 255, a: .08 })
+            songPlaying:  "#14c8c8c8"
+            songSelected: "#4da0a0a0"
+            songHovered:  "#14a0a0a0"
 
             folder: "#1f1f1f"
         }
         iconColor: "black"
     }
 
-    readonly property Palette light: Palette {
+    final readonly property Palette light: Palette {
         texts: TextPalette {
             primaryText: "black"
             secondaryText: "#080808"
@@ -97,9 +97,9 @@ QtObject {
             hoveredFilled: "#afafaf"
             clicked: "#969696"
 
-            songPlaying:  ({ r: 20 / 255, g: 20 / 255, b: 20 / 255, a: .08 })
-            songSelected: ({ r: 35 / 255, g: 35 / 255, b: 35 / 255, a: .3 })
-            songHovered:  ({ r: 35 / 255, g: 35 / 255, b: 35 / 255, a: .08 })
+            songPlaying:  "#14141414"
+            songSelected: "#4d232323"
+            songHovered:  "#14232323"
 
             folder: "#a0a0a0"
         }
