@@ -5,7 +5,7 @@
 #include <QIdentityProxyModel>
 #include <QtQmlIntegration>
 
-class SearchResultsProxy : public QIdentityProxyModel
+class SearchResultsProxy : public QObject
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(SearchResults)
@@ -13,29 +13,22 @@ class SearchResultsProxy : public QIdentityProxyModel
 
 public:
     explicit SearchResultsProxy (QObject *parent = nullptr)
-        : QIdentityProxyModel(parent),
-          m_slist(s_injectedList), // Copies shared_ptr, incrementing ref count
-          m_iface(qobject_cast<SearchResults*>(m_slist.get()))
-    {
-        if (m_slist) {
-            setSourceModel(m_slist.get());
-        }
-    }
+        : QObject (parent),
+          m_search(s_injectedSearch) // Copies shared_ptr, incrementing ref count
+    {}
 
     // Non-destructive injection via const reference
-    static void inject(const std::shared_ptr<QAbstractListModel> &list) {
-        s_injectedList = list; // Ref count incremented, caller's instance unaffected
+    static void inject(const std::shared_ptr<SearchResults> &searchengine) {
+        s_injectedSearch = searchengine; // Ref count incremented, caller's instance unaffected
     }
 
-    Q_INVOKABLE void performSearch(const QString &query, QObject *containerModel) {
-        if (!m_iface) return;
+    Q_INVOKABLE QList<Types::Song> performSearch(const QString &query, QObject *containerModel) {
+        if (!m_search) return {};
         
-        return m_iface->performSearch(query, containerModel);
+        return m_search->performSearch(query, containerModel);
     }
 
 private:
-    std::shared_ptr<QAbstractListModel> m_slist;
-    inline static std::shared_ptr<QAbstractListModel> s_injectedList = nullptr;
-
-    SearchResults *m_iface = nullptr;
+    std::shared_ptr<SearchResults> m_search;
+    inline static std::shared_ptr<SearchResults> s_injectedSearch = nullptr;
 };

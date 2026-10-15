@@ -16,12 +16,14 @@ ColumnLayout {
 
     required property SearchBar searchBarItem
 
+    property list<song> displayedTracks
+
     Connections {
         target: LocalLibrary // qmllint disable
 
         function onRefreshFinished() {
-            SearchResults.performSearch("", LocalLibrary);
-            libraryChanges.enabled = true; // start reacting to dataChanged only from here on
+            root.displayedTracks = SearchResults.performSearch("", LocalLibrary);
+            libraryChanges.enabled = true; // start reacting to dataChanged from now on
             target = null; // one-shot: stop listening after the first refresh completes
         }
     }
@@ -33,7 +35,7 @@ ColumnLayout {
 
         function onDataChanged() {
             if (root.searchBarItem.text === "") {
-                SearchResults.performSearch("", LocalLibrary);
+                root.displayedTracks = SearchResults.performSearch("", LocalLibrary);
             }
         }
     }
@@ -52,12 +54,12 @@ ColumnLayout {
 
         function onTextChanged() {
             
-            SearchResults.performSearch(root.searchBarItem.text, LocalLibrary);
+            root.displayedTracks = SearchResults.performSearch(root.searchBarItem.text, LocalLibrary);
         }
     }
 
     SongGrid {
-        model: SearchResults
+        model: root.displayedTracks
 
         Layout.fillWidth: true
         Layout.fillHeight: true
