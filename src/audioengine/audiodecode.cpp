@@ -56,6 +56,17 @@ audio_decode_worker::is_song_loaded () const
 
 void 
 audio_decode_worker::load(const QString &file_path) {
+    // The decoder is already on this exact file: rewind instead of reopening.
+    if (m_song_loaded && fmt_ctx && file_path == m_open_path) {
+        {   // a fresh load drops any pending gapless handoff, exactly like clean()
+            std::lock_guard<std::mutex> q_lock(m_queue_mutex);
+            m_has_queued_song = false;
+            m_queued_next_song = Types::Song{};
+        }
+        if (rewind_in_place(0)) return;
+        // seek failed: fall through to a full reopen
+    }
+
     // clear any previous context
     clean();
 
@@ -128,6 +139,7 @@ audio_decode_worker::open_file_internal(const QString &file_path)
             return false;
         }
 
+        m_open_path   = file_path;
         m_song_loaded = true;
         return true;
     } 
@@ -276,15 +288,9 @@ audio_decode_worker::decode_step ()
     av_packet_free(&pkt);
 }
 
-void
-audio_decode_worker::seek(uint64_t position_ms) {
-    // If no context, abort and decrement the pending seek count
-    if (!fmt_ctx) {
-        m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
-        m_ring_buffer.reset_cancel(); // Re-arm even if we abort
-        return;
-    }
-
+bool
+audio_decode_worker::rewind_in_place(uint64_t position_ms)
+{
     // reset eof
     m_ring_buffer.eof_decoded.store(false);
     m_ring_buffer.eof_played.store(false);
@@ -306,9 +312,11 @@ audio_decode_worker::seek(uint64_t position_ms) {
                                         // time scale fraction
                                        {1, 1000}, 
                                        fmt_ctx->streams[audio_stream_index]->time_base);
+    
+    const bool ok = av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) >= 0;
 
     // perform the seek
-    if (av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) >= 0) {
+    if (ok) {
         
         // Clear FFmpeg decoder buffers
         avcodec_flush_buffers(codec_ctx);
@@ -342,6 +350,21 @@ audio_decode_worker::seek(uint64_t position_ms) {
 
     // release the RT thread (must stay BEFORE pending_seeks is decremented, as before)
     m_ring_buffer.end_rt_quiesce();
+
+    return ok;
+}
+
+void
+audio_decode_worker::seek(uint64_t position_ms)
+{
+    // If no context, abort and decrement the pending seek count
+    if (!fmt_ctx) {
+        m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
+        m_ring_buffer.reset_cancel(); // Re-arm even if we abort
+        return;
+    }
+
+    rewind_in_place(position_ms);
 
     // mark seek as complete so actual audio playback can safely resume
     m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
@@ -405,18 +428,7 @@ audio_decode_worker::clean ()
 {
     // ffmpeg clean
 
-    if (codec_ctx) {
-        avcodec_free_context(&codec_ctx);
-        codec_ctx = nullptr;
-    }
-    if (fmt_ctx) {
-        avformat_close_input(&fmt_ctx);
-        fmt_ctx = nullptr;
-    }
-    if (swr_ctx) {
-        swr_free(&swr_ctx);
-        swr_ctx = nullptr;
-    }
+    close_ffmpeg_contexts();
 
     // The RT thread may be inside pop(): same flush protocol as seek()
     m_ring_buffer.begin_rt_quiesce();
@@ -472,4 +484,5 @@ audio_decode_worker::close_ffmpeg_contexts()
         swr_free(&swr_ctx);
         swr_ctx = nullptr;
     }
+    m_open_path.clear();
 }
