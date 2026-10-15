@@ -33,19 +33,6 @@ QtObject {
         if (!item || item.width <= 0 || item.height <= 0)
             return Qt.rect(0, 0, 0, 0)
 
-        const w = item.width
-        const h = item.height
-
-        const tl = item.mapToItem(ref, 0, 0)
-        const tr = item.mapToItem(ref, w, 0)
-        const bl = item.mapToItem(ref, 0, h)
-        const br = item.mapToItem(ref, w, h)
-
-        const x0 = Math.min(tl.x, tr.x, bl.x, br.x)
-        const y0 = Math.min(tl.y, tr.y, bl.y, br.y)
-        const xe = Math.max(tl.x, tr.x, bl.x, br.x)
-        const ye = Math.max(tl.y, tr.y, bl.y, br.y)
-
-        return Qt.rect(x0, y0, xe - x0, ye - y0)
+        return item.mapToItem(ref, 0, 0, item.width, item.height)
     }
 }
