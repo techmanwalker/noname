@@ -84,14 +84,15 @@ MediaFilterLI::performSearch(const QString &query, QObject *sourceModel)
         
         all_songs = localLib->flattened(); // faster and dedicated
     } else if (auto *sourceSequence = qobject_cast<AbstractMediaSequence*>(sourceModel)) {
+        // Filter its songs and traverse 1 level through its directories
+        // noname does not support more than one level at the moment
+
+        auto [songs, directories] = sourceSequence->items_of_types<Types::Song, Types::Directory>();
+
+        all_songs = std::move(songs);
         
-        // Fallback for generic sequences if needed
-        for (const Types::Any &item : sourceSequence->items()) {
-            if (const auto *song = std::get_if<Types::Song>(&item)) {
-                all_songs.append(*song);
-            } else if (const auto *dir = std::get_if<Types::Directory>(&item)) {
-                all_songs.append(dir->songs);
-            }
+        for (const Types::Directory &dir : directories) {
+            all_songs += dir.songs;
         }
     } else {
         qCWarning(l_mediasequences) << "Invalid source model provided for search.";
