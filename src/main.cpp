@@ -2,8 +2,9 @@
 #include "configuration.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
+#include "mediafilterproxy.hpp"
 #include "windowgeometryproxy.hpp"
-#include "searchresultsproxy.hpp"
+#include "mediafilterproxy.hpp"
 #include "locallibrary.hpp"
 #include "locallibraryproxy.hpp"
 #include "lyricsmanifestproxy.hpp"
@@ -12,7 +13,7 @@
 #include "lyricsmanifest.hpp"
 #include "playqueue.hpp"
 #include "playqueueproxy.hpp"
-#include "searchresults.hpp"
+#include "mediafilter.hpp"
 #include "shortcutslist.hpp"
 #include "shortcutslistproxy.hpp"
 #include "songfactory.hpp" // direct call in case we need to cancel
@@ -60,7 +61,7 @@ main (int argc, char ** argv)
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
-    auto sr = std::make_shared<SearchResultsLI>   ();
+    auto mf = std::make_shared<MediaFilterLI>   ();
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
@@ -75,7 +76,7 @@ main (int argc, char ** argv)
     PlayerPresenterProxy::inject(pp);
     PlayQueueProxy::inject(pq);
     ShortcutsListProxy::inject(sl);
-    SearchResultsProxy::inject(sr);
+    MediaFilterProxy::inject(mf);
     WindowGeometryProxy::inject(wi);
 
 

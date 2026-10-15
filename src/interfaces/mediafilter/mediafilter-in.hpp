@@ -6,11 +6,11 @@ namespace Types {
     struct Song;
 }
 
-class SearchResults
+class MediaFilter
 {
 
 public: 
-    virtual ~SearchResults () = default;
+    virtual ~MediaFilter () = default;
 
     virtual QList<Types::Song> performSearch(const QString &query, QObject *sourceModel) = 0;
 };
