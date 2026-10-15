@@ -57,6 +57,7 @@ endfunction()
 ## C++ sources
 module_sources(MEDIATYPES_SOURCES       "src/datamodels/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/datamodels/sequences/*.cpp")
+module_sources(MEDIATRANSFORMS_SOURCES  "src/transforms/media/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/lyrics/*.cpp")
 module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/playerpresenter/*.cpp")
 module_sources(PLAYQUEUE_SOURCES        "src/presenters/playqueue/*.cpp")
@@ -67,7 +68,7 @@ module_sources(COVERS_SOURCES           "src/covers/*.cpp")
 module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
 module_sources(CONFIGURATION_SOURCES    "src/configuration/*.cpp")
 module_sources(DISKIO_SOURCES           "src/diskio/*.cpp")
-module_sources(SONGFACTORY_SOURCES      "src/songfactory/*.cpp")
+module_sources(SONGFACTORY_SOURCES      "src/ingest/songfactory/*.cpp")
 
 ## QML files
 
@@ -132,19 +133,44 @@ target_link_libraries(mediasequences
     PUBLIC
         mediatypes
 
-        mediafilter_in
-        locallibrary_in # for the shortcut in mediafilter_in
+        
         
     PRIVATE
         Qt6::Core
 
         rolecompiler
+
+        locallibrary_in # for the shortcut in mediafilter_in
 )
 
 target_include_directories(mediasequences
     PUBLIC
         src/datamodels/sequences # to make qmltyperegistrar happy
-        src/datamodels/sequences/filters
+        src/datamodels/transforms/media
+)
+
+add_library(mediatransforms STATIC
+    ${MEDIATRANSFORMS_SOURCES}
+)
+
+target_link_libraries(mediatransforms
+    PUBLIC
+        mediafilter_in
+
+    PRIVATE
+        mediatypes
+        mediasequences
+
+        locallibrary_in
+
+        Qt6::Core
+        Qt6::QmlIntegration
+
+)
+
+target_include_directories(mediatransforms
+    PUBLIC
+        src/transforms/media
 )
 
 add_library(mediafilter_in INTERFACE)
@@ -216,7 +242,7 @@ target_link_libraries(songfactory
 
 target_include_directories(songfactory
     PUBLIC
-        src/songfactory
+        src/ingest/songfactory
 )
 
 
@@ -312,6 +338,7 @@ target_link_libraries (locallibrary
     PRIVATE
         diskio
         configuration_in
+        mediatransforms
         mediatypes
         rolecompiler
         songfactory # local library interface, needs to load the songs metadata
@@ -429,6 +456,8 @@ target_link_libraries(playqueue
         
         mediasequences
         songfactory # qml can drop songs to the play queue graphically, needs to read them
+
+        mediatransforms
 )
 
 target_include_directories(playqueue
@@ -612,6 +641,7 @@ target_link_libraries(${PROJECT_NAME}
         playerpresenter
         playqueue
         configuration
+        mediatransforms
 
         covers # every executable that features its own cover storage will feature this
 
