@@ -28,9 +28,9 @@ public:
     };
     Q_ENUM(PlaybackState)
 
-    Q_PROPERTY(QString title       READ title       NOTIFY titleChanged)
-    Q_PROPERTY(QString artist      READ artist      NOTIFY artistChanged)
-    Q_PROPERTY(QString album       READ album       NOTIFY albumChanged)
+    Q_PROPERTY(QString title       READ title       NOTIFY titleChanged  FINAL)
+    Q_PROPERTY(QString artist      READ artist      NOTIFY artistChanged FINAL)
+    Q_PROPERTY(QString album       READ album       NOTIFY albumChanged  FINAL)
     Q_PROPERTY(QUrl    cover       READ cover       NOTIFY coverChanged)
     Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY durationChanged)
 
