@@ -60,7 +60,7 @@ main (int argc, char ** argv)
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
-    auto sr = std::make_shared<SearchResultsLI>   (nullptr);
+    auto sr = std::make_shared<SearchResultsLI>   ();
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */

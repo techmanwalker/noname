@@ -9,6 +9,8 @@
 
 #include <memory>
 
+#include <qlist.h>
+#include <qobject.h>
 #include <rapidfuzz/fuzz.hpp>
 #include <unicode/translit.h>
 #include <unicode/unistr.h>
@@ -58,16 +60,15 @@ nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> tran
 
 } // namespace
 
-SearchResultsLI::SearchResultsLI(QObject *parent)
-    : PlaylistSequence(parent),
-      m_internal ( std::make_shared<SearchResultsLIPrivate>(make_transliterator()) )
+SearchResultsLI::SearchResultsLI()
+    : m_internal ( std::make_shared<SearchResultsLIPrivate>(make_transliterator()) )
 {
 }
 
 
 // The Search proxy
 
-void
+QList<Types::Song>
 SearchResultsLI::performSearch(const QString &query, QObject *sourceModel)
 {
     QList<Types::Song> all_songs;
@@ -94,19 +95,18 @@ SearchResultsLI::performSearch(const QString &query, QObject *sourceModel)
         }
     } else {
         qCWarning(l_mediasequences) << "Invalid source model provided for search.";
-        return;
+        return {};
     }
 
-    // Execute RapidFuzz search logic on 'all_songs' and call respawn_list(...)
-    performSearch(query, all_songs); 
+    // Execute RapidFuzz search logic on 'all_songs' and return the list (...)
+    return performSearch(query, all_songs); 
 }
 
-void
+QList<Types::Song>
 SearchResultsLI::performSearch(const QString &query, QList<Types::Song> &song_list)
 {
     if (query.isEmpty()) {
-        respawn_list(Prettifiers::sortBy(&Types::Song::title, song_list));
-        return;
+        return Prettifiers::sortBy(&Types::Song::title, song_list);
     }
 
     using rankable_item = std::pair<size_t, double>;
@@ -139,5 +139,5 @@ SearchResultsLI::performSearch(const QString &query, QList<Types::Song> &song_li
         matching_songs.append(song_list.at(ranked.first));
     }
 
-    respawn_list(matching_songs);
+    return matching_songs;
 }
