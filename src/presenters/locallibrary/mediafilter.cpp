@@ -1,4 +1,4 @@
-#include "searchresults.hpp"
+#include "mediafilter.hpp"
 #include "abstractmediasequence.hpp"
 #include "prettifiers.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
@@ -19,12 +19,12 @@
 // bridge icu and icu_<version> safely
 using namespace U_ICU_NAMESPACE; 
 
-class SearchResultsLIPrivate
+class MediaFilterLIPrivate
 {
 public:
     std::shared_ptr<Transliterator> translit;
 
-    SearchResultsLIPrivate (decltype(translit) transliterator)
+    MediaFilterLIPrivate (decltype(translit) transliterator)
         : translit(transliterator) {}
 };
 
@@ -60,8 +60,8 @@ nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> tran
 
 } // namespace
 
-SearchResultsLI::SearchResultsLI()
-    : m_internal ( std::make_shared<SearchResultsLIPrivate>(make_transliterator()) )
+MediaFilterLI::MediaFilterLI()
+    : m_internal ( std::make_shared<MediaFilterLIPrivate>(make_transliterator()) )
 {
 }
 
@@ -69,7 +69,7 @@ SearchResultsLI::SearchResultsLI()
 // The Search proxy
 
 QList<Types::Song>
-SearchResultsLI::performSearch(const QString &query, QObject *sourceModel)
+MediaFilterLI::performSearch(const QString &query, QObject *sourceModel)
 {
     QList<Types::Song> all_songs;
 
@@ -103,7 +103,7 @@ SearchResultsLI::performSearch(const QString &query, QObject *sourceModel)
 }
 
 QList<Types::Song>
-SearchResultsLI::performSearch(const QString &query, QList<Types::Song> &song_list)
+MediaFilterLI::performSearch(const QString &query, QList<Types::Song> &song_list)
 {
     if (query.isEmpty()) {
         return Prettifiers::sortBy(&Types::Song::title, song_list);

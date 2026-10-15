@@ -2,8 +2,8 @@
 
 // The one file in this module that's allowed to see QML's registration
 // machinery. Kept out of mediatypes.hpp/.cpp on purpose: those headers are
-// included by non-QML consumers (audioengine_li, songfactory, debugtools,
-// playerpresenter_li) and shouldn't gain a QtQml include just because this
+// included by non-QML consumers (audioengine, songfactory, debugtools,
+// playerpresenter) and shouldn't gain a QtQml include just because this
 // module also happens to register its types for QML.
 #include <QtQmlIntegration>
 
