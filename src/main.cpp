@@ -1,30 +1,30 @@
-#include "audioengine.hpp"
-#include "configuration.hpp"
-#include "coverprovider.hpp"
-#include "coverstorage.hpp"
-#include "mediafilterproxy.hpp"
-#include "windowgeometryproxy.hpp"
-#include "mediafilterproxy.hpp"
-#include "locallibrary.hpp"
-#include "locallibraryproxy.hpp"
-#include "lyricsmanifestproxy.hpp"
-#include "playerpresenterproxy.hpp"
-#include "playerpresenter.hpp"
-#include "lyricsmanifest.hpp"
-#include "playqueue.hpp"
-#include "playqueueproxy.hpp"
-#include "filter.hpp"
-#include "shortcutslist.hpp"
-#include "shortcutslistproxy.hpp"
-#include "songfactory.hpp" // direct call in case we need to cancel
-#include "windowgeometry.hpp"
 
 #include <QGuiApplication>
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
 #include <QTranslator>
 #include <memory>
-#include <qobject.h>
+
+#include "audioengine.hpp"
+#include "configuration.hpp"
+#include "coverprovider.hpp"
+#include "coverstorage.hpp"
+#include "filter.hpp"
+#include "locallibrary.hpp"
+#include "lyricsmanifest.hpp"
+#include "playerpresenter.hpp"
+#include "playqueue.hpp"
+#include "shortcutslist.hpp"
+#include "songfactory.hpp"
+#include "windowgeometry.hpp"
+
+#include "locallibraryproxy.hpp"
+#include "lyricsmanifestproxy.hpp"
+#include "mediafilterproxy.hpp"
+#include "playerpresenterproxy.hpp"
+#include "playqueueproxy.hpp"
+#include "shortcutslistproxy.hpp"
+#include "windowgeometryproxy.hpp"
 
 Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
@@ -61,7 +61,7 @@ main (int argc, char ** argv)
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
-    auto mf = std::make_shared<MediaFilterLI>   ();
+    auto mf = std::make_shared<MediaFilterLI>     ();
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
@@ -71,18 +71,18 @@ main (int argc, char ** argv)
     sl->read_conf_and_load();
 
     // initialize QML proxies
-    LyricsManifestProxy::inject(lm);
-    LocalLibraryProxy::inject(ll);
-    PlayerPresenterProxy::inject(pp);
-    PlayQueueProxy::inject(pq);
-    ShortcutsListProxy::inject(sl);
-    MediaFilterProxy::inject(mf);
-    WindowGeometryProxy::inject(wi);
+    LyricsManifestProxy   ::inject(lm);
+    LocalLibraryProxy     ::inject(ll);
+    PlayerPresenterProxy  ::inject(pp);
+    PlayQueueProxy        ::inject(pq);
+    ShortcutsListProxy    ::inject(sl);
+    MediaFilterProxy      ::inject(mf);
+    WindowGeometryProxy   ::inject(wi);
 
 
     // bind signals
     QObject::connect (ae.get(), &audio_engineLI::track_changed,
-        pq.get(), &PlayQueueLI::handle_track_changed);
+            pq.get(), &PlayQueueLI::handle_track_changed);
 
     QObject::connect(ae.get(), &audio_engineLI::queued_tracks_finished,
             pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
