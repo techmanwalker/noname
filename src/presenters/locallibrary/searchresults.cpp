@@ -17,6 +17,15 @@
 // bridge icu and icu_<version> safely
 using namespace U_ICU_NAMESPACE; 
 
+class SearchResultsLIPrivate
+{
+public:
+    std::shared_ptr<Transliterator> translit;
+
+    SearchResultsLIPrivate (decltype(translit) transliterator)
+        : translit(transliterator) {}
+};
+
 namespace {
 
 std::shared_ptr<Transliterator>
@@ -33,16 +42,8 @@ make_transliterator()
     return translit;
 }
 
-} // namespace
-
-SearchResultsLI::SearchResultsLI(QObject *parent)
-    : PlaylistSequence(parent),
-      m_translit(make_transliterator())
-{
-}
-
 std::string
-SearchResultsLI::nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> transliterator) {
+nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> transliterator) {
     if (!transliterator) {
         qCDebug(l_mediasequences) << "The transliterator pointer arrived nullptr. Returning original query.";
         return input;
@@ -53,6 +54,14 @@ SearchResultsLI::nfkd_and_translit(const std::string& input, std::shared_ptr<Tra
     std::string result;
     uText.toUTF8String(result);
     return result;
+}
+
+} // namespace
+
+SearchResultsLI::SearchResultsLI(QObject *parent)
+    : PlaylistSequence(parent),
+      m_internal ( std::make_shared<SearchResultsLIPrivate>(make_transliterator()) )
+{
 }
 
 
@@ -104,14 +113,14 @@ SearchResultsLI::performSearch(const QString &query, QList<Types::Song> &song_li
     std::vector<rankable_item> rankable;
 
     // Clean query once using the local transliterator instance
-    const std::string clean_keywords = nfkd_and_translit(query.toStdString(), m_translit);
+    const std::string clean_keywords = nfkd_and_translit(query.toStdString(), m_internal->translit);
     rapidfuzz::fuzz::CachedPartialRatio<char> scorer(clean_keywords.c_str());
     const double score_thresh = 50.0;
 
     // Execute search directly against the flattened song list
     for (qsizetype i = 0; i < song_list.size(); ++i) {
         // Pass transPtr to process text instantly without initialization overhead
-        const std::string clean_title = nfkd_and_translit(song_list.at(i).title.toStdString(), m_translit);
+        const std::string clean_title = nfkd_and_translit(song_list.at(i).title.toStdString(), m_internal->translit);
         double score = scorer.similarity(clean_title.c_str(), score_thresh);
 
         if (score >= score_thresh) {
