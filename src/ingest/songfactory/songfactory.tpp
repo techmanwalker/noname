@@ -2,7 +2,6 @@
 
 #include "attributesstruct.hpp"
 #include "songfactory.hpp"
-// note: that if constexpr sources_to_read needs to be factored out
 
 namespace song_factory {
 
