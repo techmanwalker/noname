@@ -11,8 +11,8 @@ QtObject {
         // use the multiplier values background uses
         let multiplier = background.lumaMultiplierAtCenter (bounds);
 
-        let m_backdrop = presenter.backdrop_luma_for_rect(bounds) * multiplier;
-        let m_ring     = presenter.ring_luma_for_rect(bounds)     * multiplier;
+        let m_backdrop = presenter.backdropLumaForRect(bounds) * multiplier;
+        let m_ring     = presenter.ringLumaForRect(bounds)     * multiplier;
 
         if (m_backdrop > 0.92) return true;   // always light
         if (m_backdrop < 0.05) return false;  // always dark (redundant while the gate below is 0.48)

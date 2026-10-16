@@ -45,7 +45,7 @@ RowLayout {
 
         onPressedChanged: {
 
-            root.stateModel.notify_slider_pressed_change(pressed);
+            root.stateModel.notifySliderPressedChange(pressed);
             
             if (!pressed) {
                 root.stateModel.position_ms = value

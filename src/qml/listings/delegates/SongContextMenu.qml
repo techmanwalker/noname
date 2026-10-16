@@ -15,7 +15,7 @@ ActionMenu {
             text: qsTr("Add to play queue"),
             action: () => {
                 if (root.selectedUris.length > 0) {
-                    PlayQueue.batch_append(root.selectedUris)
+                    PlayQueue.batchAppend(root.selectedUris)
                 }
             }
         },

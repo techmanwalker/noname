@@ -70,13 +70,13 @@ ColumnLayout {
         reuseItems: true
 
         onSongClicked: function(clicked_song: song) {
-            PlayQueue.switch_to(clicked_song.source)
+            PlayQueue.switchTo(clicked_song.source)
         }
 
         additionalMenuActions: [
             {
                 text: qsTr("Play all"),
-                action: () => PlayQueue.respawn_queue(LocalLibrary.flattened_sources())
+                action: () => PlayQueue.respawnQueue(LocalLibrary.flattenedSources())
             }
         ]
     }

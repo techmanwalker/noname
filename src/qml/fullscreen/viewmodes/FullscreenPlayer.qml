@@ -103,8 +103,8 @@ Row {
             target: controls
 
             /*
-            onBoundsChanged: console.log("controls backing luma: " + root.stateModel.backdrop_luma_for_rect(controlsBounds.bounds) + ", "
-                + " ring luma: " + root.stateModel.ring_luma_for_rect(controlsBounds.bounds))
+            onBoundsChanged: console.log("controls backing luma: " + root.stateModel.backdropLumaForRect(controlsBounds.bounds) + ", "
+                + " ring luma: " + root.stateModel.ringLumaForRect(controlsBounds.bounds))
             */
         }
     }
@@ -166,7 +166,7 @@ Row {
 
             onDropped: (drop) => {
                 if (drop.hasUrls) {
-                    PlayQueue.batch_append(drop.urls)
+                    PlayQueue.batchAppend(drop.urls)
 
                     drop.acceptProposedAction()
                 }
@@ -202,7 +202,7 @@ Row {
                     lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                     onSongClicked: (song) => {
-                        PlayQueue.playhead = PlayQueue.find_by_source(song.source)
+                        PlayQueue.playhead = PlayQueue.findBySource(song.source)
                     }
 
                     additionalMenuActions: [
