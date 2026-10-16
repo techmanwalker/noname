@@ -10,7 +10,7 @@
 QList<Types::Song>
 LocalLibraryLI::flattened () const
 {
-    auto dirs= items();
+    auto dirs= items<Types::Directory>();
 
     QList<Types::Song> flattened_directories_songs;
     flattened_directories_songs.reserve(dirs.size());
@@ -185,17 +185,20 @@ LocalLibraryLI::snapshot_known_directories ()
     });
 }
 
-QList<Types::Directory>
-LocalLibraryLI::items () const
-{
-    return AbstractMediaSequence::items<Types::Directory>();
-}
-
 QStringList
 LocalLibraryLI::paths ()
 {
     // .path of all items that are Types::Directory
-    return sources<Types::Directory>();
+    QList<Types::Directory> dir_items = items<Types::Directory>();
+
+    QStringList dir_paths;
+    dir_paths.reserve(dir_items.size());
+
+    for (Types::Directory &dir : dir_items) {
+        dir_paths.push_back(std::move(dir.path));
+    }
+
+    return dir_paths;
 }
 
 LocalLibraryLI::LocalLibraryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)

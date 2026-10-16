@@ -302,5 +302,6 @@ AbstractMediaSequence::__index_next_to_unlocked (const QPersistentModelIndex &id
 QStringList
 AbstractMediaSequence::sources () const
 {
-    return sources<QList<Types::Any>>(m_d->m_items);
+    // read sources for the private items list as is
+    return sources<>(m_d->m_items);
 }
