@@ -26,6 +26,7 @@ QJsonArray
 serialize(const QList<MediaType> &media)
 {
     QList<Types::Any> any_list;
+    any_list.reserve(media.size());
 
     for (const Types::Any &i : media) {
         any_list.append(i);

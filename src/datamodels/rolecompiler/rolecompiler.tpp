@@ -18,6 +18,7 @@ QHash<int, QByteArray>
 compiled_role_set<T>::role_names() const
 {
     QHash<int, QByteArray> hash;
+    hash.reserve(m_compiledroles.size());
     for (const compiled_role<T> &r : m_compiledroles) {
         hash.insert(r.number, r.name);
     }

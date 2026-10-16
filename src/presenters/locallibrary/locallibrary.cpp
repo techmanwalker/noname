@@ -10,9 +10,12 @@
 QList<Types::Song>
 LocalLibraryLI::flattened () const
 {
-    QList<Types::Song> flattened_directories_songs;
+    auto dirs= items();
 
-    for (const Types::Directory &dir : items()) { // quick conversion to avoid more boilerplate
+    QList<Types::Song> flattened_directories_songs;
+    flattened_directories_songs.reserve(dirs.size());
+
+    for (const Types::Directory &dir : dirs) { // quick conversion to avoid more boilerplate
         flattened_directories_songs.append(dir.songs);
     }
 
@@ -107,6 +110,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             }
 
             Types::Directory &target_dir = std::get<Types::Directory>(current_found);
+            target_dir.songs.reserve(songs.size());
 
             // Defensive merge-or-append: not_yet_loaded was deduped by source up front, but
             // another in-flight take_snapshot() on this same directory could have loaded some
@@ -145,6 +149,7 @@ QFuture<void>
 LocalLibraryLI::take_snapshots (const QStringList &paths)
 {
     QList<QFuture<void>> snapshot_futures;
+    snapshot_futures.reserve(paths.size());
 
     for (const QString &dir_path : paths) {
         snapshot_futures.append(

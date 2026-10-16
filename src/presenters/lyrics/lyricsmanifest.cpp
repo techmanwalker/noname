@@ -156,6 +156,7 @@ LyricsManifestLI::current_lines() const
 {
     QReadLocker locker(&m_d->m_lock);
     std::vector<std::string> lrc_lines;
+    lrc_lines.reserve(m_d->m_lyrics.size());
 
     // serialize the logical lyrics back to .lrc only to print it back
     // utilizes a const reference to strictly avoid copying
@@ -174,6 +175,7 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
     return m_d->read_from_metadata_tag(source).then(
         [](filelines lines) {
             std::vector<__syrinc_lyric> decoupled_lines;
+            decoupled_lines.reserve(lines.size());
 
             for (const std::string &line : lines) {
                 std::vector<timestamp> prolly_single_timestamp = lines::line_timestamps(line);
