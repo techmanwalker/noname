@@ -40,18 +40,19 @@ Item {
         Qt.point(1.00, 1)
     ]
 
-    // Used verbatim whenever contentLightness is the "unset" sentinel
-    // (< 0) — e.g. this component previewed standalone, with no real
-    // coverLuma ever bound to it. Matches the old fixed cover_back_l.
+    // fallback for contentLightness < 0 (unset)
     property real coverBackLumaFallback: 0.65
+
+    // base cover_back_l
+    readonly property real implicitMultiplier: root.contentLightness < 0
+        ? root.coverBackLumaFallback
+        : root.clamp(root.curveValue(root.coverBackLumaStops, root.contentLightness))
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
     property real edges_player_l: root.cover_back_l * 0.4
     property real inner_player_l: root.cover_back_l * 0.7
-    property real cover_back_l:   root.contentLightness < 0
-        ? root.coverBackLumaFallback
-        : root.clamp(root.curveValue(root.coverBackLumaStops, root.contentLightness))
+    property real cover_back_l:   implicitMultiplier
         
     property real edges_player_c: root.edges_player_l * 1.4
     property real inner_player_c: root.inner_player_l * 1.3
