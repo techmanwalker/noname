@@ -24,6 +24,8 @@ find_package(libjxl REQUIRED)
 
 find_package(OpenMP)
 
+find_package(CLI11 REQUIRED)
+
 add_subdirectory(submodules/syrinc)
 
 qt_policy(SET QTP0001 NEW)
@@ -630,7 +632,7 @@ set(PLAYER_INCLUDE_DIRECTORIES
 # Actual main executable - the Player
 
 qt_add_executable(${PROJECT_NAME}
-    src/main.cpp
+    src/main/main.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

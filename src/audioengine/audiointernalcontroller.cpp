@@ -1,6 +1,7 @@
 #include "audiointernalcontroller.hpp"
 #include "audiodecodeworker.hpp"
 #include "l_audioengine.hpp" // logging categories
+#include "soundiobackends.hpp"
 
 #include <QThread>
 
@@ -49,26 +50,25 @@ negotiate_stream_format (SoundIoDevice *dev, int preferred_rate)
 
 } // namespace
 
-audio_internal_controller::audio_internal_controller(QObject *parent)
+audio_internal_controller::audio_internal_controller(QObject *parent, audio_backend backend)
     : QObject(parent),
       m_audio_decoding_thread(new QThread(this))
 {
     m_soundio = soundio_create();
 
+    qCDebug (l_audioengine) << "Target backend: " << map::backend_to_string_view(backend);
+
     // Prioritize PulseAudio (seamlessly handled by PipeWire)
-    int err = soundio_connect_backend(m_soundio, SoundIoBackendPulseAudio);
+    int err = soundio_connect_backend(m_soundio, map::backend_to_soundio_backend(backend));
 
-    // Fall back to standard iteration if PulseAudio is unavailable
-    if (err != 0) {
-        err = soundio_connect(m_soundio);
+    const char* early_backend_name = soundio_backend_name(m_soundio->current_backend);
 
-        if (err) {
-            qCCritical(l_audioengine) << "Error connecting soundio:" << soundio_strerror(err);
-            // Handle error or return early
-        } else {
-            // 2. Print the successful backend safely
-            qCDebug(l_audioengine) << "SoundIO connected backend:" << soundio_backend_name(m_soundio->current_backend);
-        }
+    if (err) {
+        // it will crash anyway
+        qCCritical (l_audioengine) << "Error connecting soundio: " << soundio_strerror(err) << "; ended up with " << early_backend_name;
+        std::exit(EXIT_FAILURE);
+    } else {
+        qCDebug(l_audioengine) << "SoundIO connected backend: " << early_backend_name;
     }
 
     soundio_flush_events(m_soundio);
