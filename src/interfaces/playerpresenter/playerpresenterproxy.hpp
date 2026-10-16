@@ -118,13 +118,13 @@ public:
     Q_INVOKABLE void next()  const { if (m_presenter) m_presenter->next();  }
     Q_INVOKABLE void prev()  const { if (m_presenter) m_presenter->prev();  }
 
-    Q_INVOKABLE void notify_slider_pressed_change(bool pressed) {
+    Q_INVOKABLE void notifySliderPressedChange(bool pressed) {
         if (m_presenter) m_presenter->notify_slider_pressed_change(pressed);
     }
 
-    Q_INVOKABLE void save_volume() const { if (m_presenter) m_presenter->save_volume(); }
+    Q_INVOKABLE void saveVolume() const { if (m_presenter) m_presenter->save_volume(); }
 
-    Q_INVOKABLE double backdrop_luma_for_rect (QRect rect) const {
+    Q_INVOKABLE double backdropLumaForRect (QRect rect) const {
         if (m_presenter) {
             return m_presenter->backdrop_luma_for_rect(rect);
         } else {
@@ -132,7 +132,7 @@ public:
         }
     }
 
-    Q_INVOKABLE double ring_luma_for_rect (QRect rect) const {
+    Q_INVOKABLE double ringLumaForRect (QRect rect) const {
         if (m_presenter) {
             return m_presenter->ring_luma_for_rect(rect);
         } else {

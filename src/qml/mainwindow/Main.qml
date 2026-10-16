@@ -27,7 +27,7 @@ T.ApplicationWindow {
     onClosing: {
         // save last used values
         WindowGeometry.poll_and_save_to_disk(width, height);
-        PlayerPresenter.save_volume();
+        PlayerPresenter.saveVolume();
     }
 
     Background {

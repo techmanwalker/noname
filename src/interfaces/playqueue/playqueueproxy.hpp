@@ -63,7 +63,7 @@ public:
     bool shuffled() const { return m_iface && m_iface->shuffled(); }
     void set_shuffle(bool enabled) { if (m_iface) m_iface->set_shuffle(enabled); }
 
-    Q_INVOKABLE void qml_switch_to(const QModelIndex &index) {
+    void qml_switch_to(const QModelIndex &index) {
         if (!m_iface) return; 
 
         // index arrives in THIS proxy's space — map down before crossing the
@@ -71,7 +71,7 @@ public:
         m_iface->switch_to(QPersistentModelIndex(mapToSource(index)), true);
     }
 
-    Q_INVOKABLE void switch_to(const QUrl &source) {
+    Q_INVOKABLE void switchTo(const QUrl &source) {
         if (!m_iface) return; 
         m_iface->switch_to(source);
     }
@@ -91,17 +91,17 @@ public:
         m_iface->clear();
     }
 
-    Q_INVOKABLE QModelIndex find_by_source (const QString &needle) {
+    Q_INVOKABLE QModelIndex findBySource (const QString &needle) {
         if (!m_iface) return QPersistentModelIndex();
         return mapFromSource(m_iface->find_by_source(needle));
     }
 
-    Q_INVOKABLE QFuture<void> batch_append(const QList<QUrl> &sources) {
+    Q_INVOKABLE QFuture<void> batchAppend(const QList<QUrl> &sources) {
         if (!m_iface) return QtFuture::makeReadyVoidFuture(); 
         return m_iface->batch_append(sources);
     }
 
-    Q_INVOKABLE void respawn_queue(const QStringList &sources) {
+    Q_INVOKABLE void respawnQueue(const QStringList &sources) {
         if (!m_iface) return;
         m_iface->respawn_queue(sources);
     }

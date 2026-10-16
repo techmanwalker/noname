@@ -50,7 +50,7 @@ ColumnLayout {
         reuseItems: true
 
         onSongClicked: (song) => {
-            PlayQueue.switch_to(song.source)
+            PlayQueue.switchTo(song.source)
         }
     }
 

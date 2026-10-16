@@ -47,7 +47,7 @@ public:
         return m_iface->flattened();
     }
 
-    Q_INVOKABLE QStringList flattened_sources() const {
+    Q_INVOKABLE QStringList flattenedSources() const {
         if (!m_iface) return {}; 
 
         return m_iface->flattened_sources();

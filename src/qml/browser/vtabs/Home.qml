@@ -30,7 +30,7 @@ ColumnLayout {
         shortcutCoverHeight: root.shortcutCoverHeight
 
         onSongClicked: (song) => {
-            PlayQueue.switch_to(song.source)
+            PlayQueue.switchTo(song.source)
         }
     }
 
