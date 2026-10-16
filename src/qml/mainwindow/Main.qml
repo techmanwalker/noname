@@ -46,6 +46,14 @@ T.ApplicationWindow {
         coverLeft:    stack_player.coverGlobalBounds.x                                           / Math.max(1, root.width)
         coverRight:  (stack_player.coverGlobalBounds.x  + stack_player.coverGlobalBounds.width)  / Math.max(1, root.width)
         playerRight: (stack_player.playerGlobalBounds.x + stack_player.playerGlobalBounds.width) / Math.max(1, root.width)
+
+        // a pinned target looks better in lyrics mode
+        readonly property real lyricsMode_cover_back_l: implicitMultiplier < 1 ? 0.5 : 0.9
+
+        Binding on cover_back_l {
+            value: bg.lyricsMode_cover_back_l
+            when: stack_player.playerLyrics === 1 // in lyrics view mode
+        }
     }
 
     StackLayout {
