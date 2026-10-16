@@ -3,6 +3,8 @@
 #include "attributesstruct.hpp"
 #include "songfactory.hpp"
 
+// note: that if constexpr sources_to_read needs to be factored out
+
 namespace song_factory {
 
 template <list_of_sources sl>
@@ -12,6 +14,7 @@ progressive_extract (const sl &sources, attributes a)
     using value_type = typename sl::value_type;
 
     QList<QUrl> sources_to_read;
+    sources_to_read.reserve(sources.size());
 
     if constexpr (std::is_same_v<value_type, QString>) {
         for (const QString &source : sources) {
@@ -31,6 +34,7 @@ batch_extract (const sl &sources, attributes a)
     using value_type = typename sl::value_type;
 
     QList<QUrl> sources_to_read;
+    sources_to_read.reserve(sources.size());
 
     if constexpr (std::is_same_v<value_type, QString>) {
         for (const QString &source : sources) {
