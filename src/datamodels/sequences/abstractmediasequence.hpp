@@ -71,16 +71,17 @@ public:
 
     const QList<Types::Any> & items() const;
 
+    // items that can be converted to certain types
+    // returns one QList per requested type, in the order requested, in a single pass
+    template <media_type T>
+    QList<T> items () const;
+
     // fetch sources of any input list
     template <media_sequence container>
     static QStringList sources (const container &items);
 
     // fetch the source of every element
     QStringList sources () const;
-
-    // fetch the source of every element convertible to media_type
-    template <media_type T>
-    QStringList sources() const;
 
     // position solvers
     std::optional<std::reference_wrapper<Types::Any>> pointed_to (const QPersistentModelIndex &idx);
@@ -95,11 +96,6 @@ public:
 
     // read a role directly
     Q_INVOKABLE QVariant read_role(qsizetype row, const QByteArray &role) const;
-
-    // items that can be converted to certain types
-    // returns one QList per requested type, in the order requested, in a single pass
-    template <media_type T>
-    QList<T> items () const;
 
     template <typename... Ts> requires distinct_media_types<Ts...>
     std::tuple<QList<Ts>...> items_of_types () const;

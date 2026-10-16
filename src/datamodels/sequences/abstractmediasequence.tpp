@@ -45,29 +45,6 @@ AbstractMediaSequence::items () const
     return list;
 }
 
-template <media_type T>
-QStringList
-AbstractMediaSequence::sources() const
-{
-    QReadLocker locker(&_lock());
-    QStringList uri_sources;
-
-    QList<T> filtered_items = items<T>();
-
-    uri_sources.reserve(static_cast<qsizetype>(_items().size()));
-
-    for (const Types::Any &item : _items()) {
-        if (const auto *resolved = std::get_if<T>(&item)) {
-            if constexpr (std::is_same_v<T, Types::Song>) {
-                uri_sources.append(resolved->source.toLocalFile());
-            }
-        }
-    }
-
-    return uri_sources;
-}
-
-
 // proxy for both sources
 template <media_sequence container>
 QStringList
