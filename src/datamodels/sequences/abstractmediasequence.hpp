@@ -34,6 +34,12 @@ struct all_distinct<T, Rest...>
 template <typename... Ts>
 inline constexpr bool all_distinct_v = all_distinct<Ts...>::value;
 
+template <typename... Ts>
+concept distinct_media_types =
+    (sizeof...(Ts) > 0)
+    && (media_type<Ts> && ...)
+    && all_distinct_v<Ts...>;
+
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
 class AbstractMediaSequencePrivate;
@@ -95,9 +101,8 @@ public:
     template <media_type T>
     QList<T> items () const;
 
-    template <media_type... Ts>
-        requires (sizeof...(Ts) > 0) && all_distinct_v<Ts...>
-    std::tuple<QList<Ts>...> items_of_types() const;
+    template <typename... Ts> requires distinct_media_types<Ts...>
+    std::tuple<QList<Ts>...> items_of_types () const;
 
     // Find an item whose pointed member matches the needle, returns invalid if not found
     template <typename MediaType, typename FieldType>
@@ -122,6 +127,9 @@ protected:
     std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
     std::optional<size_t> __row_next_to_unlocked (const QPersistentModelIndex &idx) const;
     QPersistentModelIndex __index_next_to_unlocked (const QPersistentModelIndex &idx) const;
+    
+    template <typename... Ts> requires distinct_media_types<Ts...>
+    std::tuple<QList<Ts>...> __items_of_types_unlocked () const;
 
     void remove(size_t index);
     void clear();

@@ -8,24 +8,12 @@
 #include <qlist.h>
 
 // --- readers
-
-template <media_type T>
-QList<T> 
-AbstractMediaSequence::items () const
-{
-    auto [list] = items_of_types<T>();
-
-    return list;
-}
-
-template <media_type... Ts>
-    requires (sizeof...(Ts) > 0) && all_distinct_v<Ts...>
+template <typename... Ts>
+    requires distinct_media_types<Ts...>
 std::tuple<QList<Ts>...>
-AbstractMediaSequence::items_of_types () const
+AbstractMediaSequence::__items_of_types_unlocked () const
 {
     std::tuple<QList<Ts>...> result;
-
-    QReadLocker locker (&_lock());
 
     for (const Types::Any &item : _items()) {
         std::visit([&]<typename V>(const V &value) {
@@ -38,12 +26,33 @@ AbstractMediaSequence::items_of_types () const
     return result;
 }
 
+template <typename... Ts>
+    requires distinct_media_types<Ts...>
+std::tuple<QList<Ts>...>
+AbstractMediaSequence::items_of_types () const
+{
+    QReadLocker locker (&_lock());
+    return __items_of_types_unlocked<Ts...>();
+}
+
+
+template <media_type T>
+QList<T> 
+AbstractMediaSequence::items () const
+{
+    auto [list] = items_of_types<T>();
+
+    return list;
+}
+
 template <media_type T>
 QStringList
 AbstractMediaSequence::sources() const
 {
     QReadLocker locker(&_lock());
     QStringList uri_sources;
+
+    QList<T> filtered_items = items<T>();
 
     uri_sources.reserve(static_cast<qsizetype>(_items().size()));
 
