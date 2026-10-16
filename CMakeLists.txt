@@ -393,7 +393,11 @@ target_link_libraries(covers
 
 target_include_directories(covers
     PUBLIC
-        src/covers
+        src/covers/decodeedit
+        src/covers/livecache
+        src/covers/logging
+        src/covers/presentation
+        src/covers/thumbnaildiskio
 )
 
 
