@@ -2,49 +2,53 @@
 
 #include "attributesstruct.hpp"
 #include "songfactory.hpp"
-
 // note: that if constexpr sources_to_read needs to be factored out
 
 namespace song_factory {
+
+namespace {
+
+template <list_of_sources sl>
+QList<QUrl> string_file_paths_to_qurllist (const sl &sources)
+{
+    using value_type = typename sl::value_type;
+
+    if constexpr (std::is_same_v<value_type, QString>) {
+        QList<QUrl> local_file_paths;
+        local_file_paths.reserve(sources.size());
+
+        for (const QString &source : sources) {
+            local_file_paths.append(QUrl::fromLocalFile(source));
+        }
+
+        return local_file_paths;
+    } else {
+        return sources;
+    }
+}
+
+}
 
 template <list_of_sources sl>
 QList<QFuture<Types::Song>>
 progressive_extract (const sl &sources, attributes a)
 {
-    using value_type = typename sl::value_type;
 
-    QList<QUrl> sources_to_read;
-    sources_to_read.reserve(sources.size());
-
-    if constexpr (std::is_same_v<value_type, QString>) {
-        for (const QString &source : sources) {
-            sources_to_read.append(QUrl::fromLocalFile(source));
-        }
-    } else {
-        sources_to_read = sources;
-    }
-
-    return progressive_extract(sources_to_read, a);
+    return progressive_extract(
+        string_file_paths_to_qurllist(sources), 
+        a
+    );
 }
 
 template <list_of_sources sl>
 QFuture<QList<Types::Song>>
 batch_extract (const sl &sources, attributes a)
 {
-    using value_type = typename sl::value_type;
 
-    QList<QUrl> sources_to_read;
-    sources_to_read.reserve(sources.size());
-
-    if constexpr (std::is_same_v<value_type, QString>) {
-        for (const QString &source : sources) {
-            sources_to_read.append(QUrl::fromLocalFile(source));
-        }
-    } else {
-        sources_to_read = sources;
-    }
-
-    return batch_extract(sources_to_read, a);
+    return batch_extract(
+        string_file_paths_to_qurllist(sources),
+        a
+    );
 }
 
 }
