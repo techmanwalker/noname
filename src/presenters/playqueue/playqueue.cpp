@@ -81,7 +81,7 @@ PlayQueueLI::respawn_queue(const QList<Types::Song> &new_queue)
     if (rowCount() > 0 && !playhead().isValid()) switch_to(index(0, 0));
 }
 
-void
+QFuture<void>
 PlayQueueLI::respawn_queue (const QStringList &sources)
 {
     clear();
@@ -93,7 +93,7 @@ PlayQueueLI::respawn_queue (const QStringList &sources)
         uri_sources.emplace_back(QUrl::fromLocalFile(source));
     }
 
-    batch_append(uri_sources);
+    return batch_append(uri_sources);
 }
 
 QPersistentModelIndex

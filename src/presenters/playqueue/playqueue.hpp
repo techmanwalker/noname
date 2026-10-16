@@ -59,7 +59,7 @@ public:
     void set_shuffle (bool enabled) override;
 
     void respawn_queue (const QList<Types::Song> &new_queue);
-    Q_INVOKABLE void respawn_queue (const QStringList &sources) override;
+    Q_INVOKABLE QFuture<void> respawn_queue (const QStringList &sources) override;
 
 signals:
     void track_changed ();
