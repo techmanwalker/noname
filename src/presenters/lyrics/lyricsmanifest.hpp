@@ -42,7 +42,7 @@ public:
 
     QModelIndex index_of_lyric_to_highlight() const override;
 
-    Q_INVOKABLE void clear() override;
+    void clear() override;
 
 signals:
     void lines_changed();

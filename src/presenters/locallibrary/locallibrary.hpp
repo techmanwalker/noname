@@ -26,8 +26,8 @@ public:
     QFuture<void> snapshot_known_directories () override;
 
     QStringList paths ();
-    Q_INVOKABLE QList<Types::Song> flattened () const override; // equivalent to "All Tracks" 
-    Q_INVOKABLE QStringList flattened_sources () const override;
+    QList<Types::Song> flattened () const override; // equivalent to "All Tracks" 
+    QStringList flattened_sources () const override;
 
 signals:
     void refreshFinished ();

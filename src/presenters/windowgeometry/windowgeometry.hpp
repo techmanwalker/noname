@@ -22,7 +22,7 @@ public:
     void poll_width  (int width)  override;
     void poll_height (int height) override;
 
-    Q_INVOKABLE void poll_and_save_to_disk (int width, int height) override;
+    void poll_and_save_to_disk (int width, int height) override;
 
 signals:
     void size_changed();

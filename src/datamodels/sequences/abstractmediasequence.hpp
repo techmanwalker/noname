@@ -95,7 +95,7 @@ public:
     std::optional<std::reference_wrapper<Types::Any>> item_at(size_t index);
 
     // read a role directly
-    Q_INVOKABLE QVariant read_role(qsizetype row, const QByteArray &role) const;
+    QVariant read_role(qsizetype row, const QByteArray &role) const;
 
     template <typename... Ts> requires distinct_media_types<Ts...>
     std::tuple<QList<Ts>...> items_of_types () const;

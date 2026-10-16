@@ -44,22 +44,22 @@ public:
     bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) override;
     void qml_switch_to (const QModelIndex &index);
 
-    Q_INVOKABLE void switch_to (const QUrl &source) override;
+    void switch_to (const QUrl &source) override;
 
-    Q_INVOKABLE void next () override;
-    Q_INVOKABLE void prev () override;
+    void next () override;
+    void prev () override;
 
-    Q_INVOKABLE void clear () override;
+    void clear () override;
 
     QPersistentModelIndex find_by_source (const QString &needle) override;
 
-    Q_INVOKABLE QFuture<void> batch_append (const QList<QUrl> &sources) override;
+    QFuture<void> batch_append (const QList<QUrl> &sources) override;
 
     bool shuffled () const override;
     void set_shuffle (bool enabled) override;
 
     void respawn_queue (const QList<Types::Song> &new_queue);
-    Q_INVOKABLE QFuture<void> respawn_queue (const QStringList &sources) override;
+    QFuture<void> respawn_queue (const QStringList &sources) override;
 
 signals:
     void track_changed ();

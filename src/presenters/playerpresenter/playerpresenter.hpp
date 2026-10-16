@@ -94,17 +94,17 @@ public:
     void load(Types::Song &song) const override;
 
     // Playback controls
-    Q_INVOKABLE void play()  const override;
-    Q_INVOKABLE void pause() const override;
-    Q_INVOKABLE void stop()  const override;
-    Q_INVOKABLE void next()  const override;
-    Q_INVOKABLE void prev()  const override;
+    void play()  const override;
+    void pause() const override;
+    void stop()  const override;
+    void next()  const override;
+    void prev()  const override;
 
     // to stop the poll timer while scrubbing
-    Q_INVOKABLE void notify_slider_pressed_change (bool pressed) override;
+    void notify_slider_pressed_change (bool pressed) override;
 
     // save volume level to disk on demand
-    Q_INVOKABLE void save_volume () const override;
+    void save_volume () const override;
     
 signals:
     // Needed signals for QML to be reactive
