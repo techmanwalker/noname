@@ -63,6 +63,7 @@ song_factory_impl::extract(const QUrl &source, attributes a)
         if (!promise.isCanceled()) {
             if (!result.is_valid()) {
                 qCDebug(l_songfactory) << "Extraction promise for source \"" << source << "\" returned an invalid song.";
+                qCInfo(l_songfactory)  << "File path " << source << " is not a media file.";
             }
             promise.addResult(result);
         } else {

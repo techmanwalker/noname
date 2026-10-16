@@ -3,9 +3,12 @@
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
 #include <QTranslator>
+#include <algorithm>
+#include <iterator>
 #include <memory>
 
 #include <CLI/CLI.hpp>
+#include <qabstractitemmodel.h>
 
 #include "audioengine.hpp"
 #include "configuration.hpp"
@@ -15,6 +18,7 @@
 #include "locallibrary.hpp"
 #include "lyricsmanifest.hpp"
 #include "playerpresenter.hpp"
+#include "playlistsequence.hpp"
 #include "playqueue.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp"
@@ -69,6 +73,8 @@ main (int argc, char ** argv)
         complete_help_view.data()
     );
 
+    cli.allow_extras();
+
     audio_backend backend { audio_backend::pulseaudio };
 
     {
@@ -102,6 +108,19 @@ main (int argc, char ** argv)
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
+
+    // Add to the play queue any path that's readable by song_factory as a track
+    if (cli.remaining().size() > 0) {
+        QStringList arg_paths;
+        std::ranges::transform (cli.remaining(), std::back_inserter(arg_paths), &QString::fromStdString);
+        pq->respawn_queue(arg_paths).then([&pq, &ae](){
+            // probably no path was a song
+            if (pq->item_count() == 0) return;
+
+            pq->switch_to(pq->index(0, 0));
+            ae->play();
+        });
+    }
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
