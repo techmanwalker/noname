@@ -8,6 +8,8 @@
 #include "audiortpump.hpp"
 #include "mediatypes.hpp"
 
+enum class audio_backend;
+
 // log simplifier, avoids super verbose function calls
 #define execute_soundio(func, ...) \
     audio_internal_controller::log_soundio_internal(#func, func, __VA_ARGS__)
@@ -19,7 +21,7 @@ class audio_internal_controller : public QObject
 {
     Q_OBJECT
 public:
-    explicit audio_internal_controller(QObject *parent = nullptr);
+    explicit audio_internal_controller(QObject *parent, audio_backend backend);
     ~audio_internal_controller() override;
 
     template<typename Func, typename... Args>

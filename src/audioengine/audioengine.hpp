@@ -8,6 +8,8 @@
 
 #include <QLoggingCategory>
 
+enum class audio_backend;
+
 /**
     @brief Playback controller proxy for whatever audio framework hides behind the scenes.
 
@@ -23,7 +25,7 @@ class audio_engineLI : public QObject, public audio_engine
     Q_OBJECT
     Q_INTERFACES (audio_engine)
 public:
-    explicit audio_engineLI (QObject *parent);
+    explicit audio_engineLI (QObject *parent, audio_backend backend);
 
     void play() override;
     void pause() override;

@@ -5,6 +5,8 @@
 #include <QTranslator>
 #include <memory>
 
+#include <CLI/CLI.hpp>
+
 #include "audioengine.hpp"
 #include "configuration.hpp"
 #include "coverprovider.hpp"
@@ -16,6 +18,7 @@
 #include "playqueue.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp"
+#include "soundiobackends.hpp"
 #include "windowgeometry.hpp"
 
 #include "locallibraryproxy.hpp"
@@ -25,6 +28,8 @@
 #include "playqueueproxy.hpp"
 #include "shortcutslistproxy.hpp"
 #include "windowgeometryproxy.hpp"
+
+#include "constexprstringcat.hpp"
 
 Q_LOGGING_CATEGORY(l_noname, "noname.app")
 
@@ -36,7 +41,14 @@ main (int argc, char ** argv)
 
     QGuiApplication app(argc, argv);
 
-    QCoreApplication::setApplicationName(QStringLiteral("noname"));
+    #ifndef APP_NAME
+        #define APP_NAME "noname"
+    #endif
+
+    constexpr char name [] { APP_NAME };
+    constexpr QLatin1StringView name_qstr { APP_NAME };
+
+    QCoreApplication::setApplicationName( name_qstr );
 
     QLoggingCategory::setFilterRules(
         "noname.coverprovider.debug=false"
@@ -44,6 +56,32 @@ main (int argc, char ** argv)
 
     // cover cache to hold the shortcuts covers across the entire session
     std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
+
+    // cli options
+    CLI::App cli { name };
+
+    std::string audio_backend_str { "pulseaudio" };
+    using map::audio_backends_list;
+
+    cli.add_option(
+        "-b,--audio-backend",
+        audio_backend_str,
+        complete_help_view.data()
+    );
+
+    audio_backend backend { audio_backend::pulseaudio };
+
+    {
+        using enum audio_backend;
+
+        try {
+            cli.parse(argc, argv);
+        } catch (const CLI::ParseError &e) {
+            return cli.exit(e);
+        }
+
+        backend = map::string_to_backend (audio_backend_str);
+    }
 
     /*  
         Composition root: instantiate concrete implementations behind each
@@ -56,7 +94,7 @@ main (int argc, char ** argv)
     
     auto cm = std::make_shared<configuration::managerLI> (nullptr);
 
-    auto ae = std::make_shared<audio_engineLI>    (nullptr);
+    auto ae = std::make_shared<audio_engineLI>    (nullptr, backend);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
@@ -120,7 +158,7 @@ main (int argc, char ** argv)
 
 
     QTranslator translator;
-    if (translator.load(QLocale::system(), "noname", "_", ":/i18n")) {
+    if (translator.load(QLocale::system(), name_qstr, "_", ":/i18n")) {
         QCoreApplication::installTranslator(&translator);
     }
 

@@ -1,6 +1,7 @@
 #include "audioengine.hpp"
 #include "audiointernalcontroller.hpp"
 #include "mediatypes.hpp"
+#include "soundiobackends.hpp"
 
 #include <QFuture>
 
@@ -9,9 +10,9 @@
 // Logs are fundamental for this program not to blindly fall apart
 
 // Private constructor
-audio_engineLI::audio_engineLI(QObject *parent)
+audio_engineLI::audio_engineLI(QObject *parent, audio_backend backend)
     : QObject(parent),
-      m_internal(std::make_unique<audio_internal_controller>(this))
+      m_internal(std::make_unique<audio_internal_controller>(this, backend))
 {
     connect(m_internal.get(), &audio_internal_controller::seeked,
             this, &audio_engineLI::seek_finished);
