@@ -53,5 +53,40 @@ extract_cover (TagLib::File *file, size_t crop_and_resize)
     return cover;
 }
 
+namespace {
+// Fraction of the duration where the thumbnail frame is taken.
+constexpr double thumbnail_position = 0.15;
+}
+
+QImage
+make_thumbnail (const QUrl &file, const QSize &requested_size)
+{
+    // requested_size.{w|h} == 0 means "return at full size"
+    if (!file.isLocalFile()) {
+        return {};
+    }
+
+    const QImage frame = decode::decode_video_frame_at_fraction(
+        file.toLocalFile(), thumbnail_position, pixelformat_qimage);
+
+    if (frame.isNull()) {
+        return {};
+    }
+
+    if (requested_size.isEmpty()) return frame;
+
+    // 6-7. Center-crop to the requested aspect ratio, still at native resolution.
+    //      Passing w:h straight through is enough: largest_aspect_size compares
+    //      by cross-multiplication, so there's no need to reduce it with
+    //      find_aspect_ratio first.
+    const QImage cropped = transform::crop_largest_aspect(
+        frame, requested_size.width(), requested_size.height());
+
+    // 8-9. Single Lanczos pass on the cropped region.
+    return transform::lanczos_resize(cropped,
+                                     static_cast<size_t>(requested_size.width()),
+                                     static_cast<size_t>(requested_size.height()));
+}
+
 }
 }
