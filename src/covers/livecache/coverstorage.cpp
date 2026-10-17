@@ -127,9 +127,24 @@ cover_storage::resolve_blocking (
 
         if (!file.isNull()) {
             img = extract_cover(file.file(), ref.size());
+
             if (!img.isNull()) {
                 store(ref, img);
                 qCDebug(l_coverprovider) << "Stored/overwritten on demand decoding.";
+            } else {
+                qCDebug (l_coverprovider) << "Trying to make a thumbnail." << ref.source() << ref.size();
+                // try decoding a video frame, if possible
+                img = make_thumbnail(
+                    ref.source(), 
+                    {
+                        static_cast<int>(ref.size()),
+                        static_cast<int>(ref.size())
+                    }
+                );
+                if (!img.isNull()) {
+                    store(ref, img);
+                    qCDebug(l_coverprovider) << "Made a thumbnail from a video file.";
+                }
             }
         }
     }
