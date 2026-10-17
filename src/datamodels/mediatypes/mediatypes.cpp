@@ -47,12 +47,6 @@ Song::duration_mmss () const
     return QString::number(mm) + ":" + (ss < 10 ? "0" : "") + QString::number(ss);
 }
 
-QString
-Song::printable_joint_metadata () const
-{
-    return artist + (album.length() > 0 ? " · " + album : "");
-}
-
 QUrl
 Song::coveruri () const 
 {

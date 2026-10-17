@@ -66,7 +66,8 @@ GridView {
             anchors.bottomMargin: root.songVerticalPadding
 
             title: songItem.title
-            metadata: songItem.printable_joint_metadata
+            metadata: (songItem.artist.length > 0 ? songItem.artist : qsTr ("Unknown Artist"))
+                + (songItem.album.length > 0 ? " · " + songItem.album : "")
             cover: songItem.cover
             duration: songItem.duration_mmss
 

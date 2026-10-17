@@ -47,9 +47,9 @@ Column {
     Label {
         id: artist
 
-        text: root.artist
+        text: root.artist.length > 0 ? root.artist : qsTr("Unknown Artist")
 
-        visible: root.artist.length > 0
+        visible: root.title.length > 0
 
         width: parent.width
         elide: Text.ElideRight
@@ -65,7 +65,7 @@ Column {
 
         text: root.album
 
-        visible: root.album.length > 0
+        visible: root.title.length > 0 && root.album.length > 0
 
         Binding on color {
             value: "black"

@@ -55,7 +55,8 @@ ListView {
 
         title:      model.title
         cover:      model.cover
-        metadata:   model.printable_joint_metadata
+        metadata:   (model.artist.length > 0 ? model.artist : qsTr ("Unknown Artist"))
+            + (model.album.length > 0 ? " · " + model.album : "")
         duration:   model.duration_mmss
 
         coverWidth: root.songCoverWidth
