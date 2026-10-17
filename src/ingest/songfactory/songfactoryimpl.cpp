@@ -164,7 +164,7 @@ song_factory_impl::execute_extraction(QPromise<Types::Song> &promise, attributes
     song.album  = to_qstring(tag->album());
 
     if (song.title.isEmpty()) {
-        song.title = m_source.fileName();
+        song.title = QFileInfo(m_source.fileName()).baseName();
     }
 
     song.duration = static_cast<quint64>(props->lengthInMilliseconds());
