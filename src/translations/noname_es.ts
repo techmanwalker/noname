@@ -37,7 +37,7 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="46"/>
+        <location filename="../qml/browser/Browser.qml" line="47"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
@@ -61,7 +61,7 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="294"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="210"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -70,7 +70,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="303"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="219"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -86,7 +86,7 @@
 <context>
     <name>Lyrics</name>
     <message>
-        <location filename="../qml/fullscreen/Lyrics.qml" line="39"/>
+        <location filename="../qml/fullscreen/Lyrics.qml" line="48"/>
         <source>No lyrics.</source>
         <translation>Sin letras.</translation>
     </message>
@@ -94,12 +94,12 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="90"/>
+        <location filename="../qml/mainwindow/Main.qml" line="121"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="139"/>
+        <location filename="../qml/mainwindow/Main.qml" line="170"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -117,7 +117,19 @@
     </message>
     <message>
         <location filename="../qml/fullscreen/viewmodes/MinibarPlayer.qml" line="16"/>
+        <source>Unknown Artist</source>
+        <translation>Artista desconocido</translation>
+    </message>
+    <message>
         <source>Unknown artist</source>
+        <translation type="vanished">Artista desconocido</translation>
+    </message>
+</context>
+<context>
+    <name>PlayQueueHeader</name>
+    <message>
+        <location filename="../qml/fullscreen/PlayQueueHeader.qml" line="50"/>
+        <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
 </context>
@@ -126,6 +138,18 @@
     <message>
         <source>Back</source>
         <translation type="vanished">Atrás</translation>
+    </message>
+</context>
+<context>
+    <name>Playlist</name>
+    <message>
+        <source>Unknown artist</source>
+        <translation type="vanished">Artista desconocido</translation>
+    </message>
+    <message>
+        <location filename="../qml/listings/Playlist.qml" line="58"/>
+        <source>Unknown Artist</source>
+        <translation>Artista desconocido</translation>
     </message>
 </context>
 <context>
@@ -159,6 +183,18 @@
         <location filename="../qml/browser/delegates/SearchBar.qml" line="29"/>
         <source>Search…</source>
         <translation>Buscar…</translation>
+    </message>
+</context>
+<context>
+    <name>Shortcuts</name>
+    <message>
+        <source>Unknown artist</source>
+        <translation type="vanished">Artista desconocido</translation>
+    </message>
+    <message>
+        <location filename="../qml/listings/Shortcuts.qml" line="45"/>
+        <source>Unknown Artist</source>
+        <translation>Artista desconocido</translation>
     </message>
 </context>
 <context>
@@ -196,14 +232,26 @@
     </message>
 </context>
 <context>
+    <name>SongGrid</name>
+    <message>
+        <source>Unknown artist</source>
+        <translation type="vanished">Artista desconocido</translation>
+    </message>
+    <message>
+        <location filename="../qml/listings/SongGrid.qml" line="69"/>
+        <source>Unknown Artist</source>
+        <translation>Artista desconocido</translation>
+    </message>
+</context>
+<context>
     <name>Tracks</name>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="45"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="76"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="78"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>

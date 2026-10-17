@@ -51,7 +51,6 @@ namespace Types {
 
         // Pretty printers for QML
         Q_PROPERTY(QString duration_mmss READ duration_mmss)
-        Q_PROPERTY(QString printable_joint_metadata READ printable_joint_metadata)
 
     public:
 
@@ -63,7 +62,6 @@ namespace Types {
 
         // ready to print in qml
         QString duration_mmss () const;
-        QString printable_joint_metadata () const;
 
         CoverRef cover = CoverRef(source);
 

@@ -13,7 +13,7 @@ ColumnLayout {
 
 
     readonly property string noTitleText: qsTr("Untitled track")
-    readonly property string noArtistText: qsTr("Unknown artist")
+    readonly property string noArtistText: qsTr("Unknown Artist")
 
     property real padding: 0
     property real topPadding: padding
