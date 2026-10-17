@@ -1,3 +1,4 @@
+#include "basicdiskio.hpp"
 #include "configuration.hpp"
 #include "standardpaths.hpp"
 
@@ -10,7 +11,6 @@
 namespace configuration {
 
 Q_LOGGING_CATEGORY(l_configuration, "noname.memory.configuration");
-
 
 QUrl
 file (conf_file_type type)
@@ -87,31 +87,9 @@ managerLI::__cache_lines_unlocked (conf_file_type type)
 {
     // unsafe to use as-is, read write locks must be externally managed
 
-    QUrl file_uri = file(type); // file path of conf file to read
-    if (file_uri.isEmpty()) return;
-
-    QString local_path = file_uri.toLocalFile();
-
-    QStringList lines;
-
-    QFile file_object (local_path);
-
-    if (!file_object.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return; // if it does not exist, safely return empty
-    }
-
-    QTextStream in (&file_object);
-
-    while (!in.atEnd()) {
-        QString line = in.readLine().trimmed();
-
-        if (!line.isEmpty()) {
-            lines.append(line);
-        }
-    }
-
+    // open and read the conf file for the corresponding type line by line
     // insert or overwrite, does not matter
-    m_last_content_acknowledged_for_file.insert(type, lines);
+    m_last_content_acknowledged_for_file.insert(type, diskio::read_lines(file(type).toLocalFile()).value_or({}));
 
     // qCInfo(l_configuration) << "File " << local_path << "was reloaded. Manually refresh or restart the program for changes to take effect.";
 }
