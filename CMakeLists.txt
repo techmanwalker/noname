@@ -333,6 +333,7 @@ qt_add_qml_module(locallibrary
 target_link_libraries (locallibrary
     PUBLIC
         locallibrary_in
+        playlistslist_in
         shortcutslist_in
         
         mediasequences
@@ -360,6 +361,10 @@ target_include_directories(locallibrary
 add_library(locallibrary_in INTERFACE)
 target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
 target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
+
+add_library(playlistslist_in INTERFACE)
+target_include_directories(playlistslist_in INTERFACE src/interfaces/playlistslist)
+target_link_libraries(playlistslist_in INTERFACE Qt6::Core mediatypes)
 
 add_library(shortcutslist_in INTERFACE)
 target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)

@@ -6,6 +6,7 @@
 #include <QUrl>
 
 #include <cstddef>
+#include <qtmetamacros.h>
 
 /*  Deterministic, session-independent cache key for a song's thumbnail.
     Hashing the absolute path (not file contents) keeps this cheap — an MD5
@@ -91,10 +92,24 @@ namespace Types {
 
         bool operator==(const Album&) const = default; 
 
-        // An empty Playlist doesn't make it invalid
+        // An empty Album doesn't make it invalid
     };
 
-    using Playlist = Album;
+    struct Playlist {
+        Q_GADGET
+        Q_PROPERTY(QString title MEMBER title)
+        Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
+        Q_PROPERTY(quint64 duration READ duration)
+
+    public:
+        QString     title;
+        QList<Song> songs;
+
+        // sum of all the children
+        quint64 duration() const;
+
+        bool operator==(const Playlist&) const = default; 
+    };
 
     struct Directory {
         Q_GADGET
@@ -117,5 +132,5 @@ namespace Types {
         bool operator==(const Directory&) const = default; 
     };
 
-    using Any = std::variant<Types::Song, Types::Album, Types::Directory>;
+    using Any = std::variant<Types::Song, Types::Album, Types::Playlist, Types::Directory>;
 }

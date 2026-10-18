@@ -9,7 +9,8 @@ namespace standardpaths {
 
 enum class standard_dirs {
     configuration,
-    thumbnails
+    thumbnails,
+    playlists
 };
 
 QString dir(standard_dirs type);

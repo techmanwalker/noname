@@ -8,17 +8,17 @@
 #include <memory>
 
 #include <CLI/CLI.hpp>
-#include <qabstractitemmodel.h>
 
 #include "audioengine.hpp"
 #include "configuration.hpp"
 #include "coverprovider.hpp"
 #include "coverstorage.hpp"
+#include "dump.hpp"
 #include "filter.hpp"
 #include "locallibrary.hpp"
 #include "lyricsmanifest.hpp"
 #include "playerpresenter.hpp"
-#include "playlistsequence.hpp"
+#include "playlistslist.hpp"
 #include "playqueue.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp"
@@ -31,6 +31,7 @@
 #include "playerpresenterproxy.hpp"
 #include "playqueueproxy.hpp"
 #include "shortcutslistproxy.hpp"
+#include "playlistslistproxy.hpp"
 #include "windowgeometryproxy.hpp"
 
 #include "constexprstringcat.hpp"
@@ -109,6 +110,7 @@ main (int argc, char ** argv)
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
+    auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
 
     // Add to the play queue any path that's readable by song_factory as a track
@@ -128,8 +130,11 @@ main (int argc, char ** argv)
         a folder-separated view of all available songs */
     ll->snapshot_known_directories();
 
-    // load shortcuts
+    // load shortcuts and user-defined playlists to display
     sl->read_conf_and_load();
+    pl->read_conf_and_load().then(&app, [&pl]() {
+        debug::dump_list_model(l_noname(), *pl, "PlaylistsList", true);
+    });
 
     // initialize QML proxies
     LyricsManifestProxy   ::inject(lm);
@@ -137,9 +142,9 @@ main (int argc, char ** argv)
     PlayerPresenterProxy  ::inject(pp);
     PlayQueueProxy        ::inject(pq);
     ShortcutsListProxy    ::inject(sl);
+    PlaylistsListProxy    ::inject(pl);
     MediaFilterProxy      ::inject(mf);
     WindowGeometryProxy   ::inject(wi);
-
 
     // bind signals
     QObject::connect (ae.get(), &audio_engineLI::track_changed,

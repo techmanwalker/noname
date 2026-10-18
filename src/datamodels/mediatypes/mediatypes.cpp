@@ -22,6 +22,14 @@ Album::duration() const {
     return total;
 }
 
+quint64
+Playlist::duration() const {
+    quint64 total = 0;
+    for (const Song &s : songs)
+        total += s.duration;
+    return total;
+}
+
 Directory::Directory (const QString &source_path)
     : path(source_path),
       title(QFileInfo(source_path).fileName())
