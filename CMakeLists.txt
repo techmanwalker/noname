@@ -28,6 +28,10 @@ find_package(CLI11 REQUIRED)
 
 add_subdirectory(submodules/syrinc)
 
+# compile qCDebug to nothing outside Debug builds (like Qt's own QT_NO_DEBUG).
+# At directory-level: every static lib compiles its own qCDebug calls.
+add_compile_definitions($<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG_OUTPUT>)
+
 qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
 qt_policy(SET QTP0005 NEW)
