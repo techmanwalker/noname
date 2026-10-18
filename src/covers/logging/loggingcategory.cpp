@@ -4,7 +4,7 @@
 
 #include <QJsonArray>
 
-Q_LOGGING_CATEGORY(l_coverprovider, "noname.coverprovider")
+Q_LOGGING_CATEGORY(l_coverprovider, "coverprovider")
 
 namespace debug {
 

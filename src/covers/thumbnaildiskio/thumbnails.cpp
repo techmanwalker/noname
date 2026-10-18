@@ -17,7 +17,7 @@
 
 namespace covers::disk {
 
-Q_LOGGING_CATEGORY(l_thumbnails, "noname.thumbnails")
+Q_LOGGING_CATEGORY(l_thumbnails, "thumbnails")
 
 namespace { // anonymous
 

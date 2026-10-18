@@ -19,7 +19,7 @@
 #include <memory>
 #include <utility>
 
-Q_LOGGING_CATEGORY(l_playerpresenter, "noname.playerpresenter")
+Q_LOGGING_CATEGORY(l_playerpresenter, "playerpresenter")
 
 // Private constructor
 PlayerPresenterLI::PlayerPresenterLI(

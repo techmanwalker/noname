@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <functional>
 
-Q_LOGGING_CATEGORY(l_mediasequences, "noname.mediasequences")
+Q_LOGGING_CATEGORY(l_mediasequences, "mediasequences")
 
 class AbstractMediaSequencePrivate {
 public:

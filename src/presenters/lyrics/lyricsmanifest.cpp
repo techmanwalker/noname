@@ -15,7 +15,7 @@
 
 #include <optional>
 
-Q_LOGGING_CATEGORY(l_lyricsmanifest, "noname.lyrics");
+Q_LOGGING_CATEGORY(l_lyricsmanifest, "lyrics");
 
 using namespace syrinc;
 using namespace syrinc::audio;

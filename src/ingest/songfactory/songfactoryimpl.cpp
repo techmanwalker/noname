@@ -22,7 +22,7 @@ to_qstring (const TagLib::String &s)
 }
 
 
-Q_LOGGING_CATEGORY(song_factory_impl::l_songfactory, "noname.songfactory");
+Q_LOGGING_CATEGORY(song_factory_impl::l_songfactory, "songfactory");
 
 // No need for std::optional at the moment. A Song without source is already invalid.
 

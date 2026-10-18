@@ -36,7 +36,7 @@
 
 #include "constexprstringcat.hpp"
 
-Q_LOGGING_CATEGORY(l_noname, "noname.app")
+Q_LOGGING_CATEGORY(l_noname, "app")
 
 int
 main (int argc, char ** argv)
@@ -56,7 +56,7 @@ main (int argc, char ** argv)
     QCoreApplication::setApplicationName( name_qstr );
 
     QLoggingCategory::setFilterRules(
-        "noname.coverprovider.debug=false"
+        "coverprovider.debug=false"
     );
 
     // cover cache to hold the shortcuts covers across the entire session

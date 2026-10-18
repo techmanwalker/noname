@@ -2,5 +2,5 @@
 #include <qloggingcategory.h>
 
 namespace diskio {
-Q_LOGGING_CATEGORY(l_diskio, "noname.diskio");
+Q_LOGGING_CATEGORY(l_diskio, "diskio");
 }

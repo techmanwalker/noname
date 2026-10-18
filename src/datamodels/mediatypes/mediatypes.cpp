@@ -9,7 +9,7 @@
 #include <qobject.h>
 #include <qurl.h>
 
-Q_LOGGING_CATEGORY(l_mediatypes, "noname.mediatypes")
+Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
 
 
 namespace Types {

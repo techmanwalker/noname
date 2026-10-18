@@ -10,7 +10,7 @@
 
 namespace configuration {
 
-Q_LOGGING_CATEGORY(l_configuration, "noname.memory.configuration");
+Q_LOGGING_CATEGORY(l_configuration, "memory.configuration");
 
 QUrl
 file (conf_file_type type)
