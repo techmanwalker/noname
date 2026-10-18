@@ -41,7 +41,7 @@ PlayerPresenterLI::PlayerPresenterLI(
             this, &PlayerPresenterLI::position_changed);
         
     connect(this, &PlayerPresenterLI::slider_pressed_changed,
-            this, &PlayerPresenterLI::handle_slider_pressed_changed);
+            this, &PlayerPresenterLI::gate_poll_timer);
 
     connect(this, &PlayerPresenterLI::cover_changed,
             this, &PlayerPresenterLI::recompute_lumas);
@@ -245,6 +245,12 @@ void
 PlayerPresenterLI::gate_poll_timer ()
 {
     using playback_state = audio_engine::playback_state;
+
+    if (m_slider_pressed.load(std::memory_order_relaxed)) {
+        m_position_poll_timer->stop();
+        return;
+    }
+
     switch(playing->get_playback_state()) {
         case playback_state::playing:
             m_position_poll_timer->start();
@@ -279,19 +285,4 @@ PlayerPresenterLI::handle_playback_state_changed()
     emit playback_state_changed();
 
     gate_poll_timer();
-}
-
-void
-PlayerPresenterLI::handle_slider_pressed_changed()
-{
-    // write only from qml so no need to emit signal here
-
-    // avoid ui and audioengine fighting to print their position
-    // this point of execution means that the pressed state changed
-    // as the name suggests
-    if (m_slider_pressed.load(std::memory_order_relaxed)) {
-        m_position_poll_timer->stop();
-        return;
-    }
-
 }
