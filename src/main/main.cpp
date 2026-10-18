@@ -64,23 +64,32 @@ main (int argc, char ** argv)
     // cover cache to hold the shortcuts covers across the entire session
     std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
 
-    // cli options
-    CLI::App cli { name };
-
-    std::string audio_backend_str { "pulseaudio" };
-    using map::audio_backends_list;
-
-    cli.add_option(
-        "-b,--audio-backend",
-        audio_backend_str,
-        complete_help_view.data()
-    );
-
-    cli.allow_extras();
-
+    // default target backend for soundio
     audio_backend backend { audio_backend::pulseaudio };
 
+    // song paths listed as command line arguments
+    QStringList arg_paths;
+    QFuture<Types::Song> first_track; // try to kick in as fast as possible
+
     {
+        // short lived
+
+        // cli options
+        CLI::App cli { name };
+
+        std::string audio_backend_str { "pulseaudio" };
+        using map::audio_backends_list;
+
+        cli.add_option(
+            "-b,--audio-backend",
+            audio_backend_str,
+            complete_help_view.data()
+        );
+
+        cli.allow_extras();
+
+        
+
         using enum audio_backend;
 
         try {
@@ -90,6 +99,18 @@ main (int argc, char ** argv)
         }
 
         backend = map::string_to_backend (audio_backend_str);
+
+        // Add to the play queue any path that's readable by song_factory as a track
+        if (cli.remaining().size() > 0) {
+            // read first song metadata with default settings
+            first_track = song_factory::extract(
+                QUrl::fromLocalFile(QString::fromStdString(cli.remaining()[0])), 
+                {}
+            );
+
+            // morph std::vector<std::string> -> QStringList
+            std::ranges::transform (cli.remaining(), std::back_inserter(arg_paths), &QString::fromStdString);
+        }
     }
 
     /*  
@@ -99,32 +120,33 @@ main (int argc, char ** argv)
         double-ownership with Qt's parent/child teardown, hence all initialized
         with nullptr.
     */
-    using MediaTransforms::MediaFilterLI;
-    
-    auto cm = std::make_shared<configuration::managerLI> (nullptr);
 
+    // boot ae and immediately load and play the first track
     auto ae = std::make_shared<audio_engineLI>    (nullptr, backend);
-    auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
+    first_track.then([&ae](Types::Song first) {
+        if (!first.is_valid()) return;
+
+        ae->load(first);
+        ae->play();
+
+        // at this point I think ae should not know about full blown song structs…
+    });
+
+    // load the remaining, the switch should be automagic
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
+    pq->spawn_queue(arg_paths);
+
+    using MediaTransforms::MediaFilterLI;
+    using configuration::managerLI;
+    
+    auto cm = std::make_shared<managerLI>         (nullptr);
+    auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
-
-    // Add to the play queue any path that's readable by song_factory as a track
-    if (cli.remaining().size() > 0) {
-        QStringList arg_paths;
-        std::ranges::transform (cli.remaining(), std::back_inserter(arg_paths), &QString::fromStdString);
-        pq->respawn_queue(arg_paths).then([&pq, &ae](){
-            // probably no path was a song
-            if (pq->item_count() == 0) return;
-
-            pq->switch_to(pq->index(0, 0));
-            ae->play();
-        });
-    }
 
     /*  load the songs from the known music directories and display as
         a folder-separated view of all available songs */
@@ -135,6 +157,9 @@ main (int argc, char ** argv)
     pl->read_conf_and_load().then(&app, [&pl]() {
         debug::dump_list_model(l_noname(), *pl, "PlaylistsList", true);
     });
+
+    // invoke the track_changed handlers if needed
+    lm->load_current_track_lyrics();
 
     // initialize QML proxies
     LyricsManifestProxy   ::inject(lm);

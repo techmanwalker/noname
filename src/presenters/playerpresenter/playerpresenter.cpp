@@ -37,6 +37,11 @@ PlayerPresenterLI::PlayerPresenterLI(
 {
     m_position_poll_timer->setInterval(10);
 
+    // a track could be playing right now
+    if (playback_state() == PlaybackState::playing) {
+        m_position_poll_timer->start();
+    }
+
     connect(m_position_poll_timer, &QTimer::timeout, 
             this, &PlayerPresenterLI::position_changed);
         

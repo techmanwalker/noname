@@ -82,10 +82,8 @@ PlayQueueLI::respawn_queue(const QList<Types::Song> &new_queue)
 }
 
 QFuture<void>
-PlayQueueLI::respawn_queue (const QStringList &sources)
+PlayQueueLI::spawn_queue(const QStringList &sources)
 {
-    clear();
-
     QList<QUrl> uri_sources;
     uri_sources.reserve(sources.size());
 
@@ -94,6 +92,14 @@ PlayQueueLI::respawn_queue (const QStringList &sources)
     }
 
     return batch_append(uri_sources);
+}
+
+QFuture<void>
+PlayQueueLI::respawn_queue (const QStringList &sources)
+{
+    clear();
+
+    return spawn_queue(sources);
 }
 
 QPersistentModelIndex
