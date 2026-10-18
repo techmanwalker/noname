@@ -1,4 +1,3 @@
-#include "abstractmediasequence.hpp"
 #include "basicdiskio.hpp"
 #include "manager-in.hpp"
 #include "defaultroles.hpp"
@@ -9,7 +8,7 @@
 #include "playlistslist.hpp"
 
 PlaylistsListLI::PlaylistsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
-    : AbstractMediaSequence(parent, container_roles),
+    : BasicMediaSequence<Types::Playlist>(parent, container_roles),
       cm(confmanager)
 {}
 
@@ -52,8 +51,3 @@ PlaylistsListLI::read_conf_and_load ()
     return QtFuture::whenAll(pending.begin(), pending.end())
         .then(this, [](const QList<QFuture<void>> &) {});
 }
-
-// a shortcut could be actually anything, just not now
-void PlaylistsListLI::append(const Types::Playlist &playlist)            { AbstractMediaSequence::append(playlist); }
-void PlaylistsListLI::remove(size_t index)                               { AbstractMediaSequence::remove(index); }
-void PlaylistsListLI::clear()                                            { AbstractMediaSequence::clear(); }

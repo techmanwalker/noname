@@ -1,6 +1,7 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
+#include "basicmediasequence.hpp"
 
 #include "manager-in.hpp"
 #include "mediatypes.hpp"
@@ -12,7 +13,7 @@
 // repeating code but somehow Qt has issues with templated QObjects :\
 
 // Intended to end up showing in the Start page showing shortcuts to your favorite music.
-class PlaylistsListLI : public AbstractMediaSequence, public PlaylistsList
+class PlaylistsListLI : public BasicMediaSequence<Types::Playlist>, public PlaylistsList
 {
     Q_OBJECT
     Q_INTERFACES(PlaylistsList)
@@ -20,14 +21,7 @@ class PlaylistsListLI : public AbstractMediaSequence, public PlaylistsList
 public:
     explicit PlaylistsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager);
 
-    // must not copy nor reassign
-    PlaylistsListLI(const PlaylistsListLI&) = delete;
-    PlaylistsListLI& operator=(const PlaylistsListLI&) = delete;
-
-    void append(const Types::Playlist &item);
-    void batch_append ( )= delete; // not needed
-    void remove(size_t index);
-    void clear();
+    using AbstractMediaSequence::clear;
 
     // shorthand
     QFuture<void> read_conf_and_load ();
