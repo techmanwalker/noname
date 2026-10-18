@@ -2,7 +2,11 @@
 
 #include <QFuture>
 #include <QPersistentModelIndex>
+#include <functional>
+#include <optional>
 #include <qfuture.h>
+
+#include "mediatypes.hpp"
 
 class PlayQueue
 {
@@ -22,7 +26,8 @@ public:
 
     virtual void clear () = 0;
 
-    virtual QPersistentModelIndex find_by_source (const QString &needle) = 0;
+    virtual QPersistentModelIndex find_by_source (const QUrl &needle) = 0;
+    virtual std::optional<std::reference_wrapper<Types::Song>> query_metadata_for_source (const QUrl &needle) const = 0;
 
     virtual QFuture<void> batch_append (const QList<QUrl> &sources) = 0;
     

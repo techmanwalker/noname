@@ -68,14 +68,15 @@ PlayerPresenterLI::PlayerPresenterLI(
 }
 
 // Getters block
-QString PlayerPresenterLI::title()         const { return playing->current_track().title;          }
-QString PlayerPresenterLI::artist()        const { return playing->current_track().artist;         }
-QString PlayerPresenterLI::album()         const { return playing->current_track().album;          }
-QUrl    PlayerPresenterLI::cover()         const { return playing->current_track().cover.uri();    }
-quint64 PlayerPresenterLI::duration_ms()   const { return playing->current_track().duration;       }
-quint64 PlayerPresenterLI::position_ms()   const { return playing->current_position_ms();          }
-quint8  PlayerPresenterLI::volume()        const { return playing->current_volume();               }
-bool    PlayerPresenterLI::is_media_loaded() const { return playing->is_a_song_loaded();             }
+QString PlayerPresenterLI::title()         const { return m_current_track_metadata.title;        }
+QString PlayerPresenterLI::artist()        const { return m_current_track_metadata.artist;       }
+QString PlayerPresenterLI::album()         const { return m_current_track_metadata.album;        }
+QUrl    PlayerPresenterLI::cover()         const { return m_current_track_metadata.cover.uri();  }
+quint64 PlayerPresenterLI::duration_ms()   const { return m_current_track_metadata.duration;     }
+
+quint64 PlayerPresenterLI::position_ms()     const { return playing->current_position_ms();  }
+quint8  PlayerPresenterLI::volume()          const { return playing->current_volume();       }
+bool    PlayerPresenterLI::is_media_loaded() const { return playing->is_a_song_loaded();     }
 
 double
 PlayerPresenterLI::luma_of_ring (covers::luminance::luma_types ring) const
@@ -93,7 +94,7 @@ double PlayerPresenterLI::cover_pondered_luma() const { return m_cover_pondered_
 void
 PlayerPresenterLI::recompute_lumas()
 {
-    const QUrl source = playing->current_track().source;
+    const QUrl source = playing->current_track_source();
 
     const CoverRef ref(source, 256);
     const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
@@ -273,6 +274,20 @@ void
 PlayerPresenterLI::handle_track_changed()
 {
     // note: only to update the ui
+
+    // if not matched, this is a race condition or someone forgot to update this
+    Q_ASSERT_X (
+        playing->current_track_source() == m_current_track_metadata.source,
+        "PlayerPresenterLI::handle_track_changed",
+        std::string(
+            std::string("The player presenter current track metadata was not updated. ") +
+            std::string("audio_engine reports the track playing is ") + 
+            playing->current_track_source().toString().toStdString() +
+            std::string(" while the presenter internal struct is ") +
+            m_current_track_metadata.source.toString().toStdString()
+
+        ).data()
+    );
     
     // Suddenly awake the QML declarative tree
     emit title_changed();
@@ -290,4 +305,16 @@ PlayerPresenterLI::handle_playback_state_changed()
     emit playback_state_changed();
 
     gate_poll_timer();
+}
+
+bool
+PlayerPresenterLI::acknowledge_current_song(const Types::Song &metadata)
+{
+    if (metadata.source != playing->current_track_source()) { return false; }
+
+    m_current_track_metadata = metadata;
+
+    handle_track_changed();
+
+    return true;
 }

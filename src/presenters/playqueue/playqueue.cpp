@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <qabstractitemmodel.h>
+#include <variant>
 
 class PlayQueueLIPrivate 
 {
@@ -105,7 +106,7 @@ PlayQueueLI::respawn_queue (const QStringList &sources)
 QPersistentModelIndex
 PlayQueueLI::playhead ()
 {
-    QPersistentModelIndex src_idx = m_d->sequence.find(&Types::Song::source, m_d->playing->current_track().source);
+    QPersistentModelIndex src_idx = m_d->sequence.find(&Types::Song::source, m_d->playing->current_track_source());
     if (!src_idx.isValid()) return {};
     
     // Map the internal sequence index to the proxy index facing QML
@@ -205,7 +206,7 @@ PlayQueueLI::preload_next_track_whenever_possible ()
     if (!std::holds_alternative<Types::Song>(any_item)) return;
 
     Types::Song &song_item = std::get<Types::Song>(any_item);
-    if (m_d->playing->next_track_prepared().source == song_item.source) return;
+    if (m_d->playing->next_track_prepared_source() == song_item.source) return;
     
     m_d->playing->prepare_next_track(song_item);
     qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
@@ -222,9 +223,24 @@ PlayQueueLI::handle_queued_tracks_finished()
 }
 
 QPersistentModelIndex
-PlayQueueLI::find_by_source(const QString &needle)
+PlayQueueLI::find_by_source(const QUrl &needle)
 {
     return from_sequence(m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle));
+}
+
+std::optional<std::reference_wrapper<Types::Song>>
+PlayQueueLI::query_metadata_for_source(const QUrl &needle) const
+{
+    // reference to the original Types::Song struct
+    auto ref = m_d->sequence.pointed_to(m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle));
+
+    if (!ref.has_value()) return std::nullopt;
+
+    Types::Any &prolly_song = ref.value().get();
+
+    if (!std::holds_alternative<Types::Song>(prolly_song)) return std::nullopt;
+
+    return std::get<Types::Song>(prolly_song);
 }
 
 void

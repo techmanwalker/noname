@@ -105,6 +105,9 @@ public:
 
     // save volume level to disk on demand
     void save_volume () const override;
+
+    // update the current song struct on main
+    bool acknowledge_current_song (const Types::Song &metadata);
     
 signals:
     // Needed signals for QML to be reactive
@@ -138,6 +141,9 @@ private:
 
     std::atomic_bool m_slider_pressed {false};
 
+    // do not access these directly from outside, these are guarded
+    Types::Song m_current_track_metadata;
+    
     covers::luminance::cover_rings m_cover_luma_rings;
     covers::luminance::table_luma  m_cover_luma_table;
     double m_cover_pondered_luma = 0.5;

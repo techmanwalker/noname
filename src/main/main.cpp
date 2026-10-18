@@ -182,7 +182,16 @@ main (int argc, char ** argv)
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and
     // main.cpp is the one place allowed to wire concrete-to-concrete connections.
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
-            pp.get(), &PlayerPresenterLI::handle_track_changed);
+            pp.get(), [&pq, &ae, &pp]() {
+
+                // get the song struct from the play queue
+                auto prolly_queue_has_it = pq->query_metadata_for_source(ae->current_track_source());
+
+                if (!prolly_queue_has_it.has_value()) return;
+
+                // commit metadata to the presenter
+                pp->acknowledge_current_song(prolly_queue_has_it.value().get());
+            });
 
     // Both the PlayerPresenter and the LyricsManifest need to be aware
     QObject::connect(ae.get(), &audio_engineLI::track_changed,

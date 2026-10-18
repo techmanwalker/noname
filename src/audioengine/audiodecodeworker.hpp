@@ -3,10 +3,9 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QUrl>
 
 #include "audioringbuffer.hpp"
-
-#include "mediatypes.hpp"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -27,7 +26,7 @@ public slots:
     audio_ring_buffer* get_ring_buffer();
 
     // call if needed to load some other song or audio stream
-    void load (const QString &file_path);
+    void load (const QUrl &source);
 
     // ffmpeg decoding timer, triggers decode_step() repeatedly
     void start_decoding ();
@@ -42,7 +41,7 @@ public slots:
 
 public slots:
     // Queues the next file to be seamlessly opened upon EOF
-    void queue_next_song(const Types::Song& next_song);
+    void queue_next_song(const QUrl &source);
     void clear_queued_song();
 
 private slots:
@@ -68,9 +67,9 @@ private:
     bool           m_passthrough = false;
     AVSampleFormat m_out_av_fmt  = AV_SAMPLE_FMT_NONE;
 
-    // Path currently open in fmt_ctx; empty whenever no context is open. This, not the
-    // engine's current_track, is the truth for "is this file already open?"
-    QString m_open_path;
+    // Source currently open in fmt_ctx; empty whenever no context is open. This, not the
+    // engine's current_track_source, is the truth for "is this file already open?"
+    QUrl m_open_source;
 
     // Body shared by seek() and load()'s same-file rewind. false = av_seek_frame failed.
     bool rewind_in_place (uint64_t position_ms);
@@ -88,7 +87,7 @@ private:
     // decode and seek are mutually exclusive
     std::mutex m_decoder_mutex;
 
-    Types::Song m_queued_next_song;
+    QUrl m_queued_next_song_source;
     bool m_has_queued_song{false};
     std::mutex m_queue_mutex;
 
@@ -96,7 +95,7 @@ private:
     void close_ffmpeg_contexts(); 
     
     // Opens a new file and prepares SwrContext (essentially the FFmpeg parts of your current load() method)
-    bool open_file_internal(const QString& file_path);
+    bool open_file_internal(const QUrl &source);
 
     int audio_stream_index = -1;
 };

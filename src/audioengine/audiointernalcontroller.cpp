@@ -184,18 +184,18 @@ audio_internal_controller::stop()
 }
 
 void
-audio_internal_controller::load(const QString &file_path)
+audio_internal_controller::load(const QUrl &source)
 {
     m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
-    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::load, Qt::BlockingQueuedConnection, file_path);
+    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::load, Qt::BlockingQueuedConnection, source);
     m_decoder_worker->get_ring_buffer()->reset_cancel();
 }
 
 void
-audio_internal_controller::prepare_next_track(const Types::Song &song)
+audio_internal_controller::prepare_next_track(const QUrl &source)
 {
-    QMetaObject::invokeMethod(m_decoder_worker, [this, song]() {
-        m_decoder_worker->queue_next_song(song);
+    QMetaObject::invokeMethod(m_decoder_worker, [this, source]() {
+        m_decoder_worker->queue_next_song(source);
     }, Qt::QueuedConnection);
 }
 

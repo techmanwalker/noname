@@ -2,11 +2,11 @@
 
 #include <QObject>
 #include <QString>
+#include <QUrl>
 
 #include "audiodecodeworker.hpp"
 
 #include "audiortpump.hpp"
-#include "mediatypes.hpp"
 
 enum class audio_backend;
 
@@ -29,8 +29,8 @@ public:
 
     void set_transport_paused(bool paused);
     void stop();
-    void load(const QString &file_path);
-    void prepare_next_track(const Types::Song &song);
+    void load(const QUrl &source);
+    void prepare_next_track(const QUrl &source);
     void undo_prepare_next_track();
     void set_position(uint64_t position_ms);
     void set_volume_multiplier(float hw_multiplier);

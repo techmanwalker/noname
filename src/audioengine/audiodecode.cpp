@@ -55,13 +55,13 @@ audio_decode_worker::is_song_loaded () const
 }
 
 void 
-audio_decode_worker::load(const QString &file_path) {
-    // The decoder is already on this exact file: rewind instead of reopening.
-    if (m_song_loaded && fmt_ctx && file_path == m_open_path) {
+audio_decode_worker::load(const QUrl &source) {
+    // The decoder is already on this exact source: rewind instead of reopening.
+    if (m_song_loaded && fmt_ctx && source == m_open_source) {
         {   // a fresh load drops any pending gapless handoff, exactly like clean()
             std::lock_guard<std::mutex> q_lock(m_queue_mutex);
             m_has_queued_song = false;
-            m_queued_next_song = Types::Song{};
+            m_queued_next_song_source.clear();
         }
         if (rewind_in_place(0)) return;
         // seek failed: fall through to a full reopen
@@ -71,14 +71,26 @@ audio_decode_worker::load(const QString &file_path) {
     clean();
 
     // Open the new file using the helper
-    if (!open_file_internal(file_path)) {
+    if (!open_file_internal(source)) {
         m_song_loaded = false;
     }
 }
 
 bool
-audio_decode_worker::open_file_internal(const QString &file_path)
+audio_decode_worker::open_file_internal(const QUrl &source)
 {
+    // FFmpeg is opened by filesystem path below, so only local files can be decoded for now.
+    // NOTE: to support reading from external sources (http, remote shares, ...) the data has
+    // to be brought into memory BEFORE decoding: either a temporary file copy, or some other
+    // way to load it to memory (e.g. a custom AVIOContext over a QBuffer), then decode from that.
+    if (!source.isLocalFile()) {
+        qCCritical(l_ffmpeg) << "Cannot decode a non-local source:" << source;
+        QString err_q = "Only local files can be decoded.";
+        emit song_load_failed(err_q);
+        return false;
+    }
+    const QString file_path = source.toLocalFile();
+
     // 1. Open the format (the container)
     if (avformat_open_input(&fmt_ctx, file_path.toUtf8().constData(), nullptr, nullptr) < 0) {
         return false;
@@ -139,7 +151,7 @@ audio_decode_worker::open_file_internal(const QString &file_path)
             return false;
         }
 
-        m_open_path   = file_path;
+        m_open_source = source;
         m_song_loaded = true;
         return true;
     } 
@@ -261,7 +273,7 @@ audio_decode_worker::decode_step ()
             // Swap contexts transparently
             close_ffmpeg_contexts();
 
-            if (open_file_internal(m_queued_next_song.source.toLocalFile())) {
+            if (open_file_internal(m_queued_next_song_source)) {
                 m_has_queued_song = false;
                 
                 // Immediately loop again to start decoding the new file
@@ -371,10 +383,10 @@ audio_decode_worker::seek(uint64_t position_ms)
 }
 
 void
-audio_decode_worker::queue_next_song(const Types::Song& next_song)
+audio_decode_worker::queue_next_song(const QUrl &source)
 {
     std::lock_guard<std::mutex> lock(m_queue_mutex);
-    m_queued_next_song = next_song;
+    m_queued_next_song_source = source;
     m_has_queued_song = true;
 }
 
@@ -383,7 +395,7 @@ audio_decode_worker::clear_queued_song()
 {
     std::lock_guard<std::mutex> lock(m_queue_mutex);
     m_has_queued_song = false;
-    m_queued_next_song = Types::Song{};
+    m_queued_next_song_source.clear();
 }
 
 int
@@ -456,7 +468,7 @@ audio_decode_worker::clean ()
     {
         std::lock_guard<std::mutex> q_lock(m_queue_mutex);
         m_has_queued_song = false;
-        m_queued_next_song = Types::Song{};
+        m_queued_next_song_source.clear();
     }
 
     // also reset eof state
@@ -484,5 +496,5 @@ audio_decode_worker::close_ffmpeg_contexts()
         swr_free(&swr_ctx);
         swr_ctx = nullptr;
     }
-    m_open_path.clear();
+    m_open_source.clear();
 }

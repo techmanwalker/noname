@@ -1,6 +1,5 @@
 #include "audioengine.hpp"
 #include "audiointernalcontroller.hpp"
-#include "mediatypes.hpp"
 #include "soundiobackends.hpp"
 
 #include <QFuture>
@@ -60,32 +59,32 @@ audio_engineLI::stop()
 }
 
 void
-audio_engineLI::load(const Types::Song &song)
+audio_engineLI::load(const QUrl &source)
 {
-    if (!song.is_valid()) return;
+    if (source.isEmpty()) return;
 
     m_current_transaction_id++;
 
     // The decoder decides between rewind and reopen: it knows what is actually open
-    m_internal->load(song.source.toLocalFile());
-    
-    m_current_track = song;
+    m_internal->load(source);
+
+    m_current_track_source = source;
     undo_prepare_next_track();
 
     emit track_changed();
 }
 
 void
-audio_engineLI::prepare_next_track(const Types::Song &song)
+audio_engineLI::prepare_next_track(const QUrl &source)
 {
-    m_prolly_next_track = song;
-    m_internal->prepare_next_track(song);
+    m_prolly_next_track_source = source;
+    m_internal->prepare_next_track(source);
 }
 
 void
 audio_engineLI::undo_prepare_next_track()
 {
-    m_prolly_next_track = Types::Song{};
+    m_prolly_next_track_source.clear();
     m_internal->undo_prepare_next_track();
 }
 
@@ -94,7 +93,8 @@ audio_engineLI::unload()
 {
     m_current_transaction_id++; 
     stop();
-    m_current_track = Types::Song{};
+
+    m_current_track_source.clear();
     emit track_changed();
 }
 
@@ -132,16 +132,16 @@ audio_engineLI::current_volume() const
     return static_cast<quint8>(qRound(volume_percent));
 }
 
-const Types::Song &
-audio_engineLI::current_track() const
+const QUrl &
+audio_engineLI::current_track_source() const
 {
-    return m_current_track;
+    return m_current_track_source;
 }
 
-const Types::Song &
-audio_engineLI::next_track_prepared() const
+const QUrl &
+audio_engineLI::next_track_prepared_source() const
 {
-    return m_prolly_next_track;
+    return m_prolly_next_track_source;
 }
 
 quint64
@@ -162,7 +162,7 @@ audio_engineLI::get_playback_state() const
 bool
 audio_engineLI::is_a_song_loaded() const
 {
-    return m_current_track.is_valid();
+    return !m_current_track_source.isEmpty();
 }
 
 void
@@ -178,12 +178,12 @@ void
 audio_engineLI::process_track_boundary()
 {
     if (m_internal->check_and_advance_boundary()) {
-        m_current_track = m_prolly_next_track;
-        undo_prepare_next_track(); 
-        
+        m_current_track_source = m_prolly_next_track_source;
+        undo_prepare_next_track();
+
         emit track_changed();
 
-        if (!m_current_track.is_valid()) {
+        if (m_current_track_source.isEmpty()) {
             process_playlist_finished();
         }
     }

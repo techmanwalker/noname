@@ -6,7 +6,6 @@
 #include "rolecompiler.hpp"
 #include "timestamps.hpp"
 #include "lines.hpp"
-#include "mediatypes.hpp"
 #include "metadata.hpp"
 #include "process.hpp"
 #include "tokens.hpp"
@@ -224,7 +223,7 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 QFuture<void>
 LyricsManifestLI::load_current_track_lyrics ()
 {
-    return repopulate_with_lyrics_for_file(ae->current_track().source.toLocalFile());
+    return repopulate_with_lyrics_for_file(ae->current_track_source().toLocalFile());
 }
 
 void

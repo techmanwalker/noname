@@ -1,7 +1,10 @@
 #pragma once
 
 #include <QObject>
+#include <QUrl>
 #include <QtTypes>
+
+#include "mediatypes.hpp" 
 
 namespace Types {
     struct Song;
@@ -26,12 +29,20 @@ public:
     virtual void unload() = 0;
     virtual void set_position(const quint64 position_ms) = 0;
     virtual void set_volume(quint8 volume_percent) = 0;
-    virtual void load(const Types::Song &song) = 0;
-    virtual void prepare_next_track(const Types::Song &song) = 0;
+    virtual void load(const QUrl &source) = 0;
+    virtual void prepare_next_track(const QUrl &source) = 0;
     virtual void undo_prepare_next_track() = 0;
 
-    virtual const Types::Song & current_track()       const = 0;
-    virtual const Types::Song & next_track_prepared() const = 0;
+    // no Types::Song below this point; the engine only sees sources
+    void load(const Types::Song &song)
+    {
+        if (!song.is_valid()) return;
+        load(song.source);
+    }
+    void prepare_next_track(const Types::Song &song) { prepare_next_track(song.source); }
+
+    virtual const QUrl & current_track_source()       const = 0;
+    virtual const QUrl & next_track_prepared_source() const = 0;
     virtual quint64     current_position_ms() const = 0;
     virtual quint8      current_volume()      const = 0;
     virtual playback_state get_playback_state() const = 0;

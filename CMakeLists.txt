@@ -289,8 +289,6 @@ target_link_libraries(audioengine
     PUBLIC 
         audioengine_in # its interface
 
-        mediatypes # legibly returns its track information
-
     PRIVATE
         SoundIo::SoundIo
         FFmpeg::avcodec
@@ -311,7 +309,7 @@ endif()
 
 add_library(audioengine_in INTERFACE)
 target_include_directories(audioengine_in INTERFACE src/interfaces/audioengine)
-target_link_libraries(audioengine_in INTERFACE Qt6::Core)
+target_link_libraries(audioengine_in INTERFACE Qt6::Core mediatypes)
 
 
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "mediatypes.hpp"
-
 #include "audioengine-in.hpp"
 
 #include "audiointernalcontroller.hpp"
@@ -33,12 +31,17 @@ public:
     void unload() override;
     void set_position(const quint64 position_ms) override;
     void set_volume(quint8 volume_percent) override;
-    void load(const Types::Song &song) override;
-    void prepare_next_track(const Types::Song &song) override;
+    // keep audio_engine's Types::Song overloads visible through audio_engineLI
+    // (declaring the overrides below would otherwise hide them)
+    using audio_engine::load;
+    using audio_engine::prepare_next_track;
+
+    void load(const QUrl &source) override;
+    void prepare_next_track(const QUrl &source) override;
     void undo_prepare_next_track() override;
 
-    const Types::Song & current_track()       const override;
-    const Types::Song & next_track_prepared() const override;
+    const QUrl & current_track_source()       const override;
+    const QUrl & next_track_prepared_source() const override;
     quint64     current_position_ms() const override;
     quint8      current_volume()      const override;
     playback_state get_playback_state() const override;
@@ -63,8 +66,8 @@ public slots:
 private:
     std::unique_ptr<audio_internal_controller> m_internal;
 
-    Types::Song m_current_track;
-    Types::Song m_prolly_next_track;
+    QUrl m_current_track_source;
+    QUrl m_prolly_next_track_source;
 
     double m_log_volume = 0;
     uint64_t m_current_transaction_id = 0;
