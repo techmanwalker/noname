@@ -191,8 +191,16 @@ main (int argc, char ** argv)
     QObject::connect(ae.get(), &audio_engineLI::track_changed,
             pp.get(), [&pq, &ae, &pp]() {
 
+                QUrl current_track_source = ae->current_track_source();
+
+                if (current_track_source.isEmpty()) {
+                    // nothing playing
+                    pp->acknowledge_current_song({});
+                    return;
+                }
+
                 // get the song struct from the play queue
-                auto prolly_queue_has_it = pq->query_metadata_for_source(ae->current_track_source());
+                auto prolly_queue_has_it = pq->query_metadata_for_source(current_track_source);
 
                 if (!prolly_queue_has_it.has_value()) return;
 
