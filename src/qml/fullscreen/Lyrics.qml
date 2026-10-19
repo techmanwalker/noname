@@ -73,11 +73,19 @@ ColumnLayout {
             header: Item {
                 height: root.headerHeight
                 width: listView.width
+
+                TapHandler {
+                    onTapped: root.clickedOnEmptySpace()
+                }
             }
 
             footer: Item {
                 height: root.footerHeight
                 width: listView.width
+
+                TapHandler {
+                    onTapped: root.clickedOnEmptySpace()
+                }
             }
 
             function scrollToHighlighted() : void {
