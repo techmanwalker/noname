@@ -12,7 +12,6 @@
 
 #include <functional>
 #include <memory>
-#include <qabstractitemmodel.h>
 #include <type_traits>
 
 template <typename T>
@@ -43,6 +42,8 @@ concept distinct_media_types =
 Q_DECLARE_LOGGING_CATEGORY(l_mediasequences)
 
 class AbstractMediaSequencePrivate;
+
+template <typename Derived, typename T> class BasicSequenceOps; // typed facade, see basicsequenceops.hpp
 
 /**
     @brief List of any form of playable media, enumerated in the Types:: namespace. 
@@ -131,6 +132,9 @@ protected:
     void clear();
 
 private:
+    // the typed facade is the only outsider allowed to reach the protected writers
+    template <typename, typename> friend class BasicSequenceOps;
+    
     std::unique_ptr<AbstractMediaSequencePrivate> m_d;
 
     // Private reference bypasses to permit abstractmediasequence.tpp logic

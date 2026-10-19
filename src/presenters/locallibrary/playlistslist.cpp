@@ -8,7 +8,7 @@
 #include "playlistslist.hpp"
 
 PlaylistsListLI::PlaylistsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
-    : BasicMediaSequence<Types::Playlist>(parent, container_roles),
+    : AbstractMediaSequence(parent, container_roles),
       cm(confmanager)
 {}
 

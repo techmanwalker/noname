@@ -2,14 +2,17 @@
 
 #include "abstractmediasequence.hpp"
 
-#include "basicmediasequence.hpp"
+#include "basicsequenceops.hpp"
 #include "manager-in.hpp"
 #include "shortcutslist-in.hpp"
 
 #include <memory>
 
 // Intended to end up showing in the Start page showing shortcuts to your favorite music.
-class ShortcutsListLI : public BasicMediaSequence<Types::Song>, public ShortcutsList
+class ShortcutsListLI : 
+    public AbstractMediaSequence,
+    public BasicSequenceOps<ShortcutsListLI, Types::Song>,
+    public ShortcutsList
 {
     Q_OBJECT
     Q_INTERFACES(ShortcutsList)
@@ -21,6 +24,7 @@ public:
     // but noname currently only supports raw songs, will be undone later when
     // actual album support is added
 
+    USING_SEQUENCE_OPS(ShortcutsListLI, Types::Song);
     using AbstractMediaSequence::clear;
 
     // shorthand

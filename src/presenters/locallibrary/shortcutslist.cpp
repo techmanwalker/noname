@@ -1,4 +1,3 @@
-#include "basicmediasequence.hpp"
 #include "manager-in.hpp"
 #include "defaultroles.hpp"
 #include "coveruris.hpp"
@@ -6,7 +5,7 @@
 #include "shortcutslist.hpp"
 
 ShortcutsListLI::ShortcutsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
-    : BasicMediaSequence<Types::Song>(parent, container_roles),
+    : AbstractMediaSequence (parent, container_roles),
       cm(confmanager)
 {}
 

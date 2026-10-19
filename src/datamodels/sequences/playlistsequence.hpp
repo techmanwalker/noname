@@ -1,11 +1,13 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
-#include "basicmediasequence.hpp"
+#include "basicsequenceops.hpp"
 
 #include <QObject>
 
-class PlaylistSequence : public BasicMediaSequence<Types::Song>
+// AbstractMediaSequence MUST stay the first base: the QML prototype is resolved from it
+class PlaylistSequence : public AbstractMediaSequence,
+                         public BasicSequenceOps<PlaylistSequence, Types::Song>
 {
     Q_OBJECT
     QML_ANONYMOUS
@@ -17,6 +19,9 @@ public:
         QList<Types::Song>  songs,
         QObject            *parent = nullptr
     );
+
+    // both bases declare these names, so the leaf picks the typed ones
+    USING_SEQUENCE_OPS(PlaylistSequence, Types::Song);
 
     using AbstractMediaSequence::clear;
 
