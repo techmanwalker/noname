@@ -58,11 +58,7 @@ void
 audio_decode_worker::load(const QUrl &source) {
     // The decoder is already on this exact source: rewind instead of reopening.
     if (m_song_loaded && fmt_ctx && source == m_open_source) {
-        {   // a fresh load drops any pending gapless handoff, exactly like clean()
-            std::lock_guard<std::mutex> q_lock(m_queue_mutex);
-            m_has_queued_song = false;
-            m_queued_next_song_source.clear();
-        }
+        clear_queued_song();   // a fresh load drops any pending gapless handoff, like clean()
         if (rewind_in_place(0)) return;
         // seek failed: fall through to a full reopen
     }
@@ -303,67 +299,29 @@ audio_decode_worker::decode_step ()
 bool
 audio_decode_worker::rewind_in_place(uint64_t position_ms)
 {
-    // reset eof
-    m_ring_buffer.eof_decoded.store(false);
-    m_ring_buffer.eof_played.store(false);
-
     // Re-arm for normal operation before taking the lock and decoding new frames
     m_ring_buffer.reset_cancel();
-    
+
     // decode and seek are mutually exclusive
     std::lock_guard<std::mutex> lock (m_decoder_mutex);
 
-    // After this returns the RT thread cannot touch head/tail until end_rt_quiesce().
-    // Never waits on a callback that isn't running.
-    m_ring_buffer.begin_rt_quiesce();
+    {   // The scope must end BEFORE seek() decrements pending_seeks, as before.
+        audio_ring_buffer::rt_quiesce quiesce(m_ring_buffer);
 
-    // we are now in a safe zone where the RT thread will NOT touch head or tail
+        const int64_t seek_target = av_rescale_q(position_ms, {1, 1000},
+                                                 fmt_ctx->streams[audio_stream_index]->time_base);
 
-    // convert ms to FFmpeg timestamps
-    int64_t seek_target = av_rescale_q(position_ms, 
-                                        // time scale fraction
-                                       {1, 1000}, 
-                                       fmt_ctx->streams[audio_stream_index]->time_base);
-    
-    const bool ok = av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) >= 0;
+        if (av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) < 0)
+            return false;                       // ring and eof flags untouched; scope releases the RT thread
 
-    // perform the seek
-    if (ok) {
-        
-        // Clear FFmpeg decoder buffers
         avcodec_flush_buffers(codec_ctx);
-        
-        // IMPORTANT: Flush the SwrContext resampler cache to prevent old audio spillage!
-        if (swr_ctx) {
-            swr_init(swr_ctx);
-        }
-        
-        // Safely reset ring buffer (RT thread is paused waiting)
-        m_ring_buffer.head.store(0, std::memory_order_relaxed);
-        m_ring_buffer.tail.store(0, std::memory_order_relaxed);
+        if (swr_ctx) swr_init(swr_ctx);         // flush the resampler cache: no old audio spillage
 
-        m_ring_buffer.playback_base_ms.store(position_ms, std::memory_order_relaxed);
-        m_ring_buffer.frames_played.store(0, std::memory_order_relaxed);
-        
-        // Reset absolute gapless trackers for the new position
-        m_ring_buffer.absolute_frames_decoded.store(0, std::memory_order_relaxed);
-        m_ring_buffer.absolute_frames_played.store(0, std::memory_order_relaxed);
-
-        {
-            std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
-            m_ring_buffer.has_upcoming_boundary = false;
-        }
-
-        // Reset the atomic boundary target here
-        m_ring_buffer.next_boundary_frame.store(UINT64_MAX, std::memory_order_relaxed);
-
-        emit seeked();
+        m_ring_buffer.reset(quiesce, position_ms);
     }
 
-    // release the RT thread (must stay BEFORE pending_seeks is decremented, as before)
-    m_ring_buffer.end_rt_quiesce();
-
-    return ok;
+    emit seeked();
+    return true;
 }
 
 void
@@ -441,43 +399,13 @@ audio_decode_worker::clean ()
     // ffmpeg clean
 
     close_ffmpeg_contexts();
+    clear_queued_song();   // not ring state: kept out of the quiesce window
 
-    // The RT thread may be inside pop(): same flush protocol as seek()
-    m_ring_buffer.begin_rt_quiesce();
-
-    // empty buffer
-    m_ring_buffer.head.store (0);
-    m_ring_buffer.tail.store (0);
-
-    // reset playback time to 0
-    m_ring_buffer.frames_played.store(0);
-    m_ring_buffer.playback_base_ms.store(0);
-
-    // reset absolute gapless trackers
-    m_ring_buffer.absolute_frames_decoded.store(0, std::memory_order_relaxed);
-    m_ring_buffer.absolute_frames_played.store(0, std::memory_order_relaxed);
-
-    // invalidate the track boundary of the outgoing song
     {
-        std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
-        m_ring_buffer.has_upcoming_boundary = false;
-    }
-    m_ring_buffer.next_boundary_frame.store(UINT64_MAX, std::memory_order_relaxed);
-
-    // clear any gapless handoff attached to the old song
-    {
-        std::lock_guard<std::mutex> q_lock(m_queue_mutex);
-        m_has_queued_song = false;
-        m_queued_next_song_source.clear();
+        audio_ring_buffer::rt_quiesce quiesce(m_ring_buffer);
+        m_ring_buffer.reset(quiesce, 0);
     }
 
-    // also reset eof state
-    m_ring_buffer.eof_decoded.store(false);
-    m_ring_buffer.eof_played.store(false);
-
-    m_ring_buffer.end_rt_quiesce();
-
-    // mark no loaded song
     m_song_loaded.store(false);
 }
 

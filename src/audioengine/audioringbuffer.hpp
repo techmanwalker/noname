@@ -19,7 +19,10 @@ void underflow_callback (struct SoundIoOutStream *outstream);
 
 class audio_ring_buffer
 {
-    friend class audio_decode_worker;
+    // (friend removed: the decoder no longer touches ring internals)
+
+    void begin_rt_quiesce();
+    void end_rt_quiesce();
 
     // immutable for the ring's whole life: a format/rate change builds a new ring.
     // declaration order matters (initialiser list).
@@ -108,12 +111,28 @@ public:
     std::atomic_bool flush_request{false};
     std::atomic_bool rt_active{false};
 
-    void begin_rt_quiesce();
-    void end_rt_quiesce();
+    // RAII: holds the RT thread out of head/tail for its lifetime (protocol above).
+    class rt_quiesce
+    {
+    public:
+        explicit rt_quiesce (audio_ring_buffer &r) : m_ring(r) { m_ring.begin_rt_quiesce(); }
+        ~rt_quiesce () { m_ring.end_rt_quiesce(); }
+        rt_quiesce (const rt_quiesce &) = delete;
+        rt_quiesce &operator= (const rt_quiesce &) = delete;
+    private:
+        audio_ring_buffer &m_ring;
+    };
+
+    // Decoder thread only. Empties the ring and rewinds every clock/flag to "a track that
+    // starts at base_ms". The ONE place that knows which ring state belongs to a playback
+    // position: a new field gets reset here or nowhere. Deliberately NOT included:
+    // m_cancelled and pending_seeks (control-thread handshakes, not playback state).
+    void reset (const rt_quiesce &, uint64_t base_ms);
 
     std::mutex boundary_mutex;
     bool has_upcoming_boundary{false};
     uint64_t upcoming_boundary_frame{0};
+    uint64_t clock_origin_frame{0};   // absolute frame where the current track began; guarded by boundary_mutex
 
     // Target frame count for the next upcoming track boundary (UINT64_MAX when none)
     std::atomic_uint64_t next_boundary_frame{UINT64_MAX};

@@ -250,10 +250,5 @@ audio_internal_controller::is_paused() const
 bool
 audio_internal_controller::check_and_advance_boundary()
 {
-    if (m_decoder_worker->get_ring_buffer()->check_for_boundary_and_advance()) {
-        m_decoder_worker->get_ring_buffer()->frames_played.store(0, std::memory_order_relaxed);
-        m_decoder_worker->get_ring_buffer()->playback_base_ms.store(0, std::memory_order_relaxed);
-        return true;
-    }
-    return false;
+    return m_decoder_worker->get_ring_buffer()->check_for_boundary_and_advance();
 }

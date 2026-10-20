@@ -116,16 +116,19 @@ bool
 audio_ring_buffer::check_for_boundary_and_advance()
 {
     std::lock_guard<std::mutex> lock(boundary_mutex);
-    if (has_upcoming_boundary) {
-        if (absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundary_frame) {
-            
-            // Invalidate the boundary since we just crossed it
-            has_upcoming_boundary = false;
-            
-            return true;
-        }
-    }
-    return false;
+    if (!has_upcoming_boundary
+        || absolute_frames_played.load(std::memory_order_relaxed) < upcoming_boundary_frame)
+        return false;
+
+    has_upcoming_boundary = false;
+
+    // Rebase the UI clock to the new track. fetch_sub, not store(0): the RT thread keeps
+    // adding to frames_played while we run, and a store would erase both its concurrent
+    // increments and the new-track frames it already played since the crossing.
+    frames_played.fetch_sub(upcoming_boundary_frame - clock_origin_frame, std::memory_order_relaxed);
+    clock_origin_frame = upcoming_boundary_frame;
+    playback_base_ms.store(0, std::memory_order_relaxed);
+    return true;
 }
 
 uint64_t
@@ -172,4 +175,32 @@ void
 audio_ring_buffer::end_rt_quiesce ()
 {
     flush_request.store(false, std::memory_order_release);
+}
+
+void
+audio_ring_buffer::reset (const rt_quiesce &, uint64_t base_ms)
+{
+    // Nothing here is a synchronisation point, the quiesce is: begin_rt_quiesce() acquires
+    // the RT thread's last pop (rt_active), end_rt_quiesce() releases these stores to its
+    // next callback (flush_request). Relaxed is enough.
+    head.store(0, std::memory_order_relaxed);
+    tail.store(0, std::memory_order_relaxed);
+
+    // frames first, base second: a UI read between the two sees the old base, never
+    // new base + old frames
+    frames_played.store(0, std::memory_order_relaxed);
+    playback_base_ms.store(base_ms, std::memory_order_relaxed);
+
+    absolute_frames_decoded.store(0, std::memory_order_relaxed);
+    absolute_frames_played.store(0, std::memory_order_relaxed);
+
+    {
+        std::lock_guard<std::mutex> lock(boundary_mutex);
+        has_upcoming_boundary = false;
+        clock_origin_frame    = 0;   // see check_for_boundary_and_advance()
+    }
+    next_boundary_frame.store(UINT64_MAX, std::memory_order_relaxed);
+
+    eof_decoded.store(false, std::memory_order_relaxed);
+    eof_played.store(false, std::memory_order_relaxed);
 }
