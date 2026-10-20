@@ -21,6 +21,9 @@ public:
     explicit audio_decode_worker (stream_format out_format, QObject *parent = nullptr);
     ~audio_decode_worker() override;
 
+    // What the decoder really handed off to (empty if the handoff failed). Qt thread safe.
+    QUrl handoff_source () const;
+
 public slots:
 
     audio_ring_buffer* get_ring_buffer();
@@ -100,7 +103,7 @@ private:
 
     QUrl m_queued_next_song_source;
     bool m_has_queued_song{false};
-    std::mutex m_queue_mutex;
+    mutable std::mutex m_queue_mutex;
 
     // Closes FFmpeg contexts without clearing the ring buffer
     void close_ffmpeg_contexts(); 

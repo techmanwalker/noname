@@ -38,7 +38,8 @@ public:
     bool is_song_loaded() const;
     uint64_t current_position_ms() const;
     bool is_paused() const;
-    bool check_and_advance_boundary();
+    bool check_and_advance_boundary(QUrl &crossed_into);
+    bool boundary_reached () const;
 
 signals:
     void seeked();

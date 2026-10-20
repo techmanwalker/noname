@@ -467,3 +467,10 @@ audio_decode_worker::close_ffmpeg_contexts()
     }
     m_open_source.clear();
 }
+
+QUrl
+audio_decode_worker::handoff_source () const
+{
+    std::lock_guard<std::mutex> lock(m_queue_mutex);
+    return m_handoff_to;
+}

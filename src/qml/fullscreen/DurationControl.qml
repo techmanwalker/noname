@@ -54,8 +54,9 @@ RowLayout {
         }
 
         function commitPosition() {
-            if (isWithinTolerance())
-                return
+            if (isWithinTolerance()) {
+                return;
+            }
             root.stateModel.position_ms = value
             anchorValue = value
         }

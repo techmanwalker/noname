@@ -71,4 +71,7 @@ private:
 
     double m_log_volume = 0;
     uint64_t m_current_transaction_id = 0;
+
+    // RT crossed a boundary but the queued ceremony has not run yet: run it now.
+    bool settle_boundary ();
 };

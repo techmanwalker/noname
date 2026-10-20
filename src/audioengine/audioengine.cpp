@@ -77,6 +77,7 @@ audio_engineLI::load(const QUrl &source)
 void
 audio_engineLI::prepare_next_track(const QUrl &source)
 {
+    if (settle_boundary()) return;
     m_prolly_next_track_source = source;
     m_internal->prepare_next_track(source);
 }
@@ -84,6 +85,7 @@ audio_engineLI::prepare_next_track(const QUrl &source)
 void
 audio_engineLI::undo_prepare_next_track()
 {
+    if (settle_boundary()) return;
     m_prolly_next_track_source.clear();
     m_internal->undo_prepare_next_track();
 }
@@ -101,6 +103,9 @@ audio_engineLI::unload()
 void
 audio_engineLI::set_position(const quint64 position_ms)
 {
+    // Computed on the track the UI was showing. If the ceremony was overdue it has just run,
+    // and that track is gone: drop it, the UI re-derives from track_changed.
+    if (settle_boundary()) return;
     m_internal->set_position(position_ms);
 }
 
@@ -177,8 +182,14 @@ audio_engineLI::handle_track_changed()
 void
 audio_engineLI::process_track_boundary()
 {
-    if (m_internal->check_and_advance_boundary()) {
-        m_current_track_source = m_prolly_next_track_source;
+    QUrl crossed_into;
+    if (m_internal->check_and_advance_boundary(crossed_into)) {
+        // The decoder is the authority on what became audible
+        if (crossed_into != m_prolly_next_track_source)
+            qCWarning(l_audioengine) << "boundary crossed into" << crossed_into
+                                     << "but the engine expected" << m_prolly_next_track_source;
+
+        m_current_track_source = crossed_into;
         undo_prepare_next_track();
 
         emit track_changed();
@@ -193,4 +204,12 @@ void
 audio_engineLI::process_playlist_finished()
 {
     emit queued_tracks_finished();
+}
+
+bool
+audio_engineLI::settle_boundary ()
+{
+    if (!m_internal->boundary_reached()) return false;
+    process_track_boundary();   // idempotent: the queued copy of this event becomes a no-op
+    return true;
 }

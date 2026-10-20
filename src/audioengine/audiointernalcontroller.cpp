@@ -251,7 +251,17 @@ audio_internal_controller::is_paused() const
 }
 
 bool
-audio_internal_controller::check_and_advance_boundary()
+audio_internal_controller::check_and_advance_boundary (QUrl &crossed_into)
 {
-    return m_decoder_worker->get_ring_buffer()->check_for_boundary_and_advance();
+    const QUrl into = m_decoder_worker->handoff_source();   // read before consuming
+    if (!m_decoder_worker->get_ring_buffer()->check_for_boundary_and_advance()) return false;
+    crossed_into = into;
+    return true;
+}
+
+bool
+audio_internal_controller::boundary_reached () const
+{
+    using phase = audio_ring_buffer::boundary_phase;
+    return m_decoder_worker->get_ring_buffer()->boundary_snapshot().phase == phase::reached;
 }
