@@ -22,7 +22,7 @@
 #include "playqueue.hpp"
 #include "shortcutslist.hpp"
 #include "songfactory.hpp"
-#include "soundiobackends.hpp"
+#include "soundio/backends.hpp"
 #include "windowgeometry.hpp"
 
 #include "locallibraryproxy.hpp"

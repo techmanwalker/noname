@@ -1,6 +1,6 @@
 #include "audioengine.hpp"
-#include "audiointernalcontroller.hpp"
-#include "soundiobackends.hpp"
+#include "bridgecontroller/internalcontroller.hpp"
+#include "soundio/backends.hpp"
 
 #include <QFuture>
 

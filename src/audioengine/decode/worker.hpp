@@ -5,8 +5,8 @@
 #include <QTimer>
 #include <QUrl>
 
-#include "audioringbuffer.hpp"
-#include "avscratch.hpp"
+#include "ringbuffer/ringbuffer.hpp"
+#include "decode/avscratch.hpp"
 
 extern "C" {
 #include <libavformat/avformat.h>

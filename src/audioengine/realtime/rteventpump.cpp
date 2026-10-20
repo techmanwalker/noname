@@ -1,5 +1,5 @@
-#include "audiortpump.hpp"
-#include "l_audioengine.hpp" // l_soundio
+#include "realtime/rteventpump.hpp"
+#include "logging/l_audioengine.hpp" // l_soundio
 
 #include <soundio/soundio.h>
 

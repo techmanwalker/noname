@@ -1,7 +1,7 @@
 #pragma once
 
-#include "l_audioengine.hpp"
-#include "audiointernalcontroller.hpp"
+#include "logging/l_audioengine.hpp"
+#include "bridgecontroller/internalcontroller.hpp"
 
 #include <soundio/soundio.h>
 

@@ -4,7 +4,7 @@
 #include <array>
 #include <string_view>
 
-#include "soundiobackends.hpp"
+#include "soundio/backends.hpp"
 
 // A structural type that can be passed as a template argument in C++20
 template<size_t N>

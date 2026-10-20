@@ -1,4 +1,4 @@
-#include "audioringbuffer.hpp"
+#include "ringbuffer/ringbuffer.hpp"
 
 #include <algorithm>
 #include <cmath>

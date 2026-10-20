@@ -1,7 +1,7 @@
-#include "audiointernalcontroller.hpp"
-#include "audiodecodeworker.hpp"
-#include "l_audioengine.hpp" // logging categories
-#include "soundiobackends.hpp"
+#include "bridgecontroller/internalcontroller.hpp"
+#include "decode/worker.hpp"
+#include "logging/l_audioengine.hpp" // logging categories
+#include "soundio/backends.hpp"
 
 #include <QThread>
 

@@ -303,7 +303,7 @@ target_link_libraries(audioengine
 
 target_include_directories(audioengine
     PUBLIC
-        src/audioengine # enable including its own headers como Qt6:: libraries
+        src/audioengine
 )
 
 if(OpenMP_FOUND)

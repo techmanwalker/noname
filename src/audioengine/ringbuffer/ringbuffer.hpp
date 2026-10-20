@@ -7,8 +7,8 @@
 #include <mutex>
 #include <vector>
 
-#include "audiortevents.hpp"
-#include "audiostreamformat.hpp"
+#include "realtime/rteventmailbox.hpp"
+#include "ringbuffer/streamformats.hpp"
 
 // sndio
 void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);

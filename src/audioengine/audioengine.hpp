@@ -2,7 +2,7 @@
 
 #include "audioengine-in.hpp"
 
-#include "audiointernalcontroller.hpp"
+#include "bridgecontroller/internalcontroller.hpp"
 
 #include <QLoggingCategory>
 

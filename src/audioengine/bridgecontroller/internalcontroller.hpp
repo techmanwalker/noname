@@ -4,9 +4,9 @@
 #include <QString>
 #include <QUrl>
 
-#include "audiodecodeworker.hpp"
+#include "decode/worker.hpp"
 
-#include "audiortpump.hpp"
+#include "realtime/rteventpump.hpp"
 
 enum class audio_backend;
 
@@ -63,4 +63,4 @@ private:
     rt_event_pump *m_rt_pump = nullptr;
 };
 
-#include "prettyerrors.tpp" // IWYU pragma: keep
+#include "logging/prettyerrors.tpp" // IWYU pragma: keep

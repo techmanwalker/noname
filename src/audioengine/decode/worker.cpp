@@ -1,6 +1,6 @@
-#include "audiodecodeworker.hpp"
-#include "audioringbuffer.hpp"
-#include "l_audioengine.hpp"
+#include "decode/worker.hpp"
+#include "ringbuffer/ringbuffer.hpp"
+#include "logging/l_audioengine.hpp"
 
 #include <cerrno>
 #include <optional>
