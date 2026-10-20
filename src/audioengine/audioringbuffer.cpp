@@ -121,6 +121,7 @@ audio_ring_buffer::check_for_boundary_and_advance()
         return false;
 
     has_upcoming_boundary = false;
+    ++boundary_epoch;   // any seek issued before this moment is about a track that is gone
 
     // Rebase the UI clock to the new track. fetch_sub, not store(0): the RT thread keeps
     // adding to frames_played while we run, and a store would erase both its concurrent
@@ -203,4 +204,35 @@ audio_ring_buffer::reset (const rt_quiesce &, uint64_t base_ms)
 
     eof_decoded.store(false, std::memory_order_relaxed);
     eof_played.store(false, std::memory_order_relaxed);
+}
+
+audio_ring_buffer::boundary_view
+audio_ring_buffer::boundary_snapshot () const
+{
+    std::lock_guard<std::mutex> lock(boundary_mutex);
+    if (!has_upcoming_boundary) return { boundary_phase::none, boundary_epoch };
+
+    const bool reached = absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundary_frame;
+    return { reached ? boundary_phase::reached : boundary_phase::armed, boundary_epoch };
+}
+
+bool
+audio_ring_buffer::skip_within_armed_tail (const rt_quiesce &, uint64_t target_ms)
+{
+    const uint64_t now_ms = playback_position_ms();
+    if (target_ms < now_ms) return false;
+
+    uint64_t boundary;
+    { std::lock_guard<std::mutex> lock(boundary_mutex); boundary = upcoming_boundary_frame; }
+
+    const uint64_t played    = absolute_frames_played.load(std::memory_order_relaxed);
+    const uint64_t remaining = boundary > played ? boundary - played : 0;   // A frames still in the ring
+    const uint64_t skip      = std::min((target_ms - now_ms) * m_format.rate / 1000, remaining);
+
+    // Same bookkeeping the RT thread would have done by playing those frames. Landing on
+    // `remaining` makes the next unmuted callback cross the boundary normally.
+    tail.store((tail.load(std::memory_order_relaxed) + skip) % m_capacity_frames, std::memory_order_relaxed);
+    frames_played.fetch_add(skip, std::memory_order_relaxed);
+    absolute_frames_played.fetch_add(skip, std::memory_order_relaxed);
+    return true;
 }

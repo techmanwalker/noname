@@ -210,6 +210,9 @@ audio_internal_controller::undo_prepare_next_track()
 void
 audio_internal_controller::set_position(uint64_t position_ms)
 {
+    // The epoch this seek is issued under: the decoder refuses it if a ceremony ran since
+    const uint64_t epoch = m_decoder_worker->get_ring_buffer()->boundary_snapshot().epoch;
+
     m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
     m_decoder_worker->get_ring_buffer()->pending_seeks.fetch_add(1, std::memory_order_release);
 
@@ -220,7 +223,7 @@ audio_internal_controller::set_position(uint64_t position_ms)
         }
     }
 
-    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::seek, Qt::QueuedConnection, position_ms);
+    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::seek, Qt::QueuedConnection, position_ms, epoch);
 }
 
 void

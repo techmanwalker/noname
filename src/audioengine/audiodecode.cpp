@@ -266,6 +266,10 @@ audio_decode_worker::decode_step ()
             // Arm the atomic tracker. An unconditional store is safe here since we strictly track one boundary at a time.
             m_ring_buffer.next_boundary_frame.store(boundary_frame, std::memory_order_release);
 
+            // Both sides of the handoff, remembered: seeks in the window need A, the ceremony needs B
+            m_audible_source = m_open_source;               // A (close_ffmpeg_contexts() clears it)
+            m_handoff_to     = m_queued_next_song_source;   // B (m_queue_mutex is held here)
+
             // Swap contexts transparently
             close_ffmpeg_contexts();
 
@@ -278,6 +282,7 @@ audio_decode_worker::decode_step ()
                 // Next file failed to open, handle gracefully. Nothing is decodable now:
                 // without this, the next decode_step() reads from a null/half-open context.
                 close_ffmpeg_contexts();
+                m_handoff_to.clear();   // nothing became audible: the ceremony must report "no next track"
                 m_song_loaded.store(false);
                 m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
             }
@@ -297,7 +302,7 @@ audio_decode_worker::decode_step ()
 }
 
 bool
-audio_decode_worker::rewind_in_place(uint64_t position_ms)
+audio_decode_worker::rewind_in_place(uint64_t position_ms, std::optional<uint64_t> epoch)
 {
     // Re-arm for normal operation before taking the lock and decoding new frames
     m_ring_buffer.reset_cancel();
@@ -305,39 +310,75 @@ audio_decode_worker::rewind_in_place(uint64_t position_ms)
     // decode and seek are mutually exclusive
     std::lock_guard<std::mutex> lock (m_decoder_mutex);
 
-    {   // The scope must end BEFORE seek() decrements pending_seeks, as before.
-        audio_ring_buffer::rt_quiesce quiesce(m_ring_buffer);
+    // Scope ends before seek() decrements pending_seeks, as before
+    audio_ring_buffer::rt_quiesce quiesce(m_ring_buffer);
 
-        const int64_t seek_target = av_rescale_q(position_ms, {1, 1000},
-                                                 fmt_ctx->streams[audio_stream_index]->time_base);
+    if (!fmt_ctx) return false;
 
-        if (av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) < 0)
-            return false;                       // ring and eof flags untouched; scope releases the RT thread
+    if (epoch) {
+        using phase = audio_ring_buffer::boundary_phase;
+        const auto b = m_ring_buffer.boundary_snapshot();   // RT is held out: nothing here can move under us
 
-        avcodec_flush_buffers(codec_ctx);
-        if (swr_ctx) swr_init(swr_ctx);         // flush the resampler cache: no old audio spillage
+        // The request was computed on the track the engine presented when it was issued. If the
+        // ceremony ran since (epoch moved) or RT already left that track (reached), applying the
+        // target to whatever is open now IS the cross-seek bug: drop it.
+        if (b.epoch != *epoch || b.phase == phase::reached) return false;
 
-        m_ring_buffer.reset(quiesce, position_ms);
+        if (b.phase == phase::armed) {
+            if (m_ring_buffer.skip_within_armed_tail(quiesce, position_ms)) return true;
+            return reopen_audible_at(quiesce, position_ms);
+        }
     }
+    return seek_and_reset(quiesce, position_ms);
+}
 
-    emit seeked();
+bool
+audio_decode_worker::seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms)
+{
+    const int64_t seek_target = av_rescale_q(position_ms, {1, 1000},
+                                             fmt_ctx->streams[audio_stream_index]->time_base);
+
+    if (av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) < 0)
+        return false;                       // ring and eof flags untouched
+
+    avcodec_flush_buffers(codec_ctx);
+    if (swr_ctx) swr_init(swr_ctx);         // flush the resampler cache: no old audio spillage
+
+    m_ring_buffer.reset(quiesce, position_ms);
     return true;
 }
 
-void
-audio_decode_worker::seek(uint64_t position_ms)
+bool
+audio_decode_worker::reopen_audible_at (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms)
 {
-    // If no context, abort and decrement the pending seek count
-    if (!fmt_ctx) {
-        m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
-        m_ring_buffer.reset_cancel(); // Re-arm even if we abort
-        return;
+    const QUrl next = m_open_source;        // B
+    const QUrl back = m_audible_source;     // A
+    close_ffmpeg_contexts();
+
+    if (open_file_internal(back) && seek_and_reset(quiesce, position_ms)) {
+        std::lock_guard<std::mutex> lock(m_queue_mutex);
+        m_queued_next_song_source = next;   // B is handed off again when A ends
+        m_has_queued_song         = true;
+        return true;
     }
 
-    rewind_in_place(position_ms);
+    // Same policy as a failed handoff: nothing decodable, the ring plays out what it holds
+    close_ffmpeg_contexts();
+    m_song_loaded.store(false);
+    m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
+    return false;
+}
+
+void
+audio_decode_worker::seek(uint64_t position_ms, uint64_t epoch)
+{
+    rewind_in_place(position_ms, epoch);
 
     // mark seek as complete so actual audio playback can safely resume
     m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
+
+    // Exactly one completion per request, whatever happened to it
+    emit seeked();
 }
 
 void

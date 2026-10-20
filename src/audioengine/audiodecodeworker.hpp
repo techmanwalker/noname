@@ -32,7 +32,8 @@ public slots:
     void start_decoding ();
 
     // trigger to flush and start reading from some other timestamp
-    void seek (uint64_t position_ms);
+    // epoch: boundary_snapshot().epoch when the request was issued (see audioringbuffer.hpp)
+    void seek (uint64_t position_ms, uint64_t epoch);
 
     // clean the buffer
     void clean ();
@@ -71,8 +72,18 @@ private:
     // engine's current_track_source, is the truth for "is this file already open?"
     QUrl m_open_source;
 
-    // Body shared by seek() and load()'s same-file rewind. false = av_seek_frame failed.
-    bool rewind_in_place (uint64_t position_ms);
+    // Body shared by seek() and load()'s same-file rewind. false = nothing was repositioned
+    // (seek failed or, when an epoch is given, the request was stale).
+    bool rewind_in_place (uint64_t position_ms, std::optional<uint64_t> epoch = std::nullopt);
+
+    // Common tail of every reposition. Caller holds m_decoder_mutex and the quiesce.
+    bool seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms);
+
+    // Boundary armed (A audible, decoder already on B): back to A at position_ms, B returns to the queue
+    bool reopen_audible_at (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms);
+
+    QUrl m_audible_source;   // A: what is audible while the boundary is armed (decoder thread)
+    QUrl m_handoff_to;       // B: what the decoder really opened at the handoff (guarded by m_queue_mutex)
 
     audio_ring_buffer m_ring_buffer;
 

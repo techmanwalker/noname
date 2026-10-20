@@ -60,7 +60,7 @@ RowLayout {
             anchorValue = value
         }
 
-        // Fires once the handle has been held still for 250 ms while pressed.
+        // Fires once the handle has been held still for a given time (ms) while pressed.
         // Re-armed by every user-driven movement, so it can fire repeatedly
         // during a single press.
         Timer {

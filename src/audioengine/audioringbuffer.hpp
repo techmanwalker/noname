@@ -129,10 +129,23 @@ public:
     // m_cancelled and pending_seeks (control-thread handshakes, not playback state).
     void reset (const rt_quiesce &, uint64_t base_ms);
 
-    std::mutex boundary_mutex;
+    mutable std::mutex boundary_mutex;
     bool has_upcoming_boundary{false};
     uint64_t upcoming_boundary_frame{0};
     uint64_t clock_origin_frame{0};   // absolute frame where the current track began; guarded by boundary_mutex
+    uint64_t boundary_epoch{0};       // bumped (under boundary_mutex) each time the Qt side consumes a boundary
+
+    // armed:   decoder handed off to B, A still audible
+    // reached: RT is playing B, the Qt-side ceremony has not run yet
+    enum class boundary_phase { none, armed, reached };
+    struct boundary_view { boundary_phase phase; uint64_t epoch; };
+
+    // One lock: phase and epoch are consistent with each other (no ceremony can slip between them)
+    boundary_view boundary_snapshot () const;
+
+    // Decoder thread, boundary armed: fast-forward through A's tail that is already in the ring.
+    // false = target is behind the playhead (the ring only holds the future).
+    bool skip_within_armed_tail (const rt_quiesce &, uint64_t target_ms);
 
     // Target frame count for the next upcoming track boundary (UINT64_MAX when none)
     std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
