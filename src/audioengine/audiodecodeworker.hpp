@@ -21,8 +21,9 @@ public:
     explicit audio_decode_worker (stream_format out_format, QObject *parent = nullptr);
     ~audio_decode_worker() override;
 
-    // What the decoder really handed off to (empty if the handoff failed). Qt thread safe.
-    QUrl handoff_source () const;
+    // The file the decoder really opened for B when it reached the end of A's file
+    // (empty if opening it failed). Thread safe.
+    QUrl track_B_opened () const;
 
 public slots:
 
@@ -44,9 +45,9 @@ public slots:
     bool is_song_loaded () const;
 
 public slots:
-    // Queues the next file to be seamlessly opened upon EOF
-    void queue_next_song(const QUrl &source);
-    void clear_queued_song();
+    // B: the file the decoder opens once it has read A's file to the end, so the ring runs on without a gap
+    void prepare_B(const QUrl &source);
+    void undo_prepare_B();
 
 private slots:
     // single work iteration, reprograms itself via m_decode_timer
@@ -71,8 +72,10 @@ private:
     bool           m_passthrough = false;
     AVSampleFormat m_out_av_fmt  = AV_SAMPLE_FMT_NONE;
 
-    // Source currently open in fmt_ctx; empty whenever no context is open. This, not the
-    // engine's current_track_source, is the truth for "is this file already open?"
+    // The file fmt_ctx has open right now (empty when none). The decoder reads ahead of what is
+    // being heard, so this is the file that belongs to A most of the time, and the file that
+    // belongs to B once the decoder has read A's file to the end but A is still playing out.
+    // To know whether a file is already open, ask this, never the engine's A.
     QUrl m_open_source;
 
     // Body shared by seek() and load()'s same-file rewind. false = nothing was repositioned
@@ -82,11 +85,14 @@ private:
     // Common tail of every reposition. Caller holds m_decoder_mutex and the quiesce.
     bool seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms);
 
-    // Boundary armed (A audible, decoder already on B): back to A at position_ms, B returns to the queue
-    bool reopen_audible_at (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms);
+    // Boundary armed (A still audible, the decoder already reading B's file): reopen A's file at
+    // position_ms, B is prepared again
+    bool reopen_A_at (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms);
 
-    QUrl m_audible_source;   // A: what is audible while the boundary is armed (decoder thread)
-    QUrl m_handoff_to;       // B: what the decoder really opened at the handoff (guarded by m_queue_mutex)
+    // The decoder has ONE file open (m_open_source). These exist for the armed window, when the
+    // open file (B's) is not the one being heard (A's).
+    QUrl m_track_A_source;   // A's file, remembered when the decoder moved on to B's; valid only while armed (decoder thread)
+    QUrl m_track_B_opened;   // B's file as the decoder really opened it (guarded by m_B_mutex)
 
     audio_ring_buffer m_ring_buffer;
 
@@ -101,9 +107,11 @@ private:
     // decode and seek are mutually exclusive
     std::mutex m_decoder_mutex;
 
-    QUrl m_queued_next_song_source;
-    bool m_has_queued_song{false};
-    mutable std::mutex m_queue_mutex;
+    // B's file as prepared: opened (and consumed) when the decoder reaches the end of A's file.
+    // Guarded by m_B_mutex.
+    QUrl m_track_B_source;
+    bool m_has_B{false};
+    mutable std::mutex m_B_mutex;
 
     // Closes FFmpeg contexts without clearing the ring buffer
     void close_ffmpeg_contexts(); 

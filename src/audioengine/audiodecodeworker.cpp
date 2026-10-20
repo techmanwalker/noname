@@ -58,7 +58,7 @@ void
 audio_decode_worker::load(const QUrl &source) {
     // The decoder is already on this exact source: rewind instead of reopening.
     if (m_song_loaded && fmt_ctx && source == m_open_source) {
-        clear_queued_song();   // a fresh load drops any pending gapless handoff, like clean()
+        undo_prepare_B();   // load designates a new A: the B prepared for the old one goes, like clean()
         if (rewind_in_place(0)) return;
         // seek failed: fall through to a full reopen
     }
@@ -225,7 +225,9 @@ audio_decode_worker::decode_step ()
             const bool pushed = push_frame(frame);
             av_frame_unref(frame);
 
-            // Cancelled mid-drain: do NOT fall through to the gapless handoff (see notes below)
+            // Cancelled mid-drain: a seek/stop/load is taking over and will reset the codec and
+            // the ring. Do NOT fall through to step 2 below (arming the boundary, opening B's
+            // file): the last samples of A's file never reached the ring.
             if (!pushed) {
                 av_packet_free(&pkt);
                 av_frame_free(&frame);
@@ -250,15 +252,15 @@ audio_decode_worker::decode_step ()
             }
         }
 
-        // 2. GAPLESS HANDOFF CHECK
-        std::lock_guard<std::mutex> q_lock(m_queue_mutex);
+        // 2. End of A's file: if B is prepared, open B's file and keep decoding right behind A's samples
+        std::lock_guard<std::mutex> B_lock(m_B_mutex);
 
-        if (m_has_queued_song) {
+        if (m_has_B) {
 
-            // Register the boundary for the UI
+            // Register the boundary between A and B for the UI
             uint64_t boundary_frame = m_ring_buffer.absolute_frames_decoded.load(std::memory_order_relaxed);
             {
-                std::lock_guard<std::mutex> b_lock(m_ring_buffer.boundary_mutex);
+                std::lock_guard<std::mutex> boundary_lock(m_ring_buffer.boundary_mutex);
                 m_ring_buffer.upcoming_boundary_frame = boundary_frame;
                 m_ring_buffer.has_upcoming_boundary = true;
             }
@@ -266,28 +268,28 @@ audio_decode_worker::decode_step ()
             // Arm the atomic tracker. An unconditional store is safe here since we strictly track one boundary at a time.
             m_ring_buffer.next_boundary_frame.store(boundary_frame, std::memory_order_release);
 
-            // Both sides of the handoff, remembered: seeks in the window need A, the ceremony needs B
-            m_audible_source = m_open_source;               // A (close_ffmpeg_contexts() clears it)
-            m_handoff_to     = m_queued_next_song_source;   // B (m_queue_mutex is held here)
+            // Remember both files: seeks while armed need A's, on_boundary_hit() needs to know B's
+            m_track_A_source = m_open_source;       // A's file (close_ffmpeg_contexts() clears m_open_source)
+            m_track_B_opened = m_track_B_source;    // B's file (m_B_mutex is held here)
 
-            // Swap contexts transparently
+            // The decoder's single open file moves from A's to B's
             close_ffmpeg_contexts();
 
-            if (open_file_internal(m_queued_next_song_source)) {
-                m_has_queued_song = false;
-                
-                // Immediately loop again to start decoding the new file
-                m_decode_timer->setInterval(0); 
+            if (open_file_internal(m_track_B_source)) {
+                m_has_B = false;   // consumed: B's file is open now
+
+                // Immediately loop again to start decoding B
+                m_decode_timer->setInterval(0);
             } else {
-                // Next file failed to open, handle gracefully. Nothing is decodable now:
+                // B's file failed to open, handle gracefully. Nothing is decodable now:
                 // without this, the next decode_step() reads from a null/half-open context.
                 close_ffmpeg_contexts();
-                m_handoff_to.clear();   // nothing became audible: the ceremony must report "no next track"
+                m_track_B_opened.clear();   // B never existed: the hit must report "no B"
                 m_song_loaded.store(false);
                 m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
             }
         } else {
-            // No queued song, actually stop decoding
+            // No B prepared: the end of A's file is where the tape runs out, stop decoding
             m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
             m_decode_timer->setInterval(100); 
         }
@@ -319,14 +321,15 @@ audio_decode_worker::rewind_in_place(uint64_t position_ms, std::optional<uint64_
         using phase = audio_ring_buffer::boundary_phase;
         const auto b = m_ring_buffer.boundary_snapshot();   // RT is held out: nothing here can move under us
 
-        // The request was computed on the track the engine presented when it was issued. If the
-        // ceremony ran since (epoch moved) or RT already left that track (reached), applying the
-        // target to whatever is open now IS the cross-seek bug: drop it.
-        if (b.epoch != *epoch || b.phase == phase::reached) return false;
+        // The request was computed against the A the engine presented when it was issued. If that
+        // hit was consumed since (epoch moved) or the RT thread is already past the boundary
+                // (phase hit), A is gone: applying the target to the file open now (B's) IS the cross-seek
+        // bug. Drop it.
+        if (b.epoch != *epoch || b.phase == phase::hit) return false;
 
-        if (b.phase == phase::armed) {
+        if (b.phase == phase::armed) {   // A is still audible, the decoder already reads B's file
             if (m_ring_buffer.skip_within_armed_tail(quiesce, position_ms)) return true;
-            return reopen_audible_at(quiesce, position_ms);
+            return reopen_A_at(quiesce, position_ms);
         }
     }
     return seek_and_reset(quiesce, position_ms);
@@ -349,20 +352,20 @@ audio_decode_worker::seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesc
 }
 
 bool
-audio_decode_worker::reopen_audible_at (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms)
+audio_decode_worker::reopen_A_at (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms)
 {
-    const QUrl next = m_open_source;        // B
-    const QUrl back = m_audible_source;     // A
+    const QUrl B_source = m_open_source;
+    const QUrl A_source = m_track_A_source;
     close_ffmpeg_contexts();
 
-    if (open_file_internal(back) && seek_and_reset(quiesce, position_ms)) {
-        std::lock_guard<std::mutex> lock(m_queue_mutex);
-        m_queued_next_song_source = next;   // B is handed off again when A ends
-        m_has_queued_song         = true;
+    if (open_file_internal(A_source) && seek_and_reset(quiesce, position_ms)) {
+        std::lock_guard<std::mutex> lock(m_B_mutex);
+        m_track_B_source = B_source;   // B's file is opened again when the decoder reaches the end of A's
+        m_has_B          = true;
         return true;
     }
 
-    // Same policy as a failed handoff: nothing decodable, the ring plays out what it holds
+    // Same policy as when B's file fails to open: nothing decodable, the ring plays out what it holds
     close_ffmpeg_contexts();
     m_song_loaded.store(false);
     m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
@@ -382,19 +385,19 @@ audio_decode_worker::seek(uint64_t position_ms, uint64_t epoch)
 }
 
 void
-audio_decode_worker::queue_next_song(const QUrl &source)
+audio_decode_worker::prepare_B(const QUrl &source)
 {
-    std::lock_guard<std::mutex> lock(m_queue_mutex);
-    m_queued_next_song_source = source;
-    m_has_queued_song = true;
+    std::lock_guard<std::mutex> lock(m_B_mutex);
+    m_track_B_source = source;
+    m_has_B = true;
 }
 
 void
-audio_decode_worker::clear_queued_song()
+audio_decode_worker::undo_prepare_B()
 {
-    std::lock_guard<std::mutex> lock(m_queue_mutex);
-    m_has_queued_song = false;
-    m_queued_next_song_source.clear();
+    std::lock_guard<std::mutex> lock(m_B_mutex);
+    m_has_B = false;
+    m_track_B_source.clear();
 }
 
 int
@@ -440,7 +443,7 @@ audio_decode_worker::clean ()
     // ffmpeg clean
 
     close_ffmpeg_contexts();
-    clear_queued_song();   // not ring state: kept out of the quiesce window
+    undo_prepare_B();   // B was prepared to follow what we just closed. Not ring state: kept out of the quiesce window
 
     {
         audio_ring_buffer::rt_quiesce quiesce(m_ring_buffer);
@@ -469,8 +472,8 @@ audio_decode_worker::close_ffmpeg_contexts()
 }
 
 QUrl
-audio_decode_worker::handoff_source () const
+audio_decode_worker::track_B_opened () const
 {
-    std::lock_guard<std::mutex> lock(m_queue_mutex);
-    return m_handoff_to;
+    std::lock_guard<std::mutex> lock(m_B_mutex);
+    return m_track_B_opened;
 }

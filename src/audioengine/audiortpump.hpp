@@ -15,8 +15,8 @@ public:
     explicit rt_event_pump (rt_event_mailbox &mailbox, QObject *parent = nullptr);
 
 signals:
-    void playlist_finished ();
-    void track_boundary_crossed ();
+    void tape_ran_out ();   // A's samples ended, no B
+    void boundary_hit ();   // A's samples ended, B follows
 
 private slots:
     void drain ();

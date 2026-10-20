@@ -111,9 +111,8 @@ audio_ring_buffer::writable_size() const {
     return (m_capacity_frames - 1) - used;
 }
 
-// have we crossed yet?
 bool
-audio_ring_buffer::check_for_boundary_and_advance()
+audio_ring_buffer::consume_boundary_hit()
 {
     std::lock_guard<std::mutex> lock(boundary_mutex);
     if (!has_upcoming_boundary
@@ -121,9 +120,9 @@ audio_ring_buffer::check_for_boundary_and_advance()
         return false;
 
     has_upcoming_boundary = false;
-    ++boundary_epoch;   // any seek issued before this moment is about a track that is gone
+    ++boundary_epoch;   // any request issued before this moment was about an A that is gone
 
-    // Rebase the UI clock to the new track. fetch_sub, not store(0): the RT thread keeps
+    // Rebase the UI clock so it counts from B's start (B is the new A). fetch_sub, not store(0): the RT thread keeps
     // adding to frames_played while we run, and a store would erase both its concurrent
     // increments and the new-track frames it already played since the crossing.
     frames_played.fetch_sub(upcoming_boundary_frame - clock_origin_frame, std::memory_order_relaxed);
@@ -198,7 +197,7 @@ audio_ring_buffer::reset (const rt_quiesce &, uint64_t base_ms)
     {
         std::lock_guard<std::mutex> lock(boundary_mutex);
         has_upcoming_boundary = false;
-        clock_origin_frame    = 0;   // see check_for_boundary_and_advance()
+        clock_origin_frame    = 0;   // see consume_boundary_hit()
     }
     next_boundary_frame.store(UINT64_MAX, std::memory_order_relaxed);
 
@@ -212,8 +211,8 @@ audio_ring_buffer::boundary_snapshot () const
     std::lock_guard<std::mutex> lock(boundary_mutex);
     if (!has_upcoming_boundary) return { boundary_phase::none, boundary_epoch };
 
-    const bool reached = absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundary_frame;
-    return { reached ? boundary_phase::reached : boundary_phase::armed, boundary_epoch };
+    const bool hit = absolute_frames_played.load(std::memory_order_relaxed) >= upcoming_boundary_frame;
+    return { hit ? boundary_phase::hit : boundary_phase::armed, boundary_epoch };
 }
 
 bool

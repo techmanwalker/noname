@@ -182,7 +182,7 @@ main (int argc, char ** argv)
     QObject::connect (ae.get(), &audio_engineLI::track_changed,
             pq.get(), &PlayQueueLI::handle_track_changed);
 
-    QObject::connect(ae.get(), &audio_engineLI::queued_tracks_finished,
+    QObject::connect(ae.get(), &audio_engineLI::tape_ran_out,
             pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
 
     // Listen to the audio controller; when metadata updates, notify the UI's data.

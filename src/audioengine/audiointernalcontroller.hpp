@@ -30,21 +30,27 @@ public:
     void set_transport_paused(bool paused);
     void stop();
     void load(const QUrl &source);
-    void prepare_next_track(const QUrl &source);
-    void undo_prepare_next_track();
+
+    // B: the file the decoder opens as soon as it has read A's file to the end; B's samples
+    // then follow A's in the ring. Absent = the tape runs out where A's samples end.
+    void prepare_B(const QUrl &source);
+    void undo_prepare_B();
+
     void set_position(uint64_t position_ms);
     void set_volume_multiplier(float hw_multiplier);
 
     bool is_song_loaded() const;
     uint64_t current_position_ms() const;
     bool is_paused() const;
-    bool check_and_advance_boundary(QUrl &crossed_into);
-    bool boundary_reached () const;
+    // true = the RT thread hit the boundary since the last call (consumed: B is the new A).
+    // track_B_opened is the file the decoder really opened for B, empty if opening it failed.
+    bool consume_boundary_hit(QUrl &track_B_opened);
+    bool boundary_hit_pending () const;   // hit by the RT thread, not consumed yet
 
 signals:
     void seeked();
-    void track_boundary_crossed(); // emitted by rt_event_pump (this thread) on a track boundary
-    void playlist_finished();      // emitted by rt_event_pump (this thread) when the queue drains
+    void boundary_hit();   // emitted by rt_event_pump (this thread): A's samples ended, B follows
+    void tape_ran_out();   // emitted by rt_event_pump (this thread): A's samples ended, no B
 
 private:
     QThread *m_audio_decoding_thread = nullptr;

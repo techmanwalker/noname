@@ -19,13 +19,13 @@ audio_engineLI::audio_engineLI(QObject *parent, audio_backend backend)
     /*  Explicit Qt::QueuedConnection, kept on purpose: these signals are emitted by
         rt_event_pump on the main thread (never from the RT callback), so thread safety no
         longer depends on it. Queued still defers the slots out of the pump's drain loop,
-        so UI work done in process_track_boundary()/process_playlist_finished() (and
+        so UI work done in on_boundary_hit()/on_tape_ran_out() (and
         anything it triggers, like load()) can't re-enter the drain. */
-    connect(m_internal.get(), &audio_internal_controller::track_boundary_crossed,
-            this, &audio_engineLI::process_track_boundary, Qt::QueuedConnection);
+    connect(m_internal.get(), &audio_internal_controller::boundary_hit,
+            this, &audio_engineLI::on_boundary_hit, Qt::QueuedConnection);
 
-    connect(m_internal.get(), &audio_internal_controller::playlist_finished,
-            this, &audio_engineLI::process_playlist_finished, Qt::QueuedConnection);
+    connect(m_internal.get(), &audio_internal_controller::tape_ran_out,
+            this, &audio_engineLI::on_tape_ran_out, Qt::QueuedConnection);
 
     connect(this, &audio_engineLI::track_changed,
             this, &audio_engineLI::handle_track_changed);
@@ -68,7 +68,7 @@ audio_engineLI::load(const QUrl &source)
     // The decoder decides between rewind and reopen: it knows what is actually open
     m_internal->load(source);
 
-    m_current_track_source = source;
+    m_track_A_source = source;
     undo_prepare_next_track();
 
     emit track_changed();
@@ -77,17 +77,19 @@ audio_engineLI::load(const QUrl &source)
 void
 audio_engineLI::prepare_next_track(const QUrl &source)
 {
-    if (settle_boundary()) return;
-    m_prolly_next_track_source = source;
-    m_internal->prepare_next_track(source);
+    // Designated against an A that no longer exists: on_boundary_hit() just cleared B, and the
+    // track_changed handler prepares the new one.
+    if (catch_up_on_boundary_hit()) return;
+    m_track_B_source = source;
+    m_internal->prepare_B(source);
 }
 
 void
 audio_engineLI::undo_prepare_next_track()
 {
-    if (settle_boundary()) return;
-    m_prolly_next_track_source.clear();
-    m_internal->undo_prepare_next_track();
+    if (catch_up_on_boundary_hit()) return;
+    m_track_B_source.clear();
+    m_internal->undo_prepare_B();
 }
 
 void
@@ -96,16 +98,16 @@ audio_engineLI::unload()
     m_current_transaction_id++; 
     stop();
 
-    m_current_track_source.clear();
+    m_track_A_source.clear();
     emit track_changed();
 }
 
 void
 audio_engineLI::set_position(const quint64 position_ms)
 {
-    // Computed on the track the UI was showing. If the ceremony was overdue it has just run,
-    // and that track is gone: drop it, the UI re-derives from track_changed.
-    if (settle_boundary()) return;
+    // Computed against track A . If the boundary hit was overdue it has just been
+    // consumed: that A is gone, drop the request, the UI re-derives from track_changed.
+    if (catch_up_on_boundary_hit()) return;
     m_internal->set_position(position_ms);
 }
 
@@ -140,13 +142,13 @@ audio_engineLI::current_volume() const
 const QUrl &
 audio_engineLI::current_track_source() const
 {
-    return m_current_track_source;
+    return m_track_A_source;
 }
 
 const QUrl &
 audio_engineLI::next_track_prepared_source() const
 {
-    return m_prolly_next_track_source;
+    return m_track_B_source;
 }
 
 quint64
@@ -167,7 +169,7 @@ audio_engineLI::get_playback_state() const
 bool
 audio_engineLI::is_a_song_loaded() const
 {
-    return !m_current_track_source.isEmpty();
+    return !m_track_A_source.isEmpty();
 }
 
 void
@@ -180,36 +182,36 @@ audio_engineLI::handle_track_changed()
 
 // To reactively trigger the changes signals
 void
-audio_engineLI::process_track_boundary()
+audio_engineLI::on_boundary_hit()
 {
-    QUrl crossed_into;
-    if (m_internal->check_and_advance_boundary(crossed_into)) {
-        // The decoder is the authority on what became audible
-        if (crossed_into != m_prolly_next_track_source)
-            qCWarning(l_audioengine) << "boundary crossed into" << crossed_into
-                                     << "but the engine expected" << m_prolly_next_track_source;
+    QUrl track_B_opened;
+    if (m_internal->consume_boundary_hit(track_B_opened)) {
+        // The decoder is the authority on what B really was, not what the engine prepared
+        if (track_B_opened != m_track_B_source)
+            qCWarning(l_audioengine) << "boundary hit: the decoder opened this file for B:" << track_B_opened
+                                     << "but the engine prepared" << m_track_B_source;
 
-        m_current_track_source = crossed_into;
+        // B becomes A, and the B slot is empty again
+        m_track_A_source = track_B_opened;
         undo_prepare_next_track();
 
         emit track_changed();
 
-        if (m_current_track_source.isEmpty()) {
-            process_playlist_finished();
-        }
+        // B failed to open: nothing behind A, the tape ran out
+        if (m_track_A_source.isEmpty()) on_tape_ran_out();
     }
 }
 
 void
-audio_engineLI::process_playlist_finished()
+audio_engineLI::on_tape_ran_out()
 {
-    emit queued_tracks_finished();
+    emit tape_ran_out();
 }
 
 bool
-audio_engineLI::settle_boundary ()
+audio_engineLI::catch_up_on_boundary_hit ()
 {
-    if (!m_internal->boundary_reached()) return false;
-    process_track_boundary();   // idempotent: the queued copy of this event becomes a no-op
+    if (!m_internal->boundary_hit_pending()) return false;
+    on_boundary_hit();   // idempotent: the queued copy of this event becomes a no-op
     return true;
 }

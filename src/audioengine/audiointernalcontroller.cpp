@@ -97,8 +97,8 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
     m_outstream->userdata = ring;
 
     m_rt_pump = new rt_event_pump(ring->rt_events, this);
-    connect(m_rt_pump, &rt_event_pump::playlist_finished,      this, &audio_internal_controller::playlist_finished);
-    connect(m_rt_pump, &rt_event_pump::track_boundary_crossed, this, &audio_internal_controller::track_boundary_crossed);
+    connect(m_rt_pump, &rt_event_pump::tape_ran_out,      this, &audio_internal_controller::tape_ran_out);
+    connect(m_rt_pump, &rt_event_pump::boundary_hit, this, &audio_internal_controller::boundary_hit);
 
     m_outstream->write_callback = write_callback;
 
@@ -192,18 +192,18 @@ audio_internal_controller::load(const QUrl &source)
 }
 
 void
-audio_internal_controller::prepare_next_track(const QUrl &source)
+audio_internal_controller::prepare_B(const QUrl &source)
 {
     QMetaObject::invokeMethod(m_decoder_worker, [this, source]() {
-        m_decoder_worker->queue_next_song(source);
+        m_decoder_worker->prepare_B(source);
     }, Qt::QueuedConnection);
 }
 
 void
-audio_internal_controller::undo_prepare_next_track()
+audio_internal_controller::undo_prepare_B()
 {
     QMetaObject::invokeMethod(m_decoder_worker, [this]() {
-        m_decoder_worker->clear_queued_song();
+        m_decoder_worker->undo_prepare_B();
     }, Qt::QueuedConnection);
 }
 
@@ -251,17 +251,17 @@ audio_internal_controller::is_paused() const
 }
 
 bool
-audio_internal_controller::check_and_advance_boundary (QUrl &crossed_into)
+audio_internal_controller::consume_boundary_hit (QUrl &track_B_opened)
 {
-    const QUrl into = m_decoder_worker->handoff_source();   // read before consuming
-    if (!m_decoder_worker->get_ring_buffer()->check_for_boundary_and_advance()) return false;
-    crossed_into = into;
+    const QUrl opened = m_decoder_worker->track_B_opened();   // read before consuming
+    if (!m_decoder_worker->get_ring_buffer()->consume_boundary_hit()) return false;
+    track_B_opened = opened;
     return true;
 }
 
 bool
-audio_internal_controller::boundary_reached () const
+audio_internal_controller::boundary_hit_pending () const
 {
     using phase = audio_ring_buffer::boundary_phase;
-    return m_decoder_worker->get_ring_buffer()->boundary_snapshot().phase == phase::reached;
+    return m_decoder_worker->get_ring_buffer()->boundary_snapshot().phase == phase::hit;
 }

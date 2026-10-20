@@ -133,11 +133,14 @@ public:
     bool has_upcoming_boundary{false};
     uint64_t upcoming_boundary_frame{0};
     uint64_t clock_origin_frame{0};   // absolute frame where the current track began; guarded by boundary_mutex
-    uint64_t boundary_epoch{0};       // bumped (under boundary_mutex) each time the Qt side consumes a boundary
+    uint64_t boundary_epoch{0};       // bumped (under boundary_mutex) each time a hit is consumed: a request
+                                      // issued under an older epoch was about an A that is gone
 
-    // armed:   decoder handed off to B, A still audible
-    // reached: RT is playing B, the Qt-side ceremony has not run yet
-    enum class boundary_phase { none, armed, reached };
+    // none:  no B behind A (or its hit was already consumed)
+    // armed: the decoder has opened B's file, A's samples are still being played
+    // hit:   the RT thread went past the boundary (B is audible), consume_boundary_hit() has not run yet
+    enum class boundary_phase { none, armed, hit };
+
     struct boundary_view { boundary_phase phase; uint64_t epoch; };
 
     // One lock: phase and epoch are consistent with each other (no ceremony can slip between them)
@@ -147,12 +150,14 @@ public:
     // false = target is behind the playhead (the ring only holds the future).
     bool skip_within_armed_tail (const rt_quiesce &, uint64_t target_ms);
 
-    // Target frame count for the next upcoming track boundary (UINT64_MAX when none)
+    // Frame where A ends and B begins, as the RT thread sees it (UINT64_MAX when none or already hit)
     std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
 
-    // RT thread -> Qt thread events (playlist finished, track boundary, stream error/underflow).
+    // RT thread -> Qt thread events (tape ran out, boundary hit, stream error/underflow).
     // See audiortevents.hpp; the Qt side is rt_event_pump.
     rt_event_mailbox rt_events;
 
-    bool check_for_boundary_and_advance();
+    // Qt thread. true once per boundary, after the RT thread hit it: B becomes A in the clocks
+    // (position counts from B's start) and boundary_epoch moves on.
+    bool consume_boundary_hit();
 };

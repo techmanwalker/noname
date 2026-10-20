@@ -27,8 +27,8 @@ rt_event_pump::drain ()
     // Clear first: a post() racing with us then re-arms the notifier instead of being lost.
     m_mailbox.clear_wakeup();
 
-    for (uint32_t n = take(rt_event::track_boundary);  n > 0; --n) emit track_boundary_crossed();
-    for (uint32_t n = take(rt_event::playlist_finished); n > 0; --n) emit playlist_finished();
+    for (uint32_t n = take(rt_event::boundary_hit);  n > 0; --n) emit boundary_hit();
+    for (uint32_t n = take(rt_event::tape_ran_out); n > 0; --n) emit tape_ran_out();
 
     if (const uint32_t n = take(rt_event::underflow)) {
         qCWarning(l_soundio) << "SoundIo outstream underflow (x" << n << ")";

@@ -8,7 +8,8 @@
 #include <sys/eventfd.h>
 #include <unistd.h>
 
-enum class rt_event : unsigned { playlist_finished, track_boundary, underflow, stream_error,
+// boundary_hit: A's samples ended and B follows. tape_ran_out: A's samples ended, no B behind it.
+enum class rt_event : unsigned { tape_ran_out, boundary_hit, underflow, stream_error,
                                  begin_write_failed, end_write_failed, count_ };
 inline constexpr size_t rt_event_count = static_cast<size_t>(rt_event::count_);
 

@@ -47,8 +47,9 @@ public:
     playback_state get_playback_state() const override;
     bool is_a_song_loaded() const override;
 
-    void process_track_boundary();
-    void process_playlist_finished();
+    // The RT thread hit the boundary: B becomes A. Also runs early via catch_up_on_boundary_hit().
+    void on_boundary_hit();
+    void on_tape_ran_out();   // the boundary was hit with no B behind it
 
     void teardown (); // called by its governor &Q*Application::abouToQuit to safely destroy the impl
 
@@ -56,7 +57,7 @@ signals:
     void seek_finished();
     void duration_changed();
     void track_changed();
-    void queued_tracks_finished();
+    void tape_ran_out();
     void playback_state_changed();
     void volume_changed();
 
@@ -66,12 +67,13 @@ public slots:
 private:
     std::unique_ptr<audio_internal_controller> m_internal;
 
-    QUrl m_current_track_source;
-    QUrl m_prolly_next_track_source;
+    QUrl m_track_A_source;   // A (empty: nothing loaded)
+    QUrl m_track_B_source;   // B as the engine prepared it; on_boundary_hit() asks the decoder which file it really opened for B
 
     double m_log_volume = 0;
     uint64_t m_current_transaction_id = 0;
 
-    // RT crossed a boundary but the queued ceremony has not run yet: run it now.
-    bool settle_boundary ();
+    // The RT thread already hit the boundary but on_boundary_hit() has not run yet (it is queued):
+    // run it now. true = it ran, so the request being served was issued against an A that is gone.
+    bool catch_up_on_boundary_hit ();
 };

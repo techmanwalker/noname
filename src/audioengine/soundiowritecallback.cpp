@@ -58,15 +58,15 @@ apply_gain (S v, float gain)
 // (audiortevents.hpp); signals and logs are emitted by rt_event_pump on the Qt thread.
 
 RT_INLINE void
-notify_playlist_finished (audio_ring_buffer &ring)
+notify_tape_ran_out (audio_ring_buffer &ring)
 {
-    ring.rt_events.post(rt_event::playlist_finished);
+    ring.rt_events.post(rt_event::tape_ran_out);
 }
 
 RT_INLINE void
-notify_track_boundary (audio_ring_buffer &ring)
+notify_boundary_hit (audio_ring_buffer &ring)
 {
-    ring.rt_events.post(rt_event::track_boundary);
+    ring.rt_events.post(rt_event::boundary_hit);
 }
 
 // --- decoder handshake
@@ -111,16 +111,16 @@ pop_frames (audio_ring_buffer &ring, S *dst, int frames)
     return static_cast<int>(ring.pop(reinterpret_cast<std::byte *>(dst), size_t(frames)));
 }
 
-// A short read while the decoder has flushed its last frame is the true end of playback.
+// A short read after the decoder pushed the last of A's samples with no B behind them: the tape ran out.
 // One-shot: eof_played.exchange guarantees only the first underrun announces it.
 RT_INLINE void
-handle_end_of_playback (audio_ring_buffer &ring, bool underran)
+handle_tape_ran_out (audio_ring_buffer &ring, bool underran)
 {
     if (!underran || !ring.eof_decoded.load(std::memory_order_acquire)) return;
     if (ring.eof_played.exchange(true)) return;
 
     ring.is_paused.store(true, std::memory_order_release);
-    notify_playlist_finished(ring);
+    notify_tape_ran_out(ring);
 }
 
 // --- device side
@@ -160,15 +160,15 @@ count_played_frames (audio_ring_buffer &ring, int frames)
     return ring.absolute_frames_played.fetch_add(n, std::memory_order_relaxed) + n;
 }
 
-// Fires once when playback crosses the frame the decoder armed at the track boundary.
+// Fires once when playback reaches the frame the decoder armed where A ends and B begins.
 RT_INLINE void
-check_track_boundary (audio_ring_buffer &ring, uint64_t played)
+check_boundary_hit (audio_ring_buffer &ring, uint64_t played)
 {
     const uint64_t target = ring.next_boundary_frame.load(std::memory_order_acquire);
     if (target == UINT64_MAX || played < target) return;
 
     ring.next_boundary_frame.store(UINT64_MAX, std::memory_order_release); // disarm first
-    notify_track_boundary(ring);
+    notify_boundary_hit(ring);
 }
 
 // --- the loop
@@ -238,12 +238,12 @@ write_loop (const write_ctx &c) requires playable_format<F>
         } else {
             const int got = pop_frames(c.ring, scratch, frames);
 
-            handle_end_of_playback(c.ring, got < frames);
+            handle_tape_ran_out(c.ring, got < frames);
 
             write_to_device(scratch, ch, got, c.gain, areas);
             feed_silence<S>(areas, ch, got, frames); // pad the underrun tail
 
-            check_track_boundary(c.ring, count_played_frames(c.ring, frames));
+            check_boundary_hit(c.ring, count_played_frames(c.ring, frames));
         }
 
         end_chunk(c);
