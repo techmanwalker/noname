@@ -52,9 +52,10 @@ public slots:
 private slots:
     // single work iteration, reprograms itself via m_decode_timer
     void decode_step ();
+    int  on_end_of_A ();    // timer interval for the next step
 
 signals:
-    void song_load_failed (QString &err);
+    void song_load_failed (QString err);
 
     void seeked();
 

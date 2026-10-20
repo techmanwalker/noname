@@ -27,6 +27,248 @@ to_ffmpeg (sample_format f)
     default:                return std::nullopt;
     }
 }
+
+// --- timer pacing (ms). decode_step is the only place that applies them.
+
+namespace pace_ms {
+constexpr int spin     = 0;    // more to read right now
+constexpr int backoff  = 10;   // ring full / transient error
+constexpr int no_song  = 50;
+constexpr int finished = 100;  // A's tape ended, nothing to decode
+}
+
+// --- RAII at the FFmpeg boundary: no manual free on any exit path
+
+struct av_packet_deleter { void operator() (AVPacket *p) const { av_packet_free(&p); } };
+struct av_frame_deleter  { void operator() (AVFrame  *f) const { av_frame_free(&f); } };
+struct av_buffer_deleter { void operator() (uint8_t  *b) const { av_free(b); } };
+
+using av_packet_ptr = std::unique_ptr<AVPacket, av_packet_deleter>;
+using av_frame_ptr  = std::unique_ptr<AVFrame,  av_frame_deleter>;
+using av_buffer_ptr = std::unique_ptr<uint8_t,  av_buffer_deleter>; // packed samples: one block
+
+struct default_layout
+{
+    AVChannelLayout value {};
+
+    explicit default_layout (int channels) { av_channel_layout_default(&value, channels); }
+    ~default_layout () { av_channel_layout_uninit(&value); }
+
+    default_layout (const default_layout &) = delete;
+    default_layout &operator= (const default_layout &) = delete;
+};
+
+// --- open pipeline
+// Each stage: nullopt = ok, otherwise the reason. Stages never log, never close, never emit.
+
+struct open_error { QString message; };
+using open_status = std::optional<open_error>;
+
+open_error
+av_failure (int ret, const char *what)
+{
+    char buf[AV_ERROR_MAX_STRING_SIZE];
+    av_strerror(ret, buf, sizeof buf);
+    return { QStringLiteral("%1: %2").arg(QString::fromUtf8(what), QString::fromUtf8(buf)) };
+}
+
+// How decoded frames reach the ring: untouched, or through swr.
+struct conversion_plan
+{
+    AVSampleFormat out_fmt     = AV_SAMPLE_FMT_NONE;
+    bool           passthrough = false;
+};
+
+// Borrowed views of the worker's FFmpeg pointers: the stages are free functions with no class access.
+struct open_ctx
+{
+    AVFormatContext     *&fmt;
+    AVCodecContext      *&codec;
+    SwrContext          *&swr;
+    int                  &stream_index;
+    const stream_format  &out;
+    conversion_plan       plan {};
+};
+
+open_status
+require_local_file (const QUrl &source)
+{
+    // FFmpeg is opened by filesystem path, so only local files can be decoded for now.
+    // NOTE: to support reading from external sources (http, remote shares, ...) the data has
+    // to be brought into memory BEFORE decoding: either a temporary file copy, or some other
+    // way to load it to memory (e.g. a custom AVIOContext over a QBuffer), then decode from that.
+    if (source.isLocalFile()) return std::nullopt;
+    return open_error{ QStringLiteral("Only local files can be decoded.") };
+}
+
+open_status
+open_container (open_ctx &c, const QString &path)
+{
+    if (const int ret = avformat_open_input(&c.fmt, path.toUtf8().constData(), nullptr, nullptr); ret < 0)
+        return av_failure(ret, "Cannot open file");
+
+    if (const int ret = avformat_find_stream_info(c.fmt, nullptr); ret < 0)
+        return av_failure(ret, "Cannot read stream info");
+
+    return std::nullopt;
+}
+
+open_status
+select_audio_stream (open_ctx &c)
+{
+    c.stream_index = av_find_best_stream(c.fmt, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (c.stream_index >= 0) return std::nullopt;
+    return open_error{ QStringLiteral("File does not contain a valid audio stream.") };
+}
+
+open_status
+open_decoder (open_ctx &c)
+{
+    const AVCodecParameters *params = c.fmt->streams[c.stream_index]->codecpar;
+
+    const AVCodec *codec = avcodec_find_decoder(params->codec_id);
+    if (!codec) return open_error{ QStringLiteral("No decoder available for this codec.") };
+
+    c.codec = avcodec_alloc_context3(codec);
+    if (!c.codec) return av_failure(AVERROR(ENOMEM), "Cannot allocate decoder");
+
+    if (const int ret = avcodec_parameters_to_context(c.codec, params); ret < 0)
+        return av_failure(ret, "Cannot configure decoder");
+
+    if (const int ret = avcodec_open2(c.codec, codec, nullptr); ret < 0)
+        return av_failure(ret, "Cannot open decoder");
+
+    return std::nullopt;
+}
+
+// Convert only what differs. swr is skipped entirely when sample format (incl. packed
+// vs planar), rate and layout already match: frames go to the ring untouched.
+open_status
+plan_conversion (open_ctx &c)
+{
+    const std::optional<AVSampleFormat> out_av = to_ffmpeg(c.out.sample);
+    if (!out_av)
+        return av_failure(AVERROR(ENOTSUP), "Cannot convert this track to the ring format");
+
+    const default_layout out_layout(c.out.channels);
+
+    c.plan.out_fmt     = *out_av;
+    c.plan.passthrough = c.codec->sample_fmt == *out_av
+        && uint32_t(c.codec->sample_rate) == c.out.rate
+        && av_channel_layout_compare(&c.codec->ch_layout, &out_layout.value) == 0;
+
+    return std::nullopt;
+}
+
+open_status
+init_resampler (open_ctx &c)
+{
+    if (c.plan.passthrough) return std::nullopt;
+
+    const default_layout out_layout(c.out.channels);
+
+    c.swr = nullptr;
+    int ret = swr_alloc_set_opts2(&c.swr,
+                                  &out_layout.value, c.plan.out_fmt, int(c.out.rate),
+                                  &c.codec->ch_layout, c.codec->sample_fmt, c.codec->sample_rate,
+                                  0, nullptr);
+    if (ret == 0) ret = swr_init(c.swr);
+
+    if (ret < 0) return av_failure(ret, "Cannot convert this track to the ring format");
+    return std::nullopt;
+}
+
+// The whole open sequence: failures are early returns, success is the straight line.
+open_status
+open_pipeline (open_ctx &c, const QUrl &source)
+{
+    if (auto e = require_local_file(source))               return e;
+    if (auto e = open_container(c, source.toLocalFile()))  return e;
+    if (auto e = select_audio_stream(c))                   return e;
+    if (auto e = open_decoder(c))                          return e;
+    if (auto e = plan_conversion(c))                       return e;
+    return init_resampler(c);
+}
+
+// --- decode step
+
+enum class drain_status { complete, cancelled };
+
+// Push every frame the codec has ready. `cancelled`: a seek/stop/load cancelled the push and
+// is taking over; it will reset the codec and the ring, so the caller must bail out.
+template <typename Push>
+drain_status
+drain_frames (AVCodecContext *codec, AVFrame *frame, Push &&push)
+{
+    while (avcodec_receive_frame(codec, frame) == 0) {
+        const bool pushed = push(frame);
+        av_frame_unref(frame);
+        if (!pushed) return drain_status::cancelled;
+    }
+    return drain_status::complete;
+}
+
+// pkt == nullptr puts the codec in draining mode (end of file).
+template <typename Push>
+drain_status
+feed_codec (AVCodecContext *codec, const AVPacket *pkt, AVFrame *frame, Push &&push)
+{
+    avcodec_send_packet(codec, pkt);
+    return drain_frames(codec, frame, push);
+}
+
+// Rate conversion keeps a tail inside swr: flush it or every track loses its last few ms.
+drain_status
+flush_resampler (SwrContext *swr, audio_ring_buffer &ring, AVSampleFormat out_fmt)
+{
+    if (!swr) return drain_status::complete;
+
+    const int cap = swr_get_out_samples(swr, 0);
+    if (cap <= 0) return drain_status::complete;
+
+    uint8_t *raw = nullptr;
+    if (av_samples_alloc(&raw, nullptr, ring.format().channels, cap, out_fmt, 0) < 0)
+        return drain_status::complete;
+    const av_buffer_ptr owner(raw);
+
+    uint8_t *out = owner.get();
+    const int got = swr_convert(swr, &out, cap, nullptr, 0);
+
+    if (got > 0 && !ring.push_blocking(reinterpret_cast<const std::byte *>(out), size_t(got)))
+        return drain_status::cancelled;
+    return drain_status::complete;
+}
+
+// nullopt = go decode; otherwise the interval to wait. Order matters: no song wins over full ring.
+std::optional<int>
+idle_interval (bool song_loaded, audio_ring_buffer &ring)
+{
+    if (!song_loaded)    return pace_ms::no_song;
+    if (ring.is_full())  return pace_ms::backoff;   // don't decode ahead and waste RAM
+    return std::nullopt;
+}
+
+// --- boundary / end of tape (ring side only)
+
+// Publishes "A ends at this absolute frame": once for the UI, once for the RT thread.
+void
+arm_boundary (audio_ring_buffer &ring)
+{
+    const uint64_t frame = ring.absolute_frames_decoded.load(std::memory_order_relaxed);
+    {
+        std::lock_guard<std::mutex> lock(ring.boundary_mutex);
+        ring.upcoming_boundary_frame = frame;
+        ring.has_upcoming_boundary   = true;
+    }
+    // Unconditional store is safe: we strictly track one boundary at a time.
+    ring.next_boundary_frame.store(frame, std::memory_order_release);
+}
+
+void
+mark_tape_ended (audio_ring_buffer &ring)
+{
+    ring.eof_decoded.store(true, std::memory_order_release);
+}
 }
 
 // The Decoding workhorse
@@ -75,90 +317,21 @@ audio_decode_worker::load(const QUrl &source) {
 bool
 audio_decode_worker::open_file_internal(const QUrl &source)
 {
-    // FFmpeg is opened by filesystem path below, so only local files can be decoded for now.
-    // NOTE: to support reading from external sources (http, remote shares, ...) the data has
-    // to be brought into memory BEFORE decoding: either a temporary file copy, or some other
-    // way to load it to memory (e.g. a custom AVIOContext over a QBuffer), then decode from that.
-    if (!source.isLocalFile()) {
-        qCCritical(l_ffmpeg) << "Cannot decode a non-local source:" << source;
-        QString err_q = "Only local files can be decoded.";
-        emit song_load_failed(err_q);
-        return false;
-    }
-    const QString file_path = source.toLocalFile();
+    open_ctx ctx { fmt_ctx, codec_ctx, swr_ctx, audio_stream_index, m_ring_buffer.format() };
 
-    // 1. Open the format (the container)
-    if (avformat_open_input(&fmt_ctx, file_path.toUtf8().constData(), nullptr, nullptr) < 0) {
+    if (open_status failure = open_pipeline(ctx, source)) {
+        qCCritical(l_ffmpeg) << "Cannot open" << source << "-" << failure->message;
+        close_ffmpeg_contexts();    // whatever stage failed, no half-open context survives
+        m_song_loaded = false;
+        emit song_load_failed(std::move(failure->message));
         return false;
     }
 
-    // 2. Read streams info
-    if (avformat_find_stream_info(fmt_ctx, nullptr) < 0) {
-        return false;
-    }
-
-    // 3. Find best audio stream
-    audio_stream_index = av_find_best_stream(fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-
-    if (audio_stream_index >= 0) {
-        // 4. Setup decoder
-        AVCodecParameters *params = fmt_ctx->streams[audio_stream_index]->codecpar;
-        const AVCodec *codec = avcodec_find_decoder(params->codec_id);
-        codec_ctx = avcodec_alloc_context3(codec);
-        
-        avcodec_parameters_to_context(codec_ctx, params);
-        avcodec_open2(codec_ctx, codec, nullptr);
-
-        const stream_format &out = m_ring_buffer.format();
-        const std::optional<AVSampleFormat> out_av = to_ffmpeg(out.sample);
-
-        AVChannelLayout out_ch_layout {};
-        av_channel_layout_default(&out_ch_layout, out.channels);
-        const AVChannelLayout &in_ch_layout = codec_ctx->ch_layout;
-
-        // Convert only what differs. swr is skipped entirely when sample format (incl. packed
-        // vs planar), rate and layout already match: frames go to the ring untouched.
-        m_out_av_fmt  = out_av.value_or(AV_SAMPLE_FMT_NONE);
-        m_passthrough = out_av
-            && codec_ctx->sample_fmt == *out_av
-            && uint32_t(codec_ctx->sample_rate) == out.rate
-            && av_channel_layout_compare(&in_ch_layout, &out_ch_layout) == 0;
-
-        int ret = out_av ? 0 : AVERROR(ENOTSUP);
-        if (ret == 0 && !m_passthrough) {
-            swr_ctx = nullptr;
-            ret = swr_alloc_set_opts2(&swr_ctx,
-                                      &out_ch_layout, *out_av, int(out.rate),
-                                      &in_ch_layout, codec_ctx->sample_fmt, codec_ctx->sample_rate,
-                                      0, nullptr);
-            if (ret == 0) ret = swr_init(swr_ctx);
-        }
-        av_channel_layout_uninit(&out_ch_layout);
-
-        if (ret < 0) {
-            char err_buf[AV_ERROR_MAX_STRING_SIZE];
-            av_strerror(ret, err_buf, AV_ERROR_MAX_STRING_SIZE);
-            qCCritical(l_ffmpeg) << "Cannot convert this track to the ring format:" << err_buf;
-
-            close_ffmpeg_contexts();
-
-            QString err_q = QString::fromUtf8(err_buf);
-            emit song_load_failed(err_q);
-            return false;
-        }
-
-        m_open_source = source;
-        m_song_loaded = true;
-        return true;
-    } 
-    
-    // No valid audio stream found
-    close_ffmpeg_contexts();
-    QString err_q = "File does not contain a valid audio stream.";
-    m_song_loaded = false;
-    emit song_load_failed(err_q);
-    
-    return false;
+    m_out_av_fmt  = ctx.plan.out_fmt;
+    m_passthrough = ctx.plan.passthrough;
+    m_open_source = source;
+    m_song_loaded = true;
+    return true;
 }
 
 void
@@ -175,132 +348,81 @@ audio_decode_worker::decode_step ()
     // decode and seek are mutually exclusive
     std::lock_guard<std::mutex> lock(m_decoder_mutex);
 
-    // 1. Sleep if no song loaded
-    if (!m_song_loaded) {
-        m_decode_timer->setInterval(50);
+    if (const auto idle = idle_interval(m_song_loaded, m_ring_buffer)) {
+        m_decode_timer->setInterval(*idle);
         return;
     }
 
-    // 2. Is the buffer full?
-    // If it is, wait. We don't want to keep decoding and waste RAM.
-    if (m_ring_buffer.is_full()) {
-        m_decode_timer->setInterval(10);
+    const av_packet_ptr pkt(av_packet_alloc());
+    const av_frame_ptr  frame(av_frame_alloc());
+    if (!pkt || !frame) {
+        m_decode_timer->setInterval(pace_ms::backoff);
         return;
     }
 
-    // 3. FFmpeg decoding loop
-    AVPacket *pkt = av_packet_alloc();
-    AVFrame *frame = av_frame_alloc();
+    const auto push = [this] (AVFrame *f) { return push_frame(f); };
 
-    int read_ret = av_read_frame(fmt_ctx, pkt);
+    const int read_ret = av_read_frame(fmt_ctx, pkt.get());
 
-    // if a packet was successfully read
+    // 1. A packet: decode it if it is ours (a packet can produce several frames)
     if (read_ret >= 0) {
+        const bool ours = pkt->stream_index == audio_stream_index;
+        if (ours && feed_codec(codec_ctx, pkt.get(), frame.get(), push) == drain_status::cancelled)
+            return;     // seek/stop cancelled the push: they reset codec and ring
 
-        // is this the right stream?
-        if (pkt->stream_index == audio_stream_index) {
-            avcodec_send_packet(codec_ctx, pkt);
-            
-            // 4. receive next raw frame from file (mp3, flac, etc)
-            //    a packet can produce more than a frame; drain
-            while (avcodec_receive_frame(codec_ctx, frame) == 0) {
-                // Seek/stop cancelled the push: bail out, they will reset codec and ring.
-                const bool pushed = push_frame(frame);
-                av_frame_unref(frame);
-
-                if (!pushed) {
-                    av_packet_free(&pkt);
-                    av_frame_free(&frame);
-                    return;
-                }
-            }
-        }
-
-        // make instantaneous, there might be more to read right now
-        m_decode_timer->setInterval(0);
-
-    } else if (read_ret == AVERROR_EOF && !m_ring_buffer.eof_decoded.load()) {
-        avcodec_send_packet(codec_ctx, nullptr);
-        while (avcodec_receive_frame(codec_ctx, frame) == 0) {
-            const bool pushed = push_frame(frame);
-            av_frame_unref(frame);
-
-            // Cancelled mid-drain: a seek/stop/load is taking over and will reset the codec and
-            // the ring. Do NOT fall through to step 2 below (arming the boundary, opening B's
-            // file): the last samples of A's file never reached the ring.
-            if (!pushed) {
-                av_packet_free(&pkt);
-                av_frame_free(&frame);
-                return;
-            }
-        }
-
-        // Rate conversion keeps a tail inside swr: flush it or every track loses its last few ms
-        if (swr_ctx) {
-            uint8_t *tail = nullptr;
-            const int cap = swr_get_out_samples(swr_ctx, 0);
-            if (cap > 0 && av_samples_alloc(&tail, nullptr, m_ring_buffer.format().channels,
-                                            cap, m_out_av_fmt, 0) >= 0) {
-                const int got = swr_convert(swr_ctx, &tail, cap, nullptr, 0);
-                if (got > 0 && !m_ring_buffer.push_blocking(reinterpret_cast<const std::byte *>(tail), size_t(got))) {
-                    av_freep(&tail);
-                    av_packet_free(&pkt);
-                    av_frame_free(&frame);
-                    return;
-                }
-                av_freep(&tail);
-            }
-        }
-
-        // 2. End of A's file: if B is prepared, open B's file and keep decoding right behind A's samples
-        std::lock_guard<std::mutex> B_lock(m_B_mutex);
-
-        if (m_has_B) {
-
-            // Register the boundary between A and B for the UI
-            uint64_t boundary_frame = m_ring_buffer.absolute_frames_decoded.load(std::memory_order_relaxed);
-            {
-                std::lock_guard<std::mutex> boundary_lock(m_ring_buffer.boundary_mutex);
-                m_ring_buffer.upcoming_boundary_frame = boundary_frame;
-                m_ring_buffer.has_upcoming_boundary = true;
-            }
-
-            // Arm the atomic tracker. An unconditional store is safe here since we strictly track one boundary at a time.
-            m_ring_buffer.next_boundary_frame.store(boundary_frame, std::memory_order_release);
-
-            // Remember both files: seeks while armed need A's, on_boundary_hit() needs to know B's
-            m_track_A_source = m_open_source;       // A's file (close_ffmpeg_contexts() clears m_open_source)
-            m_track_B_opened = m_track_B_source;    // B's file (m_B_mutex is held here)
-
-            // The decoder's single open file moves from A's to B's
-            close_ffmpeg_contexts();
-
-            if (open_file_internal(m_track_B_source)) {
-                m_has_B = false;   // consumed: B's file is open now
-
-                // Immediately loop again to start decoding B
-                m_decode_timer->setInterval(0);
-            } else {
-                // B's file failed to open, handle gracefully. Nothing is decodable now:
-                // without this, the next decode_step() reads from a null/half-open context.
-                close_ffmpeg_contexts();
-                m_track_B_opened.clear();   // B never existed: the hit must report "no B"
-                m_song_loaded.store(false);
-                m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
-            }
-        } else {
-            // No B prepared: the end of A's file is where the tape runs out, stop decoding
-            m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
-            m_decode_timer->setInterval(100); 
-        }
-    } else {
-        // generic error or eof already processed
-
-        m_decode_timer->setInterval(10);
+        m_decode_timer->setInterval(pace_ms::spin);   // there might be more to read right now
+        return;
     }
 
-    av_frame_free(&frame);
-    av_packet_free(&pkt);
+    // 2. End of A's file, first time we see it
+    if (read_ret == AVERROR_EOF && !m_ring_buffer.eof_decoded.load()) {
+        // Cancelled mid-drain: a seek/stop/load is taking over. Do NOT fall through to
+        // on_end_of_A (arming the boundary, opening B's file): the last samples of A never
+        // reached the ring.
+        if (feed_codec(codec_ctx, nullptr, frame.get(), push) == drain_status::cancelled
+            || flush_resampler(swr_ctx, m_ring_buffer, m_out_av_fmt) == drain_status::cancelled)
+            return;
+
+        m_decode_timer->setInterval(on_end_of_A());
+        return;
+    }
+
+    // 3. Generic error, or EOF already processed
+    m_decode_timer->setInterval(pace_ms::backoff);
+}
+
+// A's file is fully in the ring. Either hand the decoder over to B, or declare the tape ended.
+// Returns the timer interval for the next step.
+int
+audio_decode_worker::on_end_of_A ()
+{
+    std::lock_guard<std::mutex> B_lock(m_B_mutex);
+
+    if (!m_has_B) {
+        // No B prepared: the end of A's file is where the tape runs out, stop decoding
+        mark_tape_ended(m_ring_buffer);
+        return pace_ms::finished;
+    }
+
+    arm_boundary(m_ring_buffer);
+
+    // Remember both files: seeks while armed need A's, on_boundary_hit() needs to know B's
+    m_track_A_source = m_open_source;       // close_ffmpeg_contexts() clears m_open_source
+    m_track_B_opened = m_track_B_source;    // m_B_mutex is held here
+
+    // The decoder's single open file moves from A's to B's
+    close_ffmpeg_contexts();
+
+    if (!open_file_internal(m_track_B_source)) {
+        // open_file_internal already tore the decoder down and told the UI.
+        // What is left is the ring's side: B never existed, the hit must report "no B".
+        m_track_B_opened.clear();
+        mark_tape_ended(m_ring_buffer);
+        return pace_ms::no_song;
+    }
+
+    m_has_B = false;            // consumed: B's file is open now
+    return pace_ms::spin;       // start decoding B right behind A's samples
 }
 
 bool
