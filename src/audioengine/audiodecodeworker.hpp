@@ -6,6 +6,7 @@
 #include <QUrl>
 
 #include "audioringbuffer.hpp"
+#include "avscratch.hpp"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -52,7 +53,6 @@ public slots:
 private slots:
     // single work iteration, reprograms itself via m_decode_timer
     void decode_step ();
-    int  on_end_of_A ();    // timer interval for the next step
 
 signals:
     void song_load_failed (QString err);
@@ -62,9 +62,6 @@ signals:
 private:
 
     friend class audio_engine;
-
-    // swr -> ring format. Returns FRAMES (not samples), or <0 on error. Caller av_freep()s *output.
-    int  convert_to_ring (AVFrame *frame, uint8_t **output);
 
     // false = the push was cancelled (seek/stop/load): the caller must bail out
     bool push_frame (AVFrame *frame);
@@ -97,6 +94,9 @@ private:
 
     audio_ring_buffer m_ring_buffer;
 
+    // Reused packet/frame (no per-tick alloc). Reachable only through av_scratch::lease.
+    av_scratch m_scratch;
+
     AVFormatContext *fmt_ctx = nullptr;
     AVCodecContext *codec_ctx = nullptr;
     SwrContext *swr_ctx = nullptr;
@@ -116,6 +116,14 @@ private:
 
     // Closes FFmpeg contexts without clearing the ring buffer
     void close_ffmpeg_contexts(); 
+
+    // A's file is fully in the ring: hand over to B or end the tape. Returns the next timer interval.
+    int on_end_of_A ();
+
+    // Nothing decodable from here on: close the contexts and unload. By default the tape ends too, so
+    // the ring plays out what it holds. Pass true when nothing was ever played (failed load: the ring
+    // was just reset, there is no tape to end).
+    void abandon_decoding (bool do_not_mark_end_of_tape = false);
     
     // Opens a new file and prepares SwrContext (essentially the FFmpeg parts of your current load() method)
     bool open_file_internal(const QUrl &source);

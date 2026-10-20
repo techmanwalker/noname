@@ -39,13 +39,8 @@ constexpr int finished = 100;  // A's tape ended, nothing to decode
 
 // --- RAII at the FFmpeg boundary: no manual free on any exit path
 
-struct av_packet_deleter { void operator() (AVPacket *p) const { av_packet_free(&p); } };
-struct av_frame_deleter  { void operator() (AVFrame  *f) const { av_frame_free(&f); } };
-struct av_buffer_deleter { void operator() (uint8_t  *b) const { av_free(b); } };
-
-using av_packet_ptr = std::unique_ptr<AVPacket, av_packet_deleter>;
-using av_frame_ptr  = std::unique_ptr<AVFrame,  av_frame_deleter>;
-using av_buffer_ptr = std::unique_ptr<uint8_t,  av_buffer_deleter>; // packed samples: one block
+struct av_buffer_deleter { void operator() (uint8_t *b) const { av_free(b); } };
+using av_buffer_ptr = std::unique_ptr<uint8_t, av_buffer_deleter>; // packed samples: one block
 
 struct default_layout
 {
@@ -64,12 +59,18 @@ struct default_layout
 struct open_error { QString message; };
 using open_status = std::optional<open_error>;
 
-open_error
-av_failure (int ret, const char *what)
+QString
+av_error_text (int ret)
 {
     char buf[AV_ERROR_MAX_STRING_SIZE];
     av_strerror(ret, buf, sizeof buf);
-    return { QStringLiteral("%1: %2").arg(QString::fromUtf8(what), QString::fromUtf8(buf)) };
+    return QString::fromUtf8(buf);
+}
+
+open_error
+av_failure (int ret, const char *what)
+{
+    return { QStringLiteral("%1: %2").arg(QString::fromUtf8(what), av_error_text(ret)) };
 }
 
 // How decoded frames reach the ring: untouched, or through swr.
@@ -190,6 +191,58 @@ open_pipeline (open_ctx &c, const QUrl &source)
     return init_resampler(c);
 }
 
+// --- PCM blocks: ring-format samples owned by RAII, so no path can leak or double free one
+
+struct pcm_block
+{
+    av_buffer_ptr data;
+    int           frames = 0;   // frames valid in `data` (0 = nothing to push)
+    int           error  = 0;   // AVERROR code when alloc/convert failed, else 0
+};
+
+// Room for `capacity` frames, then swr over `in` (nullptr/0 = flush its tail).
+// The only place samples are allocated, hence the only place that frees them.
+pcm_block
+convert_block (SwrContext *swr, int channels, AVSampleFormat out_fmt, int capacity,
+               const uint8_t **in, int in_frames)
+{
+    pcm_block block;
+
+    uint8_t *raw = nullptr;
+    if (const int ret = av_samples_alloc(&raw, nullptr, channels, capacity, out_fmt, 0); ret < 0) {
+        block.error = ret;
+        return block;
+    }
+    block.data.reset(raw);
+
+    const int got = swr_convert(swr, &raw, capacity, in, in_frames);
+    if (got < 0) {
+        block.data.reset();     // frees
+        block.error = got;
+        return block;
+    }
+
+    block.frames = got;
+    return block;
+}
+
+// A decoded frame -> ring format, through swr.
+pcm_block
+convert_frame (SwrContext *swr, const stream_format &out, AVSampleFormat out_fmt, AVFrame &frame)
+{
+    const int capacity = int(av_rescale_rnd(swr_get_delay(swr, frame.sample_rate) + frame.nb_samples,
+                                            out.rate, frame.sample_rate, AV_ROUND_UP));
+    return convert_block(swr, out.channels, out_fmt, capacity,
+                         const_cast<const uint8_t **>(frame.data), frame.nb_samples);
+}
+
+// The single bytes-to-ring seam (the reinterpret_cast used to be written three times).
+bool
+push_pcm (audio_ring_buffer &ring, const uint8_t *samples, int frames)
+{
+    return ring.push_blocking(reinterpret_cast<const std::byte *>(samples), size_t(frames));
+}
+
 // --- decode step
 
 enum class drain_status { complete, cancelled };
@@ -209,11 +262,26 @@ drain_frames (AVCodecContext *codec, AVFrame *frame, Push &&push)
 }
 
 // pkt == nullptr puts the codec in draining mode (end of file).
+// A packet the codec refuses is dropped and logged, NOT fatal: one corrupt frame in the middle
+// of a file must not stop the track. Whatever the codec still holds is drained either way.
 template <typename Push>
 drain_status
 feed_codec (AVCodecContext *codec, const AVPacket *pkt, AVFrame *frame, Push &&push)
 {
-    avcodec_send_packet(codec, pkt);
+    int ret = avcodec_send_packet(codec, pkt);
+
+    // EAGAIN: output not drained yet and the packet was NOT consumed. Drain, then it is accepted.
+    if (ret == AVERROR(EAGAIN)) {
+        if (drain_frames(codec, frame, push) == drain_status::cancelled)
+            return drain_status::cancelled;
+        ret = avcodec_send_packet(codec, pkt);
+    }
+
+    // EOF on a flush just means "already draining": nothing to report
+    const bool already_draining = !pkt && ret == AVERROR_EOF;
+    if (ret < 0 && !already_draining)
+        qCWarning(l_ffmpeg) << "Codec rejected its input:" << av_error_text(ret);
+
     return drain_frames(codec, frame, push);
 }
 
@@ -226,15 +294,9 @@ flush_resampler (SwrContext *swr, audio_ring_buffer &ring, AVSampleFormat out_fm
     const int cap = swr_get_out_samples(swr, 0);
     if (cap <= 0) return drain_status::complete;
 
-    uint8_t *raw = nullptr;
-    if (av_samples_alloc(&raw, nullptr, ring.format().channels, cap, out_fmt, 0) < 0)
-        return drain_status::complete;
-    const av_buffer_ptr owner(raw);
+    const pcm_block tail = convert_block(swr, ring.format().channels, out_fmt, cap, nullptr, 0);
 
-    uint8_t *out = owner.get();
-    const int got = swr_convert(swr, &out, cap, nullptr, 0);
-
-    if (got > 0 && !ring.push_blocking(reinterpret_cast<const std::byte *>(out), size_t(got)))
+    if (tail.frames > 0 && !push_pcm(ring, tail.data.get(), tail.frames))
         return drain_status::cancelled;
     return drain_status::complete;
 }
@@ -308,10 +370,8 @@ audio_decode_worker::load(const QUrl &source) {
     // clear any previous context
     clean();
 
-    // Open the new file using the helper
-    if (!open_file_internal(source)) {
-        m_song_loaded = false;
-    }
+    // Failure is fully handled inside: contexts closed, song unloaded, UI told
+    open_file_internal(source);
 }
 
 bool
@@ -321,8 +381,7 @@ audio_decode_worker::open_file_internal(const QUrl &source)
 
     if (open_status failure = open_pipeline(ctx, source)) {
         qCCritical(l_ffmpeg) << "Cannot open" << source << "-" << failure->message;
-        close_ffmpeg_contexts();    // whatever stage failed, no half-open context survives
-        m_song_loaded = false;
+        abandon_decoding(true);     // whatever stage failed, no half-open context survives
         emit song_load_failed(std::move(failure->message));
         return false;
     }
@@ -353,22 +412,21 @@ audio_decode_worker::decode_step ()
         return;
     }
 
-    const av_packet_ptr pkt(av_packet_alloc());
-    const av_frame_ptr  frame(av_frame_alloc());
-    if (!pkt || !frame) {
-        m_decode_timer->setInterval(pace_ms::backoff);
-        return;
-    }
+    // Both are empty here, and emptied again on every way out of this function
+    const auto scratch = m_scratch.acquire();
+    AVPacket *const pkt   = scratch.pkt();
+    AVFrame  *const frame = scratch.frame();
 
     const auto push = [this] (AVFrame *f) { return push_frame(f); };
 
-    const int read_ret = av_read_frame(fmt_ctx, pkt.get());
+    const int read_ret = av_read_frame(fmt_ctx, pkt);
 
     // 1. A packet: decode it if it is ours (a packet can produce several frames)
     if (read_ret >= 0) {
         const bool ours = pkt->stream_index == audio_stream_index;
-        if (ours && feed_codec(codec_ctx, pkt.get(), frame.get(), push) == drain_status::cancelled)
+        if (ours && feed_codec(codec_ctx, pkt, frame, push) == drain_status::cancelled) {
             return;     // seek/stop cancelled the push: they reset codec and ring
+        }
 
         m_decode_timer->setInterval(pace_ms::spin);   // there might be more to read right now
         return;
@@ -379,7 +437,7 @@ audio_decode_worker::decode_step ()
         // Cancelled mid-drain: a seek/stop/load is taking over. Do NOT fall through to
         // on_end_of_A (arming the boundary, opening B's file): the last samples of A never
         // reached the ring.
-        if (feed_codec(codec_ctx, nullptr, frame.get(), push) == drain_status::cancelled
+        if (feed_codec(codec_ctx, nullptr, frame, push) == drain_status::cancelled
             || flush_resampler(swr_ctx, m_ring_buffer, m_out_av_fmt) == drain_status::cancelled)
             return;
 
@@ -414,10 +472,9 @@ audio_decode_worker::on_end_of_A ()
     close_ffmpeg_contexts();
 
     if (!open_file_internal(m_track_B_source)) {
-        // open_file_internal already tore the decoder down and told the UI.
-        // What is left is the ring's side: B never existed, the hit must report "no B".
+        // The UI was told by open_file_internal. B never existed: the hit must report "no B".
         m_track_B_opened.clear();
-        mark_tape_ended(m_ring_buffer);
+        abandon_decoding();
         return pace_ms::no_song;
     }
 
@@ -488,9 +545,7 @@ audio_decode_worker::reopen_A_at (const audio_ring_buffer::rt_quiesce &quiesce, 
     }
 
     // Same policy as when B's file fails to open: nothing decodable, the ring plays out what it holds
-    close_ffmpeg_contexts();
-    m_song_loaded.store(false);
-    m_ring_buffer.eof_decoded.store(true, std::memory_order_release);
+    abandon_decoding();
     return false;
 }
 
@@ -522,41 +577,18 @@ audio_decode_worker::undo_prepare_B()
     m_track_B_source.clear();
 }
 
-int
-audio_decode_worker::convert_to_ring (AVFrame *frame, uint8_t **output)
-{
-    const stream_format &out = m_ring_buffer.format();
-
-    const int dst_frames = av_rescale_rnd(
-        swr_get_delay(swr_ctx, frame->sample_rate) + frame->nb_samples,
-        out.rate, frame->sample_rate, AV_ROUND_UP);
-
-    uint8_t *converted = nullptr;
-    int ret = av_samples_alloc(&converted, nullptr, out.channels, dst_frames, m_out_av_fmt, 0);
-    if (ret < 0) return ret;
-
-    const int got = swr_convert(swr_ctx, &converted, dst_frames,
-                                (const uint8_t **)frame->data, frame->nb_samples);
-    if (got < 0) { av_freep(&converted); return got; }
-
-    *output = converted;
-    return got; // frames: no more "* 2"
-}
-
 bool
 audio_decode_worker::push_frame (AVFrame *frame)
 {
     if (m_passthrough)
-        return m_ring_buffer.push_blocking(reinterpret_cast<const std::byte *>(frame->data[0]),
-                                           size_t(frame->nb_samples));
+        return push_pcm(m_ring_buffer, frame->data[0], frame->nb_samples);
 
-    uint8_t *pcm = nullptr;
-    const int frames = convert_to_ring(frame, &pcm);
-    if (frames <= 0) { av_freep(&pcm); return true; } // nothing to push is not a cancel
+    const pcm_block pcm = convert_frame(swr_ctx, m_ring_buffer.format(), m_out_av_fmt, *frame);
+    if (pcm.error)
+        qCWarning(l_ffmpeg) << "Cannot convert a frame to the ring format:" << av_error_text(pcm.error);
 
-    const bool ok = m_ring_buffer.push_blocking(reinterpret_cast<const std::byte *>(pcm), size_t(frames));
-    av_freep(&pcm);
-    return ok;
+    if (pcm.frames <= 0) return true;   // nothing to push is not a cancel
+    return push_pcm(m_ring_buffer, pcm.data.get(), pcm.frames);
 }
 
 void
@@ -591,6 +623,14 @@ audio_decode_worker::close_ffmpeg_contexts()
         swr_ctx = nullptr;
     }
     m_open_source.clear();
+}
+
+void
+audio_decode_worker::abandon_decoding (bool do_not_mark_end_of_tape)
+{
+    close_ffmpeg_contexts();
+    m_song_loaded.store(false);
+    if (!do_not_mark_end_of_tape) mark_tape_ended(m_ring_buffer);
 }
 
 QUrl
