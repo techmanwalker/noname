@@ -235,3 +235,22 @@ audio_ring_buffer::skip_within_armed_tail (const rt_quiesce &, uint64_t target_m
     absolute_frames_played.fetch_add(skip, std::memory_order_relaxed);
     return true;
 }
+
+void
+audio_ring_buffer::arm_boundary ()
+{
+    const uint64_t frame = absolute_frames_decoded.load(std::memory_order_relaxed);
+    {
+        std::lock_guard<std::mutex> lock(boundary_mutex);
+        upcoming_boundary_frame = frame;
+        has_upcoming_boundary   = true;
+    }
+    // Unconditional store is safe: we strictly track one boundary at a time.
+    next_boundary_frame.store(frame, std::memory_order_release);
+}
+
+void
+audio_ring_buffer::mark_tape_ended ()
+{
+    eof_decoded.store(true, std::memory_order_release);
+}

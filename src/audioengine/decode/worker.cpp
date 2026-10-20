@@ -310,27 +310,6 @@ idle_interval (bool song_loaded, audio_ring_buffer &ring)
     return std::nullopt;
 }
 
-// --- boundary / end of tape (ring side only)
-
-// Publishes "A ends at this absolute frame": once for the UI, once for the RT thread.
-void
-arm_boundary (audio_ring_buffer &ring)
-{
-    const uint64_t frame = ring.absolute_frames_decoded.load(std::memory_order_relaxed);
-    {
-        std::lock_guard<std::mutex> lock(ring.boundary_mutex);
-        ring.upcoming_boundary_frame = frame;
-        ring.has_upcoming_boundary   = true;
-    }
-    // Unconditional store is safe: we strictly track one boundary at a time.
-    ring.next_boundary_frame.store(frame, std::memory_order_release);
-}
-
-void
-mark_tape_ended (audio_ring_buffer &ring)
-{
-    ring.eof_decoded.store(true, std::memory_order_release);
-}
 }
 
 // The Decoding workhorse
@@ -458,11 +437,11 @@ audio_decode_worker::on_end_of_A ()
 
     if (!m_has_B) {
         // No B prepared: the end of A's file is where the tape runs out, stop decoding
-        mark_tape_ended(m_ring_buffer);
+        m_ring_buffer.mark_tape_ended();
         return pace_ms::finished;
     }
 
-    arm_boundary(m_ring_buffer);
+    m_ring_buffer.arm_boundary();
 
     // Remember both files: seeks while armed need A's, on_boundary_hit() needs to know B's
     m_track_A_source = m_open_source;       // close_ffmpeg_contexts() clears m_open_source
@@ -630,7 +609,7 @@ audio_decode_worker::abandon_decoding (bool do_not_mark_end_of_tape)
 {
     close_ffmpeg_contexts();
     m_song_loaded.store(false);
-    if (!do_not_mark_end_of_tape) mark_tape_ended(m_ring_buffer);
+    if (!do_not_mark_end_of_tape) m_ring_buffer.mark_tape_ended();
 }
 
 QUrl

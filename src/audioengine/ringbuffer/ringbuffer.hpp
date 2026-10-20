@@ -44,6 +44,14 @@ class audio_ring_buffer
     std::condition_variable m_cv;
     std::atomic_bool m_cancelled{false};
 
+    // boundaries
+    mutable std::mutex boundary_mutex;
+    bool has_upcoming_boundary{false};
+    uint64_t upcoming_boundary_frame{0};
+    uint64_t clock_origin_frame{0};   // absolute frame where the current track began; guarded by boundary_mutex
+    uint64_t boundary_epoch{0};       // bumped (under boundary_mutex) each time a hit is consumed: a request
+                                      // issued under an older epoch was about an A that is gone
+
 public:
 
     using seconds = std::chrono::duration<double>;
@@ -123,18 +131,7 @@ public:
         audio_ring_buffer &m_ring;
     };
 
-    // Decoder thread only. Empties the ring and rewinds every clock/flag to "a track that
-    // starts at base_ms". The ONE place that knows which ring state belongs to a playback
-    // position: a new field gets reset here or nowhere. Deliberately NOT included:
-    // m_cancelled and pending_seeks (control-thread handshakes, not playback state).
-    void reset (const rt_quiesce &, uint64_t base_ms);
-
-    mutable std::mutex boundary_mutex;
-    bool has_upcoming_boundary{false};
-    uint64_t upcoming_boundary_frame{0};
-    uint64_t clock_origin_frame{0};   // absolute frame where the current track began; guarded by boundary_mutex
-    uint64_t boundary_epoch{0};       // bumped (under boundary_mutex) each time a hit is consumed: a request
-                                      // issued under an older epoch was about an A that is gone
+    // boundaries pt. 2
 
     // none:  no B behind A (or its hit was already consumed)
     // armed: the decoder has opened B's file, A's samples are still being played
@@ -143,21 +140,35 @@ public:
 
     struct boundary_view { boundary_phase phase; uint64_t epoch; };
 
+
+    // Frame where A ends and B begins, as the RT thread sees it (UINT64_MAX when none or already hit)
+    std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
+
     // One lock: phase and epoch are consistent with each other (no ceremony can slip between them)
     boundary_view boundary_snapshot () const;
+
+    // Qt thread. true once per boundary, after the RT thread hit it: B becomes A in the clocks
+    // (position counts from B's start) and boundary_epoch moves on.
+    bool consume_boundary_hit();
+
+    // Decoder thread only. Empties the ring and rewinds every clock/flag to "a track that
+    // starts at base_ms". The ONE place that knows which ring state belongs to a playback
+    // position: a new field gets reset here or nowhere. Deliberately NOT included:
+    // m_cancelled and pending_seeks (control-thread handshakes, not playback state).
+    void reset (const rt_quiesce &, uint64_t base_ms);
 
     // Decoder thread, boundary armed: fast-forward through A's tail that is already in the ring.
     // false = target is behind the playhead (the ring only holds the future).
     bool skip_within_armed_tail (const rt_quiesce &, uint64_t target_ms);
 
-    // Frame where A ends and B begins, as the RT thread sees it (UINT64_MAX when none or already hit)
-    std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
+    // Decoder thread, NOT under quiesce (runs concurrently with the RT thread by design):
+    // A's last frame is the one just pushed. Publishes the boundary to the UI side and the RT side.
+    void arm_boundary ();
+
+    // Decoder thread: A's samples are all in the ring and no B follows.
+    void mark_tape_ended ();
 
     // RT thread -> Qt thread events (tape ran out, boundary hit, stream error/underflow).
     // See audiortevents.hpp; the Qt side is rt_event_pump.
     rt_event_mailbox rt_events;
-
-    // Qt thread. true once per boundary, after the RT thread hit it: B becomes A in the clocks
-    // (position counts from B's start) and boundary_epoch moves on.
-    bool consume_boundary_hit();
 };
