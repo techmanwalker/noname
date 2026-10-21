@@ -194,7 +194,7 @@ AbstractMediaSequence::item_at(size_t index)
     return std::ref(m_d->m_items[index]);
 }
 
-const QList<Types::Any> &
+QList<Types::Any>
 AbstractMediaSequence::items() const
 {
     QReadLocker locker (&m_d->m_lock);

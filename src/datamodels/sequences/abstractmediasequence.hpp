@@ -71,7 +71,7 @@ public:
 
     std::optional<int>     role_number(const QByteArray &role) const;
 
-    const QList<Types::Any> & items() const;
+    QList<Types::Any> items() const;
 
     // items that can be converted to certain types
     // returns one QList per requested type, in the order requested, in a single pass
