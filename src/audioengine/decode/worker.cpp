@@ -349,19 +349,22 @@ audio_decode_worker::load(const QUrl &source) {
     // clear any previous context
     clean();
 
-    // Failure is fully handled inside: contexts closed, song unloaded, UI told
+    // Failure is fully handled inside: contexts closed, song unloaded, song_load_failed emitted
     open_file_internal(source);
 }
 
 bool
 audio_decode_worker::open_file_internal(const QUrl &source)
 {
+    // The stages need a clean slate (avformat_open_input would adopt a live fmt_ctx, init_resampler
+    // would leak swr_ctx). Every caller closes first; this makes it a checked contract.
+    Q_ASSERT(!fmt_ctx && !codec_ctx && !swr_ctx);
     open_ctx ctx { fmt_ctx, codec_ctx, swr_ctx, audio_stream_index, m_ring_buffer.format() };
 
     if (open_status failure = open_pipeline(ctx, source)) {
         qCCritical(l_ffmpeg) << "Cannot open" << source << "-" << failure->message;
         abandon_decoding(true);     // whatever stage failed, no half-open context survives
-        emit song_load_failed(std::move(failure->message));
+        emit song_load_failed(source, std::move(failure->message));
         return false;
     }
 
@@ -467,7 +470,7 @@ audio_decode_worker::on_end_of_A ()
     close_ffmpeg_contexts();
 
     if (!open_file_internal(m_track_B_source)) {
-        // The UI was told by open_file_internal. B never existed: the hit must report "no B".
+        // open_file_internal reported the failure. B never existed: the hit must report "no B".
         m_track_B_opened.clear();
         abandon_decoding();
         return pace_ms::no_song;

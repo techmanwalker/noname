@@ -15,6 +15,9 @@ audio_engineLI::audio_engineLI(QObject *parent, audio_backend backend)
 {
     connect(m_internal.get(), &audio_internal_controller::seeked,
             this, &audio_engineLI::seek_finished);
+
+    connect(m_internal.get(), &audio_internal_controller::load_failed,
+            this, &audio_engineLI::load_failed);
             
     /*  Explicit Qt::QueuedConnection, kept on purpose: these signals are emitted by
         rt_event_pump on the main thread (never from the RT callback), so thread safety no

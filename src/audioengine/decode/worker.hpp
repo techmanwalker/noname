@@ -59,7 +59,7 @@ private slots:
     void decode_step ();
 
 signals:
-    void song_load_failed (QString err);
+    void song_load_failed (QUrl source, QString err);   // the file that failed to open, and why
 
     void seeked();
 

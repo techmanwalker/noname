@@ -50,6 +50,7 @@ public:
 
 signals:
     void seeked();
+    void load_failed(const QUrl &source, const QString &reason);   // a file could not be opened (load, or B at the gapless handoff)
     void boundary_hit();   // emitted by rt_event_pump (this thread): A's samples ended, B follows
     void tape_ran_out();   // emitted by rt_event_pump (this thread): A's samples ended, no B
 

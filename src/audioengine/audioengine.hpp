@@ -55,6 +55,7 @@ public:
 
 signals:
     void seek_finished();
+    void load_failed(const QUrl &source, const QString &reason);   // forwarded from the decoder
     void duration_changed();
     void track_changed();
     void tape_ran_out();

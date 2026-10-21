@@ -133,6 +133,9 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
 
     connect(m_decoder_worker, &audio_decode_worker::seeked,
             this, &audio_internal_controller::seeked);
+
+    connect(m_decoder_worker, &audio_decode_worker::song_load_failed,
+            this, &audio_internal_controller::load_failed);
             
     m_audio_decoding_thread->start();
 }
