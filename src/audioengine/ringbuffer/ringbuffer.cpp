@@ -36,7 +36,8 @@ audio_ring_buffer::push_blocking(const std::byte* data, size_t count)
 
     std::unique_lock<std::mutex> lock(m_mutex);
     
-    // Nobody wakes us when the device frees space (the RT callback must not make syscalls),
+    // Nobody wakes us when the device frees space (the RT callback must not block, so no condvar:
+    // its only syscall is the mailbox's non-blocking eventfd write),
     // so nap for as long as the device needs to drain the missing space, then re-check.
     // Every wait is bounded and the predicate is re-evaluated after it, so there is no
     // wakeup to lose. cancel_blocking_push() still wakes us instantly.
