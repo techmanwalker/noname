@@ -238,7 +238,7 @@ convert_frame (SwrContext *swr, const stream_format &out, AVSampleFormat out_fmt
 
 // The single bytes-to-ring seam (the reinterpret_cast used to be written three times).
 bool
-push_pcm (audio_ring_buffer &ring, const uint8_t *samples, int frames)
+push_pcm (audio_ring_buffer::producer &ring, const uint8_t *samples, int frames)
 {
     return ring.push_blocking(reinterpret_cast<const std::byte *>(samples), size_t(frames));
 }
@@ -287,7 +287,7 @@ feed_codec (AVCodecContext *codec, const AVPacket *pkt, AVFrame *frame, Push &&p
 
 // Rate conversion keeps a tail inside swr: flush it or every track loses its last few ms.
 drain_status
-flush_resampler (SwrContext *swr, audio_ring_buffer &ring, AVSampleFormat out_fmt)
+flush_resampler (SwrContext *swr, audio_ring_buffer::producer &ring, AVSampleFormat out_fmt)
 {
     if (!swr) return drain_status::complete;
 
@@ -303,7 +303,7 @@ flush_resampler (SwrContext *swr, audio_ring_buffer &ring, AVSampleFormat out_fm
 
 // nullopt = go decode; otherwise the interval to wait. Order matters: no song wins over full ring.
 std::optional<int>
-idle_interval (bool song_loaded, audio_ring_buffer &ring)
+idle_interval (bool song_loaded, audio_ring_buffer::producer &ring)
 {
     if (!song_loaded)    return pace_ms::no_song;
     if (ring.is_full())  return pace_ms::backoff;   // don't decode ahead and waste RAM
@@ -314,21 +314,15 @@ idle_interval (bool song_loaded, audio_ring_buffer &ring)
 
 // The Decoding workhorse
 
-audio_decode_worker::audio_decode_worker (stream_format out_format, QObject *parent)
+audio_decode_worker::audio_decode_worker (audio_ring_buffer::producer out, QObject *parent)
     : QObject(parent),
-      m_ring_buffer(out_format)
+      m_ring(out)
 {
 }
 
 audio_decode_worker::~audio_decode_worker ()
 {
     close_ffmpeg_contexts();
-}
-
-audio_ring_buffer*
-audio_decode_worker::get_ring_buffer()
-{
-    return &m_ring_buffer;
 }
 
 bool
@@ -359,7 +353,7 @@ audio_decode_worker::open_file_internal(const QUrl &source)
     // The stages need a clean slate (avformat_open_input would adopt a live fmt_ctx, init_resampler
     // would leak swr_ctx). Every caller closes first; this makes it a checked contract.
     Q_ASSERT(!fmt_ctx && !codec_ctx && !swr_ctx);
-    open_ctx ctx { fmt_ctx, codec_ctx, swr_ctx, audio_stream_index, m_ring_buffer.format() };
+    open_ctx ctx { fmt_ctx, codec_ctx, swr_ctx, audio_stream_index, m_ring.format() };
 
     if (open_status failure = open_pipeline(ctx, source)) {
         qCCritical(l_ffmpeg) << "Cannot open" << source << "-" << failure->message;
@@ -396,7 +390,7 @@ audio_decode_worker::decode_step ()
         return;
     }
 
-    if (const auto idle = idle_interval(m_song_loaded, m_ring_buffer)) {
+    if (const auto idle = idle_interval(m_song_loaded, m_ring)) {
         m_decode_timer->setInterval(*idle);
         return;
     }
@@ -422,12 +416,12 @@ audio_decode_worker::decode_step ()
     }
 
     // 2. End of A's file, first time we see it
-    if (read_ret == AVERROR_EOF && !m_ring_buffer.tape_ended()) {
+    if (read_ret == AVERROR_EOF && !m_ring.tape_ended()) {
         // Cancelled mid-drain: a seek/stop/load is taking over. Do NOT fall through to
         // on_end_of_A (arming the boundary, opening B's file): the last samples of A never
         // reached the ring.
         if (feed_codec(codec_ctx, nullptr, frame, push) == drain_status::cancelled
-            || flush_resampler(swr_ctx, m_ring_buffer, m_out_av_fmt) == drain_status::cancelled)
+            || flush_resampler(swr_ctx, m_ring, m_out_av_fmt) == drain_status::cancelled)
             return;
 
         m_decode_timer->setInterval(on_end_of_A());
@@ -446,7 +440,7 @@ audio_decode_worker::on_end_of_A ()
     // While A/B is still drawn (armed, or hit but not consumed) this file's end cannot be drawn: its
     // samples already fit in the ring, but the marker would overwrite A/B's. Decide nothing now:
     // boundary_settled() calls back, and the B slot is read then (a later prepare/undo wins).
-    if (m_ring_buffer.boundary_snapshot().phase != audio_ring_buffer::boundary_phase::none) {
+    if (m_ring.boundary_snapshot().phase != audio_ring_buffer::boundary_phase::none) {
         m_end_deferred = true;
         return pace_ms::finished;
     }
@@ -456,11 +450,11 @@ audio_decode_worker::on_end_of_A ()
 
     if (!m_has_B) {
         // No B prepared: the end of A's file is where the tape runs out, stop decoding
-        m_ring_buffer.mark_tape_ended();
+        m_ring.mark_tape_ended();
         return pace_ms::finished;
     }
 
-    m_ring_buffer.arm_boundary();
+    m_ring.arm_boundary();
 
     // Remember both files: seeks while armed need A's, on_boundary_hit() needs to know B's
     m_track_A_source = m_open_source;       // close_ffmpeg_contexts() clears m_open_source
@@ -484,19 +478,19 @@ bool
 audio_decode_worker::rewind_in_place(uint64_t position_ms, std::optional<uint64_t> epoch)
 {
     // Re-arm for normal operation before taking the lock and decoding new frames
-    m_ring_buffer.reset_cancel();
+    m_ring.reset_cancel();
 
     // decode and seek are mutually exclusive
     std::lock_guard<std::mutex> lock (m_decoder_mutex);
 
     // Scope ends before seek() decrements pending_seeks, as before
-    audio_ring_buffer::rt_quiesce quiesce(m_ring_buffer);
+    const auto quiesce = m_ring.quiesce();
 
     if (!fmt_ctx) return false;
 
     if (epoch) {
         using phase = audio_ring_buffer::boundary_phase;
-        const auto b = m_ring_buffer.boundary_snapshot();   // RT is held out: nothing here can move under us
+        const auto b = m_ring.boundary_snapshot();   // RT is held out: nothing here can move under us
 
         // The request was computed against the A the engine presented when it was issued. If that
         // hit was consumed since (epoch moved) or the RT thread is already past the boundary
@@ -505,7 +499,7 @@ audio_decode_worker::rewind_in_place(uint64_t position_ms, std::optional<uint64_
         if (b.epoch != *epoch || b.phase == phase::hit) return false;
 
         if (b.phase == phase::armed) {   // A is still audible, the decoder already reads B's file
-            if (m_ring_buffer.skip_within_armed_tail(quiesce, position_ms)) return true;
+            if (m_ring.skip_within_armed_tail(quiesce, position_ms)) return true;
             return reopen_A_at(quiesce, position_ms);
         }
     }
@@ -524,7 +518,7 @@ audio_decode_worker::seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesc
     avcodec_flush_buffers(codec_ctx);
     if (swr_ctx) swr_init(swr_ctx);         // flush the resampler cache: no old audio spillage
 
-    m_ring_buffer.reset(quiesce, position_ms);
+    m_ring.reset(quiesce, position_ms);
     m_end_deferred = false;                 // decoding resumes from here: the old file end is gone
     return true;
 }
@@ -554,7 +548,7 @@ audio_decode_worker::seek(uint64_t position_ms, uint64_t epoch)
     rewind_in_place(position_ms, epoch);
 
     // mark seek as complete so actual audio playback can safely resume
-    m_ring_buffer.pending_seeks.fetch_sub(1, std::memory_order_release);
+    m_ring.end_seek();
 
     // Exactly one completion per request, whatever happened to it
     emit seeked();
@@ -589,14 +583,14 @@ bool
 audio_decode_worker::push_frame (AVFrame *frame)
 {
     if (m_passthrough)
-        return push_pcm(m_ring_buffer, frame->data[0], frame->nb_samples);
+        return push_pcm(m_ring, frame->data[0], frame->nb_samples);
 
-    const pcm_block pcm = convert_frame(swr_ctx, m_ring_buffer.format(), m_out_av_fmt, *frame);
+    const pcm_block pcm = convert_frame(swr_ctx, m_ring.format(), m_out_av_fmt, *frame);
     if (pcm.error)
         qCWarning(l_ffmpeg) << "Cannot convert a frame to the ring format:" << av_error_text(pcm.error);
 
     if (pcm.frames <= 0) return true;   // nothing to push is not a cancel
-    return push_pcm(m_ring_buffer, pcm.data.get(), pcm.frames);
+    return push_pcm(m_ring, pcm.data.get(), pcm.frames);
 }
 
 void
@@ -608,8 +602,8 @@ audio_decode_worker::clean ()
     undo_prepare_B();   // B was prepared to follow what we just closed. Not ring state: kept out of the quiesce window
 
     {
-        audio_ring_buffer::rt_quiesce quiesce(m_ring_buffer);
-        m_ring_buffer.reset(quiesce, 0);
+        const auto quiesce = m_ring.quiesce();
+        m_ring.reset(quiesce, 0);
     }
 
     m_song_loaded.store(false);
@@ -639,7 +633,7 @@ audio_decode_worker::abandon_decoding (bool do_not_mark_end_of_tape)
 {
     close_ffmpeg_contexts();
     m_song_loaded.store(false);
-    if (!do_not_mark_end_of_tape) m_ring_buffer.mark_tape_ended();
+    if (!do_not_mark_end_of_tape) m_ring.mark_tape_ended();
 }
 
 QUrl

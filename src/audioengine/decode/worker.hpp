@@ -19,7 +19,7 @@ class audio_decode_worker : public QObject
     Q_OBJECT
 
 public:
-    explicit audio_decode_worker (stream_format out_format, QObject *parent = nullptr);
+    explicit audio_decode_worker (audio_ring_buffer::producer out, QObject *parent = nullptr);
     ~audio_decode_worker() override;
 
     // The file the decoder really opened for B when it reached the end of A's file
@@ -27,8 +27,6 @@ public:
     QUrl track_B_opened () const;
 
 public slots:
-
-    audio_ring_buffer* get_ring_buffer();
 
     // call if needed to load some other song or audio stream
     void load (const QUrl &source);
@@ -65,8 +63,6 @@ signals:
 
 private:
 
-    friend class audio_engine;
-
     // false = the push was cancelled (seek/stop/load): the caller must bail out
     bool push_frame (AVFrame *frame);
 
@@ -96,7 +92,8 @@ private:
     QUrl m_track_A_source;   // A's file, remembered when the decoder moved on to B's; valid only while armed (decoder thread)
     QUrl m_track_B_opened;   // B's file as the decoder really opened it (guarded by m_B_mutex)
 
-    audio_ring_buffer m_ring_buffer;
+    // The decoder's end of the ring, and all of it this class can reach: the controller owns the ring
+    audio_ring_buffer::producer m_ring;
 
     // Reused packet/frame (no per-tick alloc). Reachable only through av_scratch::lease.
     av_scratch m_scratch;

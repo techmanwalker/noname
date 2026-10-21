@@ -10,17 +10,77 @@
 #include "realtime/rteventmailbox.hpp"
 #include "ringbuffer/streamformats.hpp"
 
-// sndio
-void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max);
+/**
+    The transport between the decoder and the device. Three roles touch it, on three threads, and
+    each one reaches only what its job needs:
 
-void error_callback(struct SoundIoOutStream *outstream, int err);
+      control   (Qt thread)  the public methods below. Only the object that OWNS the ring can call
+                             them (audio_internal_controller): transport state, clocks, boundaries.
+      producer  (decoder)    make_producer(): samples in, boundaries armed, the flush quiesce.
+      rt_end    (RT thread)  make_rt_end(): samples out, clocks, events. Minted by the libsoundio
+                             callback entry (soundio/callbacks.cpp), nowhere else.
 
-void underflow_callback (struct SoundIoOutStream *outstream);
-
+    Every atomic is private: a role can do what its handle spells out and nothing else.
+*/
 class audio_ring_buffer
 {
-    // (friend removed: the decoder no longer touches ring internals)
+public:
+    using seconds = std::chrono::duration<double>;
 
+    class producer;   // defined at the end of the class
+    class rt_end;     // defined at the end of the class
+
+    explicit audio_ring_buffer (stream_format fmt, seconds capacity = std::chrono::seconds(10));
+    audio_ring_buffer (const audio_ring_buffer &) = delete;
+    audio_ring_buffer &operator= (const audio_ring_buffer &) = delete;
+
+    const stream_format &format () const noexcept { return m_format; }
+
+    [[nodiscard]] producer make_producer () noexcept;
+    [[nodiscard]] rt_end   make_rt_end   () noexcept;
+
+    // none:  no B behind A (or its hit was already consumed)
+    // armed: the decoder has opened B's file, A's samples are still being played
+    // hit:   the RT thread went past the boundary (B is audible), consume_boundary_hit() has not run yet
+    enum class boundary_phase { none, armed, hit };
+
+    struct boundary_view { boundary_phase phase; uint64_t epoch; };
+
+    // RAII: holds the RT thread out of head/tail for its lifetime (flush protocol below).
+    // Only producer::quiesce() can make one.
+    class rt_quiesce
+    {
+    public:
+        ~rt_quiesce () { m_ring.end_rt_quiesce(); }
+        rt_quiesce (const rt_quiesce &) = delete;
+        rt_quiesce &operator= (const rt_quiesce &) = delete;
+    private:
+        friend class audio_ring_buffer::producer;
+        explicit rt_quiesce (audio_ring_buffer &r) : m_ring(r) { m_ring.begin_rt_quiesce(); }
+        audio_ring_buffer &m_ring;
+    };
+
+    // ---- control role (Qt thread) ----
+    void set_paused (bool paused) noexcept { is_paused.store(paused); }
+    bool paused () const noexcept          { return is_paused.load(); }
+    void set_volume (float gain) noexcept;   // linear multiplier, finite and >= 0
+    void begin_seek () noexcept;             // mutes the device until the decoder calls producer::end_seek()
+    void cancel_blocking_push();             // cancel an in-flight blocking push (call before seek/reset)
+    void reset_cancel();                     // re-arm after cancel
+    uint64_t playback_position_ms() const;   // derived from the clocks
+    uint64_t get_sample_rate () const;
+
+    // One lock: phase and epoch are consistent with each other (no ceremony can slip between them)
+    boundary_view boundary_snapshot () const;
+
+    // true once per boundary, after the RT thread hit it: B becomes A in the clocks
+    // (position counts from B's start) and boundary_epoch moves on.
+    bool consume_boundary_hit();
+
+    // The Qt end of the RT -> Qt channel: rt_event_pump drains it
+    rt_event_mailbox &events () noexcept { return rt_events; }
+
+private:
     void begin_rt_quiesce();
     void end_rt_quiesce();
 
@@ -64,33 +124,19 @@ class audio_ring_buffer
     // Writers: arm_boundary(), reset(), rt_crossed_boundary() only.
     std::atomic_uint64_t rt_trigger_frame{UINT64_MAX};
 
-public:
-
-    using seconds = std::chrono::duration<double>;
-
-    explicit audio_ring_buffer (stream_format fmt, seconds capacity = std::chrono::seconds(10));
-
-    const stream_format &format () const noexcept { return m_format; }
-
-    // called by the ffmpeg thread. `frames` are FRAMES (one sample per channel), interleaved,
+    // Decoder thread (through producer). `frames` are FRAMES (one sample per channel), interleaved,
     // already in format(). Blocking - guaranteed to succeed unless cancelled.
     bool push_blocking(const std::byte* data, size_t frames);
 
-    // cancel an in-flight blocking push (call before seek/reset)
-    void cancel_blocking_push();
-
-    // re-arm after cancel
-    void reset_cancel();
-
-    // called by libsoundio write_callback. Raw frames, NO gain: volume belongs to the device side.
+    // RT thread (through rt_end::pass). Raw frames, NO gain: volume belongs to the device side.
     size_t pop (std::byte* dest, size_t max_frames);
 
     bool is_full () const;
     size_t writable_size() const;
 
-    // implemented here to read during write_callback
+    // Transport state. Written by set_paused() (control) and pass::claim_tape_end() (RT),
+    // read per chunk by the RT thread.
     std::atomic_bool is_paused {false};
-
     
     // Playback time tracking
 
@@ -100,20 +146,15 @@ public:
     // delay, in frames, after the playback_base_ms time, never reset by write_callback
     std::atomic_uint64_t frames_played {0}; 
 
-    // Current playback position in ms, derived from the above.
-    uint64_t playback_position_ms() const;
-
-    // Stream data
-    uint64_t get_sample_rate () const;
-
     // Tracks total frames pushed by the decoder since the engine started
     std::atomic_uint64_t absolute_frames_decoded{0};
     
     // Tracks total frames consumed by libsoundio
     std::atomic_uint64_t absolute_frames_played{0};
 
-    // Tracks ongoing seek operations to mute the hardware loop
+    // Seeks in flight: begin_seek() (control) counts up, end_seek() (decoder) down. Device muted while > 0.
     std::atomic<int> pending_seeks{0};
+    void end_seek () noexcept;
 
     // Governed by a perceptual volume control that rescales logarithmic values back for soundio
     std::atomic<float> volume_multiplier{1.0f};
@@ -126,34 +167,6 @@ public:
     // end_rt_quiesce(), and nobody ever waits on a callback that isn't running.
     std::atomic_bool flush_request{false};
     std::atomic_bool rt_active{false};
-
-    // RAII: holds the RT thread out of head/tail for its lifetime (protocol above).
-    class rt_quiesce
-    {
-    public:
-        explicit rt_quiesce (audio_ring_buffer &r) : m_ring(r) { m_ring.begin_rt_quiesce(); }
-        ~rt_quiesce () { m_ring.end_rt_quiesce(); }
-        rt_quiesce (const rt_quiesce &) = delete;
-        rt_quiesce &operator= (const rt_quiesce &) = delete;
-    private:
-        audio_ring_buffer &m_ring;
-    };
-
-    // boundaries pt. 2
-
-    // none:  no B behind A (or its hit was already consumed)
-    // armed: the decoder has opened B's file, A's samples are still being played
-    // hit:   the RT thread went past the boundary (B is audible), consume_boundary_hit() has not run yet
-    enum class boundary_phase { none, armed, hit };
-
-    struct boundary_view { boundary_phase phase; uint64_t epoch; };
-
-    // One lock: phase and epoch are consistent with each other (no ceremony can slip between them)
-    boundary_view boundary_snapshot () const;
-
-    // Qt thread. true once per boundary, after the RT thread hit it: B becomes A in the clocks
-    // (position counts from B's start) and boundary_epoch moves on.
-    bool consume_boundary_hit();
 
     // Decoder thread only. Empties the ring and rewinds every clock/flag to "a track that
     // starts at base_ms". The ONE place that knows which ring state belongs to a playback
@@ -193,6 +206,112 @@ public:
     bool rt_claim_tape_end () noexcept { return tape_ended() && !eof_played.exchange(true); }
 
     // RT thread -> Qt thread events (tape ran out, boundary hit, stream error/underflow).
-    // See audiortevents.hpp; the Qt side is rt_event_pump.
+    // See rteventmailbox.hpp; the Qt side is rt_event_pump, through events().
     rt_event_mailbox rt_events;
+
+public:
+    // ---- decoder thread ----
+    class producer
+    {
+    public:
+        const stream_format &format () const noexcept { return m_r.m_format; }
+
+        bool push_blocking (const std::byte *data, size_t frames) { return m_r.push_blocking(data, frames); }
+        bool is_full () const { return m_r.is_full(); }
+        void reset_cancel () { m_r.reset_cancel(); }
+
+        // Flush protocol, decoder half: holds the RT thread out of head/tail while it lives.
+        // The ONLY way to get an rt_quiesce, and reset()/skip_within_armed_tail() demand one.
+        [[nodiscard]] rt_quiesce quiesce () { return rt_quiesce(m_r); }
+        void reset (const rt_quiesce &q, uint64_t base_ms) { m_r.reset(q, base_ms); }
+        bool skip_within_armed_tail (const rt_quiesce &q, uint64_t target_ms)
+        { return m_r.skip_within_armed_tail(q, target_ms); }
+
+        boundary_view boundary_snapshot () const { return m_r.boundary_snapshot(); }
+        void arm_boundary () { m_r.arm_boundary(); }
+        void mark_tape_ended () { m_r.mark_tape_ended(); }
+        bool tape_ended () const noexcept { return m_r.tape_ended(); }
+
+        // Completes a seek that control began with begin_seek(): the device unmutes.
+        void end_seek () noexcept { m_r.end_seek(); }
+
+    private:
+        friend class audio_ring_buffer;
+        explicit producer (audio_ring_buffer &r) noexcept : m_r(r) {}
+        audio_ring_buffer &m_r;
+    };
+
+    // ---- RT thread ----
+    class rt_end
+    {
+    public:
+        // One callback's access. Constructing it IS "the RT thread is inside a callback" (RT half of
+        // the flush protocol), destroying it ends that on every exit path. Wait-free, allocation-free.
+        class pass
+        {
+        public:
+            ~pass () { m_r.rt_active.store(false, std::memory_order_seq_cst); }
+            pass (const pass &) = delete;
+            pass &operator= (const pass &) = delete;
+
+            // Per chunk: a flush or seek was in flight when the pass began, or the transport is paused now.
+            bool muted () const noexcept
+            { return m_flush_requested || m_seek_pending || m_r.is_paused.load(std::memory_order_acquire); }
+
+            float gain () const noexcept { return m_gain; }
+
+            size_t pop (std::byte *dst, size_t frames) noexcept { return m_r.pop(dst, frames); }
+
+            // Absolute frames played so far, including these.
+            uint64_t count_played (int frames) noexcept
+            {
+                const auto n = static_cast<uint64_t>(frames);
+                m_r.frames_played.fetch_add(n, std::memory_order_relaxed);
+                return m_r.absolute_frames_played.fetch_add(n, std::memory_order_relaxed) + n;
+            }
+
+            bool crossed_boundary (uint64_t played) noexcept { return m_r.rt_crossed_boundary(played); }
+
+            // One-shot per tape end; the transport pauses with it.
+            bool claim_tape_end () noexcept
+            {
+                if (!m_r.rt_claim_tape_end()) return false;
+                m_r.is_paused.store(true, std::memory_order_release);
+                return true;
+            }
+
+            void notify (rt_event e) noexcept { m_r.rt_events.post(e); }
+            void notify_error (rt_event e, int err) noexcept { m_r.rt_events.post_error(e, err); }
+
+        private:
+            friend class rt_end;
+            explicit pass (audio_ring_buffer &r) noexcept : m_r(r)
+            {
+                m_r.rt_active.store(true, std::memory_order_seq_cst);                   // 1. announce we're inside
+                m_flush_requested = m_r.flush_request.load(std::memory_order_seq_cst);  // 2. then look at the decoder's request
+                m_seek_pending    = m_r.pending_seeks.load(std::memory_order_acquire) > 0;
+                m_gain            = m_r.volume_multiplier.load(std::memory_order_relaxed);
+            }
+
+            audio_ring_buffer &m_r;
+            bool  m_flush_requested = false;
+            bool  m_seek_pending    = false;
+            float m_gain            = 1.0f;
+        };
+
+        const stream_format &format () const noexcept { return m_r.m_format; }
+        [[nodiscard]] pass begin_pass () noexcept { return pass(m_r); }
+
+        // Outside a pass: libsoundio's error and underflow callbacks.
+        void notify (rt_event e) noexcept { m_r.rt_events.post(e); }
+        void notify_error (rt_event e, int err) noexcept { m_r.rt_events.post_error(e, err); }
+
+    private:
+        friend class audio_ring_buffer;
+        explicit rt_end (audio_ring_buffer &r) noexcept : m_r(r) {}
+        audio_ring_buffer &m_r;
+    };
 };
+
+inline audio_ring_buffer::producer audio_ring_buffer::make_producer () noexcept { return producer(*this); }
+inline audio_ring_buffer::rt_end   audio_ring_buffer::make_rt_end   () noexcept { return rt_end(*this); }

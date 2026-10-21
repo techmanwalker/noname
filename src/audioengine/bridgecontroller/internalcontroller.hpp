@@ -4,7 +4,10 @@
 #include <QString>
 #include <QUrl>
 
+#include <memory>
+
 #include "decode/worker.hpp"
+#include "ringbuffer/ringbuffer.hpp"
 
 #include "realtime/rteventpump.hpp"
 
@@ -55,6 +58,11 @@ signals:
     void tape_ran_out();   // emitted by rt_event_pump (this thread): A's samples ended, no B
 
 private:
+    // Owned here, so this is the only place that can reach the ring's control surface. The decoder
+    // holds the producer end, the libsoundio callbacks the rt_end (through the stream's userdata).
+    // Declared first, so it is destroyed after everything that points into it.
+    std::unique_ptr<audio_ring_buffer> m_ring;
+
     QThread *m_audio_decoding_thread = nullptr;
     audio_decode_worker *m_decoder_worker = nullptr;
 

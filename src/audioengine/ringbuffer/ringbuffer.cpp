@@ -97,6 +97,26 @@ audio_ring_buffer::reset_cancel()
     m_cancelled.store(false);
 }
 
+void
+audio_ring_buffer::set_volume (float gain) noexcept
+{
+    Q_ASSERT(std::isfinite(gain) && gain >= 0.0f);
+    volume_multiplier.store(gain, std::memory_order_relaxed);
+}
+
+void
+audio_ring_buffer::begin_seek () noexcept
+{
+    pending_seeks.fetch_add(1, std::memory_order_release);
+}
+
+void
+audio_ring_buffer::end_seek () noexcept
+{
+    [[maybe_unused]] const int before = pending_seeks.fetch_sub(1, std::memory_order_release);
+    Q_ASSERT(before > 0 && "end_seek() without a begin_seek()");
+}
+
 bool
 audio_ring_buffer::is_full() const {
     return writable_size() == 0;

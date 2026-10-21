@@ -2,6 +2,7 @@
 #include "decode/worker.hpp"
 #include "logging/l_audioengine.hpp" // logging categories
 #include "soundio/backends.hpp"
+#include "soundio/callbacks.hpp"
 
 #include <QThread>
 
@@ -82,7 +83,10 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
 
     // the ring/decoder are built FROM the negotiated format, so negotiation comes first
     const stream_format negotiated = negotiate_stream_format(m_device, 48000);
-    m_decoder_worker = new audio_decode_worker(negotiated);
+
+    // The controller owns the ring and hands the decoder nothing but its producer end
+    m_ring           = std::make_unique<audio_ring_buffer>(negotiated);
+    m_decoder_worker = new audio_decode_worker(m_ring->make_producer());
 
     m_outstream = soundio_outstream_create(m_device);
     m_outstream->format      = to_soundio(negotiated.sample);
@@ -92,11 +96,10 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
 
     m_outstream->layout = *soundio_channel_layout_get_default(negotiated.channels);
 
-    auto ring = m_decoder_worker->get_ring_buffer();
+    m_outstream->userdata = m_ring.get();   // soundio/callbacks.cpp mints its rt_end from this
 
-    m_outstream->userdata = ring;
+    m_rt_pump = new rt_event_pump(m_ring->events(), this);
 
-    m_rt_pump = new rt_event_pump(ring->rt_events, this);
     connect(m_rt_pump, &rt_event_pump::tape_ran_out,      this, &audio_internal_controller::tape_ran_out);
     connect(m_rt_pump, &rt_event_pump::boundary_hit, this, &audio_internal_controller::boundary_hit);
 
@@ -124,7 +127,7 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
 
     execute_soundio(soundio_outstream_start, m_outstream);
 
-    ring->is_paused.store(true);
+    m_ring->set_paused(true);
 
     m_decoder_worker->moveToThread(m_audio_decoding_thread);
 
@@ -142,7 +145,7 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
 
 audio_internal_controller::~audio_internal_controller()
 {
-    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
+    m_ring->cancel_blocking_push();
 
     // stop the soundio callback first, the buffer ring must outlive it
     if (m_outstream) {
@@ -151,7 +154,7 @@ audio_internal_controller::~audio_internal_controller()
     }
 
     // the callback can no longer post. drop the pump BEFORE the ring (and the eventfd
-    // it listens on) is destroyed together with the worker.
+    // it listens on) is destroyed: that happens after this body, with m_ring.
     delete m_rt_pump;
     m_rt_pump = nullptr;
 
@@ -172,26 +175,26 @@ audio_internal_controller::~audio_internal_controller()
 void
 audio_internal_controller::set_transport_paused(bool paused)
 {
-    m_decoder_worker->get_ring_buffer()->is_paused.store(paused);
+    m_ring->set_paused(paused);
 }
 
 void
 audio_internal_controller::stop()
 {
-    m_decoder_worker->get_ring_buffer()->is_paused.store(true);
-    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
+    m_ring->set_paused(true);
+    m_ring->cancel_blocking_push();
     
     QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::clean, Qt::BlockingQueuedConnection);
     
-    m_decoder_worker->get_ring_buffer()->reset_cancel();
+    m_ring->reset_cancel();
 }
 
 void
 audio_internal_controller::load(const QUrl &source)
 {
-    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
+    m_ring->cancel_blocking_push();
     QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::load, Qt::BlockingQueuedConnection, source);
-    m_decoder_worker->get_ring_buffer()->reset_cancel();
+    m_ring->reset_cancel();
 }
 
 void
@@ -214,10 +217,10 @@ void
 audio_internal_controller::set_position(uint64_t position_ms)
 {
     // The epoch this seek is issued under: the decoder refuses it if a ceremony ran since
-    const uint64_t epoch = m_decoder_worker->get_ring_buffer()->boundary_snapshot().epoch;
+    const uint64_t epoch = m_ring->boundary_snapshot().epoch;
 
-    m_decoder_worker->get_ring_buffer()->cancel_blocking_push();
-    m_decoder_worker->get_ring_buffer()->pending_seeks.fetch_add(1, std::memory_order_release);
+    m_ring->cancel_blocking_push();
+    m_ring->begin_seek();
 
     if (m_outstream) {
         int err = soundio_outstream_clear_buffer(m_outstream);
@@ -232,7 +235,7 @@ audio_internal_controller::set_position(uint64_t position_ms)
 void
 audio_internal_controller::set_volume_multiplier(float hw_multiplier)
 {
-    m_decoder_worker->get_ring_buffer()->volume_multiplier.store(hw_multiplier, std::memory_order_relaxed);
+    m_ring->set_volume(hw_multiplier);
 }
 
 bool
@@ -244,20 +247,20 @@ audio_internal_controller::is_song_loaded() const
 uint64_t
 audio_internal_controller::current_position_ms() const
 {
-    return static_cast<uint64_t>(m_decoder_worker->get_ring_buffer()->playback_position_ms());
+    return static_cast<uint64_t>(m_ring->playback_position_ms());
 }
 
 bool
 audio_internal_controller::is_paused() const
 {
-    return m_decoder_worker->get_ring_buffer()->is_paused.load();
+    return m_ring->paused();
 }
 
 bool
 audio_internal_controller::consume_boundary_hit (QUrl &track_B_opened)
 {
     const QUrl opened = m_decoder_worker->track_B_opened();   // read before consuming
-    if (!m_decoder_worker->get_ring_buffer()->consume_boundary_hit()) return false;
+    if (!m_ring->consume_boundary_hit()) return false;
     track_B_opened = opened;
     return true;
 }
@@ -266,7 +269,7 @@ bool
 audio_internal_controller::boundary_hit_pending () const
 {
     using phase = audio_ring_buffer::boundary_phase;
-    return m_decoder_worker->get_ring_buffer()->boundary_snapshot().phase == phase::hit;
+    return m_ring->boundary_snapshot().phase == phase::hit;
 }
 
 void
