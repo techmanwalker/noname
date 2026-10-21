@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <qabstractitemmodel.h>
 
 Q_LOGGING_CATEGORY(l_mediasequences, "mediasequences")
 
@@ -41,6 +42,7 @@ AbstractMediaSequence::rowCount(
 ) const
 {
     if (parent.isValid()) return 0;
+    QReadLocker locker (&m_d->m_lock);
     return static_cast<int>(m_d->m_items.size());
 }
 
@@ -91,7 +93,7 @@ AbstractMediaSequence::append(const Types::Any &item)
 void
 AbstractMediaSequence::remove(size_t index)
 {
-    if (static_cast<qsizetype>(index) >= m_d->m_items.size()) return;
+    if (static_cast<qsizetype>(index) >= rowCount()) return;
     beginRemoveRows({}, index, index);
 
     {
@@ -204,6 +206,12 @@ AbstractMediaSequence::pointed_to(const QPersistentModelIndex &idx)
 {
     QReadLocker locker (&m_d->m_lock);
 
+    return __item_pointed_to_unlocked(idx);
+}
+
+std::optional<std::reference_wrapper<Types::Any>>
+AbstractMediaSequence::__item_pointed_to_unlocked (const QPersistentModelIndex &idx) const
+{
     const std::optional<size_t> row = __row_pointed_to_unlocked(idx);
 
     if (!row.has_value()) return std::nullopt;
@@ -220,7 +228,7 @@ AbstractMediaSequence::next_to(const QPersistentModelIndex &idx)
 
     if (!next_idx.isValid()) return std::nullopt;
 
-    return pointed_to(next_idx);
+    return __item_pointed_to_unlocked (next_idx);
 }
 
 std::optional<size_t>

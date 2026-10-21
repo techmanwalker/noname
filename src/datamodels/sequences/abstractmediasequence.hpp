@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <memory>
+#include <qabstractitemmodel.h>
 #include <type_traits>
 
 template <typename T>
@@ -122,6 +123,8 @@ protected:
     void batch_remove (const QList<QPersistentModelIndex> &items);
 
     std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
+    std::optional<std::reference_wrapper<Types::Any>>
+                          __item_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
     std::optional<size_t> __row_next_to_unlocked (const QPersistentModelIndex &idx) const;
     QPersistentModelIndex __index_next_to_unlocked (const QPersistentModelIndex &idx) const;
     
