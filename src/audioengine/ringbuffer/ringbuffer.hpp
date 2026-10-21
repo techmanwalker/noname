@@ -44,6 +44,10 @@ class audio_ring_buffer
     std::condition_variable m_cv;
     std::atomic_bool m_cancelled{false};
 
+    // track eof
+    std::atomic_bool eof_decoded {false}; // set by decoder when it flushes the last frame
+    std::atomic_bool eof_played {false};  // set by libsoundio when the buffer drains
+
     // boundaries
     mutable std::mutex boundary_mutex;
     bool has_upcoming_boundary{false};
@@ -51,6 +55,14 @@ class audio_ring_buffer
     uint64_t clock_origin_frame{0};   // absolute frame where the current track began; guarded by boundary_mutex
     uint64_t boundary_epoch{0};       // bumped (under boundary_mutex) each time a hit is consumed: a request
                                       // issued under an older epoch was about an A that is gone
+    
+    // The boundary of upcoming_boundary_frame as the RT thread's one-shot trigger: an atomic mirror,
+    // because the callback cannot take boundary_mutex. Armed, it equals upcoming_boundary_frame.
+    // Lifetime differs: that one lives until consume_boundary_hit() (Qt-side bookkeeping), this one
+    // only until the RT thread crosses it (UINT64_MAX = nothing to fire). Its disarm can lag the
+    // consume by one chunk; the queued boundary_hit then finds nothing to consume, by design.
+    // Writers: arm_boundary(), reset(), rt_crossed_boundary() only.
+    std::atomic_uint64_t rt_trigger_frame{UINT64_MAX};
 
 public:
 
@@ -78,10 +90,6 @@ public:
 
     // implemented here to read during write_callback
     std::atomic_bool is_paused {false};
-
-    // track eof
-    std::atomic_bool eof_decoded {false}; // set by decoder when it flushes the last frame
-    std::atomic_bool eof_played {false};  // set by libsoundio when the buffer drains
 
     
     // Playback time tracking
@@ -140,10 +148,6 @@ public:
 
     struct boundary_view { boundary_phase phase; uint64_t epoch; };
 
-
-    // Frame where A ends and B begins, as the RT thread sees it (UINT64_MAX when none or already hit)
-    std::atomic_uint64_t next_boundary_frame{UINT64_MAX};
-
     // One lock: phase and epoch are consistent with each other (no ceremony can slip between them)
     boundary_view boundary_snapshot () const;
 
@@ -167,6 +171,26 @@ public:
 
     // Decoder thread: A's samples are all in the ring and no B follows.
     void mark_tape_ended ();
+
+    // true after mark_tape_ended(), until the next reset(). Any thread (one atomic load).
+    bool tape_ended () const noexcept { return eof_decoded.load(std::memory_order_acquire); }
+
+    // RT thread, wait-free. Defined here so they flatten into write_callback (another TU).
+
+    // true exactly once per armed boundary: when `played` has reached it.
+    // Disarms before returning, so the caller only has to notify.
+    bool rt_crossed_boundary (uint64_t played) noexcept
+    {
+        const uint64_t target = rt_trigger_frame.load(std::memory_order_acquire);
+        if (target == UINT64_MAX || played < target) return false;
+
+        rt_trigger_frame.store(UINT64_MAX, std::memory_order_release); // disarm first
+        return true;
+    }
+
+    // true exactly once per tape end: the decoder flushed the last frame with no B behind it,
+    // and the device has now drained it. One-shot through eof_played.
+    bool rt_claim_tape_end () noexcept { return tape_ended() && !eof_played.exchange(true); }
 
     // RT thread -> Qt thread events (tape ran out, boundary hit, stream error/underflow).
     // See audiortevents.hpp; the Qt side is rt_event_pump.

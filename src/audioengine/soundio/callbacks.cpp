@@ -116,8 +116,7 @@ pop_frames (audio_ring_buffer &ring, S *dst, int frames)
 RT_INLINE void
 handle_tape_ran_out (audio_ring_buffer &ring, bool underran)
 {
-    if (!underran || !ring.eof_decoded.load(std::memory_order_acquire)) return;
-    if (ring.eof_played.exchange(true)) return;
+    if (!underran || !ring.rt_claim_tape_end()) return;
 
     ring.is_paused.store(true, std::memory_order_release);
     notify_tape_ran_out(ring);
@@ -164,11 +163,7 @@ count_played_frames (audio_ring_buffer &ring, int frames)
 RT_INLINE void
 check_boundary_hit (audio_ring_buffer &ring, uint64_t played)
 {
-    const uint64_t target = ring.next_boundary_frame.load(std::memory_order_acquire);
-    if (target == UINT64_MAX || played < target) return;
-
-    ring.next_boundary_frame.store(UINT64_MAX, std::memory_order_release); // disarm first
-    notify_boundary_hit(ring);
+    if (ring.rt_crossed_boundary(played)) notify_boundary_hit(ring);
 }
 
 // --- the loop

@@ -199,7 +199,7 @@ audio_ring_buffer::reset (const rt_quiesce &, uint64_t base_ms)
         has_upcoming_boundary = false;
         clock_origin_frame    = 0;   // see consume_boundary_hit()
     }
-    next_boundary_frame.store(UINT64_MAX, std::memory_order_relaxed);
+    rt_trigger_frame.store(UINT64_MAX, std::memory_order_relaxed);
 
     eof_decoded.store(false, std::memory_order_relaxed);
     eof_played.store(false, std::memory_order_relaxed);
@@ -242,11 +242,12 @@ audio_ring_buffer::arm_boundary ()
     const uint64_t frame = absolute_frames_decoded.load(std::memory_order_relaxed);
     {
         std::lock_guard<std::mutex> lock(boundary_mutex);
+        Q_ASSERT(!has_upcoming_boundary && "second boundary armed before the first was consumed");
         upcoming_boundary_frame = frame;
         has_upcoming_boundary   = true;
     }
-    // Unconditional store is safe: we strictly track one boundary at a time.
-    next_boundary_frame.store(frame, std::memory_order_release);
+    // Unconditional store is safe: we strictly track one boundary at a time (asserted above).
+    rt_trigger_frame.store(frame, std::memory_order_release);
 }
 
 void

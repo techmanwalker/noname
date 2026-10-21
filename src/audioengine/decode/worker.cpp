@@ -412,7 +412,7 @@ audio_decode_worker::decode_step ()
     }
 
     // 2. End of A's file, first time we see it
-    if (read_ret == AVERROR_EOF && !m_ring_buffer.eof_decoded.load()) {
+    if (read_ret == AVERROR_EOF && !m_ring_buffer.tape_ended()) {
         // Cancelled mid-drain: a seek/stop/load is taking over. Do NOT fall through to
         // on_end_of_A (arming the boundary, opening B's file): the last samples of A never
         // reached the ring.
