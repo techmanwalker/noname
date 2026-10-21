@@ -50,6 +50,10 @@ public slots:
     void prepare_B(const QUrl &source);
     void undo_prepare_B();
 
+    // The engine consumed a boundary hit and already queued its undo_prepare_B / prepare_B for it:
+    // the B slot is settled. Resolves a deferred end of file (see m_end_deferred).
+    void boundary_settled ();
+
 private slots:
     // single work iteration, reprograms itself via m_decode_timer
     void decode_step ();
@@ -119,6 +123,11 @@ private:
 
     // A's file is fully in the ring: hand over to B or end the tape. Returns the next timer interval.
     int on_end_of_A ();
+
+    // The open file ended while the boundary before it (A/B) was still drawn, so its own end cannot
+    // be drawn yet: the ring holds ONE boundary. Decoder thread, under m_decoder_mutex. Cleared by
+    // close_ffmpeg_contexts() and seek_and_reset() too (decoding moved on). Resolved by boundary_settled().
+    bool m_end_deferred = false;
 
     // Nothing decodable from here on: close the contexts and unload. By default the tape ends too, so
     // the ring plays out what it holds. Pass true when nothing was ever played (failed load: the ring

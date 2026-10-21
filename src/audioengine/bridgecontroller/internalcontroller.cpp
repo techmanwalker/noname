@@ -265,3 +265,9 @@ audio_internal_controller::boundary_hit_pending () const
     using phase = audio_ring_buffer::boundary_phase;
     return m_decoder_worker->get_ring_buffer()->boundary_snapshot().phase == phase::hit;
 }
+
+void
+audio_internal_controller::boundary_settled ()
+{
+    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::boundary_settled, Qt::QueuedConnection);
+}

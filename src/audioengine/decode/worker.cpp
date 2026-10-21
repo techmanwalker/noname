@@ -386,6 +386,13 @@ audio_decode_worker::decode_step ()
     // decode and seek are mutually exclusive
     std::lock_guard<std::mutex> lock(m_decoder_mutex);
 
+    // The file ended and its end is waiting for the boundary before it: nothing to read, and a full
+    // ring is expected. boundary_settled() resumes, so this is not polling for the consume.
+    if (m_end_deferred) {
+        m_decode_timer->setInterval(pace_ms::finished);
+        return;
+    }
+
     if (const auto idle = idle_interval(m_song_loaded, m_ring_buffer)) {
         m_decode_timer->setInterval(*idle);
         return;
@@ -433,6 +440,15 @@ audio_decode_worker::decode_step ()
 int
 audio_decode_worker::on_end_of_A ()
 {
+    // While A/B is still drawn (armed, or hit but not consumed) this file's end cannot be drawn: its
+    // samples already fit in the ring, but the marker would overwrite A/B's. Decide nothing now:
+    // boundary_settled() calls back, and the B slot is read then (a later prepare/undo wins).
+    if (m_ring_buffer.boundary_snapshot().phase != audio_ring_buffer::boundary_phase::none) {
+        m_end_deferred = true;
+        return pace_ms::finished;
+    }
+    m_end_deferred = false;
+
     std::lock_guard<std::mutex> B_lock(m_B_mutex);
 
     if (!m_has_B) {
@@ -506,6 +522,7 @@ audio_decode_worker::seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesc
     if (swr_ctx) swr_init(swr_ctx);         // flush the resampler cache: no old audio spillage
 
     m_ring_buffer.reset(quiesce, position_ms);
+    m_end_deferred = false;                 // decoding resumes from here: the old file end is gone
     return true;
 }
 
@@ -556,6 +573,15 @@ audio_decode_worker::undo_prepare_B()
     m_track_B_source.clear();
 }
 
+void
+audio_decode_worker::boundary_settled ()
+{
+    std::lock_guard<std::mutex> lock(m_decoder_mutex);
+    if (!m_end_deferred) return;
+
+    m_decode_timer->setInterval(on_end_of_A());   // phase is none now; the slot is what the engine left
+}
+
 bool
 audio_decode_worker::push_frame (AVFrame *frame)
 {
@@ -602,6 +628,7 @@ audio_decode_worker::close_ffmpeg_contexts()
         swr_ctx = nullptr;
     }
     m_open_source.clear();
+    m_end_deferred = false;
 }
 
 void

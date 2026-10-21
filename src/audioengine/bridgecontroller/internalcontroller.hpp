@@ -46,6 +46,7 @@ public:
     // track_B_opened is the file the decoder really opened for B, empty if opening it failed.
     bool consume_boundary_hit(QUrl &track_B_opened);
     bool boundary_hit_pending () const;   // hit by the RT thread, not consumed yet
+    void boundary_settled();
 
 signals:
     void seeked();

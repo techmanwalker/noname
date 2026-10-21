@@ -197,6 +197,10 @@ audio_engineLI::on_boundary_hit()
 
         emit track_changed();
 
+        // Everything the ceremony and the track_changed handlers asked of the B slot is queued
+        // ahead of this, so the decoder reads a settled slot
+        m_internal->boundary_settled();
+
         // B failed to open: nothing behind A, the tape ran out
         if (m_track_A_source.isEmpty()) on_tape_ran_out();
     }
