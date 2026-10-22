@@ -162,7 +162,6 @@ target_include_directories(mediasequences
 )
 
 add_library(mediatransforms STATIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilter-in.hpp"
     ${MEDIATRANSFORMS_SOURCES}
 )
 
@@ -340,6 +339,7 @@ qt_add_qml_module(locallibrary
     URI Player.LocalLibrary
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilter-in.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilterproxy.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
         ${LOCALLIBRARY_SOURCES}
