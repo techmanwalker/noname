@@ -168,16 +168,47 @@ PlayerPresenterLI::playback_state() const
 
 
 void
-PlayerPresenterLI::set_position_ms(quint64 position)
+PlayerPresenterLI::set_position_ms(quint64 position) const
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
     playing->set_position(position);
 }
 
 void
-PlayerPresenterLI::set_volume(quint8 volume)
+PlayerPresenterLI::relative_seek(qint64 ms) const
+{
+    set_position_ms(position_ms() + ms);
+}
+
+void
+PlayerPresenterLI::set_volume(quint8 volume) const
 {
     playing->set_volume(volume);
+}
+
+void
+PlayerPresenterLI::raise_lower_volume(qint8 step) const
+{
+    if (step >  100) step =  100;
+    if (step < -100) step = -100;
+
+    // allows counting from to -100 to 200 without letting the step data type hold too much
+    
+    qint16 target_volume = static_cast<qint16>(volume()) + static_cast<qint16>(step);
+
+    // the audioengine already clamps the target percent but needs qint8
+
+    quint8 clamped_volume;
+
+    if (target_volume > 100) {
+        clamped_volume = 100;
+    } else if (target_volume < 0) {
+        clamped_volume = 0;
+    } else [[likely]] {
+        clamped_volume = static_cast<quint8>(target_volume);
+    }
+
+    set_volume(std::move(clamped_volume));
 }
 
 void
@@ -231,6 +262,16 @@ PlayerPresenterLI::prev() const
     }
 
     queue->prev();
+}
+
+void
+PlayerPresenterLI::toggle_play_pause() const
+{
+    if (playback_state() == PlaybackState::playing) {
+        pause();
+    } else {
+        play();
+    }
 }
 
 void

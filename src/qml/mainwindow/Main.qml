@@ -58,6 +58,42 @@ T.ApplicationWindow {
         onActivated: root.contentItem.forceActiveFocus()
     }
 
+    // Transport keys. A Shortcut outranks a focused button or slider (only text
+    // inputs and modal popups keep their own keys), so these work wherever the
+    // user last clicked.
+    readonly property bool transportKeys: !searchBox.activeFocus
+
+    Shortcut {
+        sequences: Keyboard.bindings.seekBack
+        enabled: root.transportKeys
+        onActivated: PlayerPresenter.shortSeekBack()
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.seekForward
+        enabled: root.transportKeys
+        onActivated: PlayerPresenter.shortSeekForward()
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.togglePlayPause
+        enabled: root.transportKeys
+        autoRepeat: false // holding Space would flip play/pause on every repeat
+        onActivated: PlayerPresenter.togglePlayPause()
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.raiseVolume
+        enabled: root.transportKeys
+        onActivated: PlayerPresenter.raiseVolume()
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.lowerVolume
+        enabled: root.transportKeys
+        onActivated: PlayerPresenter.lowerVolume()
+    }
+
     Component.onCompleted: {
         contentItem.Keys.pressed.connect(root.routeKey);
         contentItem.forceActiveFocus(); // with nothing focused, key events have no starting point

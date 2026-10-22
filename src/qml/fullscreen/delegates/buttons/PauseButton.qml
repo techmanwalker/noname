@@ -17,11 +17,5 @@ ResizableButton {
         }
     }
 
-    onClicked: {
-        if (PlayerPresenter.playbackState === PlayerPresenter.PlaybackState.playing) {
-            PlayerPresenter.pause()
-        } else {
-            PlayerPresenter.play()
-        }
-    }
+    onClicked: PlayerPresenter.togglePlayPause()
 }

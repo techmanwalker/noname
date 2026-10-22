@@ -86,9 +86,11 @@ public:
     double backdrop_luma_for_rect (QRect rect) const override;
     double ring_luma_for_rect     (QRect rect) const override;
 
-    // Setters (normally called from C++ logic when time or song changes)
-    void set_position_ms (quint64 position) override;
-    void set_volume (quint8 volume) override;
+    void set_position_ms (quint64 position) const override;
+    void relative_seek (qint64 ms) const override;
+
+    void set_volume (quint8 volume) const override;
+    void raise_lower_volume (qint8 step) const override;
 
     // Call forwardings
     void load(Types::Song &song) const override;
@@ -99,6 +101,8 @@ public:
     void stop()  const override;
     void next()  const override;
     void prev()  const override;
+
+    void toggle_play_pause () const override;
 
     // to stop the poll timer while scrubbing
     void notify_slider_pressed_change (bool pressed) override;

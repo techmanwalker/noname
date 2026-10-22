@@ -49,14 +49,22 @@ public:
     // luma of the ring that spans the bigger part of the area of this rect
     virtual double ring_luma_for_rect (QRect rect) const = 0;
 
-    virtual void set_position_ms(quint64 position) = 0;
-    virtual void set_volume (quint8 volume) = 0;
+    virtual void set_position_ms(quint64 position) const = 0;
+
+    // respect to current pos
+    // + seeks forward, - seeks back
+    virtual void relative_seek (qint64 ms) const = 0;
+
+    virtual void set_volume (quint8 volume) const = 0; // from 0 to 100
+    virtual void raise_lower_volume (qint8 step) const = 0; // relative to current volume
 
     virtual void play()  const = 0;
     virtual void pause() const = 0;
     virtual void stop()  const = 0;
     virtual void next()  const = 0;
     virtual void prev()  const = 0;
+
+    virtual void toggle_play_pause () const = 0;
 
     virtual void load(Types::Song &song) const = 0;
 

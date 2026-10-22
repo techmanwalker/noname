@@ -110,13 +110,23 @@ public:
     }
 
     void set_position_ms(quint64 position) { if (m_presenter) m_presenter->set_position_ms(position); }
+
     void set_volume(quint8 volume)         { if (m_presenter) m_presenter->set_volume(volume); }
+
+    Q_INVOKABLE void raiseVolume()  { if (m_presenter) m_presenter->raise_lower_volume( 5); }
+    Q_INVOKABLE void lowerVolume()  { if (m_presenter) m_presenter->raise_lower_volume(-5); }
 
     Q_INVOKABLE void play()  const { if (m_presenter) m_presenter->play();  }
     Q_INVOKABLE void pause() const { if (m_presenter) m_presenter->pause(); }
     Q_INVOKABLE void stop()  const { if (m_presenter) m_presenter->stop();  }
     Q_INVOKABLE void next()  const { if (m_presenter) m_presenter->next();  }
     Q_INVOKABLE void prev()  const { if (m_presenter) m_presenter->prev();  }
+
+    Q_INVOKABLE void togglePlayPause() const { if (m_presenter) m_presenter->toggle_play_pause(); }
+
+    // for 5s back/forward shortcuts
+    Q_INVOKABLE void shortSeekBack()    const { if (m_presenter) m_presenter->relative_seek(- 5000); }
+    Q_INVOKABLE void shortSeekForward() const { if (m_presenter) m_presenter->relative_seek(+ 5000); }
 
     Q_INVOKABLE void notifySliderPressedChange(bool pressed) {
         if (m_presenter) m_presenter->notify_slider_pressed_change(pressed);

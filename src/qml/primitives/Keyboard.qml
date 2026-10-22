@@ -6,8 +6,13 @@ import QtQuick
 QtObject {
     // action → key sequences (QKeySequence strings). The one place to rebind.
     readonly property var bindings: ({
-        clearSearch: ["Esc"], // bar has a query
-        leaveSearch: ["Esc"]  // bar is empty
+        clearSearch:     ["Esc"],   // bar has a query
+        leaveSearch:     ["Esc"],   // bar is empty
+        seekBack:        ["Left"],
+        seekForward:     ["Right"],
+        togglePlayPause: ["Space"],
+        raiseVolume:     ["Up"],
+        lowerVolume:     ["Down"]
     })
 
     // A chord carrying any of these is a shortcut, never text. Shift is
