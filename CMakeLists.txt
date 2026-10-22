@@ -229,7 +229,7 @@ add_library(configuration_in INTERFACE)
 target_include_directories(configuration_in INTERFACE src/interfaces/configuration)
 target_link_libraries(configuration_in INTERFACE Qt6::Core)
 
-
+# --- Data ingest - data and metadata preprocessing
 
 # The Song factory - enables extracting metadata, media and covers from songs themselves
 # performs direct I/O with audio files
@@ -284,6 +284,14 @@ target_include_directories(rolecompiler
 
 )
 
+# Statically bake ever changing strings
+
+add_library(constexprstrings INTERFACE)
+
+target_include_directories(constexprstrings
+    INTERFACE
+        src/datamodels/constexprstrings
+)
 
 
 ## --- Sound I/O
@@ -666,6 +674,7 @@ target_link_libraries(${PROJECT_NAME}
         songfactory # MUST be able to shut down its thread pool if something goes wrong
 
         debugtools # printing
+        constexprstrings # string baking
 )
 
 qt_add_qml_module(mainwindow

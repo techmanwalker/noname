@@ -34,7 +34,7 @@
 #include "playlistslistproxy.hpp"
 #include "windowgeometryproxy.hpp"
 
-#include "constexprstringcat.hpp"
+#include "backendstrings.hpp"
 
 Q_LOGGING_CATEGORY(l_main, "app")
 
