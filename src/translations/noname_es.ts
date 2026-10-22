@@ -246,17 +246,22 @@
 <context>
     <name>Tracks</name>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="48"/>
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="48"/>
         <source>Search results</source>
         <translation>Resultados de búsqueda</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="78"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="65"/>
+        <source>The track you are looking for is likely not in your Library.</source>
+        <translation>La pista que buscas probablemente no está en tu biblioteca.</translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="88"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>

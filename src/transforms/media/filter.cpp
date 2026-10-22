@@ -1,5 +1,6 @@
 #include "filter.hpp"
 #include "abstractmediasequence.hpp"
+#include "mediafilter-in.hpp"
 #include "sort.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
 #include "locallibrary-in.hpp" // IWYU pragma: keep for qobject_cast<LocalLibrary*>
@@ -71,7 +72,7 @@ MediaFilterLI::MediaFilterLI()
 {
 }
 
-QList<Types::Song>
+search_response
 MediaFilterLI::search(const QString &query, QObject *sourceModel)
 {
     QList<Types::Song> all_songs;
@@ -106,11 +107,11 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
     return search (query, all_songs); 
 }
 
-QList<Types::Song>
+search_response
 MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
 {
     if (query.isEmpty()) {
-        return sort_by (&Types::Song::title, song_list);
+        return {sort_by (&Types::Song::title, song_list), -1};
     }
 
     using rankable_item = std::pair<size_t, double>;
@@ -121,6 +122,8 @@ MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
     rapidfuzz::fuzz::CachedPartialRatio<char> scorer(clean_keywords.c_str());
     const double score_thresh = 50.0;
 
+    double high_score {-1};
+
     // Execute search directly against the flattened song list
     for (qsizetype i = 0; i < song_list.size(); ++i) {
         // Pass transPtr to process text instantly without initialization overhead
@@ -128,6 +131,7 @@ MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
         double score = scorer.similarity(clean_title.c_str(), score_thresh);
 
         if (score >= score_thresh) {
+            if (score > high_score) high_score = score;
             rankable.emplace_back(i, score);
         }
     }
@@ -143,7 +147,7 @@ MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
         matching_songs.append(song_list.at(ranked.first));
     }
 
-    return matching_songs;
+    return {matching_songs, high_score};
 }
 
 }

@@ -22,7 +22,7 @@ public:
         s_injectedFilter = searchengine; // Ref count incremented, caller's instance unaffected
     }
 
-    Q_INVOKABLE QList<Types::Song> search(const QString &query, QObject *containerModel) {
+    Q_INVOKABLE search_response search(const QString &query, QObject *containerModel) {
         if (!m_filter) return {};
         
         return m_filter->search(query, containerModel);

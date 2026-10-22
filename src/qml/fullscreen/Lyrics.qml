@@ -44,18 +44,8 @@ ColumnLayout {
 
         clip: true
 
-        Label {
+        BigThinLabel {
             text: qsTr("No lyrics.")
-
-            font.pointSize: 32
-            font.weight: Font.Light
-
-            opacity: 0.4
-
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment:   Text.AlignVCenter
-
-            color: root.unhighlightedColor
 
             TapHandler {
                 onTapped: root.clickedOnEmptySpace()

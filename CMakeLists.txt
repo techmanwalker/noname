@@ -162,6 +162,7 @@ target_include_directories(mediasequences
 )
 
 add_library(mediatransforms STATIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilter-in.hpp"
     ${MEDIATRANSFORMS_SOURCES}
 )
 

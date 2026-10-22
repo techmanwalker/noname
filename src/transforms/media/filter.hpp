@@ -14,8 +14,8 @@ class MediaFilterLI : public MediaFilter
 public:
     explicit MediaFilterLI();
 
-    QList<Types::Song> search (const QString &query, QObject *sourceModel) override;
-    QList<Types::Song> search (const QString &query, QList<Types::Song> &song_list);
+    search_response search (const QString &query, QObject *sourceModel) override;
+    search_response search (const QString &query, QList<Types::Song> &song_list);
 
 private:
 

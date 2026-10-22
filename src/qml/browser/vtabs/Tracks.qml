@@ -17,12 +17,13 @@ ColumnLayout {
     required property SearchBar searchBarItem
 
     property list<song> displayedTracks
+    property real searchHighScore: -1
 
     Connections {
-        target: LocalLibrary // qmllint disable
+        target: LocalLibrary
 
         function onRefreshFinished() {
-            root.displayedTracks = MediaFilter.search("", LocalLibrary);
+            root.displayedTracks = MediaFilter.search("", LocalLibrary).items;
             libraryChanges.enabled = true; // start reacting to dataChanged from now on
             target = null; // one-shot: stop listening after the first refresh completes
         }
@@ -30,12 +31,12 @@ ColumnLayout {
 
     Connections {
         id: libraryChanges
-        target: LocalLibrary // qmllint disable
+        target: LocalLibrary
         enabled: false // gated closed until the initial refresh finishes, above
 
         function onDataChanged() {
             if (root.searchBarItem.text === "") {
-                root.displayedTracks = MediaFilter.search("", LocalLibrary);
+                root.displayedTracks = MediaFilter.search("", LocalLibrary).items;
             }
         }
     }
@@ -53,9 +54,18 @@ ColumnLayout {
         target: root.searchBarItem
 
         function onTextChanged() {
-            
-            root.displayedTracks = MediaFilter.search(root.searchBarItem.text, LocalLibrary);
+            let response = MediaFilter.search(root.searchBarItem.text, LocalLibrary);
+            root.displayedTracks =  response.items 
+            root.searchHighScore =  response.highScore
         }
+    }
+
+    // soft threshold
+    BigThinLabel {
+        text: qsTr("The track you are looking for is likely not in your Library.")
+        visible: root.searchHighScore > 0 && root.searchHighScore < 85
+        topPadding: 5
+        bottomPadding: 10
     }
 
     SongGrid {
