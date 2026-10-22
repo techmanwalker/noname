@@ -20,6 +20,12 @@ struct SongForeign {
 struct AlbumForeign {
     Q_GADGET
     QML_FOREIGN(Types::Album)
+    QML_VALUE_TYPE(album)
+};
+
+struct PlaylistForeign {
+    Q_GADGET
+    QML_FOREIGN(Types::Playlist)
     QML_VALUE_TYPE(playlist)
 };
 

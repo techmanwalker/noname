@@ -136,6 +136,8 @@ target_include_directories(mediatypes
 qt_add_qml_module(mediasequences
     STATIC
     URI Player.MediaSequences
+    DEPENDENCIES
+        Player.MediaTypes
     SOURCES
         ${MEDIASEQUENCES_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSequences"
@@ -158,19 +160,27 @@ target_link_libraries(mediasequences
 target_include_directories(mediasequences
     PUBLIC
         src/datamodels/sequences # to make qmltyperegistrar happy
-        src/datamodels/transforms/media
 )
 
-add_library(mediatransforms STATIC
-    ${MEDIATRANSFORMS_SOURCES}
+qt_add_qml_module (mediatransforms 
+    STATIC
+    URI Player.MediaTransforms
+    DEPENDENCIES
+        Player.MediaTypes # search_results.items won't stop lint fail without this
+    SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilter-in.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilterproxy.hpp"
+        ${MEDIATRANSFORMS_SOURCES}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaTransforms"
 )
 
 target_link_libraries(mediatransforms
     PUBLIC
         mediafilter_in
+        mediatypes
 
     PRIVATE
-        mediatypes
         mediasequences
 
         locallibrary_in
@@ -337,10 +347,9 @@ target_link_libraries(audioengine_in INTERFACE Qt6::Core mediatypes constexprstr
 qt_add_qml_module(locallibrary
     STATIC
     URI Player.LocalLibrary
+    
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilter-in.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilterproxy.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
         ${LOCALLIBRARY_SOURCES}
     OUTPUT_DIRECTORY
@@ -358,8 +367,6 @@ target_link_libraries (locallibrary
     PRIVATE
         diskio
         configuration_in
-        mediatransforms
-        mediatypes
         rolecompiler
         songfactory # local library interface, needs to load the songs metadata
 
