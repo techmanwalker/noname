@@ -52,4 +52,24 @@ T.TextField {
 
     font.pointSize: 12
     font.weight: Font.Medium
+
+    // Whether there is a query to clear. Single source for the Clear button
+    // and the clear shortcut; clearing an empty bar would still fire
+    // textEdited() and yank the browser to the Tracks tab.
+    readonly property bool clearable: text !== ""
+
+    // Programmatic text changes don't emit textEdited(), so do it explicitly.
+    function clearQuery() {
+        text = "";
+        textEdited();
+    }
+
+    // Entry point for text typed while the bar wasn't focused. Focus is
+    // synchronous, so keystrokes queued behind this one already reach us.
+    // insert() emits textEdited() by itself; callers must not.
+    function feed(str) {
+        forceActiveFocus();
+        cursorPosition = length; // caret first, or the next keystrokes land mid-text
+        insert(cursorPosition, str);
+    }
 }

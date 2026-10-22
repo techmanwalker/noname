@@ -30,6 +30,39 @@ T.ApplicationWindow {
         PlayerPresenter.saveVolume();
     }
 
+    // Window-wide key routing. Events bubble from the focused item up to
+    // contentItem, so this only sees keys nothing below consumed.
+    function routeKey(event) {
+        // type-to-search: only while the bar can actually take focus (it is
+        // disabled in the player view, where focusing it would swallow the key)
+        if (searchBox.enabled && !searchBox.activeFocus) {
+            const text = Keyboard.searchText(event);
+            if (text !== "") {
+                searchBox.feed(text);
+                event.accepted = true;
+            }
+        }
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.clearSearch
+        enabled: searchBox.activeFocus && searchBox.clearable
+        onActivated: searchBox.clearQuery()
+    }
+
+    // Focus must land on contentItem, not nowhere: routeKey only receives
+    // events when something in the window has focus.
+    Shortcut {
+        sequences: Keyboard.bindings.leaveSearch
+        enabled: searchBox.activeFocus && !searchBox.clearable
+        onActivated: root.contentItem.forceActiveFocus()
+    }
+
+    Component.onCompleted: {
+        contentItem.Keys.pressed.connect(root.routeKey);
+        contentItem.forceActiveFocus(); // with nothing focused, key events have no starting point
+    }
+
     Background {
         id: bg
         source: activeView.currentIndex === 1 ? PlayerPresenter.cover : ""
@@ -119,10 +152,7 @@ T.ApplicationWindow {
 
             ResizableButton {
                 text: qsTr("Clear")
-                onClicked: {
-                    searchBox.text = ""
-                    searchBox.textEdited()
-                }
+                onClicked: searchBox.clearQuery()
 
                 leftPadding: searchBox.leftPadding / 2
                 rightPadding: searchBox.rightPadding / 2
