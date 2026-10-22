@@ -177,6 +177,31 @@ PlayerPresenterLI::set_position_ms(quint64 position) const
 void
 PlayerPresenterLI::relative_seek(qint64 ms) const
 {
+    // clamp
+    quint64 current_position = position_ms();
+    quint64 track_duration = duration_ms();
+    qint64 ms_abs = std::abs(ms);
+
+    // back/forward stepping by ms would wrap around or misbehave
+    bool under_min_limit = ms < 0 && current_position < ms_abs; // do not wrap around
+    bool over_max_limit  = ms > 0 && 
+        (current_position + ms_abs > track_duration ||  // seeked over track
+         current_position + ms_abs < current_position); // wrap around, ms > 0
+
+    if (under_min_limit) {
+        // ideally, to follow the tape roll analogy, we would prev() and seek
+        // to the track end minus step but those are two steps sequenced and
+        // desync or something happening in between is a problem
+
+        set_position_ms(0); // back to start
+        return;
+    }
+
+    if (over_max_limit) {
+        next();
+        return;
+    }
+    
     set_position_ms(position_ms() + ms);
 }
 
