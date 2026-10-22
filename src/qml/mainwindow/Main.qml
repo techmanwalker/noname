@@ -193,7 +193,7 @@ T.ApplicationWindow {
                 leftPadding: searchBox.leftPadding / 2
                 rightPadding: searchBox.rightPadding / 2
 
-                visible: searchBox.visible && searchBox.text !== ""
+                visible: searchBox.visible && searchBox.clearable
 
                 filled: true
 

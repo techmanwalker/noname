@@ -53,10 +53,11 @@ T.TextField {
     font.pointSize: 12
     font.weight: Font.Medium
 
-    // Whether there is a query to clear. Single source for the Clear button
-    // and the clear shortcut; clearing an empty bar would still fire
-    // textEdited() and yank the browser to the Tracks tab.
-    readonly property bool clearable: text !== ""
+    // Whether there is a query to clear *right now*. Single source for the
+    // Clear button and the Esc shortcuts. A disabled bar (hidden in the player
+    // view) can hold text but must not offer to clear it, and clearing an
+    // empty bar would still fire textEdited() and yank the browser to Tracks.
+    readonly property bool clearable: enabled && text !== ""
 
     // Programmatic text changes don't emit textEdited(), so do it explicitly.
     function clearQuery() {
