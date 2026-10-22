@@ -206,7 +206,7 @@ bool thumbnail_file_exists(
     return QFile::exists(thumbnail_file_path(ref));
 }
 
-// Read the file ~/.local/share/noname/thumbnails/<hash>.tga and decode it
+// Read the file ~/.local/share/<project name>/thumbnails/<hash>.tga and decode it
 QImage
 fetch_thumbnail (
     const CoverRef &ref

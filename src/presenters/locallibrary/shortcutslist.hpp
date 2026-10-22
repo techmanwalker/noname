@@ -21,7 +21,7 @@ public:
     explicit ShortcutsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager);
 
     // Intended to any type of item to be shown on shortcuts
-    // but noname currently only supports raw songs, will be undone later when
+    // but the player currently only supports raw songs, will be undone later when
     // actual album support is added
 
     USING_SEQUENCE_OPS(ShortcutsListLI, Types::Song);

@@ -36,7 +36,7 @@
 
 #include "constexprstringcat.hpp"
 
-Q_LOGGING_CATEGORY(l_noname, "app")
+Q_LOGGING_CATEGORY(l_main, "app")
 
 int
 main (int argc, char ** argv)
@@ -46,12 +46,8 @@ main (int argc, char ** argv)
 
     QGuiApplication app(argc, argv);
 
-    #ifndef APP_NAME
-        #define APP_NAME "noname"
-    #endif
-
-    constexpr char name [] { APP_NAME };
-    constexpr QLatin1StringView name_qstr { APP_NAME };
+    constexpr char name [] { PROJECT_NAME };
+    constexpr QLatin1StringView name_qstr { PROJECT_NAME };
 
     QCoreApplication::setApplicationName( name_qstr );
 
@@ -162,7 +158,7 @@ main (int argc, char ** argv)
     // load shortcuts and user-defined playlists to display
     sl->read_conf_and_load();
     pl->read_conf_and_load().then(&app, [&pl]() {
-        debug::dump_list_model(l_noname(), *pl, "PlaylistsList", true);
+        debug::dump_list_model(l_main(), *pl, "PlaylistsList", true);
     });
 
     // invoke the track_changed handlers if needed
@@ -253,7 +249,7 @@ main (int argc, char ** argv)
     */
     engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
 
-    // load qml module for noname
+    // load the root qml module
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,

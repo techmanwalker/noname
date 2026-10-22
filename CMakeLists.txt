@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(noname LANGUAGES CXX)
 
+# the project name is...
+add_compile_definitions(PROJECT_NAME="${PROJECT_NAME}")
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -319,7 +322,7 @@ target_link_libraries(audioengine_in INTERFACE Qt6::Core mediatypes)
 
 ## --- Local live storage modules - alive in memory ready to consume
 
-# All of your collection of tracks noname has currently knowledge of
+# All of your collection of tracks this player has currently knowledge of
 qt_add_qml_module(locallibrary
     STATIC
     URI Player.LocalLibrary
@@ -698,7 +701,7 @@ qt_add_translations(${PROJECT_NAME}
 
 # Executable tests per module - filled with dummy data for easy development
 
-if(NONAME_BUILD_TESTS)
+if(PLAYER_BUILD_TESTS)
     qt_add_executable(backgroundgradinghelper
         src/tests/backgroundgradinghelper.cpp
     )
@@ -718,7 +721,7 @@ if(NONAME_BUILD_TESTS)
     )
 endif()
 
-option(NONAME_ENABLE_QML_PROFILING "Enable QML debugging and profiling globally" OFF)
-if(NONAME_ENABLE_QML_PROFILING)
+option(ENABLE_QML_PROFILING "Enable QML debugging and profiling globally" OFF)
+if(ENABLE_QML_PROFILING)
     add_compile_definitions(QT_QML_DEBUG)
 endif()

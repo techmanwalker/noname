@@ -53,7 +53,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
     if (!dir_index_to_refresh.isValid() || !dir_index_opt.has_value()) {
 
         qCFatal (l_mediasequences) << "Could not create a simple empty directory snapshot on LocalLibraryLI queue. "
-            << "This is a fatal error. Aborting noname.";
+            << "This is a fatal error. Aborting.";
     }
 
     auto prolly_found = pointed_to(dir_index_to_refresh);

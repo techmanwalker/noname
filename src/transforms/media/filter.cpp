@@ -88,7 +88,7 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
         all_songs = localLib->flattened(); // faster and dedicated
     } else if (auto *sourceSequence = qobject_cast<AbstractMediaSequence*>(sourceModel)) {
         // Filter its songs and traverse 1 level through its directories
-        // noname does not support more than one level at the moment
+        // the player does not support more than one level at the moment
 
         auto [songs, directories] = sourceSequence->items_of_types<Types::Song, Types::Directory>();
 
