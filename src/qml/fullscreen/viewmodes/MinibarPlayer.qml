@@ -21,6 +21,8 @@ ColumnLayout {
     property real leftPadding: padding
     property real rightPadding: padding
 
+    property real volumeControlBottomPadding: 0 // visual compensation
+
     property real coverWidth: 48
     property real coverHeight: coverWidth
 
@@ -114,13 +116,19 @@ ColumnLayout {
             }
         }
 
-        VolumeControl {
+        Item {
             Layout.alignment: Qt.AlignVCenter
-            stateModel: root.stateModel
 
-            Layout.preferredWidth: thiscover.width * 2
+            Layout.preferredWidth: thiscover.width * 8
 
             Layout.preferredHeight: parent.height
+
+            VolumeControl {
+                stateModel: root.stateModel
+
+                anchors.fill: parent
+                anchors.bottomMargin: root.volumeControlBottomPadding
+            }
         }
     }
 }

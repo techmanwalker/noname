@@ -87,7 +87,6 @@ RowLayout {
             id: nowplayingbar
 
             topPadding: 20
-            bottomPadding: topPadding
 
             // this match may explain why this drifts below the window when it is too small
             Layout.preferredHeight: implicitHeight
@@ -98,6 +97,7 @@ RowLayout {
             visible: stateModel.isMediaLoaded
 
             coverToMetadataSpacing: 8
+            volumeControlBottomPadding: 12
 
             onMetadataClicked: root.requestTheaterMode() // clicking cover and metadata also opens theater mode
         }
