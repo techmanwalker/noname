@@ -2,6 +2,8 @@
 
 #include <QFuture>
 
+#include "interfaceid.hpp"
+
 class PlaylistsList
 {
 
@@ -11,4 +13,5 @@ public:
 
 };
 
-Q_DECLARE_INTERFACE(PlaylistsList, "com.noname.PlaylistsList")
+inline constexpr const char* PlaylistsList_iid = interface_iid<"PlaylistsList">.buf;
+Q_DECLARE_INTERFACE(PlaylistsList, PlaylistsList_iid)

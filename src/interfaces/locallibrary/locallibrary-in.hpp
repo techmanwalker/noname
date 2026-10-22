@@ -4,6 +4,8 @@
 
 #include "mediatypes.hpp"
 
+#include "interfaceid.hpp"
+
 // The manager of your logical local library database
 class LocalLibrary 
 {
@@ -21,4 +23,5 @@ public:
 
 };
 
-Q_DECLARE_INTERFACE(LocalLibrary, "com.noname.LocalLibrary")
+inline constexpr const char* LocalLibrary_iid = interface_iid<"LocalLibrary">.buf;
+Q_DECLARE_INTERFACE(LocalLibrary, LocalLibrary_iid)

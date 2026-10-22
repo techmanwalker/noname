@@ -1,5 +1,6 @@
 #pragma once
 
+#include "interfaceid.hpp"
 #include <QObject>
 #include <QString>
 #include <QUrl>
@@ -63,4 +64,5 @@ public:
     virtual void save_volume () const = 0;
 };
 
-Q_DECLARE_INTERFACE(PlayerPresenter, "com.noname.PlayerPresenter")
+inline constexpr const char* PlayerPresenter_iid = interface_iid<"PlayerPresenter">.buf;
+Q_DECLARE_INTERFACE(PlayerPresenter, PlayerPresenter_iid)

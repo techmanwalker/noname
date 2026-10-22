@@ -2,6 +2,8 @@
 
 #include <QFuture>
 
+#include "interfaceid.hpp"
+
 class LyricsManifest
 {
 
@@ -22,4 +24,5 @@ public:
 
 };
 
-Q_DECLARE_INTERFACE(LyricsManifest, "com.noname.LyricsManifest");
+inline constexpr const char* LyricsManifest_iid = interface_iid<"LyricsManifest">.buf;
+Q_DECLARE_INTERFACE(LyricsManifest, LyricsManifest_iid)

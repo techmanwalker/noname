@@ -2,6 +2,8 @@
 
 #include <QFuture>
 
+#include "interfaceid.hpp"
+
 class ShortcutsList
 {
 
@@ -11,4 +13,5 @@ public:
 
 };
 
-Q_DECLARE_INTERFACE(ShortcutsList, "com.noname.ShortcutsList")
+inline constexpr const char* ShortcutsList_iid = interface_iid<"ShortcutsList">.buf;
+Q_DECLARE_INTERFACE(ShortcutsList, ShortcutsList_iid)

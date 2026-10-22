@@ -4,6 +4,7 @@
 #include <QUrl>
 #include <QtTypes>
 
+#include "interfaceid.hpp"
 #include "mediatypes.hpp" 
 
 namespace Types {
@@ -65,4 +66,5 @@ public:
     virtual bool is_a_song_loaded() const = 0;
 };
 
-Q_DECLARE_INTERFACE(audio_engine, "com.noname.audio_controller")
+inline constexpr const char* audio_engine_iid = interface_iid<"audio_engine">.buf;
+Q_DECLARE_INTERFACE(audio_engine, audio_engine_iid)

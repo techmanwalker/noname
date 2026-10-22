@@ -324,7 +324,7 @@ endif()
 
 add_library(audioengine_in INTERFACE)
 target_include_directories(audioengine_in INTERFACE src/interfaces/audioengine)
-target_link_libraries(audioengine_in INTERFACE Qt6::Core mediatypes)
+target_link_libraries(audioengine_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 
 
@@ -373,15 +373,15 @@ target_include_directories(locallibrary
 
 add_library(locallibrary_in INTERFACE)
 target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
-target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes)
+target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 add_library(playlistslist_in INTERFACE)
 target_include_directories(playlistslist_in INTERFACE src/interfaces/playlistslist)
-target_link_libraries(playlistslist_in INTERFACE Qt6::Core mediatypes)
+target_link_libraries(playlistslist_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 add_library(shortcutslist_in INTERFACE)
 target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)
-target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes)
+target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 
 # Covers - where your vision lives, use the interface to register your cover on memory cache to display on any QML
@@ -457,7 +457,7 @@ target_include_directories(lyricsmanifest
 
 add_library(lyricsmanifest_in INTERFACE)
 target_include_directories(lyricsmanifest_in INTERFACE src/interfaces/lyricsmanifest)
-target_link_libraries(lyricsmanifest_in INTERFACE Qt6::Core)
+target_link_libraries(lyricsmanifest_in INTERFACE Qt6::Core constexprstrings)
 
 
 # What has played, what is playing and what is to be played
@@ -527,7 +527,7 @@ target_include_directories(playerpresenter
 
 add_library(playerpresenter_in INTERFACE)
 target_include_directories(playerpresenter_in INTERFACE src/interfaces/playerpresenter)
-target_link_libraries(playerpresenter_in INTERFACE Qt6::Core)
+target_link_libraries(playerpresenter_in INTERFACE Qt6::Core constexprstrings)
 
 
 
