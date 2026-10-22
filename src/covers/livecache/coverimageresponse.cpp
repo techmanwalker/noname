@@ -1,34 +1,45 @@
 #include "coverstorage.hpp"
 
-cover_image_response::cover_image_response(covers::live::cover_storage *cover_provider, const QString &id, const QSize &requestedSize)
-    : m_provider(cover_provider), m_id(id), m_requested_size(requestedSize)
+cover_image_response::cover_image_response(std::shared_ptr<cover_response_state> state)
+    : m_state(std::move(state))
 {
-    // Required: QQuickImageResponse manages its own lifetime (deleteLater()
-    // once finished() is emitted) — letting QThreadPool also auto-delete
-    // us would be a double free.
-    setAutoDelete(false);
 }
 
 QQuickTextureFactory *
 cover_image_response::textureFactory() const
 {
-    // Null on a cancelled/unresolved response — QtQuick handles that
-    // fine, it just renders nothing for this request.
-    return QQuickTextureFactory::textureFactoryForImage(m_image);
-}
-
-void 
-cover_image_response::cancel()
-{
-    m_canceled.storeRelaxed(1);
+    return QQuickTextureFactory::textureFactoryForImage(m_state->image);
 }
 
 void
-cover_image_response::run()
+cover_image_response::cancel()
 {
-    if (m_provider && !m_canceled.loadRelaxed()) {
-        m_image = m_provider->resolve_blocking(m_id, m_requested_size);
+    m_state->canceled.storeRelaxed(1);
+}
+
+cover_resolve_task::cover_resolve_task(covers::live::cover_storage *storage,
+                                       QString id, QSize size,
+                                       std::shared_ptr<cover_response_state> state,
+                                       QPointer<cover_image_response> response,
+                                       mailbox_ptr mailbox)
+    : m_storage(storage), m_id(std::move(id)), m_size(size),
+      m_state(std::move(state)), m_response(std::move(response)),
+      m_mailbox(std::move(mailbox))
+{
+}
+
+void
+cover_resolve_task::run()
+{
+    if (m_storage && !m_state->canceled.loadRelaxed()) {
+        m_state->image = m_storage->resolve_blocking(m_id, m_size);
     }
-    // Must still emit finished() even when cancelled, so the engine can clean us up.
-    emit finished();
+
+    // Hand off to the response's thread. The response is only dereferenced
+    // over there, where its deleteLater() is serialized with this call.
+    // finished() is emitted even when cancelled so Qt can clean up.
+    QMetaObject::invokeMethod(m_mailbox.get(), [response = m_response] {
+        if (response)
+            response->deliver();
+    }, Qt::QueuedConnection);
 }

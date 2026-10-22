@@ -41,8 +41,17 @@ cover_storage::~cover_storage ()
 QQuickImageResponse *
 cover_storage::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
-    auto *response = new cover_image_response(!disabled ? this : nullptr, id, requestedSize);
-    m_response_pool.start(response);
+    auto state = std::make_shared<cover_response_state>();
+
+    // Built in this call, so it has the same thread affinity as the response.
+    mailbox_ptr mailbox(new QObject);
+
+    auto *response = new cover_image_response(state);
+
+    m_response_pool.start(new cover_resolve_task(
+        !disabled ? this : nullptr, id, requestedSize,
+        state, QPointer<cover_image_response>(response), std::move(mailbox)));
+
     return response;
 }
 

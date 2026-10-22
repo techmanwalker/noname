@@ -3,9 +3,12 @@
 #include <QCache>
 #include <QLoggingCategory>
 #include <QMutex>
+#include <QPointer>
 #include <QQuickAsyncImageProvider>
 #include <QReadWriteLock>
+#include <QRunnable>
 #include <QThreadPool>
+#include <memory>
 
 Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
 
@@ -57,24 +60,53 @@ private:
 }
 
 
-// Runs on cover_storage's m_response_pool. Deliberately no Q_OBJECT here:
-// it adds no new signals/slots beyond the ones QQuickImageResponse already
-// declares, so it needs no moc processing.
-class cover_image_response : public QQuickImageResponse, public QRunnable
+// Shared by the response and its worker; whichever dies first, the other
+// still has valid memory. image is written by the worker strictly before
+// finished() is delivered and read only after it.
+struct cover_response_state {
+    QImage    image;
+    QAtomicInt canceled { 0 };
+};
+
+// Lives on the QML pixmap reader thread. Never touched by worker threads.
+// Deliberately no Q_OBJECT: no new signals/slots beyond QQuickImageResponse's.
+class cover_image_response : public QQuickImageResponse
 {
 public:
-    cover_image_response(covers::live::cover_storage *cover_provider, const QString &id, const QSize &requestedSize);
+    explicit cover_image_response(std::shared_ptr<cover_response_state> state);
 
     QQuickTextureFactory *textureFactory() const override;
-
     void cancel() override;
+
+    // Reader thread only (called through the mailbox).
+    void deliver() { emit finished(); }
+
+private:
+    std::shared_ptr<cover_response_state> m_state;
+};
+
+struct deferred_delete {
+    void operator()(QObject *o) const { o->deleteLater(); }
+};
+using mailbox_ptr = std::unique_ptr<QObject, deferred_delete>;
+
+// Pure worker: not a QObject, auto-deleted by the pool.
+class cover_resolve_task : public QRunnable
+{
+public:
+    cover_resolve_task(covers::live::cover_storage *storage,
+                       QString id, QSize size,
+                       std::shared_ptr<cover_response_state> state,
+                       QPointer<cover_image_response> response,
+                       mailbox_ptr mailbox);
 
     void run() override;
 
 private:
-    covers::live::cover_storage *m_provider;
-    QString m_id;
-    QSize m_requested_size;
-    QImage m_image;
-    QAtomicInt m_canceled { 0 };
+    covers::live::cover_storage          *m_storage;
+    QString                               m_id;
+    QSize                                 m_size;
+    std::shared_ptr<cover_response_state> m_state;
+    QPointer<cover_image_response>        m_response;
+    mailbox_ptr                           m_mailbox;
 };
