@@ -94,12 +94,12 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="121"/>
+        <location filename="../qml/mainwindow/Main.qml" line="190"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="170"/>
+        <location filename="../qml/mainwindow/Main.qml" line="236"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -249,6 +249,11 @@
         <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
+        <source>Search results</source>
+        <translation>Resultados de búsqueda</translation>
     </message>
     <message>
         <location filename="../qml/browser/vtabs/Tracks.qml" line="78"/>

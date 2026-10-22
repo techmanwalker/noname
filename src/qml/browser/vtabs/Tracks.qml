@@ -44,7 +44,7 @@ ColumnLayout {
     SectionHeading {
         id: shortcutsHeading
 
-        text: qsTr("Your library")
+        text: !root.searchBarItem.clearable ? qsTr("Your library") : qsTr("Search results")
 
         Layout.bottomMargin: root.shortcutCoverHeight / 16
     }
