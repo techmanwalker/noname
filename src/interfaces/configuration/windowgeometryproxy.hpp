@@ -15,7 +15,7 @@ public:
     Q_PROPERTY(int width  READ width  WRITE poll_width  NOTIFY sizeChanged)
     Q_PROPERTY(int height READ height WRITE poll_height NOTIFY sizeChanged)
 
-    explicit WindowGeometryProxy (QObject *parent = nullptr)        
+    explicit WindowGeometryProxy (QObject *parent = nullptr)
         : QObject(parent),
           m_geometry(s_injectedGeometry) // Copies shared_ptr, incrementing ref count
     {
@@ -32,7 +32,7 @@ public:
         s_injectedGeometry = geometry; // Ref count incremented, caller's instance unaffected
     }
 
-    int width ()  { 
+    int width ()  {
         if (!m_geometry) return 0;
 
         return m_geometry->width();;
@@ -56,10 +56,11 @@ public:
         m_geometry->poll_height(height);
     }
 
-    Q_INVOKABLE void poll_and_save_to_disk (int width, int height) { if (m_geometry) m_geometry->poll_and_save_to_disk(width, height); }
-
 signals:
     void sizeChanged();
+
+public slots:
+    void poll_and_save_to_disk (int width, int height) { if (m_geometry) m_geometry->poll_and_save_to_disk(width, height); }
 
 private:
     std::shared_ptr<WindowGeometry> m_geometry;

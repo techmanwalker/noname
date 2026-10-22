@@ -71,26 +71,6 @@ public:
         m_iface->switch_to(QPersistentModelIndex(mapToSource(index)), true);
     }
 
-    Q_INVOKABLE void switchTo(const QUrl &source) {
-        if (!m_iface) return; 
-        m_iface->switch_to(source);
-    }
-
-    Q_INVOKABLE void next() {
-        if (!m_iface) return;
-        m_iface->next();
-    }
-
-    Q_INVOKABLE void prev() {
-        if (!m_iface) return; 
-        m_iface->prev();
-    }
-
-    Q_INVOKABLE void clear() {
-        if (!m_iface) return; 
-        m_iface->clear();
-    }
-
     Q_INVOKABLE QModelIndex findBySource (const QString &needle) {
         if (!m_iface) return QPersistentModelIndex();
         return mapFromSource(m_iface->find_by_source(needle));
@@ -110,6 +90,27 @@ signals:
     void trackChanged();
     void countChanged();
     void shuffleChanged();
+
+public slots:
+    void switchTo(const QUrl &source) {
+        if (!m_iface) return; 
+        m_iface->switch_to(source);
+    }
+
+    void next() {
+        if (!m_iface) return;
+        m_iface->next();
+    }
+
+    void prev() {
+        if (!m_iface) return; 
+        m_iface->prev();
+    }
+
+    void clear() {
+        if (!m_iface) return; 
+        m_iface->clear();
+    }
 
 private:
     std::shared_ptr<QAbstractItemModel> m_queue;

@@ -45,13 +45,6 @@ public:
         return static_cast<int>(m_iface->line_count());
     }
 
-    // Respect and expose the public Q_INVOKABLE interface using the abstraction
-    Q_INVOKABLE void clear() {
-        if (!m_iface) return;
-
-        m_iface->clear();
-    }
-
     QModelIndex index_of_lyric_to_highlight() const {
         if (!m_iface) return {};
 
@@ -64,6 +57,13 @@ public:
 signals:
     void highlightedRowChanged();
     void countChanged();
+
+public slots:
+    void clear() {
+        if (!m_iface) return;
+
+        m_iface->clear();
+    }
 
 private:
     std::shared_ptr<QAbstractListModel> m_manifest;
