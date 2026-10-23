@@ -10,9 +10,9 @@
 #include <QtAssert>
 
 #include <memory>
+#include <optional>
 #include <qabstractitemmodel.h>
 #include <qloggingcategory.h>
-#include <variant>
 
 class PlayQueueLIPrivate 
 {
@@ -137,19 +137,18 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
     }
 
     // Map the external proxy index down to the hidden sequence index
-    auto song_opt = m_d->sequence.pointed_to(QPersistentModelIndex(to_sequence(song)));
-    if (!song_opt.has_value()) return false;
+    return m_d->sequence.pointed_to<const Types::Song &>(
+        QPersistentModelIndex(to_sequence(song)), 
+        [this, play_afterwards](const Types::Song &prolly_song) -> bool {
+            m_d->playing->load(prolly_song);
 
-    Types::Any &song_item = song_opt.value().get();
-    if (!std::holds_alternative<Types::Song>(song_item)) return false;
+            if (play_afterwards) {
+                m_d->playing->play();
+            }
 
-    m_d->playing->load(std::get<Types::Song>(song_item));
-
-    if (play_afterwards) {
-        m_d->playing->play();
-    }
-
-    return true;
+            return true;
+        }
+    );
 }
 
 void
@@ -211,12 +210,12 @@ PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
         if (play_afterwards) m_d->playing->play();
     }
 
-    Q_ASSERT_X(m_d->playing->current_track_source() == playhead_item_ref->get().source,
+    Q_ASSERT_X(m_d->playing->current_track_source() == playhead_item_ref.value().source,
         "PlayQueueLI::prev_at_end",
         "The supposed playhead track reference is not the current track according to audio_engine."
     );
 
-    quint64 track_duration = playhead_item_ref.value().get().duration;
+    quint64 track_duration = playhead_item_ref.value().duration;
 
     if (stepback_ms < track_duration) {
         m_d->playing->set_position(track_duration - stepback_ms);
@@ -234,17 +233,16 @@ PlayQueueLI::preload_next_track_whenever_possible ()
 
     if (!upcoming.isValid()) m_d->playing->undo_prepare_next_track();
 
-    auto song_opt = m_d->sequence.pointed_to(QPersistentModelIndex(to_sequence(upcoming)));
-    if (!song_opt.has_value()) return;
+    m_d->sequence.pointed_to<const Types::Song &>(
+        QPersistentModelIndex(to_sequence(upcoming)), 
+        [this](const Types::Song &prolly_song) {
+            const Types::Song &song_item = prolly_song;
+            if (m_d->playing->next_track_prepared_source() == song_item.source) return;
 
-    Types::Any &any_item = song_opt.value().get();
-    if (!std::holds_alternative<Types::Song>(any_item)) return;
-
-    Types::Song &song_item = std::get<Types::Song>(any_item);
-    if (m_d->playing->next_track_prepared_source() == song_item.source) return;
-    
-    m_d->playing->prepare_next_track(song_item);
-    qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
+            m_d->playing->prepare_next_track(song_item);
+            qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
+        }
+    );
 }
 
 void
@@ -263,19 +261,21 @@ PlayQueueLI::find_by_source(const QUrl &needle)
     return from_sequence(m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle));
 }
 
-std::optional<std::reference_wrapper<Types::Song>>
+std::optional<Types::Song>
 PlayQueueLI::query_metadata_for_source(const QUrl &needle) const
 {
-    // reference to the original Types::Song struct
-    auto ref = m_d->sequence.pointed_to(m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle));
+    std::optional<Types::Song> result = std::nullopt;
 
-    if (!ref.has_value()) return std::nullopt;
+    bool success = m_d->sequence.pointed_to<const Types::Song &> (
+        m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle), 
+        [&result](const Types::Song &prolly_song) -> void {
+            result = prolly_song;
+        }
+    );
 
-    Types::Any &prolly_song = ref.value().get();
+    if (!success) return std::nullopt;
 
-    if (!std::holds_alternative<Types::Song>(prolly_song)) return std::nullopt;
-
-    return std::get<Types::Song>(prolly_song);
+    return result;
 }
 
 void

@@ -85,8 +85,12 @@ public:
     // fetch the source of every element
     QStringList sources () const;
 
-    // position solvers
-    std::optional<std::reference_wrapper<Types::Any>> pointed_to (const QPersistentModelIndex &idx);
+    // position solvers, lifetime control by predicate
+
+    template <media_type T>
+    bool pointed_to (const QPersistentModelIndex &idx, std::invocable<T> auto callback);
+
+
     std::optional<size_t> row_pointed_to(const QPersistentModelIndex &idx) const;
 
     QPersistentModelIndex index_next_to (const QPersistentModelIndex &idx) const;

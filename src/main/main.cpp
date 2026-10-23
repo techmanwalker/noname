@@ -202,7 +202,7 @@ main (int argc, char ** argv)
                 if (!prolly_queue_has_it.has_value()) return;
 
                 // commit metadata to the presenter
-                pp->acknowledge_current_song(prolly_queue_has_it.value().get());
+                pp->acknowledge_current_song(prolly_queue_has_it.value());
             });
 
     // Both the PlayerPresenter and the LyricsManifest need to be aware

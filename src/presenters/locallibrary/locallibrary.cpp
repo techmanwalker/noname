@@ -5,6 +5,7 @@
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 #include "songfactory.hpp"
+#include <qfuture.h>
 
 QList<Types::Song>
 LocalLibraryLI::flattened () const
@@ -55,83 +56,80 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             << "This is a fatal error. Aborting.";
     }
 
-    auto prolly_found = pointed_to(dir_index_to_refresh);
+    QFuture<QList<Types::Song>> extract_future = QtFuture::makeReadyValueFuture<QList<Types::Song>>({});
+    
+    pointed_to<Types::Directory &>(
+        dir_index_to_refresh, 
+        [&dir_path, &extract_future](Types::Directory &target_dir) -> void {
+            // Recursively list files in directory
+            QStringList files_in_path = diskio::list_dir(dir_path, true);
 
-    if (
-        !prolly_found.has_value()
-    ||  !std::holds_alternative<Types::Directory>(prolly_found.value().get())
-    ) {
-        qCDebug(l_mediasequences) << "Found media item was not a directory.";
-        return QtFuture::makeReadyVoidFuture();
-    }
+            // filter only songs that don't exist already in found_dir.songs
+            QList<QUrl> not_yet_loaded;
+            for (const QString &raw_source : files_in_path) {
+                QUrl one_source = QUrl::fromLocalFile(raw_source);
 
-    Types::Directory &target_dir = std::get<Types::Directory>(prolly_found.value().get());
+                auto it = std::ranges::find_if(target_dir.songs, [&one_source](const Types::Song &existing_song) {
+                    return existing_song.source == one_source;
+                });
 
-    // Recursively list files in directory
-    QStringList files_in_path = diskio::list_dir(dir_path, true);
+                if (it == target_dir.songs.end()) {
+                    not_yet_loaded.append(one_source);
+                }
+            }
 
-    // filter only songs that don't exist already in found_dir.songs
-    QList<QUrl> not_yet_loaded;
-    for (const QString &raw_source : files_in_path) {
-        QUrl one_source = QUrl::fromLocalFile(raw_source);
+            // avoid unnecessarily triggering a thread if everything is up to date
+            if (not_yet_loaded.isEmpty()) {
+                return;
+            }
 
-        auto it = std::ranges::find_if(target_dir.songs, [&one_source](const Types::Song &existing_song) {
-            return existing_song.source == one_source;
-        });
+            qCDebug(l_mediasequences) << "Reading directory: " << target_dir.path;
 
-        if (it == target_dir.songs.end()) {
-            not_yet_loaded.append(one_source);
+            extract_future = song_factory::batch_extract (
+                not_yet_loaded, 
+                {covers::default_cover_thumbnail_size, true} /* enough for 1440p, can be tweaked any time later */
+            );
         }
-    }
-
-    // avoid unnecessarily triggering a thread if everything is up to date
-    if (not_yet_loaded.isEmpty()) {
-        return QtFuture::makeReadyVoidFuture();
-    }
-
-    qCDebug(l_mediasequences) << "Reading directory: " << target_dir.path;
+    );
 
     // Ask song_factory to extract the metadata of songs, all at once
-    return song_factory::batch_extract (not_yet_loaded, {covers::default_cover_thumbnail_size, true} /* enough for 1440p, can be tweaked any time later */)
-        .then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
+    return extract_future.then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
             /*  Re-resolve through the persistent index rather than trusting target_dir from
                 above: m_items may have reallocated (another take_snapshot() appending a new
                 directory, for instance) during the time batch_extract spent running. */
-            auto current_refresh = pointed_to(dir_index_to_refresh);
-            if (!current_refresh.has_value()) {
+            auto did_execute = pointed_to<Types::Directory &>(
+                dir_index_to_refresh, [&songs](Types::Directory &target_dir) -> bool {
+                    target_dir.songs.reserve(songs.size());
+
+                    // Defensive merge-or-append: not_yet_loaded was deduped by source up front, but
+                    // another in-flight take_snapshot() on this same directory could have loaded some
+                    // of these same sources in the meantime.
+                    for (Types::Song &song : songs) {
+                        // A song with empty source is considered invalid
+                        if (!song.is_valid()) {
+                            continue;
+                        }
+
+                        auto it = std::ranges::find_if(target_dir.songs, [&song](const Types::Song &existing_song) {
+                            return existing_song.source == song.source;
+                        });
+
+                        if (it != target_dir.songs.end()) {
+                            *it = std::move(song);
+                        } else {
+                            target_dir.songs.append(std::move(song));
+                        }
+                    }
+
+                    return true;
+                }
+            );
+
+            if (did_execute) {
+                emit dataChanged(dir_index_to_refresh, dir_index_to_refresh);
+            } else {
                 qCDebug(l_mediasequences) << "Directory was unmapped while metadata extraction was in progress.";
-                return;
             }
-
-            Types::Any &current_found = current_refresh.value().get();
-            if (!std::holds_alternative<Types::Directory>(current_found)) {
-                return;
-            }
-
-            Types::Directory &target_dir = std::get<Types::Directory>(current_found);
-            target_dir.songs.reserve(songs.size());
-
-            // Defensive merge-or-append: not_yet_loaded was deduped by source up front, but
-            // another in-flight take_snapshot() on this same directory could have loaded some
-            // of these same sources in the meantime.
-            for (Types::Song &song : songs) {
-                // A song with empty source is considered invalid
-                if (!song.is_valid()) {
-                    continue;
-                }
-
-                auto it = std::ranges::find_if(target_dir.songs, [&song](const Types::Song &existing_song) {
-                    return existing_song.source == song.source;
-                });
-
-                if (it != target_dir.songs.end()) {
-                    *it = std::move(song);
-                } else {
-                    target_dir.songs.append(std::move(song));
-                }
-            }
-
-            emit dataChanged(dir_index_to_refresh, dir_index_to_refresh);
         })
         .onFailed(this, [this] {
             qCWarning(l_mediasequences) << "Batch song load failed for a directory; its songs list was left unchanged.";

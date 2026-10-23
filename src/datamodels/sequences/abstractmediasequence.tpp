@@ -6,6 +6,8 @@
 #include <QList>
 #include <qabstractitemmodel.h>
 #include <qlist.h>
+#include <qreadwritelock.h>
+#include <variant>
 
 // --- readers
 template <typename... Ts>
@@ -130,4 +132,52 @@ AbstractMediaSequence::batch_append(const container &items)
     emit count_changed();
 
     return indices;
+}
+
+template <media_type T>
+bool
+AbstractMediaSequence::pointed_to(const QPersistentModelIndex &idx, std::invocable<T> auto callback)
+{
+    // use lock type based on const-ness
+    constexpr bool is_const_target = std::is_const_v<std::remove_reference_t<T>>;
+    using LockerType = std::conditional_t<is_const_target, QReadLocker, QWriteLocker>;
+    LockerType locker (&_lock());
+
+    // get item ref
+    std::optional<std::reference_wrapper<Types::Any>> ref = __item_pointed_to_unlocked(idx);
+    if (!ref.has_value()) return false;
+
+    // base type
+    using base_t = std::remove_cvref_t<T>;
+
+    // reference to the real variant
+    using variant_ref_type = std::conditional_t<is_const_target, const Types::Any&, Types::Any&>;
+    variant_ref_type underlying_variant = ref.value().get();
+
+    // a: T is exactly Types::Any
+    if constexpr (std::is_same_v<base_t, Types::Any>) {
+        using return_type = std::invoke_result_t<decltype(callback), variant_ref_type>;
+
+        if constexpr (std::is_void_v<return_type>) {
+            callback(underlying_variant);
+            return true;
+        } else {
+            return callback(underlying_variant);
+        }
+    } 
+    // b: T is an alternative for Types::Any
+    else {
+        if (!std::holds_alternative<base_t>(underlying_variant)) return false;
+
+        // properly propagate constness (if variant_ref_type is const, std::get will return const base_t&)
+        auto&& extracted_value = std::get<base_t>(underlying_variant);
+        using return_type = std::invoke_result_t<decltype(callback), decltype(extracted_value)>;
+
+        if constexpr (std::is_void_v<return_type>) {
+            callback(std::forward<decltype(extracted_value)>(extracted_value));
+            return true;
+        } else {
+            return callback(std::forward<decltype(extracted_value)>(extracted_value));
+        }
+    }
 }

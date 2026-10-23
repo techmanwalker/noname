@@ -6,7 +6,6 @@
 #include <QIdentityProxyModel>
 #include <QFuture>
 
-#include <functional>
 #include <memory>
 #include <qabstractitemmodel.h>
 
@@ -54,7 +53,7 @@ public:
     void clear () override;
 
     QPersistentModelIndex find_by_source (const QUrl &needle) override;
-    std::optional<std::reference_wrapper<Types::Song>> query_metadata_for_source (const QUrl &needle) const override;
+    std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const override;
 
     QFuture<void> batch_append (const QList<QUrl> &sources) override;
 

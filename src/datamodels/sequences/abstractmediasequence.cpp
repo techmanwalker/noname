@@ -202,14 +202,6 @@ AbstractMediaSequence::items() const
 }
 
 std::optional<std::reference_wrapper<Types::Any>>
-AbstractMediaSequence::pointed_to(const QPersistentModelIndex &idx)
-{
-    QReadLocker locker (&m_d->m_lock);
-
-    return __item_pointed_to_unlocked(idx);
-}
-
-std::optional<std::reference_wrapper<Types::Any>>
 AbstractMediaSequence::__item_pointed_to_unlocked (const QPersistentModelIndex &idx) const
 {
     const std::optional<size_t> row = __row_pointed_to_unlocked(idx);
