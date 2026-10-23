@@ -122,7 +122,7 @@ main (int argc, char ** argv)
     */
 
     // boot ae and immediately load and play the first track
-    auto ae = std::make_shared<audio_engineLI>    (nullptr, backend);
+    auto ae = std::make_shared<audio_engine_LI>    (nullptr, backend);
     // do not wait for the metadata to be read
     if (!first_track_source.isEmpty()) {
         ae->load(first_track_source);
@@ -176,16 +176,16 @@ main (int argc, char ** argv)
     WindowGeometryProxy   ::inject(wi);
 
     // bind signals
-    QObject::connect (ae.get(), &audio_engineLI::track_changed,
+    QObject::connect (ae.get(), &audio_engine_LI::track_changed,
             pq.get(), &PlayQueueLI::handle_track_changed);
 
-    QObject::connect(ae.get(), &audio_engineLI::tape_ran_out,
+    QObject::connect(ae.get(), &audio_engine_LI::tape_ran_out,
             pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
 
     // Listen to the audio controller; when metadata updates, notify the UI's data.
     // These stay here, not in the proxy: both ae and pn are concrete pointers, and
     // main.cpp is the one place allowed to wire concrete-to-concrete connections.
-    QObject::connect(ae.get(), &audio_engineLI::track_changed,
+    QObject::connect(ae.get(), &audio_engine_LI::track_changed,
             pp.get(), [&pq, &ae, &pp]() {
 
                 QUrl current_track_source = ae->current_track_source();
@@ -206,28 +206,28 @@ main (int argc, char ** argv)
             });
 
     // Both the PlayerPresenter and the LyricsManifest need to be aware
-    QObject::connect(ae.get(), &audio_engineLI::track_changed,
+    QObject::connect(ae.get(), &audio_engine_LI::track_changed,
             lm.get(), &LyricsManifestLI::load_current_track_lyrics);
 
-    QObject::connect(ae.get(), &audio_engineLI::playback_state_changed,
+    QObject::connect(ae.get(), &audio_engine_LI::playback_state_changed,
             pp.get(), &PlayerPresenterLI::handle_playback_state_changed);
 
-    QObject::connect(ae.get(), &audio_engineLI::seek_finished,
+    QObject::connect(ae.get(), &audio_engine_LI::seek_finished,
             pp.get(), &PlayerPresenterLI::position_changed);
 
-    QObject::connect(ae.get(), &audio_engineLI::seek_finished,
+    QObject::connect(ae.get(), &audio_engine_LI::seek_finished,
             pp.get(), &PlayerPresenterLI::seek_finished);
 
-    QObject::connect(ae.get(), &audio_engineLI::volume_changed,
+    QObject::connect(ae.get(), &audio_engine_LI::volume_changed,
             pp.get(), &PlayerPresenterLI::volume_changed);
 
-    QObject::connect (ae.get(), &audio_engineLI::seek_finished,
+    QObject::connect (ae.get(), &audio_engine_LI::seek_finished,
             pp.get(), &PlayerPresenterLI::gate_poll_timer);
 
     QObject::connect(pp.get(), &PlayerPresenterLI::position_changed,
             lm.get(), &LyricsManifestLI::poll_highlighted_line_change);
 
-    QObject::connect(ae.get(), &audio_engineLI::relative_seek_before_zero_performed,
+    QObject::connect(ae.get(), &audio_engine_LI::relative_seek_before_zero_performed,
             pq.get(), &PlayQueueLI::prev_at_end);
 
 

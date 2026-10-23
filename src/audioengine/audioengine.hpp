@@ -19,12 +19,12 @@ enum class audio_backend;
 /**
     @brief Playback controller proxy.
 */
-class audio_engineLI : public QObject, public audio_engine
+class audio_engine_LI : public QObject, public audio_engine
 {
     Q_OBJECT
     Q_INTERFACES (audio_engine)
 public:
-    explicit audio_engineLI (QObject *parent, audio_backend backend);
+    explicit audio_engine_LI (QObject *parent, audio_backend backend);
 
     void play() override;
     void pause() override;
@@ -33,7 +33,7 @@ public:
     void set_position(const quint64 position_ms) override;
     void relative_seek (qint64 step_ms) override;
     void set_volume(quint8 volume_percent) override;
-    // keep audio_engine's Types::Song overloads visible through audio_engineLI
+    // keep audio_engine's Types::Song overloads visible through audio_engine_LI
     // (declaring the overrides below would otherwise hide them)
     using audio_engine::load;
     using audio_engine::prepare_next_track;

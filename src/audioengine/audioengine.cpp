@@ -9,15 +9,15 @@
 // Logs are fundamental for this program not to blindly fall apart
 
 // Private constructor
-audio_engineLI::audio_engineLI(QObject *parent, audio_backend backend)
+audio_engine_LI::audio_engine_LI(QObject *parent, audio_backend backend)
     : QObject(parent),
       m_internal(std::make_unique<audio_internal_controller>(this, backend))
 {
     connect(m_internal.get(), &audio_internal_controller::seeked,
-            this, &audio_engineLI::seek_finished);
+            this, &audio_engine_LI::seek_finished);
 
     connect(m_internal.get(), &audio_internal_controller::load_failed,
-            this, &audio_engineLI::load_failed);
+            this, &audio_engine_LI::load_failed);
             
     /*  Explicit Qt::QueuedConnection, kept on purpose: these signals are emitted by
         rt_event_pump on the main thread (never from the RT callback), so thread safety no
@@ -25,44 +25,44 @@ audio_engineLI::audio_engineLI(QObject *parent, audio_backend backend)
         so UI work done in on_boundary_hit()/on_tape_ran_out() (and
         anything it triggers, like load()) can't re-enter the drain. */
     connect(m_internal.get(), &audio_internal_controller::boundary_hit,
-            this, &audio_engineLI::on_boundary_hit, Qt::QueuedConnection);
+            this, &audio_engine_LI::on_boundary_hit, Qt::QueuedConnection);
 
     connect(m_internal.get(), &audio_internal_controller::tape_ran_out,
-            this, &audio_engineLI::on_tape_ran_out, Qt::QueuedConnection);
+            this, &audio_engine_LI::on_tape_ran_out, Qt::QueuedConnection);
 
-    connect(this, &audio_engineLI::track_changed,
-            this, &audio_engineLI::handle_track_changed);
+    connect(this, &audio_engine_LI::track_changed,
+            this, &audio_engine_LI::handle_track_changed);
 }
 
 void
-audio_engineLI::teardown ()
+audio_engine_LI::teardown ()
 {
     m_internal.reset();
 }
 
 void
-audio_engineLI::play()
+audio_engine_LI::play()
 {
     m_internal->set_transport_paused(false);
     emit playback_state_changed();
 }
 
 void
-audio_engineLI::pause()
+audio_engine_LI::pause()
 {
     m_internal->set_transport_paused(true);
     emit playback_state_changed();
 }
 
 void
-audio_engineLI::stop()
+audio_engine_LI::stop()
 {
     m_internal->stop();
     emit playback_state_changed();
 }
 
 void
-audio_engineLI::load(const QUrl &source)
+audio_engine_LI::load(const QUrl &source)
 {
     if (source.isEmpty()) return;
 
@@ -78,7 +78,7 @@ audio_engineLI::load(const QUrl &source)
 }
 
 void
-audio_engineLI::prepare_next_track(const QUrl &source)
+audio_engine_LI::prepare_next_track(const QUrl &source)
 {
     // Designated against an A that no longer exists: on_boundary_hit() just cleared B, and the
     // track_changed handler prepares the new one.
@@ -88,7 +88,7 @@ audio_engineLI::prepare_next_track(const QUrl &source)
 }
 
 void
-audio_engineLI::undo_prepare_next_track()
+audio_engine_LI::undo_prepare_next_track()
 {
     if (catch_up_on_boundary_hit()) return;
     m_track_B_source.clear();
@@ -96,7 +96,7 @@ audio_engineLI::undo_prepare_next_track()
 }
 
 void
-audio_engineLI::unload()
+audio_engine_LI::unload()
 {
     m_current_transaction_id++; 
     stop();
@@ -106,7 +106,7 @@ audio_engineLI::unload()
 }
 
 void
-audio_engineLI::relative_seek(qint64 step_ms)
+audio_engine_LI::relative_seek(qint64 step_ms)
 {
     quint64 current_position = current_position_ms();
     quint64 step_ms_abs = std::abs(step_ms);
@@ -121,7 +121,7 @@ audio_engineLI::relative_seek(qint64 step_ms)
 }
 
 void
-audio_engineLI::set_position(const quint64 position_ms)
+audio_engine_LI::set_position(const quint64 position_ms)
 {
     // Computed against track A . If the boundary hit was overdue it has just been
     // consumed: that A is gone, drop the request, the UI re-derives from track_changed.
@@ -131,7 +131,7 @@ audio_engineLI::set_position(const quint64 position_ms)
 }
 
 void
-audio_engineLI::set_volume(quint8 volume_percent)
+audio_engine_LI::set_volume(quint8 volume_percent)
 {
     if (volume_percent > 100) volume_percent = 100;
 
@@ -149,7 +149,7 @@ audio_engineLI::set_volume(quint8 volume_percent)
 }
 
 quint8
-audio_engineLI::current_volume() const
+audio_engine_LI::current_volume() const
 {
     if (m_log_volume <= -std::numeric_limits<double>::infinity()) return 0;
     
@@ -159,40 +159,40 @@ audio_engineLI::current_volume() const
 }
 
 const QUrl &
-audio_engineLI::current_track_source() const
+audio_engine_LI::current_track_source() const
 {
     return m_track_A_source;
 }
 
 const QUrl &
-audio_engineLI::next_track_prepared_source() const
+audio_engine_LI::next_track_prepared_source() const
 {
     return m_track_B_source;
 }
 
 quint64
-audio_engineLI::current_position_ms() const
+audio_engine_LI::current_position_ms() const
 {
     if (!m_internal->is_song_loaded()) return 0;
     return m_internal->current_position_ms();
 }
 
-audio_engineLI::playback_state
-audio_engineLI::get_playback_state() const
+audio_engine_LI::playback_state
+audio_engine_LI::get_playback_state() const
 {
-    using ps = audio_engineLI::playback_state;
+    using ps = audio_engine_LI::playback_state;
     if (!m_internal->is_song_loaded()) return ps::stopped;
     return m_internal->is_paused() ? ps::stopped : ps::playing;
 }
 
 bool
-audio_engineLI::is_a_song_loaded() const
+audio_engine_LI::is_a_song_loaded() const
 {
     return !m_track_A_source.isEmpty();
 }
 
 void
-audio_engineLI::handle_track_changed()
+audio_engine_LI::handle_track_changed()
 {
     emit duration_changed();
     emit seek_finished(); // to 0
@@ -201,7 +201,7 @@ audio_engineLI::handle_track_changed()
 
 // To reactively trigger the changes signals
 void
-audio_engineLI::on_boundary_hit()
+audio_engine_LI::on_boundary_hit()
 {
     QUrl track_B_opened;
     if (m_internal->consume_boundary_hit(track_B_opened)) {
@@ -226,13 +226,13 @@ audio_engineLI::on_boundary_hit()
 }
 
 void
-audio_engineLI::on_tape_ran_out()
+audio_engine_LI::on_tape_ran_out()
 {
     emit tape_ran_out();
 }
 
 bool
-audio_engineLI::catch_up_on_boundary_hit ()
+audio_engine_LI::catch_up_on_boundary_hit ()
 {
     if (!m_internal->boundary_hit_pending()) return false;
     on_boundary_hit();   // idempotent: the queued copy of this event becomes a no-op
