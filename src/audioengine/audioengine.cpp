@@ -106,11 +106,30 @@ audio_engineLI::unload()
 }
 
 void
+audio_engineLI::relative_seek(qint64 step_ms)
+{
+    quint64 current_position = current_position_ms();
+
+    // do not go before 0, avoid wrapping to huge value
+    if (step_ms < 0 && current_position < std::abs(step_ms)) {
+        // ideally, to follow the tape roll narrative, we would prev() and seek
+        // to the track end minus step but those are two steps sequenced and
+        // desync or something happening in between is a problem
+
+        set_position(0);
+        return;
+    }
+
+    set_position(current_position + step_ms);
+}
+
+void
 audio_engineLI::set_position(const quint64 position_ms)
 {
     // Computed against track A . If the boundary hit was overdue it has just been
     // consumed: that A is gone, drop the request, the UI re-derives from track_changed.
     if (catch_up_on_boundary_hit()) return;
+
     m_internal->set_position(position_ms);
 }
 

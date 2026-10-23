@@ -45,6 +45,7 @@ public:
     virtual void stop() = 0;
     virtual void unload() = 0;
     virtual void set_position(const quint64 position_ms) = 0;
+    virtual void relative_seek (qint64 step_ms) = 0; // + advances, - goes back
     virtual void set_volume(quint8 volume_percent) = 0;
     virtual void load(const QUrl &source) = 0;                // designates A
     virtual void prepare_next_track(const QUrl &source) = 0;  // designates B
