@@ -135,7 +135,7 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
     indices.reserve(items.size());
 
     for (const QPersistentModelIndex &item : items) {
-        std::optional<size_t> prolly_exists = row_pointed_to(item);
+        std::optional<size_t> prolly_exists = item.row();
         if (!prolly_exists.has_value()) continue;
         indices.push_back(prolly_exists.value());
     }
@@ -183,17 +183,6 @@ AbstractMediaSequence::clear()
     emit count_changed();
 }
 
-std::optional<std::reference_wrapper<Types::Any>>
-AbstractMediaSequence::item_at(size_t index)
-{
-    QReadLocker locker (&m_d->m_lock);
-    if (static_cast<qsizetype>(index) >= m_d->m_items.size()) {
-        return std::nullopt;
-    };
-
-    return std::ref(m_d->m_items[index]);
-}
-
 QList<Types::Any>
 AbstractMediaSequence::items() const
 {
@@ -211,49 +200,6 @@ AbstractMediaSequence::__item_pointed_to_unlocked (const QPersistentModelIndex &
     return std::ref(m_d->m_items[row.value()]);
 }
 
-std::optional<std::reference_wrapper<Types::Any>>
-AbstractMediaSequence::next_to(const QPersistentModelIndex &idx)
-{
-    QReadLocker locker (&m_d->m_lock);
-
-    const QPersistentModelIndex next_idx = __index_next_to_unlocked(idx);
-
-    if (!next_idx.isValid()) return std::nullopt;
-
-    return __item_pointed_to_unlocked (next_idx);
-}
-
-std::optional<size_t>
-AbstractMediaSequence::row_pointed_to(const QPersistentModelIndex &idx) const
-{
-    QReadLocker locker (&m_d->m_lock);
-
-    const std::optional<size_t> row = __row_pointed_to_unlocked(idx);
-
-    if (!row.has_value()) return std::nullopt;
-
-    return std::ref(row.value());
-}
-
-QPersistentModelIndex 
-AbstractMediaSequence::index_next_to (const QPersistentModelIndex &idx) const
-{
-    QReadLocker locker (&m_d->m_lock);
-    return __index_next_to_unlocked(idx);
-}
-
-std::optional<size_t>
-AbstractMediaSequence::row_next_to(const QPersistentModelIndex &idx) const
-{
-    QReadLocker locker (&m_d->m_lock);
-
-    const std::optional<size_t> next_row = __row_next_to_unlocked(idx);
-
-    if (!next_row.has_value()) return std::nullopt;
-
-    return next_row.value();
-}
-
 std::optional<size_t>
 AbstractMediaSequence::__row_pointed_to_unlocked(const QPersistentModelIndex &idx) const
 {
@@ -267,36 +213,6 @@ AbstractMediaSequence::__row_pointed_to_unlocked(const QPersistentModelIndex &id
     }
 
     return row;
-}
-
-std::optional<size_t>
-AbstractMediaSequence::__row_next_to_unlocked(const QPersistentModelIndex &idx) const
-{
-    if (!idx.isValid()) {
-        return std::nullopt;
-    }
-
-    const int row = idx.row() + 1;
-
-    if (row < 1 || row >= static_cast<int>(m_d->m_items.size())) {
-        return std::nullopt;
-    }
-
-    return row;
-}
-
-QPersistentModelIndex
-AbstractMediaSequence::__index_next_to_unlocked (const QPersistentModelIndex &idx) const
-{
-    if (!idx.isValid()) {
-        return QPersistentModelIndex();
-    }
-
-    const std::optional<size_t> next_row = __row_next_to_unlocked(idx);
-
-    if (!next_row.has_value()) return QPersistentModelIndex();
-
-    return index(next_row.value());
 }
 
 QStringList

@@ -35,10 +35,9 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
     // Try to search if the directory already has a snapshot
     QPersistentModelIndex dir_index_to_refresh = AbstractMediaSequence::find(&Types::Directory::path, dir_path);
 
-    std::optional<size_t> dir_index_opt = row_pointed_to(dir_index_to_refresh);
+    std::optional<size_t> dir_index_opt = dir_index_to_refresh.row();
 
     // this is how we create an empty directory reference
-    // row_pointed_to already returns nullopt if the idx is invalid
     if (!dir_index_to_refresh.isValid() || !dir_index_opt.has_value()) {
         qCDebug(l_mediasequences) << "No snapshot in memory for this directory. Loading...";
         
@@ -47,7 +46,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
                 dir_path
             ));
 
-        dir_index_opt = row_pointed_to (dir_index_to_refresh);
+        dir_index_opt = dir_index_to_refresh.row();
     }
 
     if (!dir_index_to_refresh.isValid() || !dir_index_opt.has_value()) {

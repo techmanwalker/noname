@@ -90,16 +90,6 @@ public:
     template <media_type T>
     bool pointed_to (const QPersistentModelIndex &idx, std::invocable<T> auto callback);
 
-
-    std::optional<size_t> row_pointed_to(const QPersistentModelIndex &idx) const;
-
-    QPersistentModelIndex index_next_to (const QPersistentModelIndex &idx) const;
-    std::optional<std::reference_wrapper<Types::Any>> next_to (const QPersistentModelIndex &idx);
-    std::optional<size_t> row_next_to(const QPersistentModelIndex &idx) const;
-
-    // Access to the raw item for inherited classes that need extra roles
-    std::optional<std::reference_wrapper<Types::Any>> item_at(size_t index);
-
     // read a role directly
     QVariant read_role(qsizetype row, const QByteArray &role) const;
 
@@ -145,8 +135,6 @@ private:
     std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
     std::optional<std::reference_wrapper<Types::Any>>
                           __item_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
-    std::optional<size_t> __row_next_to_unlocked (const QPersistentModelIndex &idx) const;
-    QPersistentModelIndex __index_next_to_unlocked (const QPersistentModelIndex &idx) const;
     
     template <typename... Ts> requires distinct_media_types<Ts...>
     std::tuple<QList<Ts>...> __items_of_types_unlocked () const;
