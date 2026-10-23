@@ -60,7 +60,6 @@ public:
     bool shuffled () const override;
     void set_shuffle (bool enabled) override;
 
-    void respawn_queue (const QList<Types::Song> &new_queue);
     QFuture<void> spawn_queue (const QStringList &sources);
     QFuture<void> respawn_queue (const QStringList &sources) override;
 

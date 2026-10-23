@@ -77,13 +77,6 @@ PlayQueueLI::batch_append (const QList<QUrl> &sources)
     });
 }
 
-void
-PlayQueueLI::respawn_queue(const QList<Types::Song> &new_queue)
-{
-    m_d->sequence.respawn_list(new_queue);
-    if (rowCount() > 0 && !playhead().isValid()) switch_to(index(0, 0));
-}
-
 QFuture<void>
 PlayQueueLI::spawn_queue(const QStringList &sources)
 {
