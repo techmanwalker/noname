@@ -19,6 +19,7 @@ public:
 
     virtual void switch_to (const QUrl &source) = 0;
     virtual bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) = 0;
+    virtual bool switch_to (size_t index, bool play_afterwards = false) = 0;
 
     virtual bool next () = 0;
     virtual bool prev (bool play_afterwards = false) = 0;

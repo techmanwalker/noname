@@ -42,6 +42,7 @@ public:
     // controls
     void switch_to (const Types::Song &song, bool play_afterwards = false);
     bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) override;
+    bool switch_to (size_t idx, bool play_afterwards = false) override;
     void qml_switch_to (const QModelIndex &index);
 
     void switch_to (const QUrl &source) override;

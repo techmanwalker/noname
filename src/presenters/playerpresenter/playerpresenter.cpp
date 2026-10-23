@@ -242,9 +242,9 @@ PlayerPresenterLI::save_volume () const
 // Proxies for QML to be able to perform play, pause and more actions
 void
 PlayerPresenterLI::play() const {
-    if (!queue->playhead().isValid() && queue->item_count() > 0) {
+    if (!queue->playhead().isValid() && queue->item_count() >= 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
-        queue->next();
+        queue->switch_to(0);
     }
 
     playing->play();

@@ -144,6 +144,12 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
     );
 }
 
+bool
+PlayQueueLI::switch_to(size_t idx, bool play_afterwards)
+{
+    return switch_to(index(idx, idx), play_afterwards);
+}
+
 void
 PlayQueueLI::switch_to (const QUrl &source){
     song_factory::extract(source, {}).then(
@@ -166,7 +172,10 @@ bool
 PlayQueueLI::next ()
 {
     QPersistentModelIndex current = playhead();
-    if (!current.isValid()) return false;
+    if (!current.isValid()) {
+        // switch to first track
+        return switch_to(0, true);
+    };
     
     const QPersistentModelIndex upcoming = successor_of(current);
     if (upcoming.isValid()) {
