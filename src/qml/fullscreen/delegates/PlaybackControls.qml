@@ -17,7 +17,13 @@ ColumnLayout {
 
     readonly property alias basicControlsHeight: basicControls.height
 
+    readonly property alias buttonPadding: volcontrol.buttonPadding
+
     DurationControl {
+        // inset padding of the buttons right below
+        Layout.leftMargin: controls.buttonPadding
+        Layout.rightMargin: Layout.leftMargin
+
         Layout.alignment: Qt.AlignHCenter
         Layout.fillWidth: true
 
@@ -38,6 +44,8 @@ ColumnLayout {
         Layout.preferredHeight: basicControls.height
 
         VolumeControl {
+            id: volcontrol
+
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             

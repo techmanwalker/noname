@@ -94,7 +94,7 @@ Row {
 
             visible: !root.immersive || leftCol_hover.hovered
 
-            Layout.maximumWidth: nowplaying_cover.width * .75
+            Layout.maximumWidth: Math.min(nowplaying_cover.width * .75 + 2 * buttonPadding, nowplaying_cover.width)
             Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
         }
 

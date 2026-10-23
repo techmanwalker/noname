@@ -128,6 +128,8 @@ ColumnLayout {
 
                 anchors.fill: parent
                 anchors.bottomMargin: root.volumeControlBottomPadding
+
+                spacing: muteButtonWidth / 2
             }
         }
     }

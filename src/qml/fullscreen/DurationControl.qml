@@ -29,6 +29,7 @@ RowLayout {
 
         font.weight: Font.Medium
 
+        Layout.preferredWidth: font.pointSize * text.length // stop variable width font shifting the layout
         Layout.alignment: Qt.AlignVCenter
 
         visible: !root.hideTimestamps
@@ -109,7 +110,10 @@ RowLayout {
 
         font.weight: Font.Medium
 
+        Layout.preferredWidth: font.pointSize * text.length // stop variable width font shifting the layout
         Layout.alignment: Qt.AlignVCenter
+
+        horizontalAlignment: Text.AlignRight
 
         visible: !root.hideTimestamps
 

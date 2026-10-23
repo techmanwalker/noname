@@ -9,18 +9,20 @@ RowLayout {
 
     required property PlayerPresenter stateModel
     
-    spacing: muteButton.width / 2
+    spacing: muteButton.width / 3
 
     property color accentColor: Theme.dark.slider.accentColor
     property color backgroundColor: Theme.dark.slider.backgroundColor
 
     property bool buttonLightMode: false
+    property alias buttonPadding: muteButton.padding
+
+    readonly property alias muteButtonWidth: muteButton.width
 
     ResizableButton {
         id: muteButton
         icon.name: volumeSlider.value > 0 ? "audio-volume-high" : "audio-volume-muted"
         flat: true
-        padding: 0
 
         Layout.alignment: Qt.AlignVCenter
 
