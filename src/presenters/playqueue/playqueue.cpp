@@ -194,13 +194,21 @@ PlayQueueLI::prev (bool play_afterwards)
 void
 PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
 {   
+
     // step back
+    QUrl prolly_not_the_same_track = m_d->playing->current_track_source();
     prev();
+
     auto playhead_item_ref = query_metadata_for_source(m_d->playing->current_track_source());
 
     if (!playhead_item_ref.has_value()) {
         qCDebug(l_mediasequences) << "Current playing track not found on the queue.";
         if (play_afterwards) m_d->playing->play();
+    }
+
+    if (prolly_not_the_same_track == playhead_item_ref->source) {
+        // still same track, noop same as forward tape FF
+        return;
     }
 
     Q_ASSERT_X(m_d->playing->current_track_source() == playhead_item_ref.value().source,
