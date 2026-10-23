@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <CLI/CLI.hpp>
+#include <qobject.h>
 
 #include "audioengine.hpp"
 #include "configuration.hpp"
@@ -225,6 +226,9 @@ main (int argc, char ** argv)
 
     QObject::connect(pp.get(), &PlayerPresenterLI::position_changed,
             lm.get(), &LyricsManifestLI::poll_highlighted_line_change);
+
+    QObject::connect(ae.get(), &audio_engineLI::relative_seek_before_zero_performed,
+            pq.get(), &PlayQueueLI::prev_at_end);
 
 
 

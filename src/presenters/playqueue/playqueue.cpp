@@ -7,9 +7,11 @@
 #include "songfactory.hpp"
 
 #include <QLoggingCategory>
+#include <QtAssert>
 
 #include <memory>
 #include <qabstractitemmodel.h>
+#include <qloggingcategory.h>
 #include <variant>
 
 class PlayQueueLIPrivate 
@@ -179,7 +181,7 @@ PlayQueueLI::next ()
 }
 
 void
-PlayQueueLI::prev ()
+PlayQueueLI::prev (bool play_afterwards)
 {
     int last_index = rowCount() - 1;
     if (last_index < 0) return; 
@@ -189,7 +191,35 @@ PlayQueueLI::prev ()
         return;
     }
 
-    switch_to(index(playhead().row() - 1, 0), true);
+    switch_to(index(playhead().row() - 1, 0), play_afterwards);
+}
+
+void
+PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
+{   
+    // step back
+    prev();
+    auto playhead_item_ref = query_metadata_for_source(m_d->playing->current_track_source());
+
+    if (!playhead_item_ref.has_value()) {
+        qCDebug(l_mediasequences) << "Current playing track not found on the queue.";
+        if (play_afterwards) m_d->playing->play();
+    }
+
+    Q_ASSERT_X(m_d->playing->current_track_source() == playhead_item_ref->get().source,
+        "PlayQueueLI::prev_at_end",
+        "The supposed playhead track reference is not the current track according to audio_engine."
+    );
+
+    quint64 track_duration = playhead_item_ref.value().get().duration;
+
+    if (stepback_ms < track_duration) {
+        m_d->playing->set_position(track_duration - stepback_ms);
+    } else [[unlikely]] {
+        m_d->playing->set_position(0);
+    }
+
+    if (play_afterwards) m_d->playing->play();
 }
 
 void

@@ -63,6 +63,7 @@ signals:
     void tape_ran_out();
     void playback_state_changed();
     void volume_changed();
+    void relative_seek_before_zero_performed(quint64 stepback_ms, bool play_afterwards);
 
 public slots:
     void handle_track_changed();
