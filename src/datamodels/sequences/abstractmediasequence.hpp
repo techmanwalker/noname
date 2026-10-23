@@ -126,15 +126,6 @@ protected:
     // remove items in batch using their persistent indices
     void batch_remove (const QList<QPersistentModelIndex> &items);
 
-    std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
-    std::optional<std::reference_wrapper<Types::Any>>
-                          __item_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
-    std::optional<size_t> __row_next_to_unlocked (const QPersistentModelIndex &idx) const;
-    QPersistentModelIndex __index_next_to_unlocked (const QPersistentModelIndex &idx) const;
-    
-    template <typename... Ts> requires distinct_media_types<Ts...>
-    std::tuple<QList<Ts>...> __items_of_types_unlocked () const;
-
     void remove(size_t index);
     void clear();
 
@@ -149,6 +140,16 @@ private:
     QList<Types::Any>& _items();
     const QList<Types::Any>& _items() const;
     QReadWriteLock& _lock() const;
+
+    // must not be touched by anything that are not their locking supersets
+    std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
+    std::optional<std::reference_wrapper<Types::Any>>
+                          __item_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
+    std::optional<size_t> __row_next_to_unlocked (const QPersistentModelIndex &idx) const;
+    QPersistentModelIndex __index_next_to_unlocked (const QPersistentModelIndex &idx) const;
+    
+    template <typename... Ts> requires distinct_media_types<Ts...>
+    std::tuple<QList<Ts>...> __items_of_types_unlocked () const;
 };
 
 #include "abstractmediasequence.tpp"
