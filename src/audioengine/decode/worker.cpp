@@ -381,7 +381,7 @@ void
 audio_decode_worker::decode_step ()
 {
     // decode and seek are mutually exclusive
-    std::lock_guard<std::mutex> lock(m_decoder_mutex);
+    std::lock_guard<std::mutex> lock(m_seek_decode_mutex);
 
     // The file ended and its end is waiting for the boundary before it: nothing to read, and a full
     // ring is expected. boundary_settled() resumes, so this is not polling for the consume.
@@ -481,7 +481,7 @@ audio_decode_worker::rewind_in_place(uint64_t position_ms, std::optional<uint64_
     m_ring.reset_cancel();
 
     // decode and seek are mutually exclusive
-    std::lock_guard<std::mutex> lock (m_decoder_mutex);
+    std::lock_guard<std::mutex> lock (m_seek_decode_mutex);
 
     // Scope ends before seek() decrements pending_seeks, as before
     const auto quiesce = m_ring.quiesce();
@@ -573,7 +573,7 @@ audio_decode_worker::undo_prepare_B()
 void
 audio_decode_worker::boundary_settled ()
 {
-    std::lock_guard<std::mutex> lock(m_decoder_mutex);
+    std::lock_guard<std::mutex> lock(m_seek_decode_mutex);
     if (!m_end_deferred) return;
 
     m_decode_timer->setInterval(on_end_of_A());   // phase is none now; the slot is what the engine left

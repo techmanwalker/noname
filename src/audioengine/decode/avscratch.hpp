@@ -59,5 +59,5 @@ private:
 
     std::unique_ptr<AVPacket, av_packet_deleter> m_pkt;
     std::unique_ptr<AVFrame,  av_frame_deleter>  m_frame;
-    bool m_leased = false;   // only touched under m_decoder_mutex
+    bool m_leased = false;   // only touched under m_seek_decode_mutex
 };

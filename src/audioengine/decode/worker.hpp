@@ -80,7 +80,7 @@ private:
     // (seek failed or, when an epoch is given, the request was stale).
     bool rewind_in_place (uint64_t position_ms, std::optional<uint64_t> epoch = std::nullopt);
 
-    // Common tail of every reposition. Caller holds m_decoder_mutex and the quiesce.
+    // Common tail of every reposition. Caller holds m_seek_decode_mutex and the quiesce.
     bool seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms);
 
     // Boundary armed (A still audible, the decoder already reading B's file): reopen A's file at
@@ -107,7 +107,7 @@ private:
     std::atomic_bool m_song_loaded {false};
 
     // decode and seek are mutually exclusive
-    std::mutex m_decoder_mutex;
+    std::mutex m_seek_decode_mutex;
 
     // B's file as prepared: opened (and consumed) when the decoder reaches the end of A's file.
     // Guarded by m_B_mutex.
@@ -122,7 +122,7 @@ private:
     int on_end_of_A ();
 
     // The open file ended while the boundary before it (A/B) was still drawn, so its own end cannot
-    // be drawn yet: the ring holds ONE boundary. Decoder thread, under m_decoder_mutex. Cleared by
+    // be drawn yet: the ring holds ONE boundary. Decoder thread, under m_seek_decode_mutex. Cleared by
     // close_ffmpeg_contexts() and seek_and_reset() too (decoding moved on). Resolved by boundary_settled().
     bool m_end_deferred = false;
 
