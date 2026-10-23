@@ -177,7 +177,12 @@ PlayQueueLI::next ()
     if (!current.isValid()) return;
     
     const QPersistentModelIndex upcoming = successor_of(current);
-    if (upcoming.isValid()) switch_to(upcoming, true);
+    if (upcoming.isValid()) {
+        switch_to(upcoming, true);
+    } else {
+        // go back to first track
+        switch_to(index(0, 0));
+    }
 }
 
 void

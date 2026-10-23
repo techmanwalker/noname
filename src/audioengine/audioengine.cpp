@@ -113,10 +113,6 @@ audio_engineLI::relative_seek(qint64 step_ms)
 
     // do not go before 0, avoid wrapping to huge value
     if (step_ms < 0 && current_position < step_ms_abs) {
-        // ideally, to follow the tape roll narrative, we would prev() and seek
-        // to the track end minus step but those are two steps sequenced and
-        // desync or something happening in between is a problem
-
         emit relative_seek_before_zero_performed(step_ms_abs, true);
         return;
     }
