@@ -162,39 +162,37 @@ PlayQueueLI::qml_switch_to(const QModelIndex &song)
     switch_to(QPersistentModelIndex(song), true);
 }
 
-void
+bool
 PlayQueueLI::next ()
 {
     QPersistentModelIndex current = playhead();
-    if (!current.isValid()) return;
+    if (!current.isValid()) return false;
     
     const QPersistentModelIndex upcoming = successor_of(current);
     if (upcoming.isValid()) {
-        switch_to(upcoming, true);
+        return switch_to(upcoming, true);
     } else {
         // go back to first track
-        switch_to(index(0, 0));
+        return switch_to(index(0, 0));
     }
 }
 
-void
+bool
 PlayQueueLI::prev (bool play_afterwards)
 {
     int last_index = rowCount() - 1;
-    if (last_index < 0) return; 
+    if (last_index < 0) return false; 
 
     if (!playhead().isValid() || playhead().row() == 0) {
-        switch_to(index(last_index, 0));
-        return;
+        return switch_to(index(last_index, 0));
     }
 
-    switch_to(index(playhead().row() - 1, 0), play_afterwards);
+    return switch_to(index(playhead().row() - 1, 0), play_afterwards);
 }
 
-void
+bool
 PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
 {   
-
     // step back
     QUrl prolly_not_the_same_track = m_d->playing->current_track_source();
     prev();
@@ -203,12 +201,18 @@ PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
 
     if (!playhead_item_ref.has_value()) {
         qCDebug(l_mediasequences) << "Current playing track not found on the queue.";
-        if (play_afterwards) m_d->playing->play();
+        return false;
     }
 
     if (prolly_not_the_same_track == playhead_item_ref->source) {
-        // still same track, noop same as forward tape FF
-        return;
+        // still same track
+
+        // seek back to beginning
+        m_d->playing->set_position(0);
+        if (play_afterwards) m_d->playing->play();
+
+        // never truly switched
+        return false;
     }
 
     Q_ASSERT_X(m_d->playing->current_track_source() == playhead_item_ref.value().source,
@@ -225,6 +229,8 @@ PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
     }
 
     if (play_afterwards) m_d->playing->play();
+
+    return true;
 }
 
 void

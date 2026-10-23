@@ -20,11 +20,11 @@ public:
     virtual void switch_to (const QUrl &source) = 0;
     virtual bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) = 0;
 
-    virtual void next () = 0;
-    virtual void prev (bool play_afterwards = false) = 0;
+    virtual bool next () = 0;
+    virtual bool prev (bool play_afterwards = false) = 0;
 
     // play the previous track, but seek backward from the end
-    virtual void prev_at_end (quint64 stepback_ms, bool play_afterwards = false) = 0;
+    virtual bool prev_at_end (quint64 stepback_ms, bool play_afterwards = false) = 0;
 
     virtual void clear () = 0;
 

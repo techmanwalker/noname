@@ -46,9 +46,9 @@ public:
 
     void switch_to (const QUrl &source) override;
 
-    void next () override;
-    void prev (bool play_afterwards = false) override;
-    void prev_at_end (quint64 stepback_ms, bool play_afterwards = false) override;
+    bool next () override;
+    bool prev (bool play_afterwards = false) override;
+    bool prev_at_end (quint64 stepback_ms, bool play_afterwards = false) override;
 
     void clear () override;
 
