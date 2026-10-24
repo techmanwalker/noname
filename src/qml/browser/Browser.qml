@@ -17,7 +17,10 @@ RowLayout {
 
     readonly property alias vtabsColWidth: vtabsCol.width
 
-    readonly property bool aPlaylistIsOpen: activeVtab === vtabs.playlistsIndex && playlistsitem.aPlaylistIsOpen
+    // name -> stack index, generated from the VTabPages in activeView: vtabs.<name>
+    readonly property alias vtabs: vtabList.indices
+
+    readonly property bool aPlaylistIsOpen: activeVtab === vtabs.playlists && playlistsitem.aPlaylistIsOpen
 
     // Vertical tabs switch and window decorations for bigscreen
     ColumnLayout {
@@ -26,17 +29,13 @@ RowLayout {
         Layout.minimumHeight: 0
 
         ArrangementList {
-            id: vtabs
+            id: vtabList
 
             Layout.alignment: Qt.AlignTop
 
             Layout.minimumHeight: 0
 
             stack: activeView
-            homeIndex: 0
-            playlistsIndex: 1
-            foldersIndex: 2
-            tracksIndex: 3
         }
 
         Item {
@@ -71,23 +70,51 @@ RowLayout {
             Layout.minimumHeight: 0
             clip: true
 
-            currentIndex: vtabs.tracksIndex // Folders — matches the old sourceComponent: folders default
+            Component.onCompleted: currentIndex = root.vtabs.tracks
 
-            Home {
-                id: homeitem
+            VTabPage {
+                name: "home"
+                title: qsTr("Home")
+                iconName: "user-home-symbolic"
+
+                Home {
+                    id: homeitem
+                    anchors.fill: parent
+                }
             }
 
-            Playlists {
-                id: playlistsitem
+            VTabPage {
+                name: "playlists"
+                title: qsTr("Playlists")
+                iconName: "view-media-playlist"
+
+                Playlists {
+                    id: playlistsitem
+                    anchors.fill: parent
+                }
             }
 
-            Folders {
-                id: foldersitem
+            VTabPage {
+                name: "folders"
+                title: qsTr("Folders")
+                iconName: "folder-symbolic"
+
+                Folders {
+                    id: foldersitem
+                    anchors.fill: parent
+                }
             }
 
-            Tracks {
-                id: tracksitem
-                searchBarItem: root.searchBar
+            VTabPage {
+                name: "tracks"
+                title: qsTr("Tracks")
+                iconName: "library-music-symbolic"
+
+                Tracks {
+                    id: tracksitem
+                    anchors.fill: parent
+                    searchBarItem: root.searchBar
+                }
             }
 
             Connections {

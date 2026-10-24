@@ -4,7 +4,7 @@
 <context>
     <name>Playlists</name>
     <message numerus="yes">
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="57"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="67"/>
         <source>%n track(s)</source>
         <comment>number of tracks in this playlist</comment>
         <translation type="unfinished">

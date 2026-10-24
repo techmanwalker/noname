@@ -9,52 +9,29 @@ Column {
 
     property StackLayout stack
 
-    required property int homeIndex
-    required property int playlistsIndex
-    required property int foldersIndex
-    required property int tracksIndex
-
-    VTabButton {
-        iconName: "user-home-symbolic"
-        text: qsTr("Home")
-
-        onClicked: if (root.stack) root.stack.currentIndex = root.homeIndex
+    // name -> stack index, one entry per VTabPage in the stack
+    readonly property var indices: {
+        const map = {};
+        const pages = root.stack ? root.stack.children : [];
+        for (let i = 0; i < pages.length; ++i) {
+            const page = pages[i] as VTabPage;
+            if (page)
+                map[page.name] = i;
+        }
+        return Object.freeze(map);
     }
 
-    VTabButton {
-        iconName: "media-album-cover"
-        text: qsTr("Albums")
+    Repeater {
+        model: root.stack ? root.stack.children : []
 
-        visible: false // still unsupported
+        VTabButton {
+            required property VTabPage modelData
+            required property int index
+
+            iconName: modelData.iconName
+            text: modelData.title
+
+            onClicked: root.stack.currentIndex = index
+        }
     }
-
-    VTabButton {
-        iconName: "view-media-artist"
-        text: qsTr("Artists")
-
-        visible: false // still unsupported
-    }
-
-    VTabButton {
-        iconName: "view-media-playlist"
-        text: qsTr("Playlists")
-
-        onClicked: if (root.stack) root.stack.currentIndex = root.playlistsIndex
-    }
-
-    VTabButton {
-        iconName: "folder-symbolic"
-        text: qsTr("Folders")
-
-        onClicked: if (root.stack) root.stack.currentIndex = root.foldersIndex
-    }
-
-    VTabButton {
-        iconName: "library-music-symbolic"
-        text: qsTr("Tracks")
-
-        onClicked: if (root.stack) root.stack.currentIndex = root.tracksIndex
-    }
-
-    // AllTracks was delegated to the Search page, an empty search query returns your entire library
 }

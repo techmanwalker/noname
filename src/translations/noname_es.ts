@@ -4,42 +4,56 @@
 <context>
     <name>ArrangementList</name>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="19"/>
         <source>Home</source>
-        <translation>Inicio</translation>
+        <translation type="vanished">Inicio</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="26"/>
         <source>Albums</source>
-        <translation>Álbumes</translation>
+        <translation type="vanished">Álbumes</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="33"/>
         <source>Artists</source>
-        <translation>Artistas</translation>
+        <translation type="vanished">Artistas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="40"/>
         <source>Playlists</source>
-        <translation>Listas de reproducción</translation>
+        <translation type="vanished">Listas de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="47"/>
         <source>Folders</source>
-        <translation>Carpetas</translation>
+        <translation type="vanished">Carpetas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="54"/>
         <source>Tracks</source>
-        <translation>Pistas</translation>
+        <translation type="vanished">Pistas</translation>
     </message>
 </context>
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="48"/>
+        <location filename="../qml/browser/Browser.qml" line="50"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/Browser.qml" line="77"/>
+        <source>Home</source>
+        <translation>Inicio</translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/Browser.qml" line="88"/>
+        <source>Playlists</source>
+        <translation>Listas de reproducción</translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/Browser.qml" line="99"/>
+        <source>Folders</source>
+        <translation>Carpetas</translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/Browser.qml" line="110"/>
+        <source>Tracks</source>
+        <translation>Pistas</translation>
     </message>
     <message>
         <source>Clear</source>
@@ -99,7 +113,7 @@
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="236"/>
+        <location filename="../qml/mainwindow/Main.qml" line="239"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -155,12 +169,12 @@
 <context>
     <name>Playlists</name>
     <message>
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="29"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="39"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="57"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="67"/>
         <source>%n track(s)</source>
         <comment>number of tracks in this playlist</comment>
         <translation>

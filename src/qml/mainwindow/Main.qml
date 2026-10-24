@@ -179,7 +179,7 @@ T.ApplicationWindow {
 
                 Layout.alignment: Qt.AlignVCenter
 
-                onTextEdited: browser.activeVtab = 3 // Tracks
+                onTextEdited: browser.activeVtab = browser.vtabs.tracks
 
                 // to still take space
                 enabled: activeView.currentIndex === 0
@@ -258,7 +258,7 @@ T.ApplicationWindow {
                     }
 
                     // playlists vtab
-                    if (browser.activeVtab === 1) {
+                    if (browser.activeVtab === browser.vtabs.playlists) {
                         browser.backButtonClicked_r()
                     }
                 }
