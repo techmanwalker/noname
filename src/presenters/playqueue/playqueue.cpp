@@ -98,6 +98,14 @@ PlayQueueLI::respawn_queue (const QStringList &sources)
     return spawn_queue(sources);
 }
 
+void
+PlayQueueLI::respawn_queue(const QList<Types::Song> &songs)
+{
+    clear();
+
+    m_d->sequence.batch_append(songs);
+}
+
 QPersistentModelIndex
 PlayQueueLI::playhead ()
 {

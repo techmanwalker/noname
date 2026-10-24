@@ -104,7 +104,9 @@ ColumnLayout {
 
             onSongClicked: (clicked_song) => {
                 // every tab manages click behavior on their own, Browser doesn't
-                PlayQueue.switchTo(clicked_song.source)
+
+                PlayQueue.respawnQueue(model)
+                PlayQueue.playhead = PlayQueue.findBySource(clicked_song.source)
             }
         }
     }

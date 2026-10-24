@@ -81,6 +81,10 @@ public:
         return m_iface->batch_append(sources);
     }
 
+    Q_INVOKABLE void respawnQueue(const QList<Types::Song> &songs) {
+        m_iface->respawn_queue(songs);
+    }
+
     Q_INVOKABLE void respawnQueue(const QStringList &sources) {
         if (!m_iface) return;
         m_iface->respawn_queue(sources);

@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <qabstractitemmodel.h>
+#include <qlist.h>
 
 namespace covers::live {
     class cover_provider;
@@ -63,6 +64,7 @@ public:
 
     QFuture<void> spawn_queue (const QStringList &sources);
     QFuture<void> respawn_queue (const QStringList &sources) override;
+    void respawn_queue (const QList<Types::Song> &songs) override;
 
 signals:
     void track_changed ();
