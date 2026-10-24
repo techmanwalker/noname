@@ -179,7 +179,7 @@ T.ApplicationWindow {
 
                 Layout.alignment: Qt.AlignVCenter
 
-                onTextEdited: browser.activeVtab = 1 // Tracks
+                onTextEdited: browser.activeVtab = 3 // Tracks
 
                 // to still take space
                 enabled: activeView.currentIndex === 0
@@ -229,7 +229,10 @@ T.ApplicationWindow {
                 id: fullscreenToggle
                 iconName: "arrow-left"
 
-                visible: activeView.currentIndex === 1
+                visible: activeView.currentIndex === 1 || // we are in the player
+                    (activeView.currentIndex === 0 && ( // we are in the browser
+                        browser.aPlaylistIsOpen
+                    ))
 
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -252,6 +255,11 @@ T.ApplicationWindow {
                         } else {
                             activeView.currentIndex = 0
                         }
+                    }
+
+                    // playlists vtab
+                    if (browser.activeVtab === 1) {
+                        browser.backButtonClicked_r()
                     }
                 }
             }

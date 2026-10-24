@@ -26,7 +26,7 @@ ListView {
     // to float outside the list content without overlapping it
     rightMargin: scrollbar.logicalWidth
 
-    signal songClicked(song clicked_song)
+    signal songClicked(var clicked_song)
 
     // selection
 
@@ -45,7 +45,7 @@ ListView {
     delegate: Song {
         id: song
 
-        required property song model
+        required property var model
         
         width: root.width - root.rightMargin
 

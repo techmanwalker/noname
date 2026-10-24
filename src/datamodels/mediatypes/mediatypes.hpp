@@ -99,14 +99,21 @@ namespace Types {
         Q_GADGET
         Q_PROPERTY(QString title MEMBER title)
         Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
+        Q_PROPERTY(QUrl cover READ firstcover)
         Q_PROPERTY(quint64 duration READ duration)
+
+        Q_PROPERTY(QString duration_mmss READ duration_mmss)
 
     public:
         QString     title;
         QList<Song> songs;
 
+        // cover of the first element
+        QUrl firstcover () const;
+
         // sum of all the children
         quint64 duration() const;
+        QString duration_mmss () const;
 
         bool operator==(const Playlist&) const = default; 
     };

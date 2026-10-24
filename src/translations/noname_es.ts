@@ -4,32 +4,32 @@
 <context>
     <name>ArrangementList</name>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="18"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="19"/>
         <source>Home</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="25"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="26"/>
         <source>Albums</source>
         <translation>Álbumes</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="32"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="33"/>
         <source>Artists</source>
         <translation>Artistas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="39"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="40"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="46"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="47"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/ArrangementList.qml" line="53"/>
+        <location filename="../qml/browser/ArrangementList.qml" line="54"/>
         <source>Tracks</source>
         <translation>Pistas</translation>
     </message>
@@ -37,7 +37,7 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="47"/>
+        <location filename="../qml/browser/Browser.qml" line="48"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
@@ -153,6 +153,23 @@
     </message>
 </context>
 <context>
+    <name>Playlists</name>
+    <message>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="29"/>
+        <source>Playlists</source>
+        <translation>Listas de reproducción</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="57"/>
+        <source>%n track(s)</source>
+        <comment>number of tracks in this playlist</comment>
+        <translation>
+            <numerusform>%n pista</numerusform>
+            <numerusform>%n pistas</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>RepeatButton</name>
     <message>
         <location filename="../qml/fullscreen/delegates/buttons/RepeatButton.qml" line="43"/>
@@ -246,22 +263,22 @@
 <context>
     <name>Tracks</name>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="48"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="49"/>
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="48"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="49"/>
         <source>Search results</source>
         <translation>Resultados de búsqueda</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="65"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="66"/>
         <source>The track you are looking for is likely not in your Library.</source>
         <translation>La pista que buscas probablemente no está en tu biblioteca.</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="88"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="89"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>

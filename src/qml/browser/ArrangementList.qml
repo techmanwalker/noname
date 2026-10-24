@@ -10,8 +10,9 @@ Column {
     property StackLayout stack
 
     required property int homeIndex
-    required property int tracksIndex
+    required property int playlistsIndex
     required property int foldersIndex
+    required property int tracksIndex
 
     VTabButton {
         iconName: "user-home-symbolic"
@@ -38,7 +39,7 @@ Column {
         iconName: "view-media-playlist"
         text: qsTr("Playlists")
 
-        visible: false // still unsupported
+        onClicked: if (root.stack) root.stack.currentIndex = root.playlistsIndex
     }
 
     VTabButton {

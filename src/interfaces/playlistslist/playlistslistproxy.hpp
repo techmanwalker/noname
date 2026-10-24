@@ -10,6 +10,8 @@ class PlaylistsListProxy : public QIdentityProxyModel
     QML_NAMED_ELEMENT(PlaylistsList)
     QML_SINGLETON
 
+    Q_PROPERTY (int count READ item_count NOTIFY countChanged)
+
 public:
     explicit PlaylistsListProxy(QObject *parent = nullptr)
         : QIdentityProxyModel(parent),
@@ -17,6 +19,8 @@ public:
     {
         if (m_slist) {
             setSourceModel(m_slist.get());
+
+            connect(m_slist.get(), SIGNAL(count_changed()), this, SIGNAL(countChanged()));
         }
     }
 
@@ -24,6 +28,13 @@ public:
     static void inject(const std::shared_ptr<QAbstractListModel> &list) {
         s_injectedList = list; // Ref count incremented, caller's instance unaffected
     }
+
+    int item_count () {
+        return s_injectedList->rowCount();
+    }
+
+signals:
+    void countChanged();
 
 private:
     std::shared_ptr<QAbstractListModel> m_slist;

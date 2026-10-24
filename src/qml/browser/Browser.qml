@@ -12,9 +12,12 @@ RowLayout {
 
     property alias activeVtab: activeView.currentIndex
 
+    signal backButtonClicked_r () // notify, don't drive directly
     signal requestTheaterMode ()
 
     readonly property alias vtabsColWidth: vtabsCol.width
+
+    readonly property bool aPlaylistIsOpen: activeVtab === vtabs.playlistsIndex && playlistsitem.aPlaylistIsOpen
 
     // Vertical tabs switch and window decorations for bigscreen
     ColumnLayout {
@@ -31,8 +34,9 @@ RowLayout {
 
             stack: activeView
             homeIndex: 0
-            tracksIndex: 1
+            playlistsIndex: 1
             foldersIndex: 2
+            tracksIndex: 3
         }
 
         Item {
@@ -73,13 +77,24 @@ RowLayout {
                 id: homeitem
             }
 
+            Playlists {
+                id: playlistsitem
+            }
+
+            Folders {
+                id: foldersitem
+            }
+
             Tracks {
                 id: tracksitem
                 searchBarItem: root.searchBar
             }
 
-            Folders {
-                id: foldersitem
+            Connections {
+                target: root
+                function onBackButtonClicked_r () {
+                    playlistsitem.backButtonClicked_r()
+                }
             }
         }
 

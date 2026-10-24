@@ -11,6 +11,21 @@
 
 Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
 
+namespace {
+
+QString
+printable_time (quint64 ms)
+{
+    quint64 total_seconds =  ms / 1000;
+
+    quint64 mm = total_seconds / 60;
+    quint8 ss = total_seconds % 60;
+
+    return QString::number(mm) + ":" + (ss < 10 ? "0" : "") + QString::number(ss);
+}
+
+}
+
 
 namespace Types {
 
@@ -30,6 +45,19 @@ Playlist::duration() const {
     return total;
 }
 
+QString
+Playlist::duration_mmss() const {
+    return printable_time(duration());
+}
+
+QUrl
+Playlist::firstcover() const
+{
+    if (songs.size() == 0) return {};
+
+    return songs.at(0).coveruri();
+}
+
 Directory::Directory (const QString &source_path)
     : path(source_path),
       title(QFileInfo(source_path).fileName())
@@ -47,12 +75,7 @@ Song::is_valid () const
 QString
 Song::duration_mmss () const
 {
-    quint64 total_seconds =  duration / 1000;
-
-    quint64 mm = total_seconds / 60;
-    quint8 ss = total_seconds % 60;
-
-    return QString::number(mm) + ":" + (ss < 10 ? "0" : "") + QString::number(ss);
+    return printable_time(duration);
 }
 
 QUrl

@@ -350,6 +350,7 @@ qt_add_qml_module(locallibrary
     
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playlistslist/playlistslistproxy.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
         ${LOCALLIBRARY_SOURCES}
     OUTPUT_DIRECTORY
