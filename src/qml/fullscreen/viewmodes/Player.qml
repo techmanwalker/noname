@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 
-import Player.App
 import Player.Fullscreen
 import Player.LyricsManifest
 import Player.Primitives
@@ -22,6 +21,16 @@ Item {
     readonly property alias coverSize: fsp.coverSize
 
     signal backToBrowser()
+    signal backButtonClicked_r()
+
+    onBackButtonClicked_r: {
+        // if it is in the lyrics view
+        if (playerLyrics === 1) {
+            playerLyrics = 0;
+        } else {
+            backToBrowser()
+        }
+    }
 
     StackLayout {
         id: stack

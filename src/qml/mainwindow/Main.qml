@@ -246,19 +246,10 @@ T.ApplicationWindow {
                 lightMode: windex.lightMode
 
                 onClicked: {
-                    // if we are in the player
-                    if (activeView.currentIndex === 1) {
-
-                        // if it is in the lyrics view
-                        if (stack_player.playerLyrics === 1) {
-                            stack_player.playerLyrics = 0;
-                        } else {
-                            activeView.currentIndex = 0
-                        }
-                    }
-
-                    // playlists vtab
-                    if (browser.activeVtab === browser.vtabs.playlists) {
+                    
+                    if (activeView.currentIndex === 1) { // if we are in the player
+                        stack_player.backButtonClicked_r()
+                    } else if (browser.activeVtab === browser.vtabs.playlists) { // playlists vtab
                         browser.backButtonClicked_r()
                     }
                 }
