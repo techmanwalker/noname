@@ -26,7 +26,7 @@ ListView {
     // to float outside the list content without overlapping it
     rightMargin: scrollbar.logicalWidth
 
-    signal songClicked(var clicked_song)
+    signal songClicked(song clicked_song)
 
     // selection
 
@@ -45,19 +45,19 @@ ListView {
     delegate: Song {
         id: song
 
-        required property var model
+        required property song modelData
         
+        title:      modelData.title
+        cover:      modelData.cover
+        metadata:   (modelData.artist.length > 0 ? modelData.artist : qsTr ("Unknown Artist"))
+            + (modelData.album.length > 0 ? " · " + modelData.album : "")
+        duration:   modelData.duration_mmss
+
         width: root.width - root.rightMargin
 
         height: 80
 
         lightMode: root.lightMode
-
-        title:      model.title
-        cover:      model.cover
-        metadata:   (model.artist.length > 0 ? model.artist : qsTr ("Unknown Artist"))
-            + (model.album.length > 0 ? " · " + model.album : "")
-        duration:   model.duration_mmss
 
         coverWidth: root.songCoverWidth
 
@@ -66,26 +66,27 @@ ListView {
         lateralPadding: root.songLateralPadding
 
         // findBySource returns a different object from memory, hence comparing .row instead
-        playing: PlayQueue.playhead.row === PlayQueue.findBySource(model.source).row // qmllint disable
+        playing: PlayQueue.playhead.row >= 0 // qmllint disable
+            && PlayQueue.playhead.row === PlayQueue.findBySource(modelData.source).row // qmllint disable
 
         showSeparator: true
 
         clip: true
 
-        selected: root.selectedSources.includes(model.source)
+        selected: root.selectedSources.includes(modelData.source)
 
         onClicked: {
             // Standard click clears multi-selection
             root.selectedSources = []
-            root.songClicked(model)
+            root.songClicked(modelData)
         }
 
         onCtrlClicked: {
             let sources = root.selectedSources
-            let idx = sources.indexOf(model.source)
+            let idx = sources.indexOf(modelData.source)
             
             if (idx === -1) {
-                sources.push(model.source)
+                sources.push(modelData.source)
             } else {
                 sources.splice(idx, 1)
             }
@@ -96,8 +97,8 @@ ListView {
 
         onRightClicked: {
             // If right-clicked song isn't in current selection, select only it
-            if (!root.selectedSources.includes(model.source)) {
-                root.selectedSources = [model.source]
+            if (!root.selectedSources.includes(modelData.source)) {
+                root.selectedSources = [modelData.source]
             }
             songContextMenu.popup()
         }
