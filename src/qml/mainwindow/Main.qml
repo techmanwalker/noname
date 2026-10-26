@@ -161,8 +161,42 @@ T.ApplicationWindow {
             id: navbar_hover
         }
 
-        Item {
+        Row {
             Layout.preferredWidth: browser.vtabsColWidth - searchBox.leftPadding
+
+            ResizableButton {
+                id: fullscreenToggle
+                iconName: "arrow-left"
+
+                visible: activeView.currentIndex === 1 || // we are in the player
+                    (activeView.currentIndex === 0 && ( // we are in the browser
+                        browser.aPlaylistIsOpen
+                    ))
+
+                anchors.verticalCenter: parent.verticalCenter
+
+                text: qsTr("Back")
+
+                leftPadding: 20
+                rightPadding: leftPadding
+                topPadding: 12
+                bottomPadding: topPadding
+
+                magnify: true
+
+                spacing: 12
+
+                lightMode: windex.lightMode
+
+                onClicked: {
+                    
+                    if (activeView.currentIndex === 1) { // if we are in the player
+                        stack_player.backButtonClicked_r()
+                    } else if (browser.activeVtab === browser.vtabs.playlists) { // playlists vtab
+                        browser.backButtonClicked_r()
+                    }
+                }
+            }
         }
 
         RowLayout {
@@ -225,35 +259,6 @@ T.ApplicationWindow {
 
             property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
 
-            ResizableButton {
-                id: fullscreenToggle
-                iconName: "arrow-left"
-
-                visible: activeView.currentIndex === 1 || // we are in the player
-                    (activeView.currentIndex === 0 && ( // we are in the browser
-                        browser.aPlaylistIsOpen
-                    ))
-
-                anchors.verticalCenter: parent.verticalCenter
-
-                text: qsTr("Back")
-
-                leftPadding: 10
-                rightPadding: 10
-
-                magnify: true
-
-                lightMode: windex.lightMode
-
-                onClicked: {
-                    
-                    if (activeView.currentIndex === 1) { // if we are in the player
-                        stack_player.backButtonClicked_r()
-                    } else if (browser.activeVtab === browser.vtabs.playlists) { // playlists vtab
-                        browser.backButtonClicked_r()
-                    }
-                }
-            }
             
             WindowDecorations {
                 window: root
