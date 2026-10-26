@@ -257,7 +257,7 @@ T.ApplicationWindow {
 
             Layout.alignment: Qt.AlignVCenter
 
-            property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
+            property bool lightMode: activeView.currentIndex !== 0 && PlayerPresenter.lumaSentinel && Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
 
             
             WindowDecorations {
