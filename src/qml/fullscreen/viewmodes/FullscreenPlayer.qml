@@ -195,8 +195,8 @@ Row {
                     property rect globalBounds: Qt.rect(
                             nextQueue_cBounds.x,
                             nextQueue_cBounds.y,
-                            nextQueue_c.contentWidth,
-                            nextQueue_c.contentHeight
+                            nextQueue_c.width,
+                            Math.min(nextQueue_c.contentHeight, nextQueue_c.height)
                         )
 
                     lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
