@@ -259,7 +259,7 @@ T.ApplicationWindow {
 
             Layout.alignment: Qt.AlignVCenter
 
-            property bool lightMode: Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
+            property bool lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
 
             
             WindowDecorations {
