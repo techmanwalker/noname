@@ -45,7 +45,7 @@ ColumnLayout {
         clip: true
 
         BigThinLabel {
-            text: qsTr("No lyrics.")
+            text: qsTr("No lyrics available.")
 
             TapHandler {
                 onTapped: root.clickedOnEmptySpace()

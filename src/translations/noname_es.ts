@@ -100,20 +100,28 @@
 <context>
     <name>Lyrics</name>
     <message>
-        <location filename="../qml/fullscreen/Lyrics.qml" line="48"/>
         <source>No lyrics.</source>
-        <translation>Sin letras.</translation>
+        <translation type="vanished">Sin letras.</translation>
+    </message>
+    <message>
+        <source>No lyrics available</source>
+        <translation type="vanished">No hay letras disponibles</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/Lyrics.qml" line="48"/>
+        <source>No lyrics available.</source>
+        <translation>No hay letras disponibles.</translation>
     </message>
 </context>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="190"/>
+        <location filename="../qml/mainwindow/Main.qml" line="224"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="239"/>
+        <location filename="../qml/mainwindow/Main.qml" line="178"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -161,7 +169,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="58"/>
+        <location filename="../qml/listings/Playlist.qml" line="52"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
