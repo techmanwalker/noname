@@ -90,7 +90,7 @@ Row {
         PlaybackControls {
             id: controls
 
-            lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
+            lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
 
             visible: !root.immersive || leftCol_hover.hovered
 
@@ -142,7 +142,7 @@ Row {
                 height: metadataContainer.textContentHeight
             })
 
-            lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+            lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
         }
 
         // _d = "the drop area"
@@ -199,7 +199,7 @@ Row {
                             nextQueue_c.contentHeight
                         )
 
-                    lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                    lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                     onSongClicked: (song) => {
                         PlayQueue.playhead = PlayQueue.findBySource(song.source)
@@ -234,7 +234,7 @@ Row {
                             nextQueue_p.contentHeight
                         )
 
-                    property bool lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                    property bool lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                     color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                 }

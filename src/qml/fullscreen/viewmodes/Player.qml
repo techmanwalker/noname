@@ -78,7 +78,7 @@ Item {
             background: root.background
             immersive: fsp.immersive
 
-            property bool lightMode: PlayerPresenter.lumaSentinel && Light.lightModeForBounds(lyricsBounds, root.background, PlayerPresenter) // context is everything
+            property bool lightMode: Light.lightModeForBounds(lyricsBounds, root.background, PlayerPresenter) // context is everything
 
             highlightedColor:   lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
             unhighlightedColor: lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric

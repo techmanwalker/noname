@@ -48,9 +48,6 @@ public:
 
     Q_PROPERTY(double coverPonderedLuma     READ cover_pondered_luma     NOTIFY lumasChanged)
 
-    // trigger to reevaluate backingLumaForRect
-    Q_PROPERTY(bool   lumaSentinel READ luma_sentinel NOTIFY lumasChanged)
-
     explicit PlayerPresenterProxy(QObject *parent = nullptr)
         : QObject(parent),
           m_presenter(s_injectedPresenter) // Copies shared_ptr, incrementing ref count
@@ -94,8 +91,6 @@ public:
     quint64 position_ms()      const { return m_presenter ?  m_presenter->position_ms()      : 0;         }
     quint8  volume()           const { return m_presenter ?  m_presenter->volume()           : 0;         }
     bool    is_media_loaded()  const { return m_presenter && m_presenter->is_media_loaded();              }
-
-    static consteval bool luma_sentinel () noexcept { return true; }
 
     PlaybackState playback_state() const {
         if (!m_presenter) return PlaybackState::stopped;

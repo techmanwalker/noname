@@ -6,7 +6,23 @@ import Player.Fullscreen
 import Player.Presenter
 
 QtObject {
+    id: root
+
+    // Every binding that reaches lightModeForBounds re-evaluates whenever it is bumped.
+    property int epoch: 0
+
+    function invalidate () { root.epoch++; }
+
+    property Connections presenterSignals: Connections {
+        target: PlayerPresenter
+        function onLumasChanged () { root.invalidate() }
+    }
+
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
+
+        // Subscribe to the epoch. Must stay ABOVE every early return,
+        // since reads after a return are never tracked.
+        void root.epoch;
 
         // use the multiplier values background uses
         let multiplier = background.lumaMultiplierAtCenter (bounds);

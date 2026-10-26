@@ -128,6 +128,8 @@ T.ApplicationWindow {
     StackLayout {
         id: activeView
 
+        onCurrentIndexChanged: Light.invalidate()
+
         anchors.fill: parent
 
         anchors.topMargin: currentIndex === 0 ? windexRow.height : 0
@@ -257,7 +259,7 @@ T.ApplicationWindow {
 
             Layout.alignment: Qt.AlignVCenter
 
-            property bool lightMode: activeView.currentIndex !== 0 && PlayerPresenter.lumaSentinel && Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
+            property bool lightMode: Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
 
             
             WindowDecorations {

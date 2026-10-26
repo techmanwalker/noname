@@ -195,7 +195,7 @@ ColumnLayout {
     PlaybackControls {
         id: controls
 
-        lightMode: root.stateModel.lumaSentinel && Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel)
+        lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel)
 
         visible: !root.immersive
 
