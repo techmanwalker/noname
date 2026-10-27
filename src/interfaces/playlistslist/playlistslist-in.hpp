@@ -9,8 +9,6 @@ class PlaylistsList
 
 public:
     virtual ~PlaylistsList () = default;
-
-
 };
 
 inline constexpr const char* PlaylistsList_iid = interface_iid<"PlaylistsList">.buf;

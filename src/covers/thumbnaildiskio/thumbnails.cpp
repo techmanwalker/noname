@@ -33,9 +33,10 @@ thumbnail_pool ()
     return &pool;
 }
 
-/*  The actual encode + disk write. Now purely an implementation detail —
-    the public write_thumbnail() below only ever queues this onto
-    thumbnail_pool(), it's never called directly. */
+/*  The actual encode + disk write. The public write_thumbnail()
+    below only ever queues this onto thumbnail_pool().
+    Never call this directly elsewhere.
+    */
 bool
 write_thumbnail_blocking (
     const CoverRef &ref,

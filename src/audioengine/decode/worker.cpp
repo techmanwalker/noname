@@ -494,7 +494,7 @@ audio_decode_worker::rewind_in_place(uint64_t position_ms, std::optional<uint64_
 
         // The request was computed against the A the engine presented when it was issued. If that
         // hit was consumed since (epoch moved) or the RT thread is already past the boundary
-                // (phase hit), A is gone: applying the target to the file open now (B's) IS the cross-seek
+        // (phase hit), A is gone: applying the target to the file open now (B's) IS the cross-seek
         // bug. Drop it.
         if (b.epoch != *epoch || b.phase == phase::hit) return false;
 

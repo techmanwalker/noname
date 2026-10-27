@@ -48,9 +48,9 @@ public:
     QModelIndex index_of_lyric_to_highlight() const {
         if (!m_iface) return {};
 
-        // Re-home the index onto this proxy — an index carries a pointer to
-        // the model it belongs to, and m_iface hands back one rooted in the
-        // source model, not this one.
+        /*  Re-home the index onto this proxy an index carries a pointer to
+            the model it belongs to, and m_iface hands back one rooted in the
+            source model, not this one. */
         return mapFromSource(m_iface->index_of_lyric_to_highlight());
     }
 

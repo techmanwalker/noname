@@ -8,20 +8,16 @@
 #include <cstddef>
 #include <qtmetamacros.h>
 
-/*  Deterministic, session-independent cache key for a song's thumbnail.
-    Hashing the absolute path (not file contents) keeps this cheap — an MD5
-    over a path-length string is microseconds, dwarfed by the decode/encode
-    it lets us skip. crop_and_resize is folded in too, since the cache
-    stores the already-resized image: without it, two call sites requesting
-    different sizes for the same song would collide on one cache entry and
-    silently serve the wrong resolution to whichever asked second. */
+
+// A recipe that tells the cover storage hot cache how to resolve a cover.
+// This is a payload factory.
 struct CoverRef {
     CoverRef (const QUrl &source_media_path, size_t square_size = 0);
 
-    QUrl source () const;
-    size_t size () const;
+    QUrl source () const; // uri of the original media file
+    size_t size () const; // what resolution to load and store this cover in memory and thumbnail cache
 
-    QUrl uri () const;
+    QUrl uri () const; // encoded payload cover_storage will use to resolve and scale the source media's cover
 
     bool operator==(const CoverRef &) const = default;
 
@@ -29,6 +25,7 @@ struct CoverRef {
     static CoverRef decode_base64url (const QString &base64url_coverref);
 
     private:
+        // what media file is it
         QUrl m_source;
 
         // a square size of 0 means full resolution

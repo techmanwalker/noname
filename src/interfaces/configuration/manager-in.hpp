@@ -18,7 +18,7 @@ class manager
 public:
     virtual ~manager() = default;
 
-    /** main operations, use conf_file_type to choose
+    /** use conf_file_type to choose
     which file's line you wish to read from or
     write to
     */

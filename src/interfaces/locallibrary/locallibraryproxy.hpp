@@ -19,11 +19,8 @@ public:
     {
         if (m_library) {
             setSourceModel(m_library.get());
-
-            /*  refreshFinished isn't (and can't be) part of the LocalLibrary interface,
-                since LocalLibrary isn't a QObject. Bind by name against the injected
-                object's runtime meta-object instead of a compile-time &Concrete::signal
-                pointer, so this proxy stays free of any #include on LocalLibraryLDB. */
+            
+            // an interface cannot feature signals, needs to bind by name
             connect(m_library.get(), SIGNAL(refreshFinished()),
                     this, SIGNAL(refreshFinished()));
         }

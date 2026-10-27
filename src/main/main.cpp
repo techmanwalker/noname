@@ -42,8 +42,7 @@ Q_LOGGING_CATEGORY(l_main, "app")
 int
 main (int argc, char ** argv)
 {
-    // real entry point for this player app main executable
-    // which must take the project name when I decide what it will be.
+    // main executable
 
     QGuiApplication app(argc, argv);
 
@@ -101,7 +100,7 @@ main (int argc, char ** argv)
         // Add to the play queue any path that's readable by song_factory as a track
         if (cli.remaining().size() > 0) {
 
-            // read first song metadata with default settings
+            // preemptt first song with default settings
             first_track_source = QUrl::fromLocalFile(QString::fromStdString(cli.remaining()[0]));
             first_track = song_factory::extract(
                 first_track_source, 
@@ -114,11 +113,7 @@ main (int argc, char ** argv)
     }
 
     /*  
-        Composition root: instantiate concrete implementations behind each
-        interface boundary. Order reflects the dependency graph (pq needs ae;
-        pn needs ae+pq+lm). Ownership is shared_ptr only, to avoid
-        double-ownership with Qt's parent/child teardown, hence all initialized
-        with nullptr.
+        composition root: instantiate each component separately, in order.
     */
 
     // boot ae and immediately load and play the first track
@@ -152,8 +147,7 @@ main (int argc, char ** argv)
         pp->acknowledge_current_song(first);
     });
 
-    /*  load the songs from the known music directories and display as
-        a folder-separated view of all available songs */
+    // read user's music directories, and load the music library as a whole
     ll->snapshot_known_directories();
 
     // load shortcuts and user-defined playlists to display
@@ -175,16 +169,13 @@ main (int argc, char ** argv)
     MediaFilterProxy      ::inject(mf);
     WindowGeometryProxy   ::inject(wi);
 
-    // bind signals
+    // bind concrete<->concrete signals
     QObject::connect (ae.get(), &audio_engine_LI::track_changed,
             pq.get(), &PlayQueueLI::handle_track_changed);
 
     QObject::connect(ae.get(), &audio_engine_LI::tape_ran_out,
             pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
 
-    // Listen to the audio controller; when metadata updates, notify the UI's data.
-    // These stay here, not in the proxy: both ae and pn are concrete pointers, and
-    // main.cpp is the one place allowed to wire concrete-to-concrete connections.
     QObject::connect(ae.get(), &audio_engine_LI::track_changed,
             pp.get(), [&pq, &ae, &pp]() {
 
@@ -205,7 +196,7 @@ main (int argc, char ** argv)
                 pp->acknowledge_current_song(prolly_queue_has_it.value());
             });
 
-    // Both the PlayerPresenter and the LyricsManifest need to be aware
+    // both the PlayerPresenter and the LyricsManifest need to be aware of track changes
     QObject::connect(ae.get(), &audio_engine_LI::track_changed,
             lm.get(), &LyricsManifestLI::load_current_track_lyrics);
 
@@ -229,8 +220,6 @@ main (int argc, char ** argv)
 
     QObject::connect(ae.get(), &audio_engine_LI::relative_seek_before_zero_performed,
             pq.get(), &PlayQueueLI::prev_at_end);
-
-
 
     QTranslator translator;
     if (translator.load(QLocale::system(), name_qstr, "_", ":/i18n")) {

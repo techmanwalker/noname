@@ -93,16 +93,13 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
 
     // Ask song_factory to extract the metadata of songs, all at once
     return extract_future.then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
-            /*  Re-resolve through the persistent index rather than trusting target_dir from
-                above: m_items may have reallocated (another take_snapshot() appending a new
-                directory, for instance) during the time batch_extract spent running. */
+
+            //  re-resolve the target directory in case it has been modified in anyway while pointed_to remained unlocked
             auto did_execute = pointed_to<Types::Directory &>(
                 dir_index_to_refresh, [&songs](Types::Directory &target_dir) -> bool {
                     target_dir.songs.reserve(songs.size());
 
-                    // Defensive merge-or-append: not_yet_loaded was deduped by source up front, but
-                    // another in-flight take_snapshot() on this same directory could have loaded some
-                    // of these same sources in the meantime.
+                    // recheck if each track was truly not added yet; if so, overwrite it it
                     for (Types::Song &song : songs) {
                         // A song with empty source is considered invalid
                         if (!song.is_valid()) {

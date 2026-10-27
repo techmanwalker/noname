@@ -32,10 +32,10 @@ struct srgb_tables {
     }
 };
 
+// safe to call from other static initializers and from any worker thread
 [[nodiscard]] const srgb_tables &
 srgb ()
 {
-    // safe to call from other static initializers and from any worker thread
     static const srgb_tables tables;
     return tables;
 }
@@ -81,11 +81,11 @@ srgb_to_linear (uint8_t channel_8bit)
     return srgb().linear_d[channel_8bit];
 }
 
+// Björn Ottosson's OkLab forward transform — L channel only, since
+// that's all percentile_luminance needs.
 double
 oklab_lightness (double r_linear, double g_linear, double b_linear)
 {
-    // Björn Ottosson's OkLab forward transform — L channel only, since
-    // that's all percentile_luminance needs.
     using namespace oklab;
     const auto &M1 = lms_from_linear_srgb<double>;
 
@@ -134,7 +134,7 @@ lightness_run (const QRgb *__restrict px, float *__restrict out, int n) noexcept
 }
 
 // Value at the given percentile of [first, first + count). Requires count > 0.
-// Reorders the range. Same rank formula as before, now in one place.
+// Reorders the range.
 template <typename T>
 [[nodiscard]] T
 select_percentile (T *first, size_t count, int percentile) noexcept
@@ -171,7 +171,7 @@ percentile_luminance (const QImage &chunk, int percentile,
         return result_ring; // empty ring
     }
 
-    // Cover thumbnails are treated as opaque; Format_RGB32 gives a known,
+    // cover thumbnails are treated as opaque; Format_RGB32 gives a known,
     // tightly-packed 0xffRRGGBB layout we can walk with a raw pointer.
     const QImage rgb = chunk.format() == QImage::Format_RGB32
         ? chunk
@@ -194,7 +194,7 @@ percentile_luminance (const QImage &chunk, int percentile,
     const double inv_half_w = half_w > 0.0 ? 1.0 / half_w : 0.0;
     const double inv_half_h = half_h > 0.0 ? 1.0 / half_h : 0.0;
 
-        // Column runs passing the x-side of the ring test. lo is the lower bound
+    // Column runs passing the x-side of the ring test. lo is the lower bound
     // on nx: `begin` for rows that cross the centre hole (ny < begin), 0 for
     // rows already beyond it. Half-open [begin, end) semantics, with end == 1
     // keeping the literal edge pixels, are preserved exactly.
@@ -263,9 +263,9 @@ pondered_luma (const cover_rings &lumas)
         const double begin = std::clamp(ring.ring_crop_begin, 0.0, 1.0);
         const double end   = std::clamp(ring.ring_crop_end,   0.0, 1.0);
 
-        // See the header comment: area fraction of a Chebyshev ring is
-        // exactly end^2 - begin^2. max(0, ...) so a malformed ring
-        // (begin >= end) contributes zero weight instead of a negative one.
+        /*  Area fraction of a Chebyshev ring is exactly end^2 - begin^2. max(0, ...) 
+            so a malformed ring (begin >= end) contributes zero weight instead of
+            a negative one. */
         const double weight = std::max(0.0, end * end - begin * begin);
 
         weighted_sum += ring.value * weight;
@@ -282,19 +282,21 @@ pondered_luma (const cover_rings &lumas)
 namespace
 {
 
-// Pixel boundary of the index-th of `cells` equal divisions of `extent`.
-// edge(0) == 0 and edge(cells) == extent, so [edge(i), edge(i+1)) tile
-// [0, extent) exactly; neighbouring cells differ by at most one pixel.
+/*  Pixel boundary of the index-th of `cells` equal divisions of `extent`.
+    edge(0) == 0 and edge(cells) == extent, so [edge(i), edge(i+1)) tile
+    [0, extent) exactly; neighbouring cells differ by at most one pixel.
+    */
 [[nodiscard]] constexpr int
 cell_edge (size_t index, size_t cells, size_t extent) noexcept
 {
     return static_cast<int>(static_cast<uint64_t>(index) * extent / cells);
 }
 
-// Half-open range of whole cells touched by [begin, end), given in cell
-// units. Rounds outward so every touched cell counts. The tolerance keeps an
-// interval that is cell-aligned up to floating-point noise from dragging in
-// a neighbouring cell. The result is never empty and stays inside [0, cells].
+/*  Half-open range of whole cells touched by [begin, end), given in cell
+    units. Rounds outward so every touched cell counts. The tolerance keeps an
+    interval that is cell-aligned up to floating-point noise from dragging in
+    a neighbouring cell. The result is never empty and stays inside [0, cells].
+    */
 [[nodiscard]] std::pair<size_t, size_t>
 touched_cells (double begin, double end, size_t cells) noexcept
 {
@@ -309,9 +311,10 @@ touched_cells (double begin, double end, size_t cells) noexcept
     return { first, past };
 }
 
-// How much of the cover's width and height a surface of this size shows when
-// the cover fills it, centered and cropped to the surface's aspect ratio. One
-// of the two is exactly 1.0. Empty if either aspect ratio is degenerate.
+/*  How much of the cover's width and height a surface of this size shows when
+    the cover fills it, centered and cropped to the surface's aspect ratio. One
+    of the two is exactly 1.0. Empty if either aspect ratio is degenerate.
+    */
 [[nodiscard]] QSizeF
 visible_cover_fraction (transform::ratio cover_aspect, QSize surface) noexcept
 {
@@ -330,8 +333,9 @@ visible_cover_fraction (transform::ratio cover_aspect, QSize surface) noexcept
     return { fit.width() / cover_area.width(), fit.height() / cover_area.height() };
 }
 
-// Area of [left, right) x [top, bottom) that lies inside the box centered on
-// `center` with the given half-extents.
+/*  Area of [left, right) x [top, bottom) that lies inside the box centered on
+    `center` with the given half-extents.
+    */
 [[nodiscard]] double
 overlap_with_centered_box (double left, double top, double right, double bottom,
                            QPointF center, double half_w, double half_h) noexcept
@@ -381,9 +385,7 @@ luma_table_of_image (const QImage &image, int percentile)
         const size_t band_h = static_cast<size_t>(y1 - y0);
 
         // 1. Lightness of the whole pixel band of this table row, computed once.
-        //    Full-width scanlines are long contiguous runs, which is what the
-        //    vectorized kernel needs. The cells never overlap, so no pixel is
-        //    converted twice.
+        //    The cells never overlap, so no pixel is converted twice.
         const auto band = std::make_unique_for_overwrite<float[]>(band_h * width);
 
         for (size_t y = 0; y < band_h; ++y) {

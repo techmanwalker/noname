@@ -21,7 +21,7 @@ public:
     // logging
     static const QLoggingCategory &l_songfactory();
 
-    // Never touches each other's instances' signals nor members
+    // Never touch each other's instances' signals or members
     // Invoked as song_factory::extract(url, cover_provider);
     static QFuture<Types::Song> extract(const QUrl &source, attributes a);
     

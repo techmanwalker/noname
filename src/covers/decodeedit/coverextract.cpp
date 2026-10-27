@@ -13,13 +13,8 @@ extract_cover (TagLib::File *file, size_t crop_and_resize)
         return QImage();
     }
 
-    // complexProperties("PICTURE") must be called on the File, not the Tag —
-    // for most formats the base File implementation just forwards to the
-    // Tag's own complexProperties(), but FLAC::File overrides this
-    // specifically, because FLAC's cover art (METADATA_BLOCK_PICTURE) is a
-    // top-level container block, not part of the tag itself. Calling this
-    // on tag() instead skips that override and silently returns nothing
-    // for every FLAC file, regardless of what's actually embedded.
+    // complexProperties("PICTURE") must be called on the File, not the Tag
+    // for broader audio file format compatibility (the latter does not work for FLAC)
     TagLib::List<TagLib::VariantMap> pictures = file->complexProperties("PICTURE");
     if (pictures.isEmpty()) {
         return QImage();
@@ -76,9 +71,7 @@ make_thumbnail (const QUrl &file, const QSize &requested_size)
     if (requested_size.isEmpty()) return frame;
 
     // 6-7. Center-crop to the requested aspect ratio, still at native resolution.
-    //      Passing w:h straight through is enough: largest_aspect_size compares
-    //      by cross-multiplication, so there's no need to reduce it with
-    //      find_aspect_ratio first.
+    //      This internally computes largest_aspect_size.
     const QImage cropped = transform::crop_largest_aspect(
         frame, requested_size.width(), requested_size.height());
 

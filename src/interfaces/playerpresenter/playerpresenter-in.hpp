@@ -33,9 +33,9 @@ public:
     virtual PlaybackState playback_state() const = 0;
     virtual bool is_media_loaded() const = 0;
 
-    // Percentile OkLab lightness of the current cover, in [0,1]. Backs the
-    // background darkener's contrast target — see PlayerPresenterLI for
-    // how/when it's (re)computed.
+    /*  Percentile OkLab lightness of the current cover, in [0,1]. Backs the
+        background darkener's contrast target. Refer to PlayerPresenterLI
+        to assess its computation heuristics. */
     virtual double cover_nuclear_luma() const = 0;
     virtual double cover_centric_luma() const = 0;
     virtual double cover_midring_luma() const = 0;

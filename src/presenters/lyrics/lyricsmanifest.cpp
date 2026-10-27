@@ -27,9 +27,8 @@ struct __syrinc_lyric {
     QString text;
 };
 
-// Projects the private, syrinc-coupled __syrinc_lyric into the public Lyric
-// gadget; never hand the private type itself to QML.
 static QVariant
+// project __syrinc_lyric ­-> public Lyric
 to_lyric_gadget(const __syrinc_lyric &x)
 {
     return QVariant::fromValue(Lyric{
@@ -39,9 +38,7 @@ to_lyric_gadget(const __syrinc_lyric &x)
 }
 
 static const role_definitions<__syrinc_lyric> lyrics_roles = {
-    // Whole-gadget role: lets LyricDelegate.qml declare
-    // `required property lyric model`, mirroring container_roles's
-    // "model"/"modelData" for Types::Any.
+    // ask to_lyric_gadget what to return
     { "model", to_lyric_gadget },
     { "modelData", to_lyric_gadget }
 };
@@ -50,7 +47,7 @@ namespace {
 
 struct LyricLookup {
     std::optional<int> active_row; // index of the last line with ts <= ts_ms
-    std::optional<int> next_row;   // index of the first line with ts >  ts_ms
+    std::optional<int> next_row;   // index of the first line with ts > ts_ms
 };
 
 LyricLookup
@@ -83,10 +80,7 @@ public:
     compiled_role_set<__syrinc_lyric> m_roles;
     mutable QReadWriteLock m_lock;
 
-    // Purely a diff-check for highlightedRowChanged — never consulted as
-    // ground truth. index_of_last_highlighted_row() always recomputes
-    // fresh, so a stale value here can cause at worst one skipped/extra
-    // notify, self-correcting on the next poll. Nothing reads it as fact.
+    // weak diff check for highlightedRowChanged; to recompute fresh, invoke index_of_last_highlighted_row
     int m_last_highlighted_row = -1;
 
     QFuture<filelines> read_from_metadata_tag(const QString &source) {
@@ -158,7 +152,7 @@ LyricsManifestLI::current_lines() const
     lrc_lines.reserve(m_d->m_lyrics.size());
 
     // serialize the logical lyrics back to .lrc only to print it back
-    // utilizes a const reference to strictly avoid copying
+    // utilizes a const ref to strictly avoid copying
     for (const __syrinc_lyric &single_timestamp_line : m_d->m_lyrics) {
         lrc_lines.emplace_back(
             "[" + single_timestamp_line.ts.as_string() + "] " 

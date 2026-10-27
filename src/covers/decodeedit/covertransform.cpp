@@ -15,8 +15,7 @@ static_assert(find_aspect_ratio(0, 0)       == ratio{ 0, 0 });
 
 // Dimensions of the largest rectangle with aspect ratio aspect_w:aspect_h
 // that fits entirely inside `bounds` (one side matches `bounds`, the other
-// is smaller or equal). Only computes a size: the caller decides where to
-// place it (e.g. centered, for a crop). Exact (no rounding); returns an
+// is smaller or equal). Exact (no rounding); returns an
 // empty size on invalid input.
 QSizeF
 largest_aspect_size(const QSizeF &bounds, double aspect_w, double aspect_h)

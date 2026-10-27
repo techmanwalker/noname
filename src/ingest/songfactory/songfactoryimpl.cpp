@@ -24,8 +24,6 @@ to_qstring (const TagLib::String &s)
 
 Q_LOGGING_CATEGORY(song_factory_impl::l_songfactory, "songfactory");
 
-// No need for std::optional at the moment. A Song without source is already invalid.
-
 // clean constructor for both qfuture and callback variants
 song_factory_impl::song_factory_impl(const QUrl &source)
     : m_source(source)
@@ -36,11 +34,8 @@ song_factory_impl::extraction_pool()
 {
     // C++11/20 guarantees thread-safe initialization of static local variables.
     static QThreadPool pool;
-    
-    /*  Optional: YThrottle the maximum thread count here to prevent 
-        extreme disk I/O thrashing on mechanical drives. 
-        If left untouched, it defaults to QThread::idealThreadCount().
-        pool.setMaxThreadCount(4);  */
+
+    // optionally throttle max thread count if ever needed
     
     return &pool;
 }
@@ -103,10 +98,8 @@ song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
         extracted_songs_ready_to_append.reserve(finished.size());
 
         for (const auto &f : finished) {
-            /*  Isolate one bad future's exception to just this iteration — otherwise a single
-                failed extraction throws out of this loop and takes the whole batch's already-
-                successful results down with it, since QFuture::result() rethrows whatever
-                exception QtConcurrent::run captured on that future's worker thread. */
+
+            // ignore cancelled future instead of throwing the entire batch
             if (f.isCanceled()) {
                 continue;
             }
@@ -145,11 +138,8 @@ song_factory_impl::execute_extraction(QPromise<Types::Song> &promise, attributes
 
     TagLib::AudioProperties *props = file.audioProperties();
 
-    // TagLib has no explicit "hasAudio" flag — this is the closest real signal
-    // it gives you: channels()/sampleRate() describe whatever audio track it
-    // found. A video file with no audio at all should leave both at zero;
-    // treat that the same way the old mediaPlayer.hasAudio() /
-    // av_find_best_stream(AVMEDIA_TYPE_AUDIO, ...) checks did.
+    // (roughly) check if the file has an audio stream
+    // turns out it works for video too, let's keep it like that
     if (!props || props->channels() <= 0 || props->sampleRate() <= 0) {
         qCWarning(l_songfactory) << "File \"" << m_source << "\" does not seem to feature a valid audio track.";
 

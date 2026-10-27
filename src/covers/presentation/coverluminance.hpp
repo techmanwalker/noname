@@ -75,51 +75,30 @@ double srgb_to_linear(uint8_t channel_8bit);
 
 double oklab_lightness(double r_linear, double g_linear, double b_linear);
 
-// Percentile of OkLab lightness (L, in [0,1]) sampled from a *ring* or *cell*
-// of `cover`. Deliberately not the mean, for the same reason as always — the
-// mean gets dragged around by large flat regions, which this exists to
-// avoid. percentile is 0-100. ring_crop_begin/ring_crop_end (each 0-1)
-// bound the ring by Chebyshev distance from the image's own center: 0 is
-// dead center, 1 is the image's own edge (corners included, since this is
-// a rectangular frame, not a circular one). [0, 1] (the defaults) samples
-// the whole image; [0, 0.6] samples a solid center block; [0.8, 1] samples
-// only the outer border frame. Adjacent rings never share a pixel — the
-// interval is half-open on the high end ([begin, end)) except at the true
-// outer edge, where end == 1 includes the literal edge pixels too.
+/*  Out of this image, crop a ring with bounds expressed in Chebyshev distance [0, 1]
+    respect to the center and ask what luma (L) score the nth percentile of pixels
+    */
 ring_luma percentile_luminance (const QImage &chunk, int percentile,
                                 double ring_crop_begin = 0.0, double ring_crop_end = 1.0);
 
-// Area-weighted mean of the four ring lumas in `lumas`, condensed to a
-// single [0,1] scalar -- the input the future dark-keyed/light-keyed
-// background curves will read, replacing a single percentile_luminance
-// reading. Each ring's weight is the fraction of the image's area it
-// covers: exactly ring_crop_end^2 - ring_crop_begin^2, regardless of the
-// cover's aspect ratio. That's not an approximation -- percentile_luminance
-// normalizes each axis independently before taking the Chebyshev max, so
-// the region within normalized distance s of center is always the whole
-// image rectangle scaled by s about its own center, on both axes at once;
-// its area is exactly s^2 of the total, no width/height needed.
-// Rings that tile [0,1] edge-to-edge sum to exactly 1, making the
-// normalization below a no-op -- it stays regardless, so a gap, overlap,
-// or malformed ring (begin > end) degrades gracefully instead of silently
-// skewing the result. Falls back to 0.5 -- the same "nothing computed
-// yet" placeholder used elsewhere -- only if every ring somehow
-// contributes zero area at once.
+/*  Based on the set of rings of a cover, calculate their weights over
+    the entire expressed buffer [0, 1] and return its overall luminance.
+    The returned magnitude is the overall value of L. 
+    */
 double pondered_luma (const cover_rings &lumas);
 
-// Which ring covers the largest part of `rect`. rect is relative to the
-// top-left corner of `reference_surface`, the surface the cover fills (cropped
-// to the surface's aspect ratio, as in table_luma::backdrop_luma_for_rect).
-// The part of rect outside the surface is ignored. Ties go to the innermost
-// ring. nullopt if no ring covers any visible part of rect: rect outside the
-// surface, empty surface, or a cover without an aspect ratio yet.
+/*  Which ring covers the largest part of `rect`; rect is relative to the
+    top-left corner of `reference_surface`, nullopt if no ring covers a
+    visible part of the rect.
+    */
 [[nodiscard]] std::optional<luma_types>
 dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
                         QRect rect, QSize reference_surface);
 
-// Divides `image` into s_rows x s_columns cells and stores the percentile
-// luminance of each one. Cell edges are rounded, but every pixel belongs to
-// at least one cell. A null image yields an all-zero table with ratio {0, 0}.
+/*  Divides `image` into s_rows x s_columns cells and stores the percentile
+    luminance of each one. Cell edges are rounded, but every pixel belongs to
+    at least one cell. A null image yields an all-zero table with ratio {0, 0}.
+    */
 table_luma luma_table_of_image (const QImage &image, int percentile);
 
 }
