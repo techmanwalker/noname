@@ -194,7 +194,7 @@ T.ApplicationWindow {
 
                 spacing: 12
 
-                lightMode: windex.lightMode
+                lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(fullscreenToggleBounds.bounds, bg, PlayerPresenter)
 
                 onClicked: {
                     
@@ -261,21 +261,17 @@ T.ApplicationWindow {
         }
 
         Row {
-            id: windex
-
             Layout.alignment: Qt.AlignVCenter
-
-            property bool lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(windexBounds, bg, PlayerPresenter) // context is everything
-
             
             WindowDecorations {
+                id: windex
                 window: root
 
                 Layout.fillWidth: true
 
                 anchors.verticalCenter: parent.verticalCenter
 
-                lightMode: windex.lightMode
+                lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(windexBounds.bounds, bg, PlayerPresenter) // context is everything
             }
         }
     }
@@ -283,6 +279,11 @@ T.ApplicationWindow {
     SceneRect {
         id: windexBounds
         target: windex
+    }
+
+    SceneRect {
+        id: fullscreenToggleBounds
+        target: fullscreenToggle
     }
 
     ResizeHandles {}
