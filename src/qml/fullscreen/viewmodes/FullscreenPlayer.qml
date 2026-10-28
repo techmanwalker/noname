@@ -155,7 +155,7 @@ Row {
 
             keys: ["text/uri-list"]
 
-            visible: !root.immersive
+            visible: !root.immersive && PlayQueue.count !== 1
 
             Layout.fillHeight: true
             Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)
