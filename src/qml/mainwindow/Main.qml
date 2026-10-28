@@ -21,8 +21,14 @@ T.ApplicationWindow {
     width: WindowGeometry.width
     height: WindowGeometry.height
 
-    onWidthChanged:  WindowGeometry.width  = width;
-    onHeightChanged: WindowGeometry.height = height;
+    onWidthChanged:  {
+        WindowGeometry.width  = width;
+        Light.invalidate()
+    }
+    onHeightChanged: {
+        WindowGeometry.height = height;
+        Light.invalidate()
+    }
 
     onClosing: {
         // save last used values
