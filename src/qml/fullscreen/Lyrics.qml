@@ -212,7 +212,7 @@ ColumnLayout {
     PlaybackControls {
         id: controls
 
-        lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel, "PlaybackControls")
+        lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel)
 
         visible: !root.immersive
 
