@@ -36,7 +36,10 @@ GridView {
     displayMarginBeginning: 1000
     displayMarginEnd: 1000
 
-    rightMargin: scrollbar.logicalWidth
+    // Every cell keeps its padding so cards stay uniform; the trailing gutter of
+    // the last column/row is cancelled here instead of in the delegate.
+    rightMargin: scrollbar.logicalWidth - songLateralPadding
+    bottomMargin: -songVerticalPadding
 
     SongContextMenu {
         id: songContextMenu
