@@ -130,6 +130,8 @@ RowLayout {
 
             topPadding: 20
 
+            Layout.rightMargin: 24 // scrollBarWidth (4) * 6
+
             // this match may explain why this drifts below the window when it is too small
             Layout.preferredHeight: implicitHeight
             coverWidth: 48
