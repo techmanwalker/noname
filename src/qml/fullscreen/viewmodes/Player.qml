@@ -77,21 +77,11 @@ Item {
 
             background: root.background
             immersive: fsp.immersive
-
-            property bool lightMode: Light.lightModeForBounds(lyricsBounds, root.background, PlayerPresenter) // context is everything
-
-            highlightedColor:   lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
-            unhighlightedColor: lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
         }
     }
 
     SceneRect {
         id: stackBounds
         target: stack
-    }
-
-    SceneRect {
-        id: lyricsBounds
-        target: lyrics
     }
 }

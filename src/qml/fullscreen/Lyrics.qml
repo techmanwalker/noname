@@ -23,9 +23,6 @@ ColumnLayout {
     property real headerHeight: autoscrollEnabled ? Window.height / 2 : 0
     property real footerHeight: autoscrollEnabled ? Window.height / 2 : 0
 
-    property color unhighlightedColor: Theme.dark.texts.unhighlightedLyric
-    property color highlightedColor: Theme.dark.texts.highlightedLyric
-
     // also enable first and last rows to be centered too
     property bool centerEdgeLines: true
 
@@ -40,12 +37,17 @@ ColumnLayout {
     StackLayout {
         id: stack
 
-        currentIndex: listView.count > 0 ? 1 : 0
+        currentIndex: lyricsRows_c.count > 0 ? 1 : 0
 
         clip: true
 
         BigThinLabel {
+            id: lyricsRows_p
             text: qsTr("No lyrics available.")
+
+            color: Light.lightModeForBounds (lyricsRows_pBounds.bounds, root.background, root.stateModel)
+                ? Theme.light.texts.unhighlightedLyric :
+                  Theme.dark.texts.unhighlightedLyric
 
             TapHandler {
                 onTapped: root.clickedOnEmptySpace()
@@ -53,16 +55,21 @@ ColumnLayout {
         }
 
         ListView {
-            id: listView
+            id: lyricsRows_c
 
             model: root.model
+
+            readonly property bool lightMode: Light.lightModeForBounds(lyricsRows_cBounds.bounds, root.background, root.stateModel) // context is everything
+
+            readonly property color highlightedColor:   lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
+            readonly property color unhighlightedColor: lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
 
             // Extra scroll room so row 0 / the last row can reach dead
             // center too, same as any line in the middle of the list.
 
             header: Item {
                 height: root.headerHeight
-                width: listView.width
+                width: lyricsRows_c.width
 
                 TapHandler {
                     onTapped: root.clickedOnEmptySpace()
@@ -71,7 +78,7 @@ ColumnLayout {
 
             footer: Item {
                 height: root.footerHeight
-                width: listView.width
+                width: lyricsRows_c.width
 
                 TapHandler {
                     onTapped: root.clickedOnEmptySpace()
@@ -102,7 +109,7 @@ ColumnLayout {
 
             NumberAnimation {
                 id: scrollAnimation
-                target: listView
+                target: lyricsRows_c
                 property: "contentY"
                 duration: 125
                 easing.type: Easing.InOutCubic
@@ -128,8 +135,8 @@ ColumnLayout {
             Connections {
                 target: root
                 function onHighlightedRowIndexChanged() {
-                    if (listView.doAutoscroll)
-                        listView.scrollToHighlighted()
+                    if (lyricsRows_c.doAutoscroll)
+                        lyricsRows_c.scrollToHighlighted()
                 }
             }
 
@@ -160,7 +167,7 @@ ColumnLayout {
                 Item {
                     id: delegateWidth 
 
-                    width: listView.interactiveWidth
+                    width: lyricsRows_c.interactiveWidth
                     height: del.height
 
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -173,7 +180,7 @@ ColumnLayout {
                         // Feeds only the break computation now — the item's
                         // actual on-screen width is implicit, so it's free to
                         // grow past this when highlighted.
-                        wrapWidth: listView.wrapWidth
+                        wrapWidth: lyricsRows_c.wrapWidth
                         topPadding: highlighted ? 20 : 10
                         bottomPadding: topPadding
 
@@ -182,31 +189,41 @@ ColumnLayout {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
 
-                        unhighlightedColor: root.unhighlightedColor
-                        highlightedColor: root.highlightedColor
+                        unhighlightedColor: lyricsRows_c.unhighlightedColor
+                        highlightedColor: lyricsRows_c.highlightedColor
 
                         highlighted: root.highlightedRowIndex === delegateRoot.index
                     }
                 }
             }
         }
+
+        SceneRect {
+            id: lyricsRows_pBounds
+            target: lyricsRows_p
+        }
+
+        SceneRect {
+            id: lyricsRows_cBounds
+            target: lyricsRows_c
+        }
     }
 
     PlaybackControls {
         id: controls
 
-        lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel)
+        lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel, "PlaybackControls")
 
         visible: !root.immersive
 
-        Layout.maximumWidth: listView.wrapWidth
+        Layout.maximumWidth: lyricsRows_c.wrapWidth
         Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
     }
 
     Connections {
         target: root.stateModel
 
-        function onSeekFinished () {listView.scrollToHighlighted() } // this is not an autoscroll event
+        function onSeekFinished () {lyricsRows_c.scrollToHighlighted() } // this is not an autoscroll event
     }
 
     SceneRect {
