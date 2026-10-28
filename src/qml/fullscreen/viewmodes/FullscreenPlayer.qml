@@ -195,7 +195,7 @@ Row {
                     property rect globalBounds: Qt.rect(
                             nextQueue_cBounds.x,
                             nextQueue_cBounds.y,
-                            nextQueue_c.width,
+                            nextQueue_c.width / 2, // 2nd half is mostly empty space
                             Math.min(nextQueue_c.contentHeight, nextQueue_c.height)
                         )
 
