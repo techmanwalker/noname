@@ -11,8 +11,6 @@
 
 #include <memory>
 #include <optional>
-#include <qabstractitemmodel.h>
-#include <qloggingcategory.h>
 
 class PlayQueueLIPrivate 
 {

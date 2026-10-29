@@ -5,8 +5,6 @@
 #include "mediatypes.hpp"
 #include "pixelformats.hpp"
 #include "thumbnails.hpp"
-#include <qhashfunctions.h>
-#include <qloggingcategory.h>
 
 namespace covers::live {
 

@@ -10,8 +10,6 @@
 
 #include <memory>
 
-#include <qlist.h>
-#include <qobject.h>
 #include <rapidfuzz/fuzz.hpp>
 #include <unicode/translit.h>
 #include <unicode/unistr.h>

@@ -7,8 +7,6 @@
 #include <QFuture>
 
 #include <memory>
-#include <qabstractitemmodel.h>
-#include <qlist.h>
 
 namespace covers::live {
     class cover_provider;

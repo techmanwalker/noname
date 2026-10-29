@@ -3,8 +3,6 @@
 
 #include <QLoggingCategory>
 
-#include <qjsonarray.h>
-#include <qjsonobject.h>
 #include <variant>
 
 QJsonObject

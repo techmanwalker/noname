@@ -8,8 +8,6 @@
 #include <QUrl>
 
 #include <memory>
-#include <qabstractitemmodel.h>
-#include <qtmetamacros.h>
 
 class PlayQueueProxy : public QIdentityProxyModel
 {

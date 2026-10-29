@@ -3,7 +3,6 @@
 #include <QFuture>
 #include <QPersistentModelIndex>
 #include <optional>
-#include <qfuture.h>
 
 #include "mediatypes.hpp"
 

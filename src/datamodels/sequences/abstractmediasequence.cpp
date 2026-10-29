@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
-#include <qabstractitemmodel.h>
 
 Q_LOGGING_CATEGORY(l_mediasequences, "mediasequences")
 

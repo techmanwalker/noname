@@ -6,7 +6,6 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <qjsonarray.h>
 #include <type_traits>
 
 template <typename T>

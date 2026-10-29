@@ -4,7 +4,6 @@
 #include <QSize>
 
 #include <memory>
-#include <qtypes.h>
 
 #include "manager-in.hpp"
 #include "windowgeometry-in.hpp"

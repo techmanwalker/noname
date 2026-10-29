@@ -5,7 +5,6 @@
 #include "bridgecontroller/internalcontroller.hpp"
 
 #include <QLoggingCategory>
-#include <qtypes.h>
 
 enum class audio_backend;
 

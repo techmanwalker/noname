@@ -6,7 +6,6 @@
 #include <QUrl>
 
 #include <cstddef>
-#include <qtmetamacros.h>
 
 
 // A recipe that tells the cover storage hot cache how to resolve a cover.

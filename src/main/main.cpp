@@ -8,7 +8,6 @@
 #include <memory>
 
 #include <CLI/CLI.hpp>
-#include <qobject.h>
 
 #include "audioengine.hpp"
 #include "configuration.hpp"

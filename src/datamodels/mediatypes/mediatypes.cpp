@@ -6,8 +6,6 @@
 #include <QStandardPaths>
 
 #include <cstddef>
-#include <qobject.h>
-#include <qurl.h>
 
 Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
 

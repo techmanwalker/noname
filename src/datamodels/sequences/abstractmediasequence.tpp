@@ -4,9 +4,7 @@
 #include "mediatypes.hpp"
 
 #include <QList>
-#include <qabstractitemmodel.h>
-#include <qlist.h>
-#include <qreadwritelock.h>
+
 #include <variant>
 
 // --- readers

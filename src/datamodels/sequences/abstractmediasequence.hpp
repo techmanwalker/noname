@@ -12,7 +12,6 @@
 
 #include <functional>
 #include <memory>
-#include <qabstractitemmodel.h>
 #include <type_traits>
 
 template <typename T>

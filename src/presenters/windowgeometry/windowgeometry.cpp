@@ -2,7 +2,6 @@
 #include "windowgeometry.hpp"
 
 #include <memory>
-#include <qtypes.h>
 
 using configuration::conf_file_type;
 

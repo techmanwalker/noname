@@ -5,7 +5,6 @@
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 #include "songfactory.hpp"
-#include <qfuture.h>
 
 QList<Types::Song>
 LocalLibraryLI::flattened () const

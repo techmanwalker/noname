@@ -1,5 +1,6 @@
 #include "basicdiskio.hpp"
-#include <qloggingcategory.h>
+
+#include <QLoggingCategory>
 
 namespace diskio {
 Q_LOGGING_CATEGORY(l_diskio, "diskio");

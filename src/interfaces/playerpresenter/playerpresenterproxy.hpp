@@ -8,7 +8,6 @@
 #include <QtQmlIntegration>
 
 #include <memory>
-#include <qtmetamacros.h>
 
 class PlayerPresenterProxy : public QObject
 {
