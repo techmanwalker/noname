@@ -141,14 +141,7 @@ Item {
         fillMode: Image.PreserveAspectCrop
         visible: false
 
-        mipmap: false
-        onStatusChanged: {
-            if (status === Image.Ready) {
-                mipmap = true;
-            } else if (status === Image.Null || status === Image.Error) {
-                mipmap = false;
-            }
-        }
+        mipmap: true
     }
 
     BackgroundOverlay {
