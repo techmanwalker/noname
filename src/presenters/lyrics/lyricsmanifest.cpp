@@ -80,9 +80,6 @@ public:
     compiled_role_set<__syrinc_lyric> m_roles;
     mutable QReadWriteLock m_lock;
 
-    // weak diff check for highlightedRowChanged; to recompute fresh, invoke index_of_last_highlighted_row
-    int m_last_highlighted_row = -1;
-
     QFuture<filelines> read_from_metadata_tag(const QString &source) {
         if (!QFile::exists(source)) {
             return QtFuture::makeReadyValueFuture(filelines());
@@ -206,11 +203,6 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
         endResetModel();
 
         emit count_changed();
-
-        if (m_d->m_last_highlighted_row != -1) {
-            m_d->m_last_highlighted_row = -1;
-            emit highlighted_row_changed();
-        }
     });
 }
 
@@ -232,11 +224,6 @@ LyricsManifestLI::clear()
         m_d->m_lyrics.clear();
     }
     endResetModel();
-
-    if (m_d->m_last_highlighted_row != -1) {
-        m_d->m_last_highlighted_row = -1;
-        emit highlighted_row_changed();
-    }
 }
 
 // Lookup
@@ -283,16 +270,4 @@ LyricsManifestLI::index_of_lyric_to_highlight() const
     const auto row = lookup_lyrics_at(m_d->m_lyrics, curr_ms).active_row;
 
     return row ? index(*row) : QModelIndex();
-}
-
-void
-LyricsManifestLI::poll_highlighted_line_change()
-{
-    const int new_row = index_of_lyric_to_highlight().row(); // -1 if none
-
-    if (new_row == m_d->m_last_highlighted_row)
-        return;
-
-    m_d->m_last_highlighted_row = new_row;
-    emit highlighted_row_changed();
 }

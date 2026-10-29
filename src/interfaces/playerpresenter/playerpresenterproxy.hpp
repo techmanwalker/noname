@@ -31,7 +31,6 @@ public:
     Q_PROPERTY(QUrl    cover       READ cover       NOTIFY coverChanged)
     Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY durationChanged)
 
-    Q_PROPERTY(quint64 position_ms READ position_ms WRITE  set_position_ms NOTIFY positionChanged)
     Q_PROPERTY(quint8  volume      READ volume      WRITE  set_volume      NOTIFY volumeChanged)
 
     Q_PROPERTY(bool isMediaLoaded  READ is_media_loaded NOTIFY mediaLoadedChanged)
@@ -57,7 +56,6 @@ public:
             connect(concrete, SIGNAL(cover_changed()),         this, SIGNAL(coverChanged()));
             connect(concrete, SIGNAL(lumas_changed()),         this, SIGNAL(lumasChanged()));
             connect(concrete, SIGNAL(duration_changed()),      this, SIGNAL(durationChanged()));
-            connect(concrete, SIGNAL(position_changed()),      this, SIGNAL(positionChanged()));
             connect(concrete, SIGNAL(volume_changed()),        this, SIGNAL(volumeChanged()));
             connect(concrete, SIGNAL(playback_state_changed()), this, SIGNAL(playbackStateChanged()));
             connect(concrete, SIGNAL(media_loaded_changed()),   this, SIGNAL(mediaLoadedChanged()));
@@ -82,7 +80,6 @@ public:
     double cover_pondered_luma() const     { return m_presenter ? m_presenter->cover_pondered_luma()  : 0.0; }
 
     quint64 duration_ms()      const { return m_presenter ?  m_presenter->duration_ms()      : 0;         }
-    quint64 position_ms()      const { return m_presenter ?  m_presenter->position_ms()      : 0;         }
     quint8  volume()           const { return m_presenter ?  m_presenter->volume()           : 0;         }
     bool    is_media_loaded()  const { return m_presenter && m_presenter->is_media_loaded();              }
 
@@ -98,9 +95,10 @@ public:
         Q_UNREACHABLE();
     }
 
-    void set_position_ms(quint64 position) { if (m_presenter) m_presenter->set_position_ms(position); }
-
     void set_volume(quint8 volume)         { if (m_presenter) m_presenter->set_volume(volume); }
+
+    Q_INVOKABLE quint64 position_ms()       const { return m_presenter ? m_presenter->position_ms() : 0;     }
+    Q_INVOKABLE void    seekTo (quint64 position) { if (m_presenter) m_presenter->set_position_ms(position); }
 
     Q_INVOKABLE double backdropLumaForRect (QRect rect) const {
         if (m_presenter) {
@@ -146,10 +144,6 @@ public slots:
     // for 5s back/forward shortcuts
     void shortSeekBack()    const { if (m_presenter) m_presenter->relative_seek(- 5000); }
     void shortSeekForward() const { if (m_presenter) m_presenter->relative_seek(+ 5000); }
-
-    void notifySliderPressedChange(bool pressed) {
-        if (m_presenter) m_presenter->notify_slider_pressed_change(pressed);
-    }
 
     void saveVolume() const { if (m_presenter) m_presenter->save_volume(); }
 

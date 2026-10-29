@@ -201,22 +201,13 @@ main (int argc, char ** argv)
             lm.get(), &LyricsManifestLI::load_current_track_lyrics);
 
     QObject::connect(ae.get(), &audio_engine_LI::playback_state_changed,
-            pp.get(), &PlayerPresenterLI::handle_playback_state_changed);
-
-    QObject::connect(ae.get(), &audio_engine_LI::seek_finished,
-            pp.get(), &PlayerPresenterLI::position_changed);
+            pp.get(), &PlayerPresenterLI::playback_state_changed);
 
     QObject::connect(ae.get(), &audio_engine_LI::seek_finished,
             pp.get(), &PlayerPresenterLI::seek_finished);
 
     QObject::connect(ae.get(), &audio_engine_LI::volume_changed,
             pp.get(), &PlayerPresenterLI::volume_changed);
-
-    QObject::connect (ae.get(), &audio_engine_LI::seek_finished,
-            pp.get(), &PlayerPresenterLI::gate_poll_timer);
-
-    QObject::connect(pp.get(), &PlayerPresenterLI::position_changed,
-            lm.get(), &LyricsManifestLI::poll_highlighted_line_change);
 
     QObject::connect(ae.get(), &audio_engine_LI::relative_seek_before_zero_performed,
             pq.get(), &PlayQueueLI::prev_at_end);
@@ -233,7 +224,6 @@ main (int argc, char ** argv)
         Give the QML engine its own proxy instance allocating a secondary wrapper.
         It will safely invoke 'delete' on this proxy without corrupting the heap
         or interfering with the 'covers' shared_ptr used by the C++ models.
-
         cover_providerLI is fine here because the engine only care about resolving image://covers...
         and doing this does not break DIP linking in CMakeLists.txt
 

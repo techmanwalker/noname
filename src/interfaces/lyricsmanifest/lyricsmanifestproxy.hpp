@@ -14,7 +14,6 @@ class LyricsManifestProxy : public QIdentityProxyModel
     QML_NAMED_ELEMENT(LyricsManifest)
     QML_SINGLETON
 
-    Q_PROPERTY(QModelIndex highlighted READ index_of_lyric_to_highlight NOTIFY highlightedRowChanged)
     Q_PROPERTY(qsizetype   count       READ item_count NOTIFY countChanged)
 
 public:
@@ -27,9 +26,6 @@ public:
         if (m_manifest) {
             setSourceModel(m_manifest.get());
         }
-
-        connect(m_manifest.get(), SIGNAL(highlighted_row_changed()),
-                        this, SIGNAL(highlightedRowChanged()));
 
         connect(m_manifest.get(), SIGNAL(count_changed()), this, SIGNAL(countChanged()));
     }
@@ -45,7 +41,7 @@ public:
         return static_cast<int>(m_iface->line_count());
     }
 
-    QModelIndex index_of_lyric_to_highlight() const {
+    Q_INVOKABLE QModelIndex indexOfLyricToHighlight() const {
         if (!m_iface) return {};
 
         /*  Re-home the index onto this proxy an index carries a pointer to
@@ -55,7 +51,6 @@ public:
     }
 
 signals:
-    void highlightedRowChanged();
     void countChanged();
 
 public slots:

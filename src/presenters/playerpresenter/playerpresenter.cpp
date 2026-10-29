@@ -15,7 +15,6 @@
 #include <QPointer>
 #include <QtConcurrent/QtConcurrent>
 
-#include <atomic>
 #include <memory>
 #include <utility>
 
@@ -35,19 +34,6 @@ PlayerPresenterLI::PlayerPresenterLI(
       queue(pqueue),
       wi(wgeometry)
 {
-    m_position_poll_timer->setInterval(10);
-
-    // a track could be playing right now
-    if (playback_state() == PlaybackState::playing) {
-        m_position_poll_timer->start();
-    }
-
-    connect(m_position_poll_timer, &QTimer::timeout, 
-            this, &PlayerPresenterLI::position_changed);
-        
-    connect(this, &PlayerPresenterLI::slider_pressed_changed,
-            this, &PlayerPresenterLI::gate_poll_timer);
-
     connect(this, &PlayerPresenterLI::cover_changed,
             this, &PlayerPresenterLI::recompute_lumas);
 
@@ -295,35 +281,6 @@ PlayerPresenterLI::load(Types::Song &song) const
     playing->load(song);
 }
 
-void
-PlayerPresenterLI::notify_slider_pressed_change (bool pressed)
-{
-    m_slider_pressed.store(pressed);
-
-    emit slider_pressed_changed ();
-}
-
-void
-PlayerPresenterLI::gate_poll_timer ()
-{
-    using playback_state = audio_engine::playback_state;
-
-    if (m_slider_pressed.load(std::memory_order_relaxed)) {
-        m_position_poll_timer->stop();
-        return;
-    }
-
-    switch(playing->get_playback_state()) {
-        case playback_state::playing:
-            m_position_poll_timer->start();
-            break;
-        case playback_state::paused:
-        case playback_state::stopped:
-            m_position_poll_timer->stop();
-            break;
-    }
-}
-
 // --- Signal handlers
 
 void
@@ -351,16 +308,7 @@ PlayerPresenterLI::handle_track_changed()
     emit album_changed();
     emit cover_changed();
     emit duration_changed();
-    emit position_changed();
     emit media_loaded_changed();
-}
-
-void
-PlayerPresenterLI::handle_playback_state_changed()
-{
-    emit playback_state_changed();
-
-    gate_poll_timer();
 }
 
 bool

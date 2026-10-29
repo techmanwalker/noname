@@ -71,7 +71,6 @@ Item {
             id: lyrics
 
             model: LyricsManifest
-            highlightedRowIndex: LyricsManifest.highlighted.row // qmllint disable
 
             onSwitchToPlayerViewRequested: stack.currentIndex = 0
 

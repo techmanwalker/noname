@@ -104,9 +104,6 @@ public:
 
     void toggle_play_pause () const override;
 
-    // to stop the poll timer while scrubbing
-    void notify_slider_pressed_change (bool pressed) override;
-
     // save volume level to disk on demand
     void save_volume () const override;
 
@@ -120,19 +117,15 @@ signals:
     void album_changed();
     void cover_changed();
     void duration_changed();
-    void position_changed();
     void volume_changed();
     void playback_state_changed();
     void media_loaded_changed();
-    void slider_pressed_changed();
     void lumas_changed();
     void seek_finished();
 
 public slots:
     // Formally expose as a metadata block receiver
     void handle_track_changed();
-    void handle_playback_state_changed();
-    void gate_poll_timer();
     void recompute_lumas();
 
 private:
@@ -140,8 +133,6 @@ private:
     std::shared_ptr<audio_engine> playing; // controller
     std::shared_ptr<PlayQueue> queue; // tape roll
     std::shared_ptr<WindowGeometry> wi; // information about the window
-
-    QTimer *m_position_poll_timer = new QTimer(this); // connect() requires this to be a pointer
 
     std::atomic_bool m_slider_pressed {false};
 

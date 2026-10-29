@@ -68,7 +68,6 @@ public:
 
     virtual void load(Types::Song &song) const = 0;
 
-    virtual void notify_slider_pressed_change (bool pressed) = 0;
     virtual void save_volume () const = 0;
 };
 

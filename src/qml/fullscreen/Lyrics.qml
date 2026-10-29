@@ -15,7 +15,7 @@ ColumnLayout {
     property PlayerPresenter stateModel: PlayerPresenter
 
     required property LyricsManifest model
-    required property int highlightedRowIndex
+    property int highlightedRowIndex: LyricsManifest.indexOfLyricToHighlight().row
 
     // whether to follow the lyrics by scrolling the list
     property bool autoscrollEnabled: true
@@ -86,10 +86,12 @@ ColumnLayout {
             }
 
             function scrollToHighlighted() : void {
-                const index = root.highlightedRowIndex
+                const index = LyricsManifest.indexOfLyricToHighlight().row
 
                 if (index >= count)
                     return
+
+                root.highlightedRowIndex = index
 
                 const fromY = contentY
 
@@ -157,10 +159,12 @@ ColumnLayout {
                         // eventPoint.position is in delegateRoot coordinates
                         const onLyric = delegateWidth.contains(delegateWidth.mapFromItem(delegateRoot, eventPoint.position))
 
-                        if (onLyric)
-                            root.stateModel.position_ms = del.model.timestamp
-                        else
+                        if (onLyric) {
+                            root.stateModel.seekTo(del.model.timestamp)
+                            lyricsRows_c.scrollToHighlighted()
+                        } else {
                             root.clickedOnEmptySpace()
+                        }
                     }
                 }
 
@@ -215,6 +219,10 @@ ColumnLayout {
         lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, root.stateModel)
 
         visible: !root.immersive
+
+        // free poll source
+        pollWhileNotVisible: true
+        onPosition_msChanged: root.highlightedRowIndex = LyricsManifest.indexOfLyricToHighlight().row
 
         Layout.maximumWidth: lyricsRows_c.wrapWidth
         Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter

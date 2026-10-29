@@ -19,7 +19,12 @@ ColumnLayout {
 
     readonly property alias buttonPadding: volcontrol.buttonPadding
 
+    property alias pollWhileNotVisible: duration.pollWhileNotVisible
+    readonly property alias position_ms: duration.position_ms
+
     DurationControl {
+        id: duration
+
         // inset padding of the buttons right below
         Layout.leftMargin: controls.buttonPadding
         Layout.rightMargin: Layout.leftMargin

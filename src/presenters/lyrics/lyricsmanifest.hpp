@@ -46,15 +46,10 @@ public:
 
 signals:
     void lines_changed();
-    void highlighted_row_changed();
     void count_changed();
 
 public slots:
     QFuture<void> load_current_track_lyrics ();
-
-    // Fire this (e.g. from the timer that polls for duration) to reconcile
-    // the highlighted lyric against the current playback position.
-    void poll_highlighted_line_change ();
 
 private:
     std::unique_ptr<LyricsManifestPrivate> m_d;

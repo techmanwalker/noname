@@ -15,6 +15,73 @@ RowLayout {
     property color accentColor: Theme.dark.slider.accentColor
     property color backgroundColor: Theme.dark.slider.backgroundColor
 
+    readonly property int pollHz: 15
+    readonly property int pollIntervalMs: Math.round(1000 / pollHz)
+
+    property bool pollWhileNotVisible: false // enable sharing the poll with another item even when not visible
+
+    // Last successful poll of the playback position (ms). The initial value is a
+    // one-shot snapshot; the first assignment in poll() replaces that binding.
+    property real position_ms: stateModel.position_ms()
+
+    function poll(): void {
+        if (slider.pressed) // the user owns the handle while scrubbing
+            return
+
+        const polled = stateModel.position_ms()
+
+        // After a seek the engine keeps reporting the old position until the new audio
+        // reaches the output. position_ms still holds the seek target, so keep it until
+        // the engine catches up (or the guard expires).
+        if (seekGuard.running) {
+            if (Math.abs(polled - position_ms) > slider.toleranceMs) {
+                console.log("debug: stale poll ignored after seek", polled, position_ms) // temporary
+                return
+            }
+            seekGuard.stop()
+        }
+
+        position_ms = polled
+
+        if (polled < stateModel.duration_ms) {
+            sweep.restart()
+        } else {
+            sweep.stop()
+            if (polled > stateModel.duration_ms)
+                console.log("debug: reported position is greater than track's duration")
+        }
+    }
+
+    Timer {
+        id: pollTimer
+        interval: root.pollIntervalMs
+        repeat: true
+        triggeredOnStart: true // sync immediately when playback/visibility resumes
+        running: (root.visible || root.pollWhileNotVisible)
+                 && root.stateModel.playbackState === PlayerPresenter.PlaybackState.playing
+        onRunningChanged: if (!running) sweep.stop()
+        onTriggered: root.poll()
+    }
+
+    // Active between a committed seek and the engine reporting a position near its target.
+    // Expiry is the escape hatch if that never happens (seek clamped, track ended, ...).
+    Timer {
+        id: seekGuard
+        interval: 1000
+    }
+
+    // Linear sweep from the last poll to where the next poll is expected to land.
+    // Runs on the animation driver (vsync), independent of the poll timer.
+    NumberAnimation {
+        id: sweep
+        target: slider
+        property: "value"
+        from: root.position_ms
+        to: root.position_ms + root.pollIntervalMs
+        duration: root.pollIntervalMs
+        easing.type: Easing.Linear
+    }
+
     // Helper function to format seconds as mm:ss
     function formatTime(ms: double): string {
         let totalSeconds = Math.floor(ms / 1000)
@@ -42,7 +109,7 @@ RowLayout {
 
         from: 0
         to: root.stateModel.duration_ms
-        value: root.stateModel.position_ms
+        value: root.position_ms
 
         // Minimum distance (ms) from the anchor for a drag to count as a seek.
         readonly property int toleranceMs: 500
@@ -58,7 +125,9 @@ RowLayout {
             if (isWithinTolerance()) {
                 return;
             }
-            root.stateModel.position_ms = value
+            root.stateModel.seekTo(value)
+            root.position_ms = value // every writer of slider.value now agrees with the seek
+            seekGuard.restart()
             anchorValue = value
         }
 
@@ -78,10 +147,9 @@ RowLayout {
         }
 
         onPressedChanged: {
-            root.stateModel.notifySliderPressedChange(pressed);
-
             if (pressed) {
-                anchorValue = root.stateModel.position_ms
+                sweep.stop()
+                anchorValue = root.stateModel.position_ms()
             } else {
                 settleTimer.stop()
 
@@ -89,7 +157,7 @@ RowLayout {
                     if (isWithinTolerance()) {
                         // Too small to be a seek: snap the handle back to the playback
                         // position. Assigning breaks the binding, so restore it.
-                        value = Qt.binding(function() { return root.stateModel.position_ms })
+                        value = Qt.binding(function() { return root.position_ms })
                     } else {
                         commitPosition()
                     }
