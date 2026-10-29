@@ -111,149 +111,151 @@ Row {
 
     // Right column: metadata + upcoming queue
 
-    // enables pushing the metadata container to the vertical
-    // center when the play queue is not visible
-    ColumnLayout {
-        id: rightCol
-        height: leftCol.height
+    // It is independent of immersive
+    // mode and of whether the queue is shown.
+    DropArea {
+        id: rightCol_d
 
-        // + scrollbar padding
-        property int scrollBarWidth: 4
-        width: (leftCol.width * .6) + (scrollBarWidth * 6)
+        keys: ["text/uri-list"]
 
-        PlayQueueHeader {
-            id: metadataContainer
-            title:  root.stateModel.title
-            artist: root.stateModel.artist
-            album:  root.stateModel.album
+        width: rightCol.width
+        height: rightCol.height
 
-            Layout.fillWidth: true
-            Layout.leftMargin: 15 // playlist song lateral padding
-            Layout.rightMargin: Layout.leftMargin
+        onDropped: (drop) => {
+            if (drop.hasUrls) {
+                PlayQueue.batchAppend(drop.urls)
 
-            onClicked: root.immersive = !root.immersive
-
-            usedInImmersiveMode: root.immersive
-
-            property rect globalBounds: ({
-                x: metadataContainerBounds.x,
-                y: metadataContainerBounds.y,
-                width: metadataContainer.textContentWidth,
-                height: metadataContainer.textContentHeight
-            })
-
-            lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                drop.acceptProposedAction()
+            }
         }
 
-        // _d = "the drop area"
-        // _s = "the stack"
-        // _c = "the content"
-        // _p = "the placeholder"
+        // Enables pushing the metadata container to the vertical
+        // center when the play queue is not visible
+        ColumnLayout {
+            id: rightCol
+            height: leftCol.height
 
-        DropArea {
-            id: nextQueue_d
+            // + scrollbar padding
+            property int scrollBarWidth: 4
+            width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
-            keys: ["text/uri-list"]
+            PlayQueueHeader {
+                id: metadataContainer
+                title:  root.stateModel.title
+                artist: root.stateModel.artist
+                album:  root.stateModel.album
 
-            visible: !root.immersive && PlayQueue.count !== 1
+                Layout.fillWidth: true
+                Layout.leftMargin: 15 // playlist song lateral padding
+                Layout.rightMargin: Layout.leftMargin
 
-            Layout.fillHeight: true
-            Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)
+                onClicked: root.immersive = !root.immersive
 
-            Layout.alignment: Qt.AlignVCenter
+                usedInImmersiveMode: root.immersive
 
-            Layout.topMargin: root.songCoverHeight * .4
+                property rect globalBounds: ({
+                    x: metadataContainerBounds.x,
+                    y: metadataContainerBounds.y,
+                    width: metadataContainer.textContentWidth,
+                    height: metadataContainer.textContentHeight
+                })
 
-            onDropped: (drop) => {
-                if (drop.hasUrls) {
-                    PlayQueue.batchAppend(drop.urls)
-
-                    drop.acceptProposedAction()
-                }
+                lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
             }
 
-            StackLayout {
-                id: nextQueue_s
+            // _s = "the stack"
+            // _c = "the content"
+            // _p = "the placeholder"
 
-                anchors.fill: parent
+                StackLayout {
+                    id: nextQueue_s
 
-                // set whatever source component is correct right at boot
-                currentIndex: PlayQueue.count === 0 ? 1 : 0
+                    visible: !root.immersive && PlayQueue.count !== 1
 
-                Playlist {
-                    id: nextQueue_c
-                    model: PlayQueue
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)
 
-                    scrollBarWidth: rightCol.scrollBarWidth
+                    Layout.alignment: Qt.AlignVCenter
 
-                    songCoverWidth: root.songCoverWidth
-                    songInnerSpacing: root.songInnerSpacing
+                    Layout.topMargin: root.songCoverHeight * .4
 
-                    clip: true
-                    reuseItems: true // tons of songs moving
+                    // set whatever source component is correct right at boot
+                    currentIndex: PlayQueue.count === 0 ? 1 : 0
 
-                    property rect globalBounds: Qt.rect(
-                            nextQueue_cBounds.x + songCoverWidth,
-                            nextQueue_cBounds.y,
-                            (nextQueue_c.width / 2) - songCoverWidth, // 2nd half is mostly empty space
-                            Math.min(nextQueue_c.contentHeight, nextQueue_c.height)
-                        )
+                    Playlist {
+                        id: nextQueue_c
+                        model: PlayQueue
 
-                    lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                        scrollBarWidth: rightCol.scrollBarWidth
 
-                    onSongClicked: (song) => {
-                        PlayQueue.playhead = PlayQueue.findBySource(song.source)
+                        songCoverWidth: root.songCoverWidth
+                        songInnerSpacing: root.songInnerSpacing
+
+                        clip: true
+                        reuseItems: true // tons of songs moving
+
+                        property rect globalBounds: Qt.rect(
+                                nextQueue_cBounds.x + songCoverWidth,
+                                nextQueue_cBounds.y,
+                                (nextQueue_c.width / 2) - songCoverWidth, // 2nd half is mostly empty space
+                                Math.min(nextQueue_c.contentHeight, nextQueue_c.height)
+                            )
+
+                        lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+
+                        onSongClicked: (song) => {
+                            PlayQueue.playhead = PlayQueue.findBySource(song.source)
+                        }
+
+                        additionalMenuActions: [
+                            {
+                                text: qsTr("Clear queue"),
+                                action: () => PlayQueue.clear()
+                            }
+                        ]
                     }
 
-                    additionalMenuActions: [
-                        {
-                            text: qsTr("Clear queue"),
-                            action: () => PlayQueue.clear()
-                        }
-                    ]
+                    Label {
+                        id: nextQueue_p
+
+                        text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
+
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment:   Text.AlignVCenter
+
+                        wrapMode: Text.WordWrap
+
+                        // MediumLabel
+                        font.pointSize: 13
+                        font.weight: Font.Medium
+
+                        property rect globalBounds: Qt.rect(
+                                nextQueue_pBounds.x,
+                                nextQueue_pBounds.y,
+                                nextQueue_p.contentWidth,
+                                nextQueue_p.contentHeight
+                            )
+
+                        property bool lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+
+                        color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
+                    }
                 }
 
-                Label {
-                    id: nextQueue_p
+            SceneRect {
+                id: nextQueue_cBounds
+                target: nextQueue_c
+            }
 
-                    text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
+            SceneRect {
+                id: nextQueue_pBounds
+                target: nextQueue_p
+            }
 
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment:   Text.AlignVCenter
-
-                    wrapMode: Text.WordWrap
-
-                    // MediumLabel
-                    font.pointSize: 13
-                    font.weight: Font.Medium
-
-                    property rect globalBounds: Qt.rect(
-                            nextQueue_pBounds.x,
-                            nextQueue_pBounds.y,
-                            nextQueue_p.contentWidth,
-                            nextQueue_p.contentHeight
-                        )
-
-                    property bool lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
-
-                    color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
-                }
+                    SceneRect {
+                id: metadataContainerBounds
+                target: metadataContainer
             }
         }
-
-        SceneRect {
-            id: nextQueue_cBounds
-            target: nextQueue_c
-        }
-
-        SceneRect {
-            id: nextQueue_pBounds
-            target: nextQueue_p
-        }
-
-        SceneRect {
-            id: metadataContainerBounds
-            target: metadataContainer
-        }
-    }
+    } // rightCol_d
 }
