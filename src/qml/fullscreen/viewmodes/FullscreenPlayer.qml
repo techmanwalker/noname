@@ -193,9 +193,9 @@ Row {
                     reuseItems: true // tons of songs moving
 
                     property rect globalBounds: Qt.rect(
-                            nextQueue_cBounds.x,
+                            nextQueue_cBounds.x + songCoverWidth,
                             nextQueue_cBounds.y,
-                            nextQueue_c.width / 2, // 2nd half is mostly empty space
+                            (nextQueue_c.width / 2) - songCoverWidth, // 2nd half is mostly empty space
                             Math.min(nextQueue_c.contentHeight, nextQueue_c.height)
                         )
 
