@@ -170,7 +170,7 @@ Row {
                 StackLayout {
                     id: nextQueue_s
 
-                    visible: !root.immersive && PlayQueue.count !== 1
+                    visible: !root.immersive && (PlayQueue.count !== 1 || root.stateModel.title === "")
 
                     Layout.fillHeight: true
                     Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)

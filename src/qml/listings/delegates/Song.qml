@@ -9,7 +9,7 @@ Item {
     property bool card: false
     property bool lightMode: false
 
-    property string title: "Untitled song"
+    property string title: qsTr("Untitled track")
     
     property string metadata // printable metadata, its parent decides what the second line should contain
 

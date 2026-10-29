@@ -75,7 +75,7 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="210"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="212"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -84,7 +84,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="219"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="221"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -108,7 +108,7 @@
         <translation type="vanished">No hay letras disponibles</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/Lyrics.qml" line="48"/>
+        <location filename="../qml/fullscreen/Lyrics.qml" line="46"/>
         <source>No lyrics available.</source>
         <translation>No hay letras disponibles.</translation>
     </message>
@@ -116,12 +116,12 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="224"/>
+        <location filename="../qml/mainwindow/Main.qml" line="232"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="178"/>
+        <location filename="../qml/mainwindow/Main.qml" line="186"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -254,6 +254,14 @@
     </message>
 </context>
 <context>
+    <name>Song</name>
+    <message>
+        <location filename="../qml/listings/delegates/Song.qml" line="12"/>
+        <source>Untitled track</source>
+        <translation>Pista sin título</translation>
+    </message>
+</context>
+<context>
     <name>SongContextMenu</name>
     <message>
         <source>Add to Play Queue</source>
@@ -277,7 +285,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/SongGrid.qml" line="69"/>
+        <location filename="../qml/listings/SongGrid.qml" line="72"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
