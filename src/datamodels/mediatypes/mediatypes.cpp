@@ -91,18 +91,18 @@ Directory::is_valid () const
 }
 
 cover_payload::cover_payload (const QUrl &source_media_path, size_t square_size)
-    : m_source(source_media_path),
-      m_square_size(square_size)
+    : source(source_media_path),
+      square_size(square_size)
 {
 }
 
 QString
 cover_payload::to_base64url() const
 {
-    if (m_source.isEmpty()) return QString();
+    if (source.isEmpty()) return QString();
 
     // Serialize as: "size|url"
-    const QByteArray payload = QByteArray::number(m_square_size) + '|' + m_source.toEncoded();
+    const QByteArray payload = QByteArray::number(square_size) + '|' + source.toEncoded();
     
     // OmitTrailingEquals prevents padding characters ('=') which clutter the URL
     return QString::fromLatin1(payload.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
@@ -121,23 +121,8 @@ cover_payload::cover_payload(const QString &base64url_payload)
     if (sep_idx == -1) return; // Invalid format safeguard
 
     // Qt 6 idiomatic substring extraction
-    const size_t size = payload.first(sep_idx).toULongLong();
-    const QUrl url = QUrl::fromEncoded(payload.sliced(sep_idx + 1));
-
-    m_source = std::move(url);
-    m_square_size = size;
-}
-
-QUrl
-cover_payload::source () const
-{
-    return m_source;
-}
-
-size_t
-cover_payload::size() const
-{
-    return m_square_size;
+    source = QUrl::fromEncoded(payload.sliced(sep_idx + 1));
+    square_size = payload.first(sep_idx).toULongLong();
 }
 
 QUrl

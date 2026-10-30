@@ -82,7 +82,7 @@ cover_storage::store (
         QMutexLocker locker(&shard->lock);
         const bool cached = shard->cache.insert(base64url_coverref, new QImage(img), cost);
         if (!cached) {
-            qCWarning(l_coverprovider) << "Cover for " << ref.source()
+            qCWarning(l_coverprovider) << "Cover for " << ref.source
                                        << " exceeds shard max cost; not kept in memory.";
         }
     } // shard lock released immediately
@@ -101,7 +101,7 @@ cover_storage::resolve_blocking (
 )
 {
     cover_payload ref { base64url_coverref };
-    if (ref.source().isEmpty()) return QImage();
+    if (ref.source.isEmpty()) return QImage();
 
     QImage img;
 
@@ -128,24 +128,24 @@ cover_storage::resolve_blocking (
     }
 
     // On-demand decoding fallback
-    if (img.isNull() && !ref.source().isEmpty()) {
-        const QByteArray local_path = ref.source().toLocalFile().toUtf8();
+    if (img.isNull() && !ref.source.isEmpty()) {
+        const QByteArray local_path = ref.source.toLocalFile().toUtf8();
         TagLib::FileRef file(local_path.constData());
 
         if (!file.isNull()) {
-            img = extract_cover(file.file(), ref.size());
+            img = extract_cover(file.file(), ref.square_size);
 
             if (!img.isNull()) {
                 store(ref, img);
                 qCDebug(l_coverprovider) << "Stored/overwritten on demand decoding.";
             } else {
-                qCDebug (l_coverprovider) << "Trying to make a thumbnail." << ref.source() << ref.size();
+                qCDebug (l_coverprovider) << "Trying to make a thumbnail." << ref.source << ref.square_size;
                 // try decoding a video frame, if possible
                 img = make_thumbnail(
-                    ref.source(), 
+                    ref.source, 
                     {
-                        static_cast<int>(ref.size()),
-                        static_cast<int>(ref.size())
+                        static_cast<int>(ref.square_size),
+                        static_cast<int>(ref.square_size)
                     }
                 );
                 if (!img.isNull()) {

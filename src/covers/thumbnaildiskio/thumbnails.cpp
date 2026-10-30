@@ -44,7 +44,7 @@ write_thumbnail_blocking (
 )
 {
     if (thumbnail.isNull()) {
-        qCWarning(l_thumbnails) << "refusing to write a null thumbnail for " << ref.source();
+        qCWarning(l_thumbnails) << "refusing to write a null thumbnail for " << ref.source;
         return false;
     }
 
@@ -67,7 +67,7 @@ write_thumbnail_blocking (
 
     auto enc = JxlEncoderMake(nullptr);
     if (!enc) {
-        qCWarning(l_thumbnails) << "failed to create JxlEncoder for" << ref.source();
+        qCWarning(l_thumbnails) << "failed to create JxlEncoder for" << ref.source;
         return false;
     }
 
@@ -75,7 +75,7 @@ write_thumbnail_blocking (
     if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
             JxlResizableParallelRunner, runner.get()))
     {
-        qCWarning(l_thumbnails) << "failed to set parallel runner for" << ref.source();
+        qCWarning(l_thumbnails) << "failed to set parallel runner for" << ref.source;
         return false;
     }
 
@@ -90,14 +90,14 @@ write_thumbnail_blocking (
     basic_info.uses_original_profile = JXL_FALSE;
 
     if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
-        qCWarning(l_thumbnails) << "JxlEncoderSetBasicInfo failed for" << ref.source();
+        qCWarning(l_thumbnails) << "JxlEncoderSetBasicInfo failed for" << ref.source;
         return false;
     }
 
     JxlColorEncoding color_encoding;
     JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray=*/JXL_FALSE);
     if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
-        qCWarning(l_thumbnails) << "JxlEncoderSetColorEncoding failed for" << ref.source();
+        qCWarning(l_thumbnails) << "JxlEncoderSetColorEncoding failed for" << ref.source;
         return false;
     }
 
@@ -120,7 +120,7 @@ write_thumbnail_blocking (
                                                    packed.data(),
                                                    bytes))
     {
-        qCWarning(l_thumbnails) << "JxlEncoderAddImageFrame failed for" << ref.source();
+        qCWarning(l_thumbnails) << "JxlEncoderAddImageFrame failed for" << ref.source;
         return false;
     }
 
@@ -145,7 +145,7 @@ write_thumbnail_blocking (
     }
 
     if (status != JXL_ENC_SUCCESS) {
-        qCWarning(l_thumbnails) << "JxlEncoderProcessOutput failed for" << ref.source();
+        qCWarning(l_thumbnails) << "JxlEncoderProcessOutput failed for" << ref.source;
         return false;
     }
 
@@ -180,8 +180,8 @@ thumbnail_hash_for_fs (
 {
     // at the file system level we need short names, no bijective encoding needed here
 
-    const QByteArray key = ref.source().toLocalFile().toUtf8()
-                          + ':' + QByteArray::number(qulonglong(ref.size()));
+    const QByteArray key = ref.source.toLocalFile().toUtf8()
+                          + ':' + QByteArray::number(qulonglong(ref.square_size));
 
     return QString::fromLatin1(
         QCryptographicHash::hash(key, QCryptographicHash::Md5).toHex());

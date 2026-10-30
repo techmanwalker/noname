@@ -14,21 +14,17 @@ struct cover_payload {
     explicit cover_payload (const QUrl &source_media_path, size_t square_size = 0); // genesis
     explicit cover_payload (const QString &base64url_payload); // build from base64url payload
 
-    QUrl source () const; // uri of the original media file
-    size_t size () const; // what resolution to load and store this cover in memory and thumbnail cache
-
     QUrl uri () const; // encoded payload cover_storage will use to resolve and scale the source media's cover
-
-    bool operator==(const cover_payload &) const = default;
 
     QString to_base64url () const;
 
-    private:
-        // what media file is it
-        QUrl m_source;
+    QUrl source; // uri of the original media file
 
-        // a square size of 0 means full resolution
-        size_t m_square_size {};
+    // a square size of 0 means full resolution
+    // what resolution to load and store this cover in memory and thumbnail cache
+    size_t square_size {};
+
+    bool operator==(const cover_payload &) const = default;
 };
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediatypes)
