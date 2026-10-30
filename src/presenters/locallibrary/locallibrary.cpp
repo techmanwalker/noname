@@ -63,16 +63,18 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             QStringList files_in_path = diskio::list_dir(dir_path, true);
 
             // filter only songs that don't exist already in found_dir.songs
+            QSet<QUrl> already_loaded;
+            already_loaded.reserve(target_dir.songs.size());
+            for (const Types::Song &existing_song : std::as_const(target_dir.songs)) {
+                already_loaded.insert(existing_song.source);
+            }
+
             QList<QUrl> not_yet_loaded;
             for (const QString &raw_source : files_in_path) {
                 QUrl one_source = QUrl::fromLocalFile(raw_source);
 
-                auto it = std::ranges::find_if(target_dir.songs, [&one_source](const Types::Song &existing_song) {
-                    return existing_song.source == one_source;
-                });
-
-                if (it == target_dir.songs.end()) {
-                    not_yet_loaded.append(one_source);
+                if (!already_loaded.contains(one_source)) {
+                    not_yet_loaded.append(std::move(one_source));
                 }
             }
 
@@ -95,23 +97,29 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
 
             //  re-resolve the target directory in case it has been modified in anyway while pointed_to remained unlocked
             auto did_execute = pointed_to<Types::Directory &>(
-                dir_index_to_refresh, [&songs](Types::Directory &target_dir) -> bool {
-                    target_dir.songs.reserve(songs.size());
+                dir_index_to_refresh,
+                [&songs](Types::Directory &target_dir) -> bool {
+                    target_dir.songs.reserve(target_dir.songs.size() + songs.size());
 
-                    // recheck if each track was truly not added yet; if so, overwrite it it
+                    // source -> position in target_dir.songs, kept in sync as we append
+                    QHash<QUrl, qsizetype> index_of;
+                    index_of.reserve(target_dir.songs.size() + songs.size());
+                    for (qsizetype i = 0; i < target_dir.songs.size(); ++i) {
+                        index_of.insert(target_dir.songs.at(i).source, i);
+                    }
+
+                    // recheck if each track was truly not added yet; if so, overwrite it
                     for (Types::Song &song : songs) {
                         // A song with empty source is considered invalid
                         if (!song.is_valid()) {
                             continue;
                         }
 
-                        auto it = std::ranges::find_if(target_dir.songs, [&song](const Types::Song &existing_song) {
-                            return existing_song.source == song.source;
-                        });
-
-                        if (it != target_dir.songs.end()) {
-                            *it = std::move(song);
+                        auto it = index_of.constFind(song.source);
+                        if (it != index_of.constEnd()) {
+                            target_dir.songs[it.value()] = std::move(song);
                         } else {
+                            index_of.insert(song.source, target_dir.songs.size());
                             target_dir.songs.append(std::move(song));
                         }
                     }
