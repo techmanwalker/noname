@@ -14,7 +14,7 @@ Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
 
 // covers::live: hot cache on memory right away to consume, already decoded and yet but cheap to decode
 
-class CoverRef;
+class cover_payload;
 
 namespace covers::live {
 
@@ -34,13 +34,13 @@ public:
     ~cover_storage(); // shutdown and pool drain
 
     // Save picture and return a generated UUID
-    bool store(const CoverRef &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
+    bool store(const cover_payload &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
     /*  Called by QtQuick to kick off an (async) image request; the actual
         resolution work runs on m_response_pool, off the GUI thread. */
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
 
-    bool is_cached (const CoverRef &ref);
+    bool is_cached (const cover_payload &ref);
 
     /*  Blocking resolution chain: memory cache -> disk cache -> decode from
     registered source. Called from a worker thread only

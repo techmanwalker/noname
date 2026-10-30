@@ -82,7 +82,7 @@ PlayerPresenterLI::recompute_lumas()
 {
     const QUrl source = playing->current_track_source();
 
-    const CoverRef ref(source, 256);
+    const cover_payload ref(source, 256);
     const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
 
     using namespace covers::luminance;

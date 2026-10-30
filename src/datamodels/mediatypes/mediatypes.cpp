@@ -90,14 +90,14 @@ Directory::is_valid () const
 
 }
 
-CoverRef::CoverRef (const QUrl &source_media_path, size_t square_size)
+cover_payload::cover_payload (const QUrl &source_media_path, size_t square_size)
     : m_source(source_media_path),
       m_square_size(square_size)
 {
 }
 
 QString
-CoverRef::encode_base64url() const
+cover_payload::to_base64url() const
 {
     if (m_source.isEmpty()) return QString();
 
@@ -107,42 +107,42 @@ CoverRef::encode_base64url() const
     // OmitTrailingEquals prevents padding characters ('=') which clutter the URL
     return QString::fromLatin1(payload.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 }
-
-CoverRef 
-CoverRef::decode_base64url(const QString &base64url_coverref)
+ 
+cover_payload::cover_payload(const QString &base64url_payload)
 {
-    if (base64url_coverref.isEmpty()) return CoverRef(QUrl());
+    if (base64url_payload.isEmpty()) return;
 
     const QByteArray payload = QByteArray::fromBase64(
-        base64url_coverref.toLatin1(), 
+        base64url_payload.toLatin1(), 
         QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals
     );
     
     const qsizetype sep_idx = payload.indexOf('|');
-    if (sep_idx == -1) return CoverRef(QUrl()); // Invalid format safeguard
+    if (sep_idx == -1) return; // Invalid format safeguard
 
     // Qt 6 idiomatic substring extraction
     const size_t size = payload.first(sep_idx).toULongLong();
     const QUrl url = QUrl::fromEncoded(payload.sliced(sep_idx + 1));
 
-    return CoverRef(url, size);
+    m_source = std::move(url);
+    m_square_size = size;
 }
 
 QUrl
-CoverRef::source () const
+cover_payload::source () const
 {
     return m_source;
 }
 
 size_t
-CoverRef::size() const
+cover_payload::size() const
 {
     return m_square_size;
 }
 
 QUrl
-CoverRef::uri () const
+cover_payload::uri () const
 {
-    const QString prolly_encoded = encode_base64url();
+    const QString prolly_encoded = to_base64url();
     return QUrl(covers::schema + (prolly_encoded.isEmpty() ? covers::default_cover_uri : prolly_encoded));
 }

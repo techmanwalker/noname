@@ -55,7 +55,7 @@ cover_storage::requestImageResponse(const QString &id, const QSize &requestedSiz
 
 bool
 cover_storage::store (
-    const CoverRef &ref,
+    const cover_payload &ref,
     const QVariant &cover_from_metadata,
     bool save_to_disk_cache
 )
@@ -69,7 +69,7 @@ cover_storage::store (
         return false;
     }
 
-    const QString &base64url_coverref = ref.encode_base64url();
+    const QString &base64url_coverref = ref.to_base64url();
 
     const qsizetype cost = img.sizeInBytes();
 
@@ -100,7 +100,7 @@ cover_storage::resolve_blocking (
     const QSize &requestedSize
 )
 {
-    CoverRef ref = CoverRef::decode_base64url(base64url_coverref);
+    cover_payload ref { base64url_coverref };
     if (ref.source().isEmpty()) return QImage();
 
     QImage img;
@@ -184,9 +184,9 @@ cover_storage::resolve_blocking (
 }
 
 bool
-cover_storage::is_cached(const CoverRef &ref)
+cover_storage::is_cached(const cover_payload &ref)
 {
-    const QString base64url_coverref = ref.encode_base64url();
+    const QString base64url_coverref = ref.to_base64url();
     // Route directly to the same shard
     const size_t shard_idx = qHash(base64url_coverref) % SHARD_COUNT;
     auto &shard = m_shards[shard_idx];

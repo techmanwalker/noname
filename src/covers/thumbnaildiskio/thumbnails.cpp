@@ -39,7 +39,7 @@ thumbnail_pool ()
     */
 bool
 write_thumbnail_blocking (
-    const CoverRef &ref,
+    const cover_payload &ref,
     const QImage &thumbnail
 )
 {
@@ -175,7 +175,7 @@ write_thumbnail_blocking (
 
 QString
 thumbnail_hash_for_fs (
-    const CoverRef &ref
+    const cover_payload &ref
 )
 {
     // at the file system level we need short names, no bijective encoding needed here
@@ -189,7 +189,7 @@ thumbnail_hash_for_fs (
 
 QString
 thumbnail_file_path (
-    const CoverRef &ref
+    const cover_payload &ref
 )
 {
     QString fs_file_hash = thumbnail_hash_for_fs(ref);
@@ -201,7 +201,7 @@ thumbnail_file_path (
 }
 
 bool thumbnail_file_exists(
-    const CoverRef &ref
+    const cover_payload &ref
 )
 {
     return QFile::exists(thumbnail_file_path(ref));
@@ -210,7 +210,7 @@ bool thumbnail_file_exists(
 // Read the file ~/.local/share/<project name>/thumbnails/<hash>.tga and decode it
 QImage
 fetch_thumbnail (
-    const CoverRef &ref
+    const cover_payload &ref
 )
 {
     const QString file_path = thumbnail_file_path(ref);
@@ -323,7 +323,7 @@ fetch_thumbnail (
 
 QFuture<void>
 write_thumbnail (
-    const CoverRef &ref,
+    const cover_payload &ref,
     QImage thumbnail
 )
 {
