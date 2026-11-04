@@ -30,16 +30,14 @@ ListView {
 
     // selection
 
-    property var selectedSources: []
-    property var additionalMenuActions: []
+    property list<url> selectedSources: []
+    property alias additionalMenuActions: songContextMenu.extraActions
 
     SongContextMenu {
         id: songContextMenu
         selectedUris: root.selectedSources
 
         onClearSelectionRequested: root.selectedSources = []
-
-        actions: defaultActions.concat(root.additionalMenuActions)
     }
 
     delegate: Song {

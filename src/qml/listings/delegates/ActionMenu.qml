@@ -10,21 +10,24 @@ T.Menu {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    // Array of { text: string, action: function }. action is called with no
-    // arguments on trigger — callers close over whatever context (selection,
-    // target item, etc.) their action needs.
-    property var actions: []
-    
+    // Qt's own action description: text, enabled, icon, shortcut, triggered().
+    // `actions` belong to the menu itself; `extraActions` come from whoever hosts it.
+    property list<T.Action> actions
+    property list<T.Action> extraActions
+
+    component ActionDelegate: ActionMenuItem {
+        required property T.Action modelData
+        action: modelData
+    }
 
     contentItem: Column {
         Repeater {
             model: control.actions
-
-            ActionMenuItem {
-                required property var modelData
-                text: modelData.text
-                onTriggered: modelData.action()
-            }
+            ActionDelegate {}
+        }
+        Repeater {
+            model: control.extraActions
+            ActionDelegate {}
         }
     }
 

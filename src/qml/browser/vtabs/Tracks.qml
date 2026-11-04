@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import Player.Browser
 import Player.Listings
@@ -85,9 +86,9 @@ ColumnLayout {
         }
 
         additionalMenuActions: [
-            {
-                text: qsTr("Play all"),
-                action: () => PlayQueue.respawnQueue(LocalLibrary.flattenedSources())
+            T.Action {
+                text: qsTr("Play all")
+                onTriggered: () => PlayQueue.respawnQueue(LocalLibrary.flattenedSources())
             }
         ]
     }

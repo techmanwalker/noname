@@ -1,29 +1,25 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Templates as T
 
+import Player.Listings
 import Player.PlayQueue
 
 ActionMenu {
     id: root
 
-    property var selectedUris: []
+    property list<url> selectedUris
 
     signal clearSelectionRequested ()
 
-    readonly property var defaultActions: [
-        {
-            text: qsTr("Add to play queue"),
-            action: () => {
-                if (root.selectedUris.length > 0) {
-                    PlayQueue.batchAppend(root.selectedUris)
-                }
-            }
+    actions: [
+        T.Action {
+            text: qsTr("Add to play queue")
+            onTriggered: PlayQueue.batchAppend(root.selectedUris)
         },
-        {
-            text: qsTr("Clear selection"),
-            action: () => {
-                root.clearSelectionRequested ()
-            }
+        T.Action {
+            text: qsTr("Clear selection")
+            onTriggered: root.clearSelectionRequested()
         }
     ]
 
@@ -32,6 +28,4 @@ ActionMenu {
             root.clearSelectionRequested ()
         }
     }
-
-    actions: defaultActions
 }

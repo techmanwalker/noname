@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import Player.Fullscreen
 import Player.Listings
@@ -208,9 +209,9 @@ Row {
                         }
 
                         additionalMenuActions: [
-                            {
-                                text: qsTr("Clear queue"),
-                                action: () => PlayQueue.clear()
+                            T.Action {
+                                text: qsTr("Clear queue")
+                                onTriggered: () => PlayQueue.clear()
                             }
                         ]
                     }

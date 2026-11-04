@@ -27,8 +27,8 @@ GridView {
 
     // selection
 
-    property var selectedSources: []
-    property var additionalMenuActions: []
+    property list<url> selectedSources: []
+    property alias additionalMenuActions: songContextMenu.extraActions
 
     clip: true
 
@@ -46,8 +46,6 @@ GridView {
         selectedUris: root.selectedSources
 
         onClearSelectionRequested: root.selectedSources = []
-
-        actions: defaultActions.concat(root.additionalMenuActions)
     }
 
     delegate: Item {
@@ -86,7 +84,7 @@ GridView {
                 root.songClicked(songItem)
             }
 
-            onCtrlClicked: {
+            onCtrlClicked: function () : void {
                 let sources = root.selectedSources
                 let idx = sources.indexOf(songItem.source)
                 
