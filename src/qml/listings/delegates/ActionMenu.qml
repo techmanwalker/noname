@@ -32,6 +32,5 @@ T.Menu {
         implicitWidth: 200
         implicitHeight: 40
         color: control.palette.window
-        border.color: control.palette.dark
     }
 }
