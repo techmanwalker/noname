@@ -26,11 +26,16 @@ QtObject {
         // since reads after a return are never tracked.
         void root.epoch;
 
-        // use the multiplier values background uses
-        let multiplier = background.lumaMultiplierAtCenter (bounds);
+        // qmlsc won't read a rect parameter, or pass it to a method, once any
+        // method call has happened. Copy the scalars out first and hand each
+        // call a fresh rect.
+        const x = bounds.x, y = bounds.y, w = bounds.width, h = bounds.height;
 
-        let m_backdrop = presenter.backdropLumaForRect(bounds) * multiplier;
-        let m_ring     = presenter.ringLumaForRect(bounds)     * multiplier;
+        // use the multiplier values background uses
+        let multiplier = background.lumaMultiplierAtCenter (Qt.rect(x, y, w, h));
+
+        let m_backdrop = presenter.backdropLumaForRect(Qt.rect(x, y, w, h)) * multiplier;
+        let m_ring     = presenter.ringLumaForRect(Qt.rect(x, y, w, h))     * multiplier;
 
         /*
         let background_area = background.width    * background.height
@@ -46,10 +51,10 @@ QtObject {
         if (log_item_name && log_item_name !== "undefined") {
             console.log(
                 "Light mode for " + log_item_name + ":\n"
-            +   "bounds: " + bounds + "\n"
-            +   "multiplier: " + multiplier.toString() + "\n"
-            +   "multiplied backdrop L: " + m_backdrop.toString() + "\n"
-            +   "multiplied ring L: " + m_ring.toString() + "\n"
+            +   "bounds: " + Qt.rect(x, y, w, h).toString() + "\n"
+            +   "multiplier: " + multiplier + "\n"
+            +   "multiplied backdrop L: " + m_backdrop + "\n"
+            +   "multiplied ring L: " + m_ring + "\n"
         //  +   "area ratio bounds/bg: " + bounds_background_ratio.toString() + "\n"
             +   "light mode picked: " + (did_pick_light ? "light" : "dark")
 
