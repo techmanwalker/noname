@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
-project(noname LANGUAGES CXX)
+project(noname
+    DESCRIPTION "Your immersive music player theater"
+    LANGUAGES CXX
+)
 
 # the project name is...
 add_compile_definitions(PROJECT_NAME="${PROJECT_NAME}")
@@ -746,3 +749,25 @@ option(ENABLE_QML_PROFILING "Enable QML debugging and profiling globally" OFF)
 if(ENABLE_QML_PROFILING)
     add_compile_definitions(QT_QML_DEBUG)
 endif()
+
+
+### Installation
+
+# the player single binary
+
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
+
+# the desktop entry
+
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/main/entry.desktop.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/entry.desktop"
+    @ONLY
+)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/entry.desktop"
+        DESTINATION "${CMAKE_INSTALL_FULL_DATADIR}/applications"
+        RENAME "${PROJECT_NAME}.desktop"
+)

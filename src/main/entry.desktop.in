@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=@PROJECT_NAME@
+Comment=@PROJECT_DESCRIPTION@
+Exec=@PROJECT_NAME@ %U
+Icon=folder-music-symbolic
+Terminal=false
+Categories=AudioVideo;Audio
+StartupNotify=true
+MimeType=audio/3gpp;audio/aac;audio/aifc;audio/amr;audio/flac;audio/m4a;audio/mp3;audio/mp4;audio/mpeg;audio/oga;audio/ogg;audio/opus;audio/vnd.rn-realaudio;audio/wav;audio/x-aac;audio/x-aiff;audio/x-flac;audio/x-m4a;audio/x-matroska;audio/x-mp3;audio/x-ms-wma;audio/x-musepack;audio/x-pn-realaudio;audio/x-speex;audio/x-opus;audio/x-wav;audio/x-webm
