@@ -70,8 +70,8 @@ PlayQueueLI::clear ()
 QFuture<void>
 PlayQueueLI::batch_append (const QList<QUrl> &sources)
 {
-    return song_factory::batch_extract(sources, {}).then(this, [this] (const QList<Types::Song> &to_append) {
-        m_d->sequence.batch_append(to_append);
+    return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Song> to_append) {
+        m_d->sequence.batch_append(std::move(to_append));
     });
 }
 
@@ -97,11 +97,11 @@ PlayQueueLI::respawn_queue (const QStringList &sources)
 }
 
 void
-PlayQueueLI::respawn_queue(const QList<Types::Song> &songs)
+PlayQueueLI::respawn_queue(QList<Types::Song> songs)
 {
     clear();
 
-    m_d->sequence.batch_append(songs);
+    m_d->sequence.batch_append(std::move(songs));
 }
 
 QPersistentModelIndex

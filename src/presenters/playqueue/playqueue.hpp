@@ -62,7 +62,7 @@ public:
 
     QFuture<void> spawn_queue (const QStringList &sources);
     QFuture<void> respawn_queue (const QStringList &sources) override;
-    void respawn_queue (const QList<Types::Song> &songs) override;
+    void respawn_queue (QList<Types::Song> songs) override;
 
 signals:
     void track_changed ();

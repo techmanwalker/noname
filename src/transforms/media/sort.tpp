@@ -36,7 +36,7 @@ sort_by (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool desc
 
     for (MediaType &item : list_to_sort) {
         // list_to_sort is our own local copy — move out of it rather than copying again
-        converted.append(MediaType { std::move(item) });
+        converted.append(std::move(item));
     }
 
     return converted;

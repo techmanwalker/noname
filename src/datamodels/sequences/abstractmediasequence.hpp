@@ -104,11 +104,12 @@ signals:
 
 protected:
     // Inherited models call these to manipulate the container
-    QPersistentModelIndex append(const Types::Any &item);
+    template <media_type T>
+    QPersistentModelIndex append(T item);
 
     template <media_sequence container>
     QList<QPersistentModelIndex>
-    batch_append(const container &items);
+    batch_append(container items);
 
     QFuture<void> progressive_batch_append (QList<QFuture<Types::Any>> futures);
 

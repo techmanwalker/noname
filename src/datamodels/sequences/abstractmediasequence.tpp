@@ -88,7 +88,7 @@ AbstractMediaSequence::find(FieldType MediaType::* member, const FieldType &need
 
 template <media_sequence container>
 QList<QPersistentModelIndex>
-AbstractMediaSequence::batch_append(const container &items)
+AbstractMediaSequence::batch_append(container items)
 {
        
     if (items.empty()) return {};
@@ -96,14 +96,14 @@ AbstractMediaSequence::batch_append(const container &items)
     std::vector<Types::Any> valid_items;
     valid_items.reserve(items.size());
 
-    for (const auto &item : items) {
+    for (auto &item : items) {
         if constexpr (std::is_same_v<std::decay_t<decltype(item)>, Types::Song>) {
             if (!item.is_valid()) {
                 continue;
             }
         }
 
-        valid_items.push_back(item);
+        valid_items.emplace_back(std::move(item));
     }
 
     if (valid_items.empty()) return {};
@@ -130,6 +130,13 @@ AbstractMediaSequence::batch_append(const container &items)
     emit count_changed();
 
     return indices;
+}
+
+template <media_type T>
+QPersistentModelIndex
+AbstractMediaSequence::append(T item)
+{
+    return batch_append(std::array<T, 1>{std::move(item)}).at(0);
 }
 
 template <media_type T>

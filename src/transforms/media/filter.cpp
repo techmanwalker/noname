@@ -106,7 +106,7 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
 }
 
 search_response
-MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
+MediaFilterLI::search (const QString &query, const QList<Types::Song> &song_list)
 {
     if (query.isEmpty()) {
         return {sort_by (&Types::Song::title, song_list), -1};

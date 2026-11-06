@@ -15,7 +15,7 @@ public:
     explicit MediaFilterLI();
 
     search_response search (const QString &query, QObject *sourceModel) override;
-    search_response search (const QString &query, QList<Types::Song> &song_list);
+    search_response search (const QString &query, const QList<Types::Song> &song_list);
 
 private:
 

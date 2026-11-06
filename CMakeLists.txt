@@ -497,6 +497,8 @@ target_link_libraries(playqueue
         songfactory # qml can drop songs to the play queue graphically, needs to read them
 
         mediatransforms
+        
+        rolecompiler
 )
 
 target_include_directories(playqueue

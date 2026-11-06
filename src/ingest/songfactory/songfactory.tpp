@@ -17,7 +17,7 @@ QList<QUrl> string_file_paths_to_qurllist (const sl &sources)
         local_file_paths.reserve(sources.size());
 
         for (const QString &source : sources) {
-            local_file_paths.append(QUrl::fromLocalFile(source));
+            local_file_paths.emplace_back(QUrl::fromLocalFile(source));
         }
 
         return local_file_paths;

@@ -83,12 +83,6 @@ AbstractMediaSequence::read_role(qsizetype row, const QByteArray &role) const
     return data(index(static_cast<int>(row)), role_n.value());
 }
 
-QPersistentModelIndex
-AbstractMediaSequence::append(const Types::Any &item)
-{
-    return batch_append(QList<Types::Any> {item}).at(0);
-}
-
 void
 AbstractMediaSequence::remove(size_t index)
 {
@@ -112,9 +106,9 @@ AbstractMediaSequence::progressive_batch_append (QList<QFuture<Types::Any>> futu
     completion_signals.reserve(futures.size());
 
     for (QFuture<Types::Any> &pending : futures) {
-        completion_signals.append(
-            pending.then(this, [this](const Types::Any &result) {
-                    append(result);
+        completion_signals.emplace_back(
+            pending.then(this, [this](Types::Any result) {
+                    append(std::move(result));
                 })
                 .onFailed(this, [] {
                     qCWarning(l_mediasequences) << "Progressive batch append: one item's future failed; skipping it.";

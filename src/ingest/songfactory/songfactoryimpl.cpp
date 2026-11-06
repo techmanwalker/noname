@@ -60,7 +60,7 @@ song_factory_impl::extract(const QUrl &source, attributes a)
                 qCDebug(l_songfactory) << "Extraction promise for source \"" << source << "\" returned an invalid song.";
                 qCInfo(l_songfactory)  << "File path " << source << " is not a media file.";
             }
-            promise.addResult(result);
+            promise.addResult(std::move(result));
         } else {
             qCDebug(l_songfactory) << "Extraction promise was canceled for source \"" << source << "\".";
         }
@@ -75,7 +75,7 @@ song_factory_impl::progressive_extract (const QList<QUrl> &sources, attributes a
     requests.reserve(sources.size());
 
     for (const QUrl &source : sources) {
-        requests.append(song_factory_impl::extract(source, a));
+        requests.emplace_back(song_factory_impl::extract(source, a));
     }
 
     return requests;
@@ -92,13 +92,12 @@ song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
         requests.begin(),
         requests.end()
     )
-    .then([](const QList<QFuture<Types::Song>> &finished) {
+    .then([](QList<QFuture<Types::Song>> finished) {
         QList<Types::Song> extracted_songs_ready_to_append;
 
         extracted_songs_ready_to_append.reserve(finished.size());
 
-        for (const auto &f : finished) {
-
+        for (QFuture<Types::Song> &f : finished) {
             // ignore cancelled future instead of throwing the entire batch
             if (f.isCanceled()) {
                 continue;
@@ -106,7 +105,7 @@ song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
 
             // truly exceptional metadata extraction failures
             try {
-                extracted_songs_ready_to_append.append(f.result());
+                extracted_songs_ready_to_append.append(f.takeResult());
             } catch (const std::exception &e) {
                 qCWarning(l_songfactory) << "Skipping one song in batch: extraction failed with" << e.what();
             } catch (...) {

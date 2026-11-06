@@ -42,7 +42,7 @@ read_lines (const QString &file)
         QString line = in.readLine().trimmed();
 
         if (!line.isEmpty()) {
-            lines.append(line);
+            lines.append(std::move(line));
         }
     }
 

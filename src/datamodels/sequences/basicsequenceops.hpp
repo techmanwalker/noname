@@ -31,9 +31,10 @@ class BasicSequenceOps
     }
 
 public:
-    QPersistentModelIndex        append       (const T &item)         { return self().AbstractMediaSequence::append(item); }
-    QList<QPersistentModelIndex> batch_append (const QList<T> &items) { return self().AbstractMediaSequence::batch_append(items); }
-    QList<T>                     items        () const                { return self().AbstractMediaSequence::template items<T>(); }
+    QPersistentModelIndex        append       (T item)          { return self().AbstractMediaSequence::append(std::move(item)); }
+    template <media_sequence container>
+    QList<QPersistentModelIndex> batch_append (container items) { return self().AbstractMediaSequence::batch_append(std::move(items)); }
+    QList<T>                     items        () const          { return self().AbstractMediaSequence::template items<T>(); }
 };
 
 // Pulls the typed facade into a leaf's scope. Both bases declare append/batch_append/items,

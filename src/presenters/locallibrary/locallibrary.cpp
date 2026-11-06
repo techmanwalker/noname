@@ -41,9 +41,9 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
         qCDebug(l_mediasequences) << "No snapshot in memory for this directory. Loading...";
         
         dir_index_to_refresh = 
-            append(Types::Directory (
+            append(Types::Directory {
                 dir_path
-            ));
+            });
 
         dir_index_opt = dir_index_to_refresh.row();
     }

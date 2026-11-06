@@ -15,9 +15,10 @@ class PlaylistSequence : public AbstractMediaSequence,
 public:
     explicit PlaylistSequence(QObject *parent = nullptr);
 
+    template <media_sequence container>
     explicit PlaylistSequence(
-        const QList<Types::Song> &songs,
-        QObject                  *parent = nullptr
+        container songs,
+        QObject  *parent = nullptr
     );
 
     // both bases declare these names, so the leaf picks the typed ones
@@ -26,5 +27,7 @@ public:
     using AbstractMediaSequence::clear;
 
     /// clear and repopulate this playlist in one step
-    void respawn_list (const QList<Types::Song> &new_list);
+    void respawn_list (QList<Types::Song> new_list);
 };
+
+#include "playlistsequence.tpp"

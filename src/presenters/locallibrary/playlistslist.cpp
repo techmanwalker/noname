@@ -43,7 +43,7 @@ PlaylistsListLI::read_conf_and_load ()
             };
 
             // load into memory
-            append(playlist);
+            append(std::move(playlist));
         }));
     }
 
