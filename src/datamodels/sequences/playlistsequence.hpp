@@ -16,8 +16,8 @@ public:
     explicit PlaylistSequence(QObject *parent = nullptr);
 
     explicit PlaylistSequence(
-        QList<Types::Song>  songs,
-        QObject            *parent = nullptr
+        const QList<Types::Song> &songs,
+        QObject                  *parent = nullptr
     );
 
     // both bases declare these names, so the leaf picks the typed ones

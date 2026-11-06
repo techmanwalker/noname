@@ -28,7 +28,7 @@ namespace {
 
 struct AVIOCtxDeleter {
     void operator()(AVIOContext *ctx) const {
-        if (ctx) { av_freep(&ctx->buffer); avio_context_free(&ctx); }
+        if (ctx) { av_free(ctx->buffer); avio_context_free(&ctx); }
     }
 };
 struct AVFormatCtxDeleter {
@@ -84,6 +84,14 @@ is_full_range(AVColorRange range, AVPixelFormat fmt)
            fmt == AV_PIX_FMT_YUVJ444P || fmt == AV_PIX_FMT_YUVJ440P;
 }
 
+// FFmpeg exposes flag fields as plain int; test them as unsigned so the
+// bitwise operation never touches a signed operand.
+constexpr bool
+has_flag (int value, int flag)
+{
+    return (static_cast<unsigned>(value) & static_cast<unsigned>(flag)) != 0;
+}
+
 using format_ctx_ptr = std::unique_ptr<AVFormatContext, AVFormatCtxDeleter>;
 
 // Opens a local file and probes its streams. Null on any failure.
@@ -116,7 +124,7 @@ find_video_stream (const AVFormatContext *fmt_ctx)
 {
     for (unsigned i = 0; i < fmt_ctx->nb_streams; ++i) {
         AVStream *st = fmt_ctx->streams[i];
-        const bool is_cover_art = (st->disposition & AV_DISPOSITION_ATTACHED_PIC) != 0;
+        const bool is_cover_art = has_flag(st->disposition, AV_DISPOSITION_ATTACHED_PIC);
 
         if (st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !is_cover_art)
             return st;
@@ -148,13 +156,15 @@ sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
     if (!sws)
         return {};
 
+    constexpr int fixed_one = 0x10000;   // 1.0 in swscale's 16.16 fixed point
+
     // The caller states what the source really is. The defaults reproduce the
     // old forced JPEG behavior (decoders don't always report yuvj* formats).
     sws_setColorspaceDetails(sws,
                              sws_getCoefficients(sws_colorspace_for(colorimetry.space, src_h)),
                              is_full_range(colorimetry.range, src_fmt) ? 1 : 0,
                              sws_getCoefficients(SWS_CS_ITU709), 0,
-                             0, 1 << 16, 1 << 16);
+                             0, fixed_one, fixed_one);   // brightness, contrast, saturation
 
     uint8_t *dst_data[4]     = {};
     int      dst_linesize[4] = {};
@@ -169,7 +179,7 @@ sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
 
     QImage img(dst_w, dst_h, out_format);
     if (img.isNull()) {
-        av_freep(&dst_data[0]);
+        av_free(dst_data[0]);
         return {};
     }
     const size_t row = std::min<size_t>(img.bytesPerLine(), dst_linesize[0]);
@@ -177,8 +187,8 @@ sws_convert_to_qimage (const uint8_t *const *src_data, const int *src_linesize,
     for (int y = 0; y < dst_h; ++y)
         std::memcpy(img.scanLine(y),
                     dst_data[0] + static_cast<ptrdiff_t>(y) * dst_linesize[0],
-                    row);
-    av_freep(&dst_data[0]);
+                                        row);
+    av_free(dst_data[0]);
     return img;
 }
 
@@ -364,7 +374,7 @@ decode_video_frame_at_fraction (const QString &local_path, double fraction,
 
     for (int n = 0; n < max_packets && av_read_frame(fmt_ctx.get(), pkt.get()) >= 0; ++n) {
         const bool is_keyframe = pkt->stream_index == stream->index &&
-                                 (pkt->flags & AV_PKT_FLAG_KEY);
+                                 has_flag(pkt->flags, AV_PKT_FLAG_KEY);
         bool got_frame = false;
 
         if (is_keyframe) {

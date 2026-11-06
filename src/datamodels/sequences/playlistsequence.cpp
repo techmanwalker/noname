@@ -6,7 +6,7 @@ PlaylistSequence::PlaylistSequence(QObject *parent)
 {}
 
 PlaylistSequence::PlaylistSequence(
-    QList<Types::Song> songs,
+    const QList<Types::Song> &songs,
     QObject *parent
 ) 
     : AbstractMediaSequence(parent, container_roles)

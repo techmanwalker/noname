@@ -58,11 +58,12 @@ write_thumbnail_blocking (
     const size_t bytes  = pixels * 4;
 
     // Tightly packed RGBA8888 buffer
+    const size_t row_bytes = size_t(width) * 4;
     std::vector<uint8_t> packed(bytes);
     for (int y = 0; y < height; ++y) {
-        std::memcpy(packed.data() + y * width * 4,
+        std::memcpy(packed.data() + size_t(y) * row_bytes,
                     rgba.constScanLine(y),
-                    size_t(width) * 4);
+                    row_bytes);
     }
 
     auto enc = JxlEncoderMake(nullptr);
@@ -127,7 +128,7 @@ write_thumbnail_blocking (
     JxlEncoderCloseInput(enc.get());
 
     std::vector<uint8_t> compressed;
-    compressed.resize(64 * 1024);   // start with 64 KiB, grow as needed
+    compressed.resize(size_t{64} * 1024);   // start with 64 KiB, grow as needed
 
     uint8_t *next_out = compressed.data();
     size_t avail_out = compressed.size();
@@ -315,7 +316,7 @@ fetch_thumbnail (
     // Force deep copy
     QImage image(pixels.data(),
                  int(info.xsize), int(info.ysize),
-                 int(info.xsize) * 4,
+                 qsizetype(info.xsize) * 4,
                  pixelformat_qimage);
 
     return image.copy();
@@ -327,7 +328,7 @@ write_thumbnail (
     QImage thumbnail
 )
 {
-    return QtConcurrent::run(thumbnail_pool(), [ref, thumbnail] {
+    return QtConcurrent::run(thumbnail_pool(), [ref, thumbnail = std::move(thumbnail)] {
         write_thumbnail_blocking(ref, thumbnail);
     });
 }

@@ -9,7 +9,7 @@
 
 PlaylistsListLI::PlaylistsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
     : AbstractMediaSequence(parent, container_roles),
-      cm(confmanager)
+      cm(std::move(confmanager))
 {}
 
 QFuture<void>
@@ -43,7 +43,7 @@ PlaylistsListLI::read_conf_and_load ()
             };
 
             // load into memory
-            append(std::move(playlist));
+            append(playlist);
         }));
     }
 

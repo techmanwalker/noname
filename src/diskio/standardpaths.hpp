@@ -7,7 +7,7 @@ Q_DECLARE_LOGGING_CATEGORY(l_standardpaths)
 
 namespace standardpaths {
 
-enum class standard_dirs {
+enum class standard_dirs : std::uint8_t {
     configuration,
     thumbnails,
     playlists

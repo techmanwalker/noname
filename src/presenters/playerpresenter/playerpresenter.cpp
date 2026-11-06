@@ -29,10 +29,10 @@ PlayerPresenterLI::PlayerPresenterLI(
     std::shared_ptr<WindowGeometry> wgeometry
 )
     : QObject(parent),
-      cm(confmanager),
-      playing(controller),
-      queue(pqueue),
-      wi(wgeometry)
+      cm(std::move(confmanager)),
+      playing(std::move(controller)),
+      queue(std::move(pqueue)),
+      wi(std::move(wgeometry))
 {
     connect(this, &PlayerPresenterLI::cover_changed,
             this, &PlayerPresenterLI::recompute_lumas);
@@ -109,7 +109,7 @@ PlayerPresenterLI::recompute_lumas()
     qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
     */
 
-    m_cover_luma_rings = std::move(rings);
+    m_cover_luma_rings = rings;
     m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);
 
     m_cover_pondered_luma = cover_pondered_luma;
@@ -190,26 +190,11 @@ PlayerPresenterLI::set_volume(quint8 volume) const
 void
 PlayerPresenterLI::raise_lower_volume(qint8 step) const
 {
-    if (step >  100) step =  100;
-    if (step < -100) step = -100;
+    // volume() + step is computed in int (integer promotion): range -128..327, no overflow
+    const int target_volume = volume() + step;
 
-    // allows counting from to -100 to 200 without letting the step data type hold too much
-    
-    qint16 target_volume = static_cast<qint16>(volume()) + static_cast<qint16>(step);
-
-    // the audioengine already clamps the target percent but needs qint8
-
-    quint8 clamped_volume;
-
-    if (target_volume > 100) {
-        clamped_volume = 100;
-    } else if (target_volume < 0) {
-        clamped_volume = 0;
-    } else [[likely]] {
-        clamped_volume = static_cast<quint8>(target_volume);
-    }
-
-    set_volume(std::move(clamped_volume));
+    // the audioengine already clamps the target percent but needs quint8
+    set_volume(static_cast<quint8>(std::clamp(target_volume, 0, 100)));
 }
 
 void

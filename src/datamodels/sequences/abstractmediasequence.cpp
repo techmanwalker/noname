@@ -20,7 +20,7 @@ public:
 
 AbstractMediaSequence::AbstractMediaSequence(
     QObject *parent,
-    std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> role_defs
+    const std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> &role_defs
 )
     : QAbstractListModel(parent),
       m_d(std::make_unique<AbstractMediaSequencePrivate>(role_defs))
@@ -93,11 +93,11 @@ void
 AbstractMediaSequence::remove(size_t index)
 {
     if (static_cast<qsizetype>(index) >= rowCount()) return;
-    beginRemoveRows({}, index, index);
+    beginRemoveRows({}, static_cast<int>(index), static_cast<int>(index));
 
     {
         QWriteLocker locker (&m_d->m_lock);
-        m_d->m_items.erase(m_d->m_items.begin() + index);
+        m_d->m_items.erase(m_d->m_items.begin() + static_cast<int>(index));
     }
 
     endRemoveRows();
@@ -196,7 +196,7 @@ AbstractMediaSequence::__item_pointed_to_unlocked (const QPersistentModelIndex &
 
     if (!row.has_value()) return std::nullopt;
 
-    return std::ref(m_d->m_items[row.value()]);
+    return std::ref(m_d->m_items[static_cast<qsizetype>(row.value())]);
 }
 
 std::optional<size_t>

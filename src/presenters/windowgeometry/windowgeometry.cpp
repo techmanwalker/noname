@@ -7,7 +7,7 @@ using configuration::conf_file_type;
 
 WindowGeometryLI::WindowGeometryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager) 
     : QObject(parent),
-      cm(confmanager)
+      cm(std::move(confmanager))
 {
 
     const auto lines = cm->read_lines(conf_file_type::window_geometry);

@@ -124,7 +124,7 @@ managerLI::__write_lines_to_disk_unlocked (conf_file_type type, const QStringLis
 {
     // no direct access to the "this" in case it dies
 
-    auto deferred_write = [](conf_file_type type, const QStringList lines) -> bool {
+    auto deferred_write = [](conf_file_type type, const QStringList &lines) -> bool {
         QUrl file_uri = file(type);
         if (file_uri.isEmpty()) return false;
 

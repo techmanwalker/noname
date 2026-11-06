@@ -197,6 +197,6 @@ LocalLibraryLI::paths ()
 
 LocalLibraryLI::LocalLibraryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
     : AbstractMediaSequence (parent, container_roles),
-      cm(confmanager)
+      cm(std::move(confmanager))
 {
 }

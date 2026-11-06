@@ -22,14 +22,14 @@ using namespace syrinc::audio;
 using namespace syrinc::timestamps;
 
 // decoupled
-struct __syrinc_lyric {
+struct syrinc_lyric_ {
     syrinc::timestamps::timestamp ts;
     QString text;
 };
 
 static QVariant
-// project __syrinc_lyric ­-> public Lyric
-to_lyric_gadget(const __syrinc_lyric &x)
+// project syrinc_lyric_ ­-> public Lyric
+to_lyric_gadget(const syrinc_lyric_ &x)
 {
     return QVariant::fromValue(Lyric{
         static_cast<quint64>(x.ts.as_ms()),
@@ -37,7 +37,7 @@ to_lyric_gadget(const __syrinc_lyric &x)
     });
 }
 
-static const role_definitions<__syrinc_lyric> lyrics_roles = {
+static const role_definitions<syrinc_lyric_> lyrics_roles = {
     // ask to_lyric_gadget what to return
     { "model", to_lyric_gadget },
     { "modelData", to_lyric_gadget }
@@ -51,11 +51,11 @@ struct LyricLookup {
 };
 
 LyricLookup
-lookup_lyrics_at(const std::vector<__syrinc_lyric> &lyrics, quint64 ts_ms)
+lookup_lyrics_at(const std::vector<syrinc_lyric_> &lyrics, quint64 ts_ms)
 {
     auto it = std::upper_bound(
-        lyrics.begin(), lyrics.end(), timestamp(ts_ms),
-        [](const timestamp &pos, const __syrinc_lyric &line) {
+        lyrics.begin(), lyrics.end(), timestamp(static_cast<int64_t>(ts_ms)),
+        [](const timestamp &pos, const syrinc_lyric_ &line) {
             return pos.as_ms() < line.ts.as_ms();
         });
 
@@ -76,8 +76,8 @@ class LyricsManifestPrivate {
 public:
     LyricsManifestPrivate() : m_roles(lyrics_roles) {}
 
-    std::vector<__syrinc_lyric> m_lyrics;
-    compiled_role_set<__syrinc_lyric> m_roles;
+    std::vector<syrinc_lyric_> m_lyrics;
+    compiled_role_set<syrinc_lyric_> m_roles;
     mutable QReadWriteLock m_lock;
 
     QFuture<filelines> read_from_metadata_tag(const QString &source) {
@@ -89,7 +89,7 @@ public:
             std::string nativeString = source.toStdString();
             return get_audio_lyrics(nativeString);
         }).then([](filelines extracted_lines) {
-            return process::process_lyrics(extracted_lines, {
+            return process::process_lyrics(std::move(extracted_lines), {
                 .dropmetadata=true,
                 .unwrap=true,
             });
@@ -101,7 +101,7 @@ public:
 LyricsManifestLI::LyricsManifestLI(QObject *parent, std::shared_ptr<audio_engine> position_tracker)
     : QAbstractListModel(parent),
       m_d(std::make_unique<LyricsManifestPrivate>()),
-      ae(position_tracker)
+      ae(std::move(position_tracker))
 {
 }
 
@@ -150,7 +150,7 @@ LyricsManifestLI::current_lines() const
 
     // serialize the logical lyrics back to .lrc only to print it back
     // utilizes a const ref to strictly avoid copying
-    for (const __syrinc_lyric &single_timestamp_line : m_d->m_lyrics) {
+    for (const syrinc_lyric_ &single_timestamp_line : m_d->m_lyrics) {
         lrc_lines.emplace_back(
             "[" + single_timestamp_line.ts.as_string() + "] " 
             + single_timestamp_line.text.toStdString());
@@ -163,8 +163,8 @@ QFuture<void>
 LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 {
     return m_d->read_from_metadata_tag(source).then(
-        [](filelines lines) {
-            std::vector<__syrinc_lyric> decoupled_lines;
+        [](const filelines &lines) {
+            std::vector<syrinc_lyric_> decoupled_lines;
             decoupled_lines.reserve(lines.size());
 
             for (const std::string &line : lines) {
@@ -192,7 +192,7 @@ LyricsManifestLI::repopulate_with_lyrics_for_file(const QString &source)
 
             return decoupled_lines;
         }
-    ).then(this, [this](std::vector<__syrinc_lyric> lines_to_add) {
+    ).then(this, [this](std::vector<syrinc_lyric_> lines_to_add) {
         beginResetModel();
 
         {

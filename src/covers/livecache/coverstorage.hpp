@@ -51,7 +51,7 @@ public:
 
 private:
 
-    static constexpr size_t SHARD_COUNT = 16;
+    static constexpr qsizetype SHARD_COUNT = 16;
     std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;
 
     QThreadPool m_response_pool; // dedicated so cover decoding never queues behind (or blocks) song_factory's metadata scan

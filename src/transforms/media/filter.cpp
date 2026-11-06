@@ -24,7 +24,7 @@ public:
     std::shared_ptr<Transliterator> translit;
 
     MediaFilterLIPrivate (decltype(translit) transliterator)
-        : translit(transliterator) {}
+        : translit(std::move(transliterator)) {}
 };
 
 namespace {
@@ -112,7 +112,7 @@ MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
         return {sort_by (&Types::Song::title, song_list), -1};
     }
 
-    using rankable_item = std::pair<size_t, double>;
+    using rankable_item = std::pair<qsizetype, double>;
     std::vector<rankable_item> rankable;
 
     // Clean query once using the local transliterator instance
@@ -139,7 +139,7 @@ MediaFilterLI::search (const QString &query, QList<Types::Song> &song_list)
 
     // Map the ranked results back to the original song objects
     QList<Types::Song> matching_songs;
-    matching_songs.reserve(rankable.size());
+    matching_songs.reserve(static_cast<qsizetype>(rankable.size()));
 
     for (const rankable_item &ranked : rankable) {
         matching_songs.append(song_list.at(ranked.first));

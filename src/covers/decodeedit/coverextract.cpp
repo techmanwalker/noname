@@ -61,7 +61,7 @@ make_thumbnail (const QUrl &file, const QSize &requested_size)
         return {};
     }
 
-    const QImage frame = decode::decode_video_frame_at_fraction(
+    QImage frame = decode::decode_video_frame_at_fraction(
         file.toLocalFile(), thumbnail_position, pixelformat_qimage);
 
     if (frame.isNull()) {

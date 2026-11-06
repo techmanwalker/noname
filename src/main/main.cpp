@@ -139,7 +139,7 @@ main (int argc, char ** argv)
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
 
-    first_track.then([&pp](Types::Song first) {
+    first_track.then([&pp](const Types::Song &first) {
         if (!first.is_valid()) return;
 
         // if ae failed to play this song, this will fail too

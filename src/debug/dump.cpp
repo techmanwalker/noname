@@ -4,6 +4,7 @@
 #include <QMetaProperty>
 #include <QMetaSequence>
 #include <QVariant>
+#include <qtypes.h>
 
 namespace
 {
@@ -26,7 +27,7 @@ dump_variant (
     const QString &name,
     const QVariant &value,
     bool expand,
-    int depth
+    qsizetype depth
 )
 {
     const QString pad (depth * 2, u' ');

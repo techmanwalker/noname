@@ -61,7 +61,7 @@ class AbstractMediaSequence : public QAbstractListModel
 
 public:
     // rolecompiler.hpp dropped by utilizing std::function directly
-    explicit AbstractMediaSequence(QObject *parent, std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> role_defs);
+    explicit AbstractMediaSequence(QObject *parent, const std::vector<std::pair<QByteArray, std::function<QVariant(const Types::Any &)>>> &role_defs);
     ~AbstractMediaSequence() override;
 
     int                    rowCount(const QModelIndex &parent = QModelIndex())        const override;

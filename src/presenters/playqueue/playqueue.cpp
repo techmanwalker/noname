@@ -22,7 +22,7 @@ public:
     PlayQueueLIPrivate(
         std::shared_ptr<audio_engine> controller
     ) :
-        playing(controller)
+        playing(std::move(controller))
     {}
 };
 
@@ -70,8 +70,8 @@ PlayQueueLI::clear ()
 QFuture<void>
 PlayQueueLI::batch_append (const QList<QUrl> &sources)
 {
-    return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Song> to_append) {
-        m_d->sequence.batch_append(std::move(to_append));
+    return song_factory::batch_extract(sources, {}).then(this, [this] (const QList<Types::Song> &to_append) {
+        m_d->sequence.batch_append(to_append);
     });
 }
 
@@ -153,7 +153,10 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 bool
 PlayQueueLI::switch_to(size_t idx, bool play_afterwards)
 {
-    return switch_to(index(idx, idx), play_afterwards);
+    // rowCount() is a non-negative int, so once idx is below it the cast to int is lossless
+    if (idx >= static_cast<size_t>(rowCount())) return false;
+
+    return switch_to(index(static_cast<int>(idx), 0), play_afterwards);
 }
 
 void
@@ -162,7 +165,7 @@ PlayQueueLI::switch_to (const QUrl &source){
         this,
         [this](Types::Song song) {
             if (song.is_valid()) {
-                switch_to(song, true);
+                switch_to(std::move(song), true);
             }
         }
     );

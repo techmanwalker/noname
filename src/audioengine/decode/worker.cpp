@@ -509,7 +509,7 @@ audio_decode_worker::rewind_in_place(uint64_t position_ms, std::optional<uint64_
 bool
 audio_decode_worker::seek_and_reset (const audio_ring_buffer::rt_quiesce &quiesce, uint64_t position_ms)
 {
-    const int64_t seek_target = av_rescale_q(position_ms, {1, 1000},
+    const int64_t seek_target = av_rescale_q(static_cast<int64_t>(position_ms), {1, 1000},
                                              fmt_ctx->streams[audio_stream_index]->time_base);
 
     if (av_seek_frame(fmt_ctx, audio_stream_index, seek_target, AVSEEK_FLAG_BACKWARD) < 0)
