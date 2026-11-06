@@ -66,11 +66,7 @@ public:
     Q_ENUM(PlaybackState)
 
     // Getters
-    QString title() const override;
-    QString artist() const override;
-    QString album() const override;
-    QUrl    cover() const override;
-    quint64 duration_ms() const override;
+    const Types::Song & current_track () const override;
     quint64 position_ms() const override;
     quint8 volume() const override;
     PlaybackState playback_state() const override;
@@ -112,11 +108,7 @@ public:
     
 signals:
     // Needed signals for QML to be reactive
-    void title_changed();
-    void artist_changed();
-    void album_changed();
-    void cover_changed();
-    void duration_changed();
+    void track_changed();
     void volume_changed();
     void playback_state_changed();
     void media_loaded_changed();
@@ -137,7 +129,7 @@ private:
     std::atomic_bool m_slider_pressed {false};
 
     // do not access these directly from outside, these are guarded
-    Types::Song m_current_track_metadata;
+    Types::Song m_current_track;
     
     covers::luminance::cover_rings m_cover_luma_rings;
     covers::luminance::table_luma  m_cover_luma_table;

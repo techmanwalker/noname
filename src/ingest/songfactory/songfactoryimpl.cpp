@@ -151,6 +151,13 @@ song_factory_impl::execute_extraction(QPromise<Types::Song> &promise, attributes
     song.title  = to_qstring(tag->title());
     song.artist = to_qstring(tag->artist());
     song.album  = to_qstring(tag->album());
+    song.genre  = to_qstring(tag->genre());
+    song.year   = tag->year();
+
+    song.channels    = props->channels();
+    song.sample_rate = props->sampleRate();
+
+    song.bitrate_kbps = props->bitrate();
 
     if (song.title.isEmpty()) {
         song.title = QFileInfo(m_source.fileName()).baseName();

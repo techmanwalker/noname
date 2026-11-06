@@ -634,6 +634,8 @@ target_link_libraries(fullscreenplayer
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::ShaderTools
+
+        mediatypes
 )
 
 # The Start Page - your entry to the experience

@@ -34,7 +34,7 @@ PlayerPresenterLI::PlayerPresenterLI(
       queue(std::move(pqueue)),
       wi(std::move(wgeometry))
 {
-    connect(this, &PlayerPresenterLI::cover_changed,
+    connect(this, &PlayerPresenterLI::track_changed,
             this, &PlayerPresenterLI::recompute_lumas);
 
     // load volume from conf file
@@ -54,11 +54,7 @@ PlayerPresenterLI::PlayerPresenterLI(
 }
 
 // Getters block
-QString PlayerPresenterLI::title()         const { return m_current_track_metadata.title;        }
-QString PlayerPresenterLI::artist()        const { return m_current_track_metadata.artist;       }
-QString PlayerPresenterLI::album()         const { return m_current_track_metadata.album;        }
-QUrl    PlayerPresenterLI::cover()         const { return m_current_track_metadata.cover.uri();  }
-quint64 PlayerPresenterLI::duration_ms()   const { return m_current_track_metadata.duration;     }
+const Types::Song & PlayerPresenterLI::current_track() const { return m_current_track; }
 
 quint64 PlayerPresenterLI::position_ms()     const { return playing->current_position_ms();  }
 quint8  PlayerPresenterLI::volume()          const { return playing->current_volume();       }
@@ -165,7 +161,7 @@ PlayerPresenterLI::relative_seek(qint64 ms) const
 {
     // upper clamp only, the engine clamps for step resulting in negative position
     quint64 current_position = position_ms();
-    quint64 track_duration = duration_ms();
+    quint64 track_duration = m_current_track.duration;
     qint64 ms_abs = std::abs(ms);
 
     // back/forward stepping by ms would wrap around or misbehave
@@ -275,24 +271,20 @@ PlayerPresenterLI::handle_track_changed()
 
     // if not matched, this is a race condition or someone forgot to update this
     Q_ASSERT_X (
-        playing->current_track_source() == m_current_track_metadata.source,
+        playing->current_track_source() == m_current_track.source,
         "PlayerPresenterLI::handle_track_changed",
         std::string(
             std::string("The player presenter current track metadata was not updated. ") +
             std::string("audio_engine reports the track playing is ") + 
             playing->current_track_source().toString().toStdString() +
             std::string(" while the presenter internal struct is ") +
-            m_current_track_metadata.source.toString().toStdString()
+            m_current_track.source.toString().toStdString()
 
         ).data()
     );
     
     // Suddenly awake the QML declarative tree
-    emit title_changed();
-    emit artist_changed();
-    emit album_changed();
-    emit cover_changed();
-    emit duration_changed();
+    emit track_changed();
     emit media_loaded_changed();
 }
 
@@ -301,7 +293,7 @@ PlayerPresenterLI::acknowledge_current_song(const Types::Song &metadata)
 {
     if (metadata.source != playing->current_track_source()) { return false; }
 
-    m_current_track_metadata = metadata;
+    m_current_track = metadata;
 
     handle_track_changed();
 

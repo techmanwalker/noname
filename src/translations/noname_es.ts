@@ -75,7 +75,7 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="212"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="214"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -84,7 +84,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="221"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="223"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -169,7 +169,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="52"/>
+        <location filename="../qml/listings/Playlist.qml" line="50"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -231,7 +231,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Shortcuts.qml" line="45"/>
+        <location filename="../qml/listings/Shortcuts.qml" line="43"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -268,12 +268,12 @@
         <translation type="vanished">Agregar a la cola de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="15"/>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="17"/>
         <source>Add to play queue</source>
         <translation>Agregar a la cola</translation>
     </message>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="23"/>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="21"/>
         <source>Clear selection</source>
         <translation>Limpiar selección</translation>
     </message>
@@ -285,30 +285,83 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/SongGrid.qml" line="72"/>
+        <location filename="../qml/listings/SongGrid.qml" line="70"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
 </context>
 <context>
+    <name>TrackDetails</name>
+    <message>
+        <source>Format</source>
+        <translation type="vanished">Formato</translation>
+    </message>
+    <message>
+        <source>Genre</source>
+        <translation type="vanished">Género</translation>
+    </message>
+    <message>
+        <source>Year</source>
+        <translation type="vanished">Año</translation>
+    </message>
+    <message>
+        <source>Channels</source>
+        <translation type="vanished">Canales</translation>
+    </message>
+    <message>
+        <source>Bitrate</source>
+        <translation type="vanished">Tasa de bits</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="22"/>
+        <source>&lt;b&gt;Format:&lt;/b&gt; %1</source>
+        <extracomment>%1 is the audio file format, e.g. FLAC</extracomment>
+        <translation>&lt;b&gt;Formato:&lt;/b&gt; %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="28"/>
+        <source>&lt;b&gt;Genre:&lt;/b&gt; %1</source>
+        <extracomment>%1 is the music genre</extracomment>
+        <translation>&lt;b&gt;Género:&lt;/b&gt; %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="34"/>
+        <source>&lt;b&gt;Year:&lt;/b&gt; %1</source>
+        <extracomment>%1 is the release year</extracomment>
+        <translation>&lt;b&gt;Año:&lt;/b&gt; %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="40"/>
+        <source>&lt;b&gt;Channels:&lt;/b&gt; %1</source>
+        <extracomment>%1 is the number of audio channels</extracomment>
+        <translation>&lt;b&gt;Canales:&lt;/b&gt; %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="46"/>
+        <source>&lt;b&gt;Bitrate:&lt;/b&gt; %1 kbps</source>
+        <extracomment>%1 is the bitrate in kilobits per second</extracomment>
+        <translation type="unfinished">&lt;b&gt;Tasa de bits:&lt;/b&gt; %1 kbps</translation>
+    </message>
+</context>
+<context>
     <name>Tracks</name>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="49"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="50"/>
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="49"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="50"/>
         <source>Search results</source>
         <translation>Resultados de búsqueda</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="66"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="67"/>
         <source>The track you are looking for is likely not in your Library.</source>
         <translation>La pista que buscas probablemente no está en tu biblioteca.</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="89"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="90"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>

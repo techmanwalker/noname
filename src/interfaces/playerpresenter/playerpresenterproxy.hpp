@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mediatypes.hpp"
 #include "playerpresenter-in.hpp"
 
 #include <QObject>
@@ -24,11 +25,13 @@ public:
     };
     Q_ENUM(PlaybackState)
 
-    Q_PROPERTY(QString title       READ title       NOTIFY titleChanged  FINAL)
-    Q_PROPERTY(QString artist      READ artist      NOTIFY artistChanged FINAL)
-    Q_PROPERTY(QString album       READ album       NOTIFY albumChanged  FINAL)
-    Q_PROPERTY(QUrl    cover       READ cover       NOTIFY coverChanged)
-    Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY durationChanged)
+    Q_PROPERTY(Types::Song currentTrack READ current_track NOTIFY trackChanged)
+
+    Q_PROPERTY(QString title       READ title       NOTIFY trackChanged FINAL)
+    Q_PROPERTY(QString artist      READ artist      NOTIFY trackChanged FINAL)
+    Q_PROPERTY(QString album       READ album       NOTIFY trackChanged FINAL)
+    Q_PROPERTY(QUrl    cover       READ cover       NOTIFY trackChanged)
+    Q_PROPERTY(quint64 duration_ms READ duration_ms NOTIFY trackChanged)
 
     Q_PROPERTY(quint8  volume      READ volume      WRITE  set_volume      NOTIFY volumeChanged)
 
@@ -49,12 +52,8 @@ public:
     {
         // an interface cannot feature the implementation signals, need to be referred to by name
         if (auto *concrete = dynamic_cast<QObject*>(m_presenter.get())) {
-            connect(concrete, SIGNAL(title_changed()),         this, SIGNAL(titleChanged()));
-            connect(concrete, SIGNAL(artist_changed()),        this, SIGNAL(artistChanged()));
-            connect(concrete, SIGNAL(album_changed()),         this, SIGNAL(albumChanged()));
-            connect(concrete, SIGNAL(cover_changed()),         this, SIGNAL(coverChanged()));
+            connect(concrete, SIGNAL(track_changed()),         this, SIGNAL(trackChanged()));
             connect(concrete, SIGNAL(lumas_changed()),         this, SIGNAL(lumasChanged()));
-            connect(concrete, SIGNAL(duration_changed()),      this, SIGNAL(durationChanged()));
             connect(concrete, SIGNAL(volume_changed()),        this, SIGNAL(volumeChanged()));
             connect(concrete, SIGNAL(playback_state_changed()), this, SIGNAL(playbackStateChanged()));
             connect(concrete, SIGNAL(media_loaded_changed()),   this, SIGNAL(mediaLoadedChanged()));
@@ -66,10 +65,11 @@ public:
         s_injectedPresenter = presenter; // Ref count incremented, caller's instance unaffected
     }
 
-    QString title()            const { return m_presenter ?  m_presenter->title()            : QString(); }
-    QString artist()           const { return m_presenter ?  m_presenter->artist()           : QString(); }
-    QString album()            const { return m_presenter ?  m_presenter->album()            : QString(); }
-    QUrl    cover()            const { return m_presenter ?  m_presenter->cover()            : QUrl();    }
+    Types::Song current_track () const { 
+        if (!m_presenter) return Types::Song {};
+        
+        return m_presenter->current_track();
+    }
 
     double cover_nuclear_luma() const { return m_presenter ?  m_presenter->cover_nuclear_luma() : 0.5;       }
     double cover_centric_luma() const { return m_presenter ?  m_presenter->cover_centric_luma() : 0.5;       }
@@ -78,9 +78,14 @@ public:
 
     double cover_pondered_luma() const     { return m_presenter ? m_presenter->cover_pondered_luma()  : 0.0; }
 
-    quint64 duration_ms()      const { return m_presenter ?  m_presenter->duration_ms()      : 0;         }
-    quint8  volume()           const { return m_presenter ?  m_presenter->volume()           : 0;         }
-    bool    is_media_loaded()  const { return m_presenter && m_presenter->is_media_loaded();              }
+    QString title()            const { return m_presenter ?  m_presenter->current_track().title     : QString(); }
+    QString artist()           const { return m_presenter ?  m_presenter->current_track().artist    : QString(); }
+    QString album()            const { return m_presenter ?  m_presenter->current_track().album     : QString(); }
+    QUrl    cover()            const { if (!m_presenter) return {}; return m_presenter->current_track().cover.uri();  }
+    quint64 duration_ms()      const { return m_presenter ?  m_presenter->current_track().duration  : 0;         }
+
+    quint8  volume()           const { return m_presenter ?  m_presenter->volume()                    : 0;   }
+    bool    is_media_loaded()  const { return m_presenter && m_presenter->is_media_loaded();                 }
 
     PlaybackState playback_state() const {
         if (!m_presenter) return PlaybackState::stopped;
@@ -116,11 +121,7 @@ public:
     }
 
 signals:
-    void titleChanged();
-    void artistChanged();
-    void albumChanged();
-    void coverChanged();
-    void durationChanged();
+    void trackChanged();
     void positionChanged();
     void volumeChanged();
     void playbackStateChanged();

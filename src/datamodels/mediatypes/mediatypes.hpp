@@ -41,6 +41,13 @@ namespace Types {
         Q_PROPERTY(QUrl source MEMBER source)
         Q_PROPERTY(QUrl cover READ coveruri)
 
+        Q_PROPERTY(QString fileformat MEMBER fileformat)
+        Q_PROPERTY(QString genre MEMBER genre)
+        Q_PROPERTY(uint year MEMBER year)
+        Q_PROPERTY(int channels MEMBER channels)
+        Q_PROPERTY(int sample_rate MEMBER sample_rate)
+        Q_PROPERTY(int bitrate_kbps MEMBER bitrate_kbps)
+
         // Pretty printers for QML
         Q_PROPERTY(QString duration_mmss READ duration_mmss)
 
@@ -51,6 +58,15 @@ namespace Types {
         QString  album;
         quint64  duration {0}; // ms
         QUrl     source; // to the audio path
+
+        // Extra metadata, intended to only show on ui when non empty
+        QString fileformat;
+        QString genre;
+        uint    year; // taglib does not support bce time :/
+        int     channels;
+        int     sample_rate;
+        int     bitrate_kbps;
+
 
         // ready to print in qml
         QString duration_mmss () const;

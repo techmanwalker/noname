@@ -5,6 +5,7 @@ import QtQuick.Templates as T
 
 import Player.Fullscreen
 import Player.Listings
+import Player.MediaTypes
 import Player.Presenter
 import Player.PlayQueue
 import Player.Primitives
@@ -167,11 +168,12 @@ Row {
             // _s = "the stack"
             // _c = "the content"
             // _p = "the placeholder"
+            // _d = "the current track details"
 
                 StackLayout {
                     id: nextQueue_s
 
-                    visible: !root.immersive && (PlayQueue.count !== 1 || root.stateModel.title === "")
+                    visible: !root.immersive
 
                     Layout.fillHeight: true
                     Layout.preferredWidth: (leftCol.width * .6) + (rightCol.scrollBarWidth * 6)
@@ -181,7 +183,7 @@ Row {
                     Layout.topMargin: root.songCoverHeight * .4
 
                     // set whatever source component is correct right at boot
-                    currentIndex: PlayQueue.count === 0 ? 1 : 0
+                    currentIndex: PlayQueue.count === 0 ? 1 : PlayQueue.count === 1 ? 2 : 0
 
                     Playlist {
                         id: nextQueue_c
@@ -241,6 +243,17 @@ Row {
 
                         color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
                     }
+
+                    TrackDetails {
+                        id: nextQueue_d
+                        leftPadding: metadataContainer.Layout.leftMargin
+
+                        model: root.stateModel.currentTrack
+
+                        lightMode: Light.lightModeForBounds(nextQueue_dBounds.bounds, root.background, PlayerPresenter)
+
+                        spacing: 10
+                    }
                 }
 
             SceneRect {
@@ -253,7 +266,12 @@ Row {
                 target: nextQueue_p
             }
 
-                    SceneRect {
+            SceneRect {
+                id: nextQueue_dBounds
+                target: nextQueue_d
+            }
+
+            SceneRect {
                 id: metadataContainerBounds
                 target: metadataContainer
             }

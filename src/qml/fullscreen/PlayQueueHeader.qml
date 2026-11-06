@@ -33,7 +33,7 @@ Column {
         font.weight: Font.DemiBold
         font.pointSize: 20
 
-        color: root.lightMode ? "black" : "white"
+        color: root.lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
 
         visible: root.title.length > 0
 
@@ -54,6 +54,8 @@ Column {
         width: parent.width
         elide: Text.ElideRight
 
+        color: root.lightMode ? Theme.light.texts.secondaryText : Theme.dark.texts.secondaryText
+
         Binding on color {
             value: "black"
             when: root.lightMode
@@ -67,10 +69,7 @@ Column {
 
         visible: root.title.length > 0 && root.album.length > 0
 
-        Binding on color {
-            value: "black"
-            when: root.lightMode
-        }
+        color: root.lightMode ? Theme.light.texts.secondaryText : Theme.dark.texts.secondaryText
 
         width: parent.width
         elide: Text.ElideRight

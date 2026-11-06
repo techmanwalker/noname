@@ -23,11 +23,7 @@ public:
 
     virtual ~PlayerPresenter () = default;
 
-    virtual QString title() const = 0;
-    virtual QString artist() const = 0;
-    virtual QString album() const = 0;
-    virtual QUrl   cover() const = 0;
-    virtual quint64 duration_ms() const = 0;
+    virtual const Types::Song & current_track () const = 0;
     virtual quint64 position_ms() const = 0;
     virtual quint8 volume() const = 0;
     virtual PlaybackState playback_state() const = 0;
