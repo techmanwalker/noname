@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <qreadwritelock.h>
 
 Q_LOGGING_CATEGORY(l_mediasequences, "mediasequences")
 
@@ -211,6 +212,8 @@ AbstractMediaSequence::__row_pointed_to_unlocked(const QPersistentModelIndex &id
 QStringList
 AbstractMediaSequence::sources () const
 {
+    QReadLocker locker (&m_d->m_lock);
+    
     // read sources for the private items list as is
     return sources<>(m_d->m_items);
 }
