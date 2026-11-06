@@ -60,6 +60,8 @@ cover_storage::store (
     bool save_to_disk_cache
 )
 {
+    if (disabled) return false;
+    
     if (!cover_from_metadata.canConvert<QImage>()) {
         return false;
     }
