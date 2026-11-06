@@ -75,7 +75,7 @@ song_factory_impl::progressive_extract (const QList<QUrl> &sources, attributes a
     requests.reserve(sources.size());
 
     for (const QUrl &source : sources) {
-        requests.emplace_back(song_factory_impl::extract(source, a));
+        requests.append(song_factory_impl::extract(source, a));
     }
 
     return requests;

@@ -1,10 +1,11 @@
 #pragma once
 
 #include "serialize.hpp"
+#include <qjsonarray.h>
 
 namespace debug {
 
-template <convertible_to_any_t MediaType>
+template <media_type MediaType>
 QJsonObject
 serialize (const QFuture<MediaType> &future_unit)
 {
@@ -21,21 +22,20 @@ serialize (const QFuture<MediaType> &future_unit)
     return out;
 }
 
-template <convertible_to_any_t MediaType>
+template <media_sequence container>
 QJsonArray
-serialize(const QList<MediaType> &media)
+serialize (const container &media)
 {
-    QList<Types::Any> any_list;
-    any_list.reserve(media.size());
+    QJsonArray out;
 
-    for (const Types::Any &i : media) {
-        any_list.append(i);
+    for (const auto &unit : media) {
+        out.append(serialize(unit));
     }
 
-    return serialize(any_list);
+    return out;
 }
 
-template <convertible_to_any_t MediaType>
+template <media_type MediaType>
 QJsonArray
 serialize(const QList<QFuture<MediaType>> &futures)
 {
@@ -43,6 +43,26 @@ serialize(const QList<QFuture<MediaType>> &futures)
 
     for (const auto &future : futures) {
         out.append(serialize(future));
+    }
+
+    return out;
+}
+
+template <media_type T>
+QJsonObject
+serialize (const T &unit)
+{
+    QJsonObject out;
+
+    if (std::holds_alternative<Types::Song>(unit)) {
+        out = serialize(std::get<Types::Song>(unit));
+    }
+    if (std::holds_alternative<Types::Album>(unit)) {
+        out = serialize(std::get<Types::Album>(unit));
+    }
+
+    if (std::holds_alternative<Types::Directory>(unit)) {
+        out = serialize(std::get<Types::Directory>(unit));
     }
 
     return out;

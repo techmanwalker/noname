@@ -27,7 +27,8 @@ public:
     using AbstractMediaSequence::clear;
 
     /// clear and repopulate this playlist in one step
-    void respawn_list (QList<Types::Song> new_list);
+    template <media_sequence container>
+    void respawn_list (container new_list);
 };
 
 #include "playlistsequence.tpp"

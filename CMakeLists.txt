@@ -282,6 +282,7 @@ add_library(debugtools STATIC
 target_link_libraries(debugtools
     PRIVATE
         mediatypes
+        mediasequences
 )
 
 target_include_directories(debugtools

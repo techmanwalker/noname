@@ -7,7 +7,6 @@
 
 #include <cstddef>
 
-
 // A recipe that tells the cover storage hot cache how to resolve a cover.
 // This is a payload factory.
 struct cover_payload {
@@ -133,3 +132,7 @@ namespace Types {
 
     using Any = std::variant<Types::Song, Types::Album, Types::Playlist, Types::Directory>;
 }
+
+template <typename T>
+concept media_type =
+    std::convertible_to<std::remove_cvref_t<T>, Types::Any>;

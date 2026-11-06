@@ -117,7 +117,7 @@ PlayQueueLI::playhead ()
 void
 PlayQueueLI::switch_to(const Types::Song &song, bool play_afterwards)
 {
-    m_d->sequence.respawn_list({song});
+    m_d->sequence.respawn_list(std::array<Types::Song, 1>{song});
     m_d->playing->load(items()[0]);
 
     if (play_afterwards) {

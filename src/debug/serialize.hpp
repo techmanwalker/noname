@@ -1,15 +1,12 @@
 #pragma once
 
+#include "mediaconcepts.hpp"
 #include "mediatypes.hpp"
 
 #include <QFuture>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <type_traits>
-
-template <typename T>
-concept convertible_to_any_t = std::is_convertible_v<T, Types::Any>;
 
 namespace debug {
     void print (const QLoggingCategory &cat, const QJsonValue &val);
@@ -17,20 +14,20 @@ namespace debug {
     QJsonObject serialize(const Types::Song &song);
     QJsonObject serialize(const Types::Album &album);
     QJsonObject serialize(const Types::Directory &dir);
-    QJsonObject serialize(const Types::Any &unit);
+    template <media_type T>
+    QJsonObject serialize(const T &unit);
 
     QJsonArray serialize(const std::vector<std::string> &lines);
 
-    template <convertible_to_any_t MediaType>
+    template <media_type MediaType>
     QJsonObject serialize (const QFuture<MediaType> &future_unit);
 
     QJsonArray serialize(const QList<QUrl> &uris);
-    QJsonArray serialize(const QList<Types::Any> &media);
 
-    template <convertible_to_any_t MediaType>
-    QJsonArray serialize(const QList<MediaType> &media);
+    template <media_sequence container>
+    QJsonArray serialize(const container &media);
 
-    template <convertible_to_any_t MediaType>
+    template <media_type MediaType>
     QJsonArray serialize(const QList<QFuture<MediaType>> &futures);
 }
 

@@ -1,16 +1,14 @@
 #pragma once
 
+#include "mediatypes.hpp"
 #include "sort.hpp"
 
 namespace MediaTransforms {
 
-template <typename FieldType, typename MediaType>
+template <typename FieldType, media_type MediaType>
 requires (
-    std::is_convertible_v<MediaType, Types::Any>
-&&  (
-        std::is_convertible_v<FieldType, QString>
-    ||  std::is_convertible_v<FieldType, quint64>
-    )
+    std::is_convertible_v<FieldType, QString>
+||  std::is_convertible_v<FieldType, quint64>
 )
 QList<MediaType>
 sort_by (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending)

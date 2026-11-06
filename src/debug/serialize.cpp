@@ -3,8 +3,6 @@
 
 #include <QLoggingCategory>
 
-#include <variant>
-
 QJsonObject
 debug::serialize (const Types::Song &song)
 {
@@ -59,25 +57,6 @@ debug::serialize (const Types::Directory &dir)
     return out;
 }
 
-QJsonObject
-debug::serialize (const Types::Any &unit)
-{
-    QJsonObject out;
-
-    if (std::holds_alternative<Types::Song>(unit)) {
-        out = serialize(std::get<Types::Song>(unit));
-    }
-    if (std::holds_alternative<Types::Album>(unit)) {
-        out = serialize(std::get<Types::Album>(unit));
-    }
-
-    if (std::holds_alternative<Types::Directory>(unit)) {
-        out = serialize(std::get<Types::Directory>(unit));
-    }
-
-    return out;
-}
-
 QJsonArray
 debug::serialize (const std::vector<std::string> &lines)
 {
@@ -99,18 +78,6 @@ debug::serialize (const QList<QUrl> &uris)
         out.append(uri.toString());
     }
     
-    return out;
-}
-
-QJsonArray
-debug::serialize (const QList<Types::Any> &media)
-{
-    QJsonArray out;
-
-    for (const auto &unit : media) {
-        out.append(serialize(unit));
-    }
-
     return out;
 }
 
