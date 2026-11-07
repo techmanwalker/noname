@@ -62,10 +62,10 @@ namespace Types {
         // Extra metadata, intended to only show on ui when non empty
         QString fileformat;
         QString genre;
-        uint    year; // taglib does not support bce time :/
-        int     channels;
-        int     sample_rate;
-        int     bitrate_kbps;
+        uint    year {0}; // taglib does not support bce time :/
+        int     channels {0};
+        int     sample_rate {0};
+        int     bitrate_kbps {0};
 
 
         // ready to print in qml
