@@ -31,6 +31,8 @@ cover_storage::cover_storage()
     }
 
     m_response_pool.setMaxThreadCount(QThread::idealThreadCount());
+    m_response_pool.setExpiryTimeout(30000);
+    m_response_pool.setThreadPriority(QThread::Priority::LowPriority);
 }
 
 cover_storage::~cover_storage ()
@@ -127,7 +129,7 @@ cover_storage::requestImageResponse(const QString &id, const QSize &requestedSiz
 QFuture<QImage>
 cover_storage::resolve(const QUrl &media_source, const QSize &requestedSize)
 {
-    return QtConcurrent::run([this, media_source, requestedSize]() {
+    return QtConcurrent::run(&m_response_pool, [this, media_source, requestedSize]() {
         return resolve_blocking(media_source, requestedSize);
     });
 }

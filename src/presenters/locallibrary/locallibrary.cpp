@@ -5,6 +5,7 @@
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"
 #include "songfactory.hpp"
+#include <malloc.h>
 
 QList<Types::Song>
 LocalLibraryLI::flattened () const
@@ -175,6 +176,8 @@ LocalLibraryLI::snapshot_known_directories ()
             ft::known_music_directories
         )
     ).then(this, [this]() {
+        // trim up the massive thread memory burden created by the extraction
+        malloc_trim(0);
         emit refreshFinished();
     });
 }
