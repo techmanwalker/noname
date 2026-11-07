@@ -3,8 +3,10 @@
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
 #include <QTranslator>
+
 #include <algorithm>
 #include <iterator>
+#include <malloc.h>
 #include <memory>
 
 #include <CLI/CLI.hpp>
@@ -42,6 +44,8 @@ int
 main (int argc, char ** argv)
 {
     // main executable
+    mallopt(M_MMAP_THRESHOLD, 128 * 1024);   // big buffers always mmap, so free() returns them to the OS
+    mallopt(M_ARENA_MAX, 2);
 
     QGuiApplication app(argc, argv);
 
