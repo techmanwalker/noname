@@ -8,10 +8,12 @@
 #include "playerpresenter-in.hpp"
 #include "windowgeometry-in.hpp"
 
+#include <QFuture>
+#include <QImage>
 #include <QLoggingCategory>
 #include <QObject>
-#include <QTimer>
 #include <QString>
+#include <QTimer>
 #include <QUrl>
 
 #include <atomic>
@@ -137,6 +139,10 @@ private:
     covers::luminance::cover_rings m_cover_luma_rings;
     covers::luminance::table_luma  m_cover_luma_table;
     double m_cover_pondered_luma = 0.5;
+
+    // latest recompute_lumas() request; older ones are cancelled/ignored
+    QFuture<QImage> m_lumas_future;
+    quint64 m_lumas_epoch = 0;
 
     double luma_of_ring (covers::luminance::luma_types ring) const;
 };

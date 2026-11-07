@@ -79,7 +79,17 @@ double PlayerPresenterLI::cover_pondered_luma() const { return m_cover_pondered_
 void
 PlayerPresenterLI::recompute_lumas()
 {
-    cp->resolve(playing->current_track_source(), {256, 256}).then(this, [this](QImage thumbnail) {
+    // Last call wins: kill the previous request (best effort) and bump the epoch
+    // so that whatever it still delivers is discarded.
+    m_lumas_future.cancel();
+    const quint64 epoch = ++m_lumas_epoch;
+
+    m_lumas_future = cp->resolve(playing->current_track_source(), {256, 256});
+
+    m_lumas_future.then(this, [this, epoch](QImage thumbnail) {
+        // A newer recompute_lumas() was issued while this one was in flight.
+        if (epoch != m_lumas_epoch) { return; }
+
         using namespace covers::luminance;
         using enum luma_types;
 
