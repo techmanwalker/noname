@@ -4,10 +4,23 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QStandardPaths>
-
-#include <cstddef>
+#include <qurl.h>
 
 Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
+
+QByteArray
+toBase64Url (const QUrl &uri)
+{
+    return uri.toEncoded().toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+}
+
+QUrl
+fromBase64Url (const QByteArray &base64url)
+{
+    return QUrl::fromEncoded(
+        QByteArray::fromBase64(base64url, QByteArray::Base64UrlEncoding)
+    );
+}
 
 namespace {
 
@@ -70,16 +83,22 @@ Song::is_valid () const
     return !source.isEmpty();
 }
 
+QUrl
+Song::coveruri() const
+{
+    return covers::schema + source_base64();
+}
+
 QString
 Song::duration_mmss () const
 {
     return printable_time(duration);
 }
 
-QUrl
-Song::coveruri () const 
+QByteArray
+Song::source_base64() const
 {
-    return cover.uri();
+    return toBase64Url(source);
 }
 
 bool
@@ -88,46 +107,4 @@ Directory::is_valid () const
     return !path.isEmpty();
 }
 
-}
-
-cover_payload::cover_payload (const QUrl &source_media_path, size_t square_size)
-    : source(source_media_path),
-      square_size(square_size)
-{
-}
-
-QString
-cover_payload::to_base64url() const
-{
-    if (source.isEmpty()) return QString();
-
-    // Serialize as: "size|url"
-    const QByteArray payload = QByteArray::number(square_size) + '|' + source.toEncoded();
-    
-    // OmitTrailingEquals prevents padding characters ('=') which clutter the URL
-    return QString::fromLatin1(payload.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
-}
- 
-cover_payload::cover_payload(const QString &base64url_payload)
-{
-    if (base64url_payload.isEmpty()) return;
-
-    const QByteArray payload = QByteArray::fromBase64(
-        base64url_payload.toLatin1(), 
-        QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals
-    );
-    
-    const qsizetype sep_idx = payload.indexOf('|');
-    if (sep_idx == -1) return; // Invalid format safeguard
-
-    // Qt 6 idiomatic substring extraction
-    source = QUrl::fromEncoded(payload.sliced(sep_idx + 1));
-    square_size = payload.first(sep_idx).toULongLong();
-}
-
-QUrl
-cover_payload::uri () const
-{
-    const QString prolly_encoded = to_base64url();
-    return QUrl(covers::schema + (prolly_encoded.isEmpty() ? covers::default_cover_uri : prolly_encoded));
 }

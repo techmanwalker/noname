@@ -169,9 +169,6 @@ song_factory_impl::execute_extraction(QPromise<Types::Song> &promise, attributes
         return {};
     }
 
-    // create the cover reference
-    song.cover = cover_payload (m_source, a.crop_and_resize);
-
     if (promise.isCanceled()) {
         return {};
     }

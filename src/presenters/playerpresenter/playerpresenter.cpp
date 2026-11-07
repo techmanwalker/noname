@@ -9,6 +9,7 @@
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
 
+#include "src/interfaces/coverstorage/coverstorage-in.hpp"
 #include "thumbnails.hpp"
 
 #include <QImage>
@@ -26,13 +27,15 @@ PlayerPresenterLI::PlayerPresenterLI(
     std::shared_ptr<configuration::manager> confmanager,
     std::shared_ptr<audio_engine> controller,
     std::shared_ptr<PlayQueue> pqueue,
-    std::shared_ptr<WindowGeometry> wgeometry
+    std::shared_ptr<WindowGeometry> wgeometry,
+    std::shared_ptr<cover_storage_in> coverprovider
 )
     : QObject(parent),
       cm(std::move(confmanager)),
       playing(std::move(controller)),
       queue(std::move(pqueue)),
-      wi(std::move(wgeometry))
+      wi(std::move(wgeometry)),
+      cp(std::move(coverprovider))
 {
     connect(this, &PlayerPresenterLI::track_changed,
             this, &PlayerPresenterLI::recompute_lumas);
@@ -76,41 +79,38 @@ double PlayerPresenterLI::cover_pondered_luma() const { return m_cover_pondered_
 void
 PlayerPresenterLI::recompute_lumas()
 {
-    const QUrl source = playing->current_track_source();
+    cp->resolve(playing->current_track_source(), {256, 256}).then(this, [this](QImage thumbnail) {
+        using namespace covers::luminance;
+        using enum luma_types;
 
-    const cover_payload ref(source, 256);
-    const QImage thumbnail = covers::disk::fetch_thumbnail(ref);
+        covers::luminance::cover_rings rings;
+        ring_of(rings, nuclear) = percentile_luminance(thumbnail, 65, 0.00, 0.15);
+        ring_of(rings, centric) = percentile_luminance(thumbnail, 60, 0.15, 0.60);
+        ring_of(rings, midring) = percentile_luminance(thumbnail, 60, 0.60, 0.80);
+        ring_of(rings, borders) = percentile_luminance(thumbnail, 70, 0.80, 1.00);
 
-    using namespace covers::luminance;
-    using enum luma_types;
+        double cover_pondered_luma = covers::luminance::pondered_luma(rings);
 
-    covers::luminance::cover_rings rings;
-    ring_of(rings, nuclear) = percentile_luminance(thumbnail, 65, 0.00, 0.15);
-    ring_of(rings, centric) = percentile_luminance(thumbnail, 60, 0.15, 0.60);
-    ring_of(rings, midring) = percentile_luminance(thumbnail, 60, 0.60, 0.80);
-    ring_of(rings, borders) = percentile_luminance(thumbnail, 70, 0.80, 1.00);
+        /*
+        constexpr double precision = 17;
 
-    double cover_pondered_luma = covers::luminance::pondered_luma(rings);
+        using covers::luminance::luma_types;
+        
+        qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(ring_of(rings, nuclear).value, 'f', precision);
+        qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(ring_of(rings, centric).value, 'f', precision);
+        qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(ring_of(rings, midring).value, 'f', precision);
+        qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(ring_of(rings, borders).value, 'f', precision);
 
-    /*
-    constexpr double precision = 17;
+        qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
+        */
 
-    using covers::luminance::luma_types;
-    
-    qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(ring_of(rings, nuclear).value, 'f', precision);
-    qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(ring_of(rings, centric).value, 'f', precision);
-    qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(ring_of(rings, midring).value, 'f', precision);
-    qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(ring_of(rings, borders).value, 'f', precision);
+        m_cover_luma_rings = rings;
+        m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);
 
-    qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
-    */
+        m_cover_pondered_luma = cover_pondered_luma;
 
-    m_cover_luma_rings = rings;
-    m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);
-
-    m_cover_pondered_luma = cover_pondered_luma;
-
-    emit lumas_changed();
+        emit lumas_changed();
+    });
 }
 
 double

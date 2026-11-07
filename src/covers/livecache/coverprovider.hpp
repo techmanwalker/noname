@@ -6,10 +6,6 @@
 #include <QVariant>
 #include <memory>
 
-// fwd
-class cover_payload;
-
-
 namespace covers::live {
 
 // fwd
@@ -26,7 +22,7 @@ public:
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
 
     // Exposed forwarding calls
-    bool store(const cover_payload &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
+    bool store(const QUrl &media_source, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
 private:
     std::shared_ptr<covers::live::cover_storage> m_real;

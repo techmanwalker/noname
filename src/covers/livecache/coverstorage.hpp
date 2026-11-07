@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QCache>
+#include <QFuture>
 #include <QLoggingCategory>
 #include <QMutex>
 #include <QPointer>
@@ -10,11 +11,11 @@
 #include <QThreadPool>
 #include <memory>
 
+#include "coverstorage-in.hpp"
+
 Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
 
 // covers::live: hot cache on memory right away to consume, already decoded and yet but cheap to decode
-
-class cover_payload;
 
 namespace covers::live {
 
@@ -25,7 +26,7 @@ struct cache_shard {
 };
 
 // Enables loading embedded thumbnails to memory.
-class cover_storage : public QQuickAsyncImageProvider
+class cover_storage : public QQuickAsyncImageProvider, public cover_storage_in
 {
     
 public:
@@ -34,22 +35,36 @@ public:
     ~cover_storage(); // shutdown and pool drain
 
     // Save picture and return a generated UUID
-    bool store(const cover_payload &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
+    bool store(const QUrl &media_source, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
     /*  Called by QtQuick to kick off an (async) image request; the actual
         resolution work runs on m_response_pool, off the GUI thread. */
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
 
-    bool is_cached (const cover_payload &ref);
+    bool is_cached (const QUrl &media_source, QSize size);
 
     /*  Blocking resolution chain: memory cache -> disk cache -> decode from
     registered source. Called from a worker thread only
     (cover_image_response::run()) — never the GUI thread. */
-    QImage resolve_blocking(const QString &base64url_coverref, const QSize &requestedSize);
+    QImage resolve_blocking(const QUrl &media_source, const QSize &requestedSize);
 
     bool disabled = false; // quickly respond with empty QImages effectively disabling responses
 
+    QFuture<QImage> resolve (const QUrl &media_source, const QSize &requestedSize) override;
+
 private:
+    // Where a (media_source, size) pair lives in the memory cache. The only place that hashes the
+    // pair and picks the shard, so a lookup can never look in a shard the store didn't write to.
+    struct cache_slot {
+        cache_shard &shard;
+        QString      key;
+    };
+    cache_slot slot_for (const QUrl &media_source, const QSize &size);
+
+    // The three places a cover can come from, cheapest first. A miss is a null QImage.
+    QImage lookup_memory (const QUrl &media_source, const QSize &size);
+    QImage lookup_disk   (const QUrl &media_source, const QSize &size);
+    QImage lookup_source (const QUrl &media_source);
 
     static constexpr qsizetype SHARD_COUNT = 16;
     std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;
@@ -95,7 +110,7 @@ class cover_resolve_task : public QRunnable
 {
 public:
     cover_resolve_task(covers::live::cover_storage *storage,
-                       QString id, QSize size,
+                       QByteArray id, QSize size,
                        std::shared_ptr<cover_response_state> state,
                        QPointer<cover_image_response> response,
                        mailbox_ptr mailbox);
@@ -104,7 +119,7 @@ public:
 
 private:
     covers::live::cover_storage          *m_storage;
-    QString                               m_id;
+    QByteArray                            m_id;
     QSize                                 m_size;
     std::shared_ptr<cover_response_state> m_state;
     QPointer<cover_image_response>        m_response;

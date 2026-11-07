@@ -81,12 +81,4 @@ lanczos_resize(const QImage &image, size_t width, size_t height)
                                  static_cast<int>(width), static_cast<int>(height), SWS_LANCZOS,
                                  av_format_for_qimage(pixelformat_qimage), pixelformat_qimage);
 }
-
-QImage
-lanczos_resize_square(const QImage &image, size_t target_size)
-{
-    const QImage cropped = crop_largest_aspect(image);
-    return lanczos_resize(cropped, static_cast<size_t>(target_size), static_cast<size_t>(target_size));
-}
-
 }

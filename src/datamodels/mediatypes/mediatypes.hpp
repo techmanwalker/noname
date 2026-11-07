@@ -2,29 +2,10 @@
 
 #include <QFileInfo>
 #include <QLoggingCategory>
+#include <QSize>
 #include <QString>
 #include <QUrl>
-
-#include <cstddef>
-
-// A recipe that tells the cover storage hot cache how to resolve a cover.
-// This is a payload factory.
-struct cover_payload {
-    explicit cover_payload (const QUrl &source_media_path, size_t square_size = 0); // genesis
-    explicit cover_payload (const QString &base64url_payload); // build from base64url payload
-
-    QUrl uri () const; // encoded payload cover_storage will use to resolve and scale the source media's cover
-
-    QString to_base64url () const;
-
-    QUrl source; // uri of the original media file
-
-    // a square size of 0 means full resolution
-    // what resolution to load and store this cover in memory and thumbnail cache
-    size_t square_size {};
-
-    bool operator==(const cover_payload &) const = default;
-};
+#include <qhashfunctions.h>
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediatypes)
 
@@ -67,12 +48,10 @@ namespace Types {
         int     sample_rate {0};
         int     bitrate_kbps {0};
 
-
         // ready to print in qml
         QString duration_mmss () const;
 
-        cover_payload cover = cover_payload(source);
-
+        QByteArray source_base64 () const;
         QUrl coveruri () const;
 
         bool is_valid () const;
@@ -152,3 +131,10 @@ namespace Types {
 template <typename T>
 concept media_type =
     std::convertible_to<std::remove_cvref_t<T>, Types::Any>;
+
+// shortcuts
+QByteArray
+toBase64Url (const QUrl &uri);
+
+QUrl
+fromBase64Url (const QByteArray &base64url);

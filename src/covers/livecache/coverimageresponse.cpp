@@ -1,4 +1,5 @@
 #include "coverstorage.hpp"
+#include "mediatypes.hpp"
 
 cover_image_response::cover_image_response(std::shared_ptr<cover_response_state> state)
     : m_state(std::move(state))
@@ -18,7 +19,7 @@ cover_image_response::cancel()
 }
 
 cover_resolve_task::cover_resolve_task(covers::live::cover_storage *storage,
-                                       QString id, QSize size,
+                                       QByteArray id, QSize size,
                                        std::shared_ptr<cover_response_state> state,
                                        QPointer<cover_image_response> response,
                                        mailbox_ptr mailbox)
@@ -32,7 +33,7 @@ void
 cover_resolve_task::run()
 {
     if (m_storage && !m_state->canceled.loadRelaxed()) {
-        m_state->image = m_storage->resolve_blocking(m_id, m_size);
+        m_state->image = m_storage->resolve_blocking(fromBase64Url(m_id), m_size);
     }
 
     // Hand off to the response's thread. The response is only dereferenced

@@ -54,9 +54,6 @@ main (int argc, char ** argv)
         "coverprovider.debug=false"
     );
 
-    // cover cache to hold the shortcuts covers across the entire session
-    std::shared_ptr<covers::live::cover_storage> cover_private_storage = std::make_shared<covers::live::cover_storage>();
-
     // default target backend for soundio
     audio_backend backend { audio_backend::pulseaudio };
 
@@ -129,11 +126,14 @@ main (int argc, char ** argv)
 
     using MediaTransforms::MediaFilterLI;
     using configuration::managerLI;
+
+    // cover cache to hold the shortcuts covers across the entire session
+    auto cs = std::make_shared<covers::live::cover_storage>();
     
     auto cm = std::make_shared<managerLI>         (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
-    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi);
+    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi, cs);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
@@ -229,7 +229,7 @@ main (int argc, char ** argv)
         QQmlEngine will take ownership of this proxy, and upon program teardown,
         will invoke 'delete' on it.
     */
-    engine.addImageProvider("covers", new covers::live::cover_provider(cover_private_storage));
+    engine.addImageProvider("covers", new covers::live::cover_provider(cs));
 
     // load the root qml module
     QObject::connect(

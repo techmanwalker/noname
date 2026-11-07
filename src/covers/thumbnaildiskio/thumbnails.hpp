@@ -5,23 +5,37 @@
 #include <QLoggingCategory>
 #include <QString>
 
-class cover_payload;
-
 // covers::disk: thumbnails and persistent caching on non volatile media
 
 namespace covers::disk {
 
 Q_DECLARE_LOGGING_CATEGORY(l_thumbnails)
 
-QString thumbnail_hash_for_fs (const cover_payload &ref);
-
 // path on disk where the thumbnail is stored and retrieved
-QString thumbnail_file_path   (const cover_payload &ref);
+QString
+thumbnail_file_path (
+    const QUrl &media_source,
+    QSize target_size
+);
+
+bool 
+thumbnail_file_exists(
+    const QUrl &media_source,
+    QSize target_size
+);
 
 // whether the file in disk actually exists
-bool    thumbnail_file_exists (const cover_payload &ref);
+[[nodiscard ("Useless decoding work.")]]
+QImage
+fetch_thumbnail (
+    const QUrl &media_source,
+    QSize target_size
+);
 
-[[nodiscard ("Useless decoding work.")]] QImage fetch_thumbnail (const cover_payload &ref);
-QFuture<void> write_thumbnail (const cover_payload &ref, QImage thumbnail);
+QFuture<void>
+write_thumbnail (
+    const QUrl &media_source,
+    QImage thumbnail
+);
 
 }

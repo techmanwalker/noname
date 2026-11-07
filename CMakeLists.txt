@@ -409,6 +409,8 @@ target_link_libraries(covers
     PUBLIC
         Qt6::Quick
 
+        coverstorage_in
+
     PRIVATE
         Qt6::Gui
         Qt6::Concurrent
@@ -433,6 +435,10 @@ target_include_directories(covers
         src/covers/presentation
         src/covers/thumbnaildiskio
 )
+
+add_library(coverstorage_in INTERFACE)
+target_include_directories(coverstorage_in INTERFACE src/interfaces/coverstorage)
+target_link_libraries(coverstorage_in INTERFACE Qt6::Core Qt6::Gui)
 
 
 ## --- Context presenters: everything the GUI can control and needs to watch on real time

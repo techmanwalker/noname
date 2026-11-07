@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QImage>
+#include <cstddef>
 
 namespace covers::transform
 {
@@ -29,8 +30,6 @@ QImage crop_largest_aspect(const QImage &image,
                            double aspect_h = 1.0);
 
 QImage lanczos_resize(const QImage &image, size_t width, size_t height);
-
-QImage lanczos_resize_square(const QImage &image, size_t target_size);
 
 
 }

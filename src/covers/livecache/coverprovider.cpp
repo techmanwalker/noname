@@ -16,9 +16,9 @@ cover_provider::requestImageResponse(const QString &id, const QSize &requestedSi
 }
 
 bool
-cover_provider::store(const cover_payload &ref, const QVariant &cover_from_metadata, bool save_to_disk_cache)
+cover_provider::store(const QUrl &media_source, const QVariant &cover_from_metadata, bool save_to_disk_cache)
 {
-    return m_real->store(ref, cover_from_metadata, save_to_disk_cache);
+    return m_real->store(media_source, cover_from_metadata, save_to_disk_cache);
 }
 
 } // namespace covers::live

@@ -81,7 +81,7 @@ public:
     QString title()            const { return m_presenter ?  m_presenter->current_track().title     : QString(); }
     QString artist()           const { return m_presenter ?  m_presenter->current_track().artist    : QString(); }
     QString album()            const { return m_presenter ?  m_presenter->current_track().album     : QString(); }
-    QUrl    cover()            const { if (!m_presenter) return {}; return m_presenter->current_track().cover.uri();  }
+    QUrl    cover()            const { if (!m_presenter) return {}; return m_presenter->current_track().coveruri();  }
     quint64 duration_ms()      const { return m_presenter ?  m_presenter->current_track().duration  : 0;         }
 
     quint8  volume()           const { return m_presenter ?  m_presenter->volume()                    : 0;   }

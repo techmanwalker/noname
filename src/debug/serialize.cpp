@@ -13,7 +13,7 @@ debug::serialize (const Types::Song &song)
     out["album"] = song.album;
     out["duration"] = static_cast<qint64>(song.duration);
     out["source"] = song.source.toString();
-    out["cover"] = song.cover.uri().toString();
+    out["cover"] = song.coveruri().toString();
 
     return out;
 }

@@ -2,6 +2,7 @@
 
 #include "audioengine-in.hpp"
 
+#include "coverstorage-in.hpp"
 #include "coverluminance.hpp"
 #include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
@@ -59,7 +60,8 @@ public:
         std::shared_ptr<configuration::manager> confmanager,
         std::shared_ptr<audio_engine> controller,
         std::shared_ptr<PlayQueue> pqueue,
-        std::shared_ptr<WindowGeometry> wgeometry
+        std::shared_ptr<WindowGeometry> wgeometry,
+        std::shared_ptr<cover_storage_in> coverprovider
     );
     
     using PlayerPresenter::PlaybackState;
@@ -125,6 +127,7 @@ private:
     std::shared_ptr<audio_engine> playing; // controller
     std::shared_ptr<PlayQueue> queue; // tape roll
     std::shared_ptr<WindowGeometry> wi; // information about the window
+    std::shared_ptr<cover_storage_in> cp; // cover provider
 
     std::atomic_bool m_slider_pressed {false};
 
