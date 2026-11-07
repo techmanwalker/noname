@@ -9,12 +9,12 @@ Column {
 
     property StackLayout stack
 
-    // name -> stack index, one entry per VTabPage in the stack
+    // name -> stack index, one entry per TabPage in the stack
     readonly property var indices: {
         const map = {};
         const pages = root.stack ? root.stack.children : [];
         for (let i = 0; i < pages.length; ++i) {
-            const page = pages[i] as VTabPage;
+            const page = pages[i] as TabPage;
             if (page)
                 map[page.name] = i;
         }
@@ -25,7 +25,7 @@ Column {
         model: root.stack ? root.stack.children : []
 
         VTabButton {
-            required property VTabPage modelData
+            required property TabPage modelData
             required property int index
 
             iconName: modelData.iconName

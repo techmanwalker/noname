@@ -17,7 +17,7 @@ RowLayout {
 
     readonly property alias vtabsColWidth: vtabsCol.width
 
-    // name -> stack index, generated from the VTabPages in activeView: vtabs.<name>
+    // name -> stack index, generated from the TabPages in activeView: vtabs.<name>
     readonly property alias vtabs: vtabList.indices
 
     readonly property bool aPlaylistIsOpen: activeVtab === vtabs.playlists && playlistsitem.aPlaylistIsOpen
@@ -72,7 +72,7 @@ RowLayout {
 
             Component.onCompleted: currentIndex = root.vtabs.tracks
 
-            VTabPage {
+            TabPage {
                 name: "home"
                 title: qsTr("Home")
                 iconName: "user-home-symbolic"
@@ -83,7 +83,7 @@ RowLayout {
                 }
             }
 
-            VTabPage {
+            TabPage {
                 name: "playlists"
                 title: qsTr("Playlists")
                 iconName: "view-media-playlist"
@@ -94,7 +94,7 @@ RowLayout {
                 }
             }
 
-            VTabPage {
+            TabPage {
                 name: "folders"
                 title: qsTr("Folders")
                 iconName: "folder-symbolic"
@@ -105,7 +105,7 @@ RowLayout {
                 }
             }
 
-            VTabPage {
+            TabPage {
                 name: "tracks"
                 title: qsTr("Tracks")
                 iconName: "library-music-symbolic"

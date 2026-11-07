@@ -75,7 +75,17 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="214"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="180"/>
+        <source>Queue</source>
+        <translation>Lista</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="197"/>
+        <source>Details</source>
+        <translation>Detalles</translation>
+    </message>
+    <message>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="281"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -84,7 +94,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="223"/>
+        <location filename="../qml/fullscreen/viewmodes/FullscreenPlayer.qml" line="231"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -313,34 +323,34 @@
         <translation type="vanished">Tasa de bits</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="22"/>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="27"/>
         <source>&lt;b&gt;Format:&lt;/b&gt; %1</source>
         <extracomment>%1 is the audio file format, e.g. FLAC</extracomment>
         <translation>&lt;b&gt;Formato:&lt;/b&gt; %1</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="28"/>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="33"/>
         <source>&lt;b&gt;Genre:&lt;/b&gt; %1</source>
         <extracomment>%1 is the music genre</extracomment>
         <translation>&lt;b&gt;Género:&lt;/b&gt; %1</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="34"/>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="39"/>
         <source>&lt;b&gt;Year:&lt;/b&gt; %1</source>
         <extracomment>%1 is the release year</extracomment>
         <translation>&lt;b&gt;Año:&lt;/b&gt; %1</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="40"/>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="45"/>
         <source>&lt;b&gt;Channels:&lt;/b&gt; %1</source>
         <extracomment>%1 is the number of audio channels</extracomment>
         <translation>&lt;b&gt;Canales:&lt;/b&gt; %1</translation>
     </message>
     <message>
-        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="46"/>
+        <location filename="../qml/fullscreen/viewmodes/TrackDetails.qml" line="51"/>
         <source>&lt;b&gt;Bitrate:&lt;/b&gt; %1 kbps</source>
         <extracomment>%1 is the bitrate in kilobits per second</extracomment>
-        <translation type="unfinished">&lt;b&gt;Tasa de bits:&lt;/b&gt; %1 kbps</translation>
+        <translation>&lt;b&gt;Tasa de bits:&lt;/b&gt; %1 kbps</translation>
     </message>
 </context>
 <context>
