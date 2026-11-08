@@ -8,17 +8,18 @@ import Player.MediaTypes
 import Player.Primitives
 import Player.PlayQueue
 
-ListView {
+AutoscrollListView {
     id: root
 
     property bool lightMode: false
 
     property int playheadRowIdx
 
-    // Gap above the playing row, as a fraction of that row's own height
-    property real playheadMarginRatio: 0.4
-
-    property int autoscrollCooldownMs: 15000
+    // The playing row rests below the top edge by 0.4x its own height
+    focusIndex: playheadRowIdx
+    focusPosition: ListView.Beginning
+    focusMarginRatio: 0.4
+    autoscrollCooldownMs: 15000
 
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
@@ -39,68 +40,6 @@ ListView {
 
     property list<url> selectedSources: []
     property alias additionalMenuActions: songContextMenu.extraActions
-
-    // true while the user drives the view (flick, wheel, drag or scrollbar)
-    readonly property bool userInteracting: moving || scrollbar.pressed
-
-    // autoscroll is suspended while the user interacts, and for a cooldown after
-    readonly property bool autoscrollAllowed: !userInteracting && !cooldownTimer.running
-
-    function scrollToPlayhead() : void {
-        if (playheadRowIdx < 0 || playheadRowIdx >= count)
-            return
-
-        const fromY = contentY
-
-        // Qt resolves the destination, clamped to the content bounds. This also
-        // instantiates the target delegate, so it can be queried right after.
-        positionViewAtIndex(playheadRowIdx, ListView.Beginning)
-
-        let toY = contentY
-
-        // Within the first/last page the row can't reach the margin anyway, so
-        // Qt's clamped position is already the right one. Anywhere else, lift
-        // the row by its own height fraction.
-        const item = itemAtIndex(playheadRowIdx)
-        if (item && !atYBeginning && !atYEnd)
-            toY -= playheadMarginRatio * item.height
-
-        contentY = fromY
-
-        scrollAnimation.to = toY
-        scrollAnimation.restart()
-    }
-
-    NumberAnimation {
-        id: scrollAnimation
-        target: root
-        property: "contentY"
-        duration: 125
-        easing.type: Easing.InOutCubic
-    }
-
-    // Fires the deferred scroll once the user has been idle long enough, so a
-    // playhead change that happened mid-interaction is not lost.
-    Timer {
-        id: cooldownTimer
-        interval: root.autoscrollCooldownMs
-        onTriggered: root.scrollToPlayhead()
-    }
-
-    onUserInteractingChanged: {
-        if (userInteracting) {
-            // yield to the user immediately, and make sure the timer can't
-            // fire a scroll in the middle of their gesture
-            scrollAnimation.stop()
-            cooldownTimer.stop()
-        } else {
-            cooldownTimer.restart()
-        }
-    }
-
-    onPlayheadRowIdxChanged: if (autoscrollAllowed) scrollToPlayhead()
-
-    Component.onCompleted: Qt.callLater(scrollToPlayhead)
 
     SongContextMenu {
         id: songContextMenu

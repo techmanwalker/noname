@@ -54,10 +54,13 @@ ColumnLayout {
             }
         }
 
-        ListView {
+        AutoscrollListView {
             id: lyricsRows_c
 
             model: root.model
+
+            focusIndex: root.highlightedRowIndex
+            autoscrollEnabled: root.autoscrollEnabled
 
             readonly property bool lightMode: Light.lightModeForBounds(lyricsRows_cBounds.bounds, root.background, root.stateModel) // context is everything
 
@@ -85,6 +88,8 @@ ColumnLayout {
                 }
             }
 
+            // Re-queries the row to follow, then scrolls to it regardless of
+            // cooldown or interaction (seeks and taps are not autoscroll events).
             function scrollToHighlighted() : void {
                 const index = LyricsManifest.indexOfLyricToHighlight().row
 
@@ -92,54 +97,7 @@ ColumnLayout {
                     return
 
                 root.highlightedRowIndex = index
-
-                const fromY = contentY
-
-                // No active line yet (position precedes the first timestamp):
-                // rest at the very top, so the header space is what's on screen.
-                if (index < 0)
-                    positionViewAtBeginning()
-                else
-                    positionViewAtIndex(index, ListView.Center)
-
-                const toY = contentY // center to screen
-                contentY = fromY
-
-                scrollAnimation.to = toY
-                scrollAnimation.restart()
-            }
-
-            NumberAnimation {
-                id: scrollAnimation
-                target: lyricsRows_c
-                property: "contentY"
-                duration: 125
-                easing.type: Easing.InOutCubic
-            }
-            
-            readonly property bool doAutoscroll: !(moving || cooldownTimer.running || !root.autoscrollEnabled)
-
-            onDoAutoscrollChanged: if (doAutoscroll) scrollToHighlighted()
-
-            onMovingChanged: if (!moving) cooldownTimer.restart()
-
-            Timer {
-                id: cooldownTimer
-                interval: 5000
-                running: root.autoscrollEnabled
-            }
-            TapHandler {
-                id: holdTracker
-                target: null
-                acceptedButtons: Qt.AllButtons
-            }
-
-            Connections {
-                target: root
-                function onHighlightedRowIndexChanged() {
-                    if (lyricsRows_c.doAutoscroll)
-                        lyricsRows_c.scrollToHighlighted()
-                }
+                scrollToFocus()
             }
 
             readonly property int interactiveWidth: root.width * 0.6
