@@ -20,7 +20,7 @@ QtObject {
         // future continuation, and Background's point* cascade runs right behind it.
         // Re-evaluate once, from the event loop, when that has settled. callLater
         // coalesces repeated requests into one pass.
-        function onLumasChanged () { Qt.callLater(root.invalidate) }
+        function onLumasChanged () { root.invalidate() }
     }
 
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
@@ -29,7 +29,7 @@ QtObject {
         // A void root.epoch sentence is completely inert.
         // Force the reading and the dependency registration
         // preventing dead code elimination.
-        if (root.epoch < 0) {}
+        if (root.epoch < 0) return false;
 
         // dark by default
         if (bounds.width === 0 || bounds.height === 0) return false;
