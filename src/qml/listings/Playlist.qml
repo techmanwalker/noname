@@ -15,6 +15,11 @@ ListView {
 
     property int playheadRowIdx
 
+    // Gap above the playing row, as a fraction of that row's own height
+    property real playheadMarginRatio: 0.4
+
+    property int autoscrollCooldownMs: 15000
+
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
     property int scrollBarWidth: 4
@@ -35,25 +40,67 @@ ListView {
     property list<url> selectedSources: []
     property alias additionalMenuActions: songContextMenu.extraActions
 
-    onPlayheadRowIdxChanged: {
-        if (playheadRowIdx < 0)
+    // true while the user drives the view (flick, wheel, drag or scrollbar)
+    readonly property bool userInteracting: moving || scrollbar.pressed
+
+    // autoscroll is suspended while the user interacts, and for a cooldown after
+    readonly property bool autoscrollAllowed: !userInteracting && !cooldownTimer.running
+
+    function scrollToPlayhead() : void {
+        if (playheadRowIdx < 0 || playheadRowIdx >= count)
             return
 
-        const targetItem = itemAtIndex(playheadRowIdx)
-        if (!targetItem)
-            return
+        const fromY = contentY
 
-        const itemY = targetItem.y
-        const itemHeight = targetItem.height
-        const itemBottom = itemY + itemHeight
+        // Qt resolves the destination, clamped to the content bounds. This also
+        // instantiates the target delegate, so it can be queried right after.
+        positionViewAtIndex(playheadRowIdx, ListView.Beginning)
 
-        // Check if the item goes offscreen or does not fit entirely in the viewport
-        if (itemY < root.contentY || itemBottom > root.contentY + root.height) {
-            const targetY = itemY - 0.4 * targetItem.height
-            const maxContentY = Math.max(0, root.contentHeight - root.height)
-            root.contentY = Math.min(Math.max(0, targetY), maxContentY)
+        let toY = contentY
+
+        // Within the first/last page the row can't reach the margin anyway, so
+        // Qt's clamped position is already the right one. Anywhere else, lift
+        // the row by its own height fraction.
+        const item = itemAtIndex(playheadRowIdx)
+        if (item && !atYBeginning && !atYEnd)
+            toY -= playheadMarginRatio * item.height
+
+        contentY = fromY
+
+        scrollAnimation.to = toY
+        scrollAnimation.restart()
+    }
+
+    NumberAnimation {
+        id: scrollAnimation
+        target: root
+        property: "contentY"
+        duration: 125
+        easing.type: Easing.InOutCubic
+    }
+
+    // Fires the deferred scroll once the user has been idle long enough, so a
+    // playhead change that happened mid-interaction is not lost.
+    Timer {
+        id: cooldownTimer
+        interval: root.autoscrollCooldownMs
+        onTriggered: root.scrollToPlayhead()
+    }
+
+    onUserInteractingChanged: {
+        if (userInteracting) {
+            // yield to the user immediately, and make sure the timer can't
+            // fire a scroll in the middle of their gesture
+            scrollAnimation.stop()
+            cooldownTimer.stop()
+        } else {
+            cooldownTimer.restart()
         }
     }
+
+    onPlayheadRowIdxChanged: if (autoscrollAllowed) scrollToPlayhead()
+
+    Component.onCompleted: Qt.callLater(scrollToPlayhead)
 
     SongContextMenu {
         id: songContextMenu
