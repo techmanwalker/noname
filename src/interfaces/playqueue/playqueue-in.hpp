@@ -2,6 +2,8 @@
 
 #include <QFuture>
 #include <QPersistentModelIndex>
+
+#include <functional>
 #include <optional>
 
 #include "mediatypes.hpp"
@@ -27,6 +29,8 @@ public:
     virtual bool prev_at_end (quint64 stepback_ms, bool play_afterwards = false) = 0;
 
     virtual void clear () = 0;
+
+    virtual bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) = 0;
 
     virtual QPersistentModelIndex find_by_source (const QUrl &needle) = 0;
     virtual std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const = 0;

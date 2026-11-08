@@ -89,6 +89,17 @@ public:
         m_iface->respawn_queue(sources);
     }
 
+    Q_INVOKABLE Types::Song itemAt (qsizetype idx) {
+        if (!m_iface) return {};
+
+        Types::Song result{};
+        m_iface->pointed_to(mapToSource(index(idx, idx)), [&result](const Types::Song &track_at_idx) {
+            result = track_at_idx;
+            return true;
+        });
+        return result;
+    }
+
 signals:
     void trackChanged();
     void countChanged();

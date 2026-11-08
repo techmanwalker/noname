@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mediatypes.hpp"
+#include "playlistsequence.hpp"
 #include "playqueue-in.hpp"
 
 #include <QIdentityProxyModel>
@@ -52,6 +53,11 @@ public:
 
     void clear () override;
 
+    bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) override;
+
+    template <media_type T>
+    bool pointed_to_t (const QPersistentModelIndex &idx, std::invocable<T> auto callback);
+
     QPersistentModelIndex find_by_source (const QUrl &needle) override;
     std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const override;
 
@@ -83,4 +89,8 @@ private:
     QPersistentModelIndex successor_of (const QPersistentModelIndex &mine) const;
 
     std::unique_ptr<PlayQueueLIPrivate> m_d;
+
+    PlaylistSequence &_sequence () const;
 };
+
+#include "playqueue.tpp"

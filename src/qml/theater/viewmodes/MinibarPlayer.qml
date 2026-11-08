@@ -77,16 +77,10 @@ ColumnLayout {
 
                 Layout.alignment: Qt.AlignVCenter
 
-                source: root.stateModel.cover
+                source: root.stateModel.isMediaLoaded ? root.stateModel.cover
+                    : (PlayQueue.count > 0 ? PlayQueue.itemAt(0).cover : "")
 
                 sourceSize: Qt.size(root.coverWidth, root.coverHeight)
-
-                visible: root.stateModel.isMediaLoaded
-            }
-
-            Item {
-                Layout.preferredWidth: root.coverWidth / 2
-                visible: !root.stateModel.isMediaLoaded
             }
 
             ColumnLayout {

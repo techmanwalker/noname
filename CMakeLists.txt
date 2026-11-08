@@ -696,7 +696,9 @@ target_link_libraries(${PROJECT_NAME}
         playerpresenter
         playqueue
         configuration
+        mediatypes
         mediatransforms
+        rolecompiler
 
         covers # every executable that features its own cover storage will feature this
 

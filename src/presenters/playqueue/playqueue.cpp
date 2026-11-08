@@ -354,3 +354,15 @@ PlayQueueLI::set_shuffle (bool enabled)
     emit track_changed(); // same track, different row: QML must re-read PlayQueue.playhead
     preload_next_track_whenever_possible(); // the upcoming track changed
 }
+
+bool
+PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback)
+{
+    return pointed_to_t<Types::Song>(idx, callback);
+}
+
+PlaylistSequence &
+PlayQueueLI::_sequence() const
+{
+    return m_d->sequence;
+}
