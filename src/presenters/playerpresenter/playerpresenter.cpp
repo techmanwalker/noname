@@ -277,12 +277,8 @@ PlayerPresenterLI::handle_track_changed()
 {
     QUrl current_track_source = playing->current_track_source();
 
-    if (!current_track_source.isEmpty()) {
-        // get the song struct from the play queue
-        m_current_track = queue->query_metadata_for_source(current_track_source).value_or({});
-    } else {
-        m_current_track = {};
-    }
+    // get the song struct from the play queue
+    m_current_track = queue->query_metadata_for_source(current_track_source).value_or({});
 
     // if not matched, this is a race condition or someone forgot to update this
     Q_ASSERT_X (

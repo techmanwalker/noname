@@ -10,6 +10,7 @@
 #include <memory>
 
 #include <CLI/CLI.hpp>
+#include <qbytearrayview.h>
 
 #include "audioengine.hpp"
 #include "configuration.hpp"
@@ -120,28 +121,41 @@ main (int argc, char ** argv)
     auto ae = std::make_shared<audio_engine_LI>    (nullptr, backend);
     // do not wait for the metadata to be read
     if (!first_track_source.isEmpty()) {
+        qCDebug (l_main) << "Trying to play the first track provided. The source is " << first_track_source;
         ae->load(first_track_source);
         ae->play();
     }
-
-    // load the remaining, the switch should be automagic
-    auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
-    pq->spawn_queue(arg_paths);
 
     using MediaTransforms::MediaFilterLI;
     using configuration::managerLI;
 
     // cover cache to hold the shortcuts covers across the entire session
     auto cs = std::make_shared<covers::live::cover_storage>();
-    
     auto cm = std::make_shared<managerLI>         (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
+    auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi, cs);
     auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
+
+    pq->spawn_queue(arg_paths).then([&pp, &pq, &first_track]() {
+        // load the remaining, the switch should be automagic
+
+        int c = pq->item_count();
+
+        qCDebug(l_main) << c << QLatin1StringView("track") + (c == 1 ? "" : "s") << "loaded from command line.";
+
+        first_track.then([&pp](const Types::Song &first) {
+            qCDebug (l_main) << "Acknowledging the presenter for first track " << first.source;
+            if (!first.is_valid()) return;
+
+            // make pp aware of the first track
+            pp->handle_track_changed();
+        });
+    });
 
     // bind concrete<->concrete signals
     QObject::connect (ae.get(), &audio_engine_LI::track_changed,
@@ -168,14 +182,6 @@ main (int argc, char ** argv)
 
     QObject::connect(ae.get(), &audio_engine_LI::relative_seek_before_zero_performed,
             pq.get(), &PlayQueueLI::prev_at_end);
-
-    first_track.then([&pp](const Types::Song &first) {
-        qCDebug (l_main) << "Acknowledging the presenter for first track " << first.source;
-        if (!first.is_valid()) return;
-
-        // make pp aware of the first track
-        pp->handle_track_changed();
-    });
 
     // read user's music directories, and load the music library as a whole
     ll->snapshot_known_directories();
