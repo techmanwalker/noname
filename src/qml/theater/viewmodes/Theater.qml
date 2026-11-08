@@ -181,9 +181,13 @@ Row {
             }
 
             Row {
+                id: queueAndMetadataTabs 
+
                 visible: queueAndMetadata_s.visible && !queueAndMetadata_s.is_showing_no_tracks_placeholder
                 Layout.leftMargin: metadataContainer.Layout.leftMargin
                                    - (tabButtons.count > 0 ? tabButtons.itemAt(0).leftPadding : 0)
+
+                property bool lightMode: Light.lightModeForBounds(queueAndMetadataTabsBounds.bounds, root.background, PlayerPresenter)
 
                 Repeater {
                     id: tabButtons
@@ -213,16 +217,16 @@ Row {
 
                         font.weight: queueAndMetadata_s.currentIndex === stackIndex ? Font.Medium : Font.Light
 
-                        lightMode: Light.lightModeForBounds(tabButtonBounds.bounds, root.background, PlayerPresenter)
+                        lightMode: queueAndMetadataTabs.lightMode
 
                         onClicked: queueAndMetadata_s.currentIndex = stackIndex
-
-                        SceneRect {
-                            id: tabButtonBounds
-                            target: tabButton
-                        }
                     }
                 }
+            }
+
+            SceneRect {
+                id: queueAndMetadataTabsBounds
+                target: queueAndMetadataTabs
             }
 
             // _s = "the stack"
