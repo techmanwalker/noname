@@ -61,7 +61,7 @@ T.ApplicationWindow {
 
     Shortcut {
         sequences: Keyboard.bindings.clearSearch
-        enabled: root.typeToSearchFocused
+        enabled: searchBox.activeFocus && searchBox.clearable
         onActivated: searchBox.clearQuery()
     }
 
@@ -69,7 +69,7 @@ T.ApplicationWindow {
     // events when something in the window has focus.
     Shortcut {
         sequences: Keyboard.bindings.leaveSearch
-        enabled: root.typeToSearchFocused
+        enabled: searchBox.activeFocus && !searchBox.clearable
         onActivated: root.contentItem.forceActiveFocus()
     }
 
@@ -121,7 +121,7 @@ T.ApplicationWindow {
 
     // when no relevant item (the grid, the search box, etc) is focused, so global key
     // negate any focus that conflicts with a global key
-    readonly property bool globalKeys: !searchBox.activeFocus || transportKeys
+    readonly property bool globalKeys: !root.typeToSearchAwaiting && !root.typeToSearchFocused && !searchBox.activeFocus
 
     Shortcut {
         sequences: Keyboard.bindings.backButton
