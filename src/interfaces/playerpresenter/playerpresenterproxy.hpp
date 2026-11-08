@@ -9,6 +9,7 @@
 #include <QtQmlIntegration>
 
 #include <memory>
+#include <qtmetamacros.h>
 
 class PlayerPresenterProxy : public QObject
 {
@@ -39,12 +40,12 @@ public:
 
     Q_PROPERTY(PlaybackState playbackState READ playback_state NOTIFY playbackStateChanged)
 
-    Q_PROPERTY(double coverNuclearLuma READ cover_nuclear_luma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverCentricLuma READ cover_centric_luma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverMidringLuma READ cover_midring_luma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverBordersLuma READ cover_borders_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverNuclearLuma  READ cover_nuclear_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverCentricLuma  READ cover_centric_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverMidringLuma  READ cover_midring_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverBordersLuma  READ cover_borders_luma NOTIFY lumasChanged)
 
-    Q_PROPERTY(double coverPonderedLuma     READ cover_pondered_luma     NOTIFY lumasChanged)
+    Q_PROPERTY(double coverPonderedLuma READ cover_pondered_luma     NOTIFY lumasChanged)
 
     explicit PlayerPresenterProxy(QObject *parent = nullptr)
         : QObject(parent),
@@ -99,7 +100,9 @@ public:
         Q_UNREACHABLE();
     }
 
-    void set_volume(quint8 volume)         { if (m_presenter) m_presenter->set_volume(volume); }
+    void set_volume(quint8 volume) { if (m_presenter) m_presenter->set_volume(volume); }
+    
+    Q_INVOKABLE void toggleMute ()            { if (m_presenter) m_presenter->toggle_mute();      }
 
     Q_INVOKABLE quint64 position_ms()       const { return m_presenter ? m_presenter->position_ms() : 0;     }
     Q_INVOKABLE void    seekTo (quint64 position) { if (m_presenter) m_presenter->set_position_ms(position); }

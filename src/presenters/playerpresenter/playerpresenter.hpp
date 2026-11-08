@@ -91,6 +91,7 @@ public:
 
     void set_volume (quint8 volume) const override;
     void raise_lower_volume (qint8 step) const override;
+    void toggle_mute () const override;
 
     // Call forwardings
     void load(Types::Song &song) const override;
@@ -120,6 +121,8 @@ public slots:
     // Formally expose as a metadata block receiver
     void handle_track_changed();
 
+    void handle_volume_changed();
+
 private slots:
     QFuture<void> recompute_lumas(const Types::Song &backdrop_source);
 
@@ -142,6 +145,8 @@ private:
     // latest recompute_lumas() request; older ones are cancelled/ignored
     QFuture<QImage> m_lumas_future;
     quint64 m_lumas_epoch = 0;
+
+    quint8 m_last_nonzero_volume { 65 };
 
     double luma_of_ring (covers::luminance::luma_types ring) const;
 };

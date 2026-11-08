@@ -53,6 +53,7 @@ public:
 
     virtual void set_volume (quint8 volume) const = 0; // from 0 to 100
     virtual void raise_lower_volume (qint8 step) const = 0; // relative to current volume
+    virtual void toggle_mute () const = 0; // unmute: set to last non zero value
 
     virtual void play()  const = 0;
     virtual void pause() const = 0;

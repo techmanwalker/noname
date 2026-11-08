@@ -35,6 +35,8 @@ PlayerPresenterLI::PlayerPresenterLI(
       wi(std::move(wgeometry)),
       cp(std::move(coverprovider))
 {
+    connect (this, &PlayerPresenterLI::volume_changed,
+             this, &PlayerPresenterLI::handle_volume_changed);
     // load volume from conf file
     const auto lines = cm->read_lines(configuration::conf_file_type::volume);
 
@@ -47,6 +49,7 @@ PlayerPresenterLI::PlayerPresenterLI(
         if (vOK) {
             // audioengine will clamp it or manage however it is to be done
             set_volume(volume);
+            m_last_nonzero_volume = volume;
         }
     }
 }
@@ -202,6 +205,14 @@ PlayerPresenterLI::raise_lower_volume(qint8 step) const
 }
 
 void
+PlayerPresenterLI:: toggle_mute() const
+{
+    set_volume(
+        volume() > 0 ? 0 : m_last_nonzero_volume
+    );
+}
+
+void
 PlayerPresenterLI::save_volume () const
 {
     
@@ -299,4 +310,12 @@ PlayerPresenterLI::handle_track_changed()
     emit media_loaded_changed();
 
     recompute_lumas(m_current_track);
+}
+
+void
+PlayerPresenterLI::handle_volume_changed()
+{
+    quint8 vol = volume();
+
+    if (vol > 0) m_last_nonzero_volume = vol;
 }

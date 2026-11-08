@@ -36,12 +36,21 @@ T.ApplicationWindow {
         PlayerPresenter.saveVolume();
     }
 
+    readonly property bool typeToSearchAwaiting: 
+        activeView.currentIndex === 0 && // in browser
+        searchBox.enabled &&             // can type
+        !searchBox.activeFocus           // not focused
+
+    readonly property bool typeToSearchFocused: 
+        searchBox.activeFocus && // focused
+        searchBox.clearable // enabled and not empty
+
     // Window-wide key routing. Events bubble from the focused item up to
     // contentItem, so this only sees keys nothing below consumed.
     function routeKey(event) {
         // type-to-search: only while the bar can actually take focus (it is
         // disabled in the player view, where focusing it would swallow the key)
-        if (searchBox.enabled && !searchBox.activeFocus) {
+        if (root.typeToSearchAwaiting) {
             const text = Keyboard.searchText(event);
             if (text !== "") {
                 searchBox.feed(text);
@@ -52,7 +61,7 @@ T.ApplicationWindow {
 
     Shortcut {
         sequences: Keyboard.bindings.clearSearch
-        enabled: searchBox.activeFocus && searchBox.clearable
+        enabled: root.typeToSearchFocused
         onActivated: searchBox.clearQuery()
     }
 
@@ -60,7 +69,7 @@ T.ApplicationWindow {
     // events when something in the window has focus.
     Shortcut {
         sequences: Keyboard.bindings.leaveSearch
-        enabled: searchBox.activeFocus && !searchBox.clearable
+        enabled: root.typeToSearchFocused
         onActivated: root.contentItem.forceActiveFocus()
     }
 
@@ -68,6 +77,9 @@ T.ApplicationWindow {
     // inputs and modal popups keep their own keys), so these work wherever the
     // user last clicked.
     readonly property bool transportKeys: !searchBox.activeFocus
+
+    readonly property bool theaterMediaControls:
+        activeView.currentIndex === 1 // in theater mode
 
     Shortcut {
         sequences: Keyboard.bindings.seekBack
@@ -98,6 +110,13 @@ T.ApplicationWindow {
         sequences: Keyboard.bindings.lowerVolume
         enabled: root.transportKeys
         onActivated: PlayerPresenter.lowerVolume()
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.muteVolume
+        enabled: root.theaterMediaControls
+        autoRepeat: false
+        onActivated: PlayerPresenter.toggleMute()
     }
 
     // when no relevant item (the grid, the search box, etc) is focused, so global key

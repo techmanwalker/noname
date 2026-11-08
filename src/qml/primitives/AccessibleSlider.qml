@@ -9,7 +9,6 @@ T.Slider {
     to: 100
 
     property bool  autoReset:          false
-    property int   lastNonZeroValue:   65
     property real  trackHeight:        4
     property real  trackOpacity:       1.0
 
@@ -19,11 +18,6 @@ T.Slider {
     property color backgroundColor: Theme.dark.slider.backgroundColor
 
     hoverEnabled: true
-
-    onValueChanged: {
-        if (value > 0 && root.autoReset)
-            root.lastNonZeroValue = value
-    }
 
     Item {
         id: interactionRect

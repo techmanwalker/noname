@@ -28,15 +28,7 @@ RowLayout {
 
         lightMode: root.buttonLightMode
         
-        onClicked: {
-            // The slider is bound to this value so both backend and GUI
-            // change volume at a time
-            if (root.stateModel.volume > 0) {
-                root.stateModel.volume = 0
-            } else {
-                root.stateModel.volume = volumeSlider.lastNonZeroValue
-            }
-        }
+        onClicked: PlayerPresenter.toggleMute()
     }
     
     AccessibleSlider {
