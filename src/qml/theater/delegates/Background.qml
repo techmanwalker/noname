@@ -50,13 +50,24 @@ Item {
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
-    property real edges_player_l: root.cover_back_l * (implicitMultiplier < 1 ? 0.4 : 1)
-    property real inner_player_l: root.cover_back_l * (implicitMultiplier < 1 ? 0.7 : 1.1)
-    property real cover_back_l:   implicitMultiplier
-        
-    property real edges_player_c: root.edges_player_l * 1.4
-    property real inner_player_c: root.inner_player_l * 1.3
-    property real cover_back_c:   root.cover_back_l   * 1.2
+    property real cover_back_l: implicitMultiplier
+
+    // The control points the shader receives, vec3(x, L_mult, C_mult), as ONE value.
+    // One binding means one change notification, so the overlay and
+    // lumaMultiplierAtCenter never see a half-updated curve.
+    readonly property var curve: {
+        const back  = root.cover_back_l
+        const edges = back * (root.implicitMultiplier < 1 ? 0.4 : 1)   // symmetric gradient
+        const inner = back * (root.implicitMultiplier < 1 ? 0.7 : 1.1)
+        return [
+            Qt.vector3d(0.00,                         edges, edges * 1.4),
+            Qt.vector3d(root.clamp(root.playerLeft),  inner, inner * 1.3),
+            Qt.vector3d(root.clamp(root.coverLeft),   back,  back  * 1.2),
+            Qt.vector3d(root.clamp(root.coverRight),  back,  back  * 1.2),
+            Qt.vector3d(root.clamp(root.playerRight), inner, inner * 1.3),
+            Qt.vector3d(1.00,                         edges, edges * 1.4)
+        ]
+    }
 
     // allow disabling the darkener for testing
     property bool darken: true
@@ -68,7 +79,7 @@ Item {
         return magnitude;
     }
 
-        // Cubic Hermite spline through `stops` (ascending-x Qt.point list),
+    // Cubic Hermite spline through `stops` (ascending-x Qt.point list),
     // with Catmull-Rom-style finite-difference tangents — smooth, and
     // passes exactly through each stop's y at its x. x outside the
     // stops' own domain is held flat at the nearest edge stop rather
@@ -122,16 +133,9 @@ Item {
         const left  = root.clamp(region.x / root.width);
         const right = root.clamp((region.x + region.width) / root.width);
 
-        // Read the points straight from the overlay: these are the very
-        // values the shader receives, so they cannot drift.
-        const points = [
-            bgOverlay.pointA,  bgOverlay.pointPA, bgOverlay.pointCA,
-            bgOverlay.pointCB, bgOverlay.pointPB, bgOverlay.pointB
-        ];
-
-        // Same curve as evalPoints() in background_overlay.frag, including
-        // its floor at 0.
-        return Math.max(0, root.curveValue(points, (left + right) / 2));
+        // Same curve as evalPoints() in background_overlay.frag, including its
+        // floor at 0. The overlay is bound to root.curve too, so they cannot drift.
+        return Math.max(0, root.curveValue(root.curve, (left + right) / 2));
     }
     
     Image {
@@ -150,29 +154,12 @@ Item {
         source: img
         visible: false
 
-        pointA.x: 0.00
-        pointA.y: root.edges_player_l
-        pointA.z: root.edges_player_c
-
-        pointPA.x: root.clamp(root.playerLeft)
-        pointPA.y: root.inner_player_l // luma multiplier
-        pointPA.z: root.inner_player_c // chroma multiplier
-        
-        pointPB.x: root.clamp(root.playerRight)
-        pointPB.y: root.inner_player_l
-        pointPB.z: root.inner_player_c
-        
-        pointCA.x: root.clamp(root.coverLeft)
-        pointCA.y: root.cover_back_l
-        pointCA.z: root.cover_back_c
-        
-        pointCB.x: root.clamp(root.coverRight)
-        pointCB.y: root.cover_back_l
-        pointCB.z: root.cover_back_c
-
-        pointB.x: 1.00
-        pointB.y: root.edges_player_l
-        pointB.z: root.edges_player_c
+        pointA:  root.curve[0]
+        pointPA: root.curve[1]
+        pointCA: root.curve[2]
+        pointCB: root.curve[3]
+        pointPB: root.curve[4]
+        pointB:  root.curve[5]
     }
 
     DualKawaseBlur {
