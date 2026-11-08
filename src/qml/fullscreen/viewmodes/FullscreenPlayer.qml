@@ -250,7 +250,7 @@ Row {
                     if (PlayQueue.count === 0)
                         currentIndex = root.tabs.placeholder;
                     else if (currentIndex === root.tabs.placeholder)
-                        currentIndex = PlayQueue.count === 1 ? root.tabs.details : root.tabs.queue;
+                        currentIndex = PlayQueue.count === 1 && PlayerPresenter.isMediaLoaded ? root.tabs.details : root.tabs.queue;
                 }
 
                 Component.onCompleted: syncToQueueCount()
