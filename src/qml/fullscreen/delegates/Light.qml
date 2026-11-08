@@ -15,13 +15,21 @@ QtObject {
 
     property Connections presenterSignals: Connections {
         target: PlayerPresenter
-        function onLumasChanged () { root.invalidate() }
+
+        // Not invalidate() directly: lumasChanged is emitted from inside the presenter's
+        // future continuation, and Background's point* cascade runs right behind it.
+        // Re-evaluate once, from the event loop, when that has settled. callLater
+        // coalesces repeated requests into one pass.
+        function onLumasChanged () { Qt.callLater(root.invalidate) }
     }
 
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
         // Subscribe to the epoch. Must stay ABOVE every early return,
         // since reads after a return are never tracked.
-        void root.epoch;
+        // A void root.epoch sentence is completely inert.
+        // Force the reading and the dependency registration
+        // preventing dead code elimination.
+        if (root.epoch < 0) {}
 
         // dark by default
         if (bounds.width === 0 || bounds.height === 0) return false;
