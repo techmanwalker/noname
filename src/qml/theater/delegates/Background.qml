@@ -50,8 +50,8 @@ Item {
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
-    property real edges_player_l: root.cover_back_l * 0.4
-    property real inner_player_l: root.cover_back_l * 0.7
+    property real edges_player_l: root.cover_back_l * (implicitMultiplier < 1 ? 0.4 : 1)
+    property real inner_player_l: root.cover_back_l * (implicitMultiplier < 1 ? 0.7 : 1.1)
     property real cover_back_l:   implicitMultiplier
         
     property real edges_player_c: root.edges_player_l * 1.4
