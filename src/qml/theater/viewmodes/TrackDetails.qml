@@ -47,6 +47,12 @@ Column {
     }
 
     MetadataTag {
+        //: %1 is the number of audio channels
+        pattern: qsTr("<b>Sample rate:</b> %1 Hz")
+        value: root.model.channels > 0 ? root.model.sample_rate : ""
+    }
+
+    MetadataTag {
         //: %1 is the bitrate in kilobits per second
         pattern: qsTr("<b>Bitrate:</b> %1 kbps")
         value: root.model.bitrate_kbps > 0 ? root.model.bitrate_kbps : ""
