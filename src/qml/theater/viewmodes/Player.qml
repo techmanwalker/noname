@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-import Player.Fullscreen
+import Player.Theater
 import Player.LyricsManifest
 import Player.Primitives
 import Player.Presenter
@@ -50,7 +50,7 @@ Item {
                 }
             }
 
-            FullscreenPlayer {
+            Theater {
                 id: fsp
 
                 anchors.centerIn: parent

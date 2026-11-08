@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 import Player.Presenter
 import Player.Primitives
-import Player.Fullscreen
+import Player.Theater
 import Player.LyricsManifest
 
 ColumnLayout {

@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 
-import Player.Fullscreen
+import Player.Theater
 import Player.Presenter
 import Player.Primitives
 

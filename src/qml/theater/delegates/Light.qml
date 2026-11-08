@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 
-import Player.Fullscreen
+import Player.Theater
 import Player.Presenter
 
 QtObject {

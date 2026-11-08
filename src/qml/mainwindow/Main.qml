@@ -5,7 +5,7 @@ import QtQuick.Layouts
 
 import Player.App
 import Player.Browser
-import Player.Fullscreen
+import Player.Theater
 import Player.Presenter
 import Player.Primitives
 

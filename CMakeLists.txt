@@ -84,7 +84,7 @@ module_sources(SONGFACTORY_SOURCES      "src/ingest/songfactory/*.cpp")
 
 ## QML files
 
-module_sources(PLAYER_QMLS      "src/qml/fullscreen/*.qml")
+module_sources(PLAYER_QMLS      "src/qml/theater/*.qml")
 module_sources(BROWSER_QMLS     "src/qml/browser/*.qml")
 module_sources(UIPRIMITIVES_QMLS  "src/qml/primitives/*.qml")
 module_sources(EFFECTS_QMLS     "src/qml/effects/*.qml")
@@ -95,7 +95,7 @@ module_sources(MAINWINDOW_QMLS  "src/qml/mainwindow/*.qml")
 set_source_files_properties(
     "src/qml/primitives/Theme.qml"
     "src/qml/primitives/Keyboard.qml"
-    "src/qml/fullscreen/delegates/Light.qml"
+    "src/qml/theater/delegates/Light.qml"
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
@@ -622,16 +622,16 @@ target_link_libraries(listings
 
 
 # The Player module
-qt_add_qml_module(fullscreenplayer
+qt_add_qml_module(theater
     STATIC
-    URI Player.Fullscreen
+    URI Player.Theater
     QML_FILES
         ${PLAYER_QMLS}
     OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/Fullscreen"
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/Theater"
 )
 
-target_link_libraries(fullscreenplayer
+target_link_libraries(theater
     PUBLIC
         playerpresenter_in
         uiprimitives
@@ -743,7 +743,7 @@ if(PLAYER_BUILD_TESTS)
 
     target_link_libraries(backgroundgradinghelper
         PUBLIC
-            fullscreenplayer
+            theater
     )
 
     qt_add_executable(luminancetest

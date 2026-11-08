@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import Player.Browser
-import Player.Fullscreen
+import Player.Theater
 import Player.Presenter
 
 RowLayout {

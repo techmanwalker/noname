@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Templates as T
 
 import Player.Browser
-import Player.Fullscreen
+import Player.Theater
 import Player.Listings
 import Player.MediaTypes
 import Player.Presenter

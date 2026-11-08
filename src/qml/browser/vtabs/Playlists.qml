@@ -16,7 +16,7 @@ ColumnLayout {
     property int songCoverHeight: songCoverWidth
     property int scrollBarWidth: 4
 
-    // expose to FullscreenPlayer
+    // expose to Theater
     property real songInnerSpacing: 8
     property real songFadePadding: 10
     property real songLateralPadding: 15
