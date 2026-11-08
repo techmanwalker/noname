@@ -106,9 +106,6 @@ public:
 
     // save volume level to disk on demand
     void save_volume () const override;
-
-    // update the current song struct on main
-    bool acknowledge_current_song (const Types::Song &metadata);
     
 signals:
     // Needed signals for QML to be reactive
@@ -122,7 +119,9 @@ signals:
 public slots:
     // Formally expose as a metadata block receiver
     void handle_track_changed();
-    void recompute_lumas();
+
+private slots:
+    QFuture<void> recompute_lumas(const Types::Song &backdrop_source);
 
 private:
     std::shared_ptr<configuration::manager> cm; // configuration

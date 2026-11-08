@@ -19,12 +19,12 @@ QtObject {
     }
 
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
-        // dark by default
-        if (bounds.width === 0 || bounds.height === 0) return false;
-
         // Subscribe to the epoch. Must stay ABOVE every early return,
         // since reads after a return are never tracked.
         void root.epoch;
+
+        // dark by default
+        if (bounds.width === 0 || bounds.height === 0) return false;
 
         // qmlsc won't read a rect parameter, or pass it to a method, once any
         // method call has happened. Copy the scalars out first and hand each

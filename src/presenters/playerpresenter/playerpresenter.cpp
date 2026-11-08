@@ -5,12 +5,10 @@
 
 #include "coverlogging.hpp"
 #include "coverluminance.hpp"
+#include "coverstorage-in.hpp"
 #include "manager-in.hpp"
 #include "mediatypes.hpp"
 #include "playqueue-in.hpp"
-
-#include "src/interfaces/coverstorage/coverstorage-in.hpp"
-#include "thumbnails.hpp"
 
 #include <QImage>
 #include <QPointer>
@@ -37,9 +35,6 @@ PlayerPresenterLI::PlayerPresenterLI(
       wi(std::move(wgeometry)),
       cp(std::move(coverprovider))
 {
-    connect(this, &PlayerPresenterLI::track_changed,
-            this, &PlayerPresenterLI::recompute_lumas);
-
     // load volume from conf file
     const auto lines = cm->read_lines(configuration::conf_file_type::volume);
 
@@ -76,17 +71,17 @@ double PlayerPresenterLI::cover_borders_luma() const { return luma_of_ring(cover
 
 double PlayerPresenterLI::cover_pondered_luma() const { return m_cover_pondered_luma; }
 
-void
-PlayerPresenterLI::recompute_lumas()
+QFuture<void>
+PlayerPresenterLI::recompute_lumas(const Types::Song &backdrop_source)
 {
     // Last call wins: kill the previous request (best effort) and bump the epoch
     // so that whatever it still delivers is discarded.
     m_lumas_future.cancel();
     const quint64 epoch = ++m_lumas_epoch;
 
-    m_lumas_future = cp->resolve(playing->current_track_source(), {256, 256});
+    m_lumas_future = cp->resolve(backdrop_source.source, {256, 256});
 
-    m_lumas_future.then(this, [this, epoch](QImage thumbnail) {
+    return m_lumas_future.then(this, [this, epoch](QImage thumbnail) {
         // A newer recompute_lumas() was issued while this one was in flight.
         if (epoch != m_lumas_epoch) { return; }
 
@@ -113,6 +108,9 @@ PlayerPresenterLI::recompute_lumas()
 
         qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
         */
+
+        // Reccheck once more befor writing to memory
+        if (epoch != m_lumas_epoch) { return; }
 
         m_cover_luma_rings = rings;
         m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);
@@ -277,7 +275,14 @@ PlayerPresenterLI::load(Types::Song &song) const
 void
 PlayerPresenterLI::handle_track_changed()
 {
-    // note: only to update the ui
+    QUrl current_track_source = playing->current_track_source();
+
+    if (!current_track_source.isEmpty()) {
+        // get the song struct from the play queue
+        m_current_track = queue->query_metadata_for_source(current_track_source).value_or({});
+    } else {
+        m_current_track = {};
+    }
 
     // if not matched, this is a race condition or someone forgot to update this
     Q_ASSERT_X (
@@ -288,24 +293,14 @@ PlayerPresenterLI::handle_track_changed()
             std::string("audio_engine reports the track playing is ") + 
             playing->current_track_source().toString().toStdString() +
             std::string(" while the presenter internal struct is ") +
-            m_current_track.source.toString().toStdString()
+            (!m_current_track.source.isEmpty() ? m_current_track.source.toString().toStdString() : "{empty}")
 
         ).data()
     );
-    
-    // Suddenly awake the QML declarative tree
-    emit track_changed();
-    emit media_loaded_changed();
-}
 
-bool
-PlayerPresenterLI::acknowledge_current_song(const Types::Song &metadata)
-{
-    if (metadata.source != playing->current_track_source()) { return false; }
-
-    m_current_track = metadata;
-
-    handle_track_changed();
-
-    return true;
+    recompute_lumas(m_current_track).then(this, [this](){        
+        // Suddenly awake the QML declarative tree
+        emit track_changed();
+        emit media_loaded_changed();
+    });
 }

@@ -143,11 +143,38 @@ main (int argc, char ** argv)
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
 
+    // bind concrete<->concrete signals
+    QObject::connect (ae.get(), &audio_engine_LI::track_changed,
+            pq.get(), &PlayQueueLI::handle_track_changed);
+
+    QObject::connect(ae.get(), &audio_engine_LI::tape_ran_out,
+            pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
+
+    QObject::connect(ae.get(), &audio_engine_LI::track_changed,
+            pp.get(), &PlayerPresenterLI::handle_track_changed);
+
+    // both the PlayerPresenter and the LyricsManifest need to be aware of track changes
+    QObject::connect(ae.get(), &audio_engine_LI::track_changed,
+            lm.get(), &LyricsManifestLI::load_current_track_lyrics);
+
+    QObject::connect(ae.get(), &audio_engine_LI::playback_state_changed,
+            pp.get(), &PlayerPresenterLI::playback_state_changed);
+
+    QObject::connect(ae.get(), &audio_engine_LI::seek_finished,
+            pp.get(), &PlayerPresenterLI::seek_finished);
+
+    QObject::connect(ae.get(), &audio_engine_LI::volume_changed,
+            pp.get(), &PlayerPresenterLI::volume_changed);
+
+    QObject::connect(ae.get(), &audio_engine_LI::relative_seek_before_zero_performed,
+            pq.get(), &PlayQueueLI::prev_at_end);
+
     first_track.then([&pp](const Types::Song &first) {
+        qCDebug (l_main) << "Acknowledging the presenter for first track " << first.source;
         if (!first.is_valid()) return;
 
-        // if ae failed to play this song, this will fail too
-        pp->acknowledge_current_song(first);
+        // make pp aware of the first track
+        pp->handle_track_changed();
     });
 
     // read user's music directories, and load the music library as a whole
@@ -171,49 +198,6 @@ main (int argc, char ** argv)
     PlaylistsListProxy    ::inject(pl);
     MediaFilterProxy      ::inject(mf);
     WindowGeometryProxy   ::inject(wi);
-
-    // bind concrete<->concrete signals
-    QObject::connect (ae.get(), &audio_engine_LI::track_changed,
-            pq.get(), &PlayQueueLI::handle_track_changed);
-
-    QObject::connect(ae.get(), &audio_engine_LI::tape_ran_out,
-            pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
-
-    QObject::connect(ae.get(), &audio_engine_LI::track_changed,
-            pp.get(), [&pq, &ae, &pp]() {
-
-                QUrl current_track_source = ae->current_track_source();
-
-                if (current_track_source.isEmpty()) {
-                    // nothing playing
-                    pp->acknowledge_current_song({});
-                    return;
-                }
-
-                // get the song struct from the play queue
-                auto prolly_queue_has_it = pq->query_metadata_for_source(current_track_source);
-
-                if (!prolly_queue_has_it.has_value()) return;
-
-                // commit metadata to the presenter
-                pp->acknowledge_current_song(prolly_queue_has_it.value());
-            });
-
-    // both the PlayerPresenter and the LyricsManifest need to be aware of track changes
-    QObject::connect(ae.get(), &audio_engine_LI::track_changed,
-            lm.get(), &LyricsManifestLI::load_current_track_lyrics);
-
-    QObject::connect(ae.get(), &audio_engine_LI::playback_state_changed,
-            pp.get(), &PlayerPresenterLI::playback_state_changed);
-
-    QObject::connect(ae.get(), &audio_engine_LI::seek_finished,
-            pp.get(), &PlayerPresenterLI::seek_finished);
-
-    QObject::connect(ae.get(), &audio_engine_LI::volume_changed,
-            pp.get(), &PlayerPresenterLI::volume_changed);
-
-    QObject::connect(ae.get(), &audio_engine_LI::relative_seek_before_zero_performed,
-            pq.get(), &PlayQueueLI::prev_at_end);
 
     QTranslator translator;
     if (translator.load(QLocale::system(), name_qstr, "_", ":/i18n")) {
