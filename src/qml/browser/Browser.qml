@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Player.Browser
 import Player.Theater
 import Player.Presenter
+import Player.PlayQueue
 
 RowLayout {
     id: root
@@ -138,7 +139,7 @@ RowLayout {
 
             stateModel: PlayerPresenter
 
-            visible: stateModel.isMediaLoaded
+            visible: stateModel.isMediaLoaded || PlayQueue.count > 0
 
             coverToMetadataSpacing: 8
             volumeControlBottomPadding: 12

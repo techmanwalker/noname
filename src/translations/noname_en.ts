@@ -2,6 +2,17 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en" sourcelanguage="en">
 <context>
+    <name>MinibarPlayer</name>
+    <message numerus="yes">
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="109"/>
+        <source>%n tracks in queue.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>Playlists</name>
     <message numerus="yes">
         <location filename="../qml/browser/vtabs/Playlists.qml" line="67"/>

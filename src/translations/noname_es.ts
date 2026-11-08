@@ -31,27 +31,27 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="50"/>
+        <location filename="../qml/browser/Browser.qml" line="51"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="77"/>
+        <location filename="../qml/browser/Browser.qml" line="78"/>
         <source>Home</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="88"/>
+        <location filename="../qml/browser/Browser.qml" line="89"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="99"/>
+        <location filename="../qml/browser/Browser.qml" line="100"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="110"/>
+        <location filename="../qml/browser/Browser.qml" line="111"/>
         <source>Tracks</source>
         <translation>Pistas</translation>
     </message>
@@ -112,14 +112,29 @@
         <translation type="vanished">Pantalla completa</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="15"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="16"/>
         <source>Untitled track</source>
         <translation>Pista sin título</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="16"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="17"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="109"/>
+        <source>%n tracks in queue.</source>
+        <translation>
+            <numerusform>%n pistas en cola.</numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 tracks in queue.</source>
+        <translation type="vanished">
+            <numerusform>%1 pistas en cola.</numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Unknown artist</source>
@@ -148,7 +163,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="50"/>
+        <location filename="../qml/listings/Playlist.qml" line="120"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -276,17 +291,17 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="297"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="301"/>
         <source>Queue</source>
         <translation>Lista</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="338"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="344"/>
         <source>Details</source>
         <translation>Detalles</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="329"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="335"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -295,7 +310,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="271"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="275"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
@@ -350,7 +365,7 @@
         <location filename="../qml/theater/viewmodes/TrackDetails.qml" line="51"/>
         <source>&lt;b&gt;Sample rate:&lt;/b&gt; %1 Hz</source>
         <extracomment>%1 is the number of audio channels</extracomment>
-        <translation type="unfinished">&lt;b&gt;Tasa de muestreo&lt;/b&gt; %1 Hz</translation>
+        <translation>&lt;b&gt;Tasa de muestreo&lt;/b&gt; %1 Hz</translation>
     </message>
     <message>
         <location filename="../qml/theater/viewmodes/TrackDetails.qml" line="57"/>

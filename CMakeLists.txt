@@ -666,6 +666,11 @@ target_link_libraries(browser
     PRIVATE
         Qt6::Quick
         Qt6::QuickControls2
+
+        # qml modules
+        playerpresenter
+        playqueue
+        uiprimitives
 )
 
 ### General excecutable linking definitions

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Player.Theater
 import Player.Presenter
 import Player.Primitives
+import Player.PlayQueue
 
 // Inline view, 
 ColumnLayout {
@@ -79,6 +80,13 @@ ColumnLayout {
                 source: root.stateModel.cover
 
                 sourceSize: Qt.size(root.coverWidth, root.coverHeight)
+
+                visible: root.stateModel.isMediaLoaded
+            }
+
+            Item {
+                Layout.preferredWidth: root.coverWidth / 2
+                visible: !root.stateModel.isMediaLoaded
             }
 
             ColumnLayout {
@@ -93,7 +101,14 @@ ColumnLayout {
                 Label {
                     id: title
 
-                    text: root.stateModel.title.length > 0 ? root.stateModel.title : root.noTitleText
+                    text: {
+                        if (root.stateModel.isMediaLoaded) {
+                            return root.stateModel.title.length > 0 ? root.stateModel.title : root.noTitleText
+                        } else {
+                            // Llamada a qsTr() completamente limpia y directa
+                            return qsTr("%n tracks in queue.", "", PlayQueue.count)
+                        }
+                    }
 
                     color: Theme.dark.texts.secondaryText
 
@@ -112,6 +127,8 @@ ColumnLayout {
                     elide: Text.ElideRight
 
                     Layout.fillWidth: true
+
+                    visible: root.stateModel.isMediaLoaded
                 }
             }
         }
@@ -130,6 +147,8 @@ ColumnLayout {
                 anchors.bottomMargin: root.volumeControlBottomPadding
 
                 spacing: muteButtonWidth / 2
+
+                visible: root.stateModel.isMediaLoaded
             }
         }
     }
