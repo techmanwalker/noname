@@ -294,9 +294,9 @@ PlayerPresenterLI::handle_track_changed()
         ).data()
     );
 
-    recompute_lumas(m_current_track).then(this, [this](){        
-        // Suddenly awake the QML declarative tree
-        emit track_changed();
-        emit media_loaded_changed();
-    });
+    // Suddenly awake the QML declarative tree
+    emit track_changed();
+    emit media_loaded_changed();
+
+    recompute_lumas(m_current_track);
 }
