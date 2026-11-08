@@ -311,6 +311,8 @@ Row {
                         clip: true
                         reuseItems: true // tons of songs moving
 
+                        playheadRowIdx: PlayQueue.playhead.row
+
                         property rect globalBounds: Qt.rect(
                                 queueAndMetadata_cBounds.x + songCoverWidth,
                                 queueAndMetadata_cBounds.y,

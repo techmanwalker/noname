@@ -13,6 +13,8 @@ ListView {
 
     property bool lightMode: false
 
+    property int playheadRowIdx
+
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
     property int scrollBarWidth: 4
@@ -33,6 +35,26 @@ ListView {
     property list<url> selectedSources: []
     property alias additionalMenuActions: songContextMenu.extraActions
 
+    onPlayheadRowIdxChanged: {
+        if (playheadRowIdx < 0)
+            return
+
+        const targetItem = itemAtIndex(playheadRowIdx)
+        if (!targetItem)
+            return
+
+        const itemY = targetItem.y
+        const itemHeight = targetItem.height
+        const itemBottom = itemY + itemHeight
+
+        // Check if the item goes offscreen or does not fit entirely in the viewport
+        if (itemY < root.contentY || itemBottom > root.contentY + root.height) {
+            const targetY = itemY - 0.4 * targetItem.height
+            const maxContentY = Math.max(0, root.contentHeight - root.height)
+            root.contentY = Math.min(Math.max(0, targetY), maxContentY)
+        }
+    }
+
     SongContextMenu {
         id: songContextMenu
         selectedUris: root.selectedSources
@@ -44,6 +66,7 @@ ListView {
         id: song
 
         required property song modelData
+        required property int index
         
         title:      modelData.title
         cover:      modelData.cover
@@ -64,8 +87,8 @@ ListView {
         lateralPadding: root.songLateralPadding
 
         // findBySource returns a different object from memory, hence comparing .row instead
-        playing: PlayQueue.playhead.row >= 0 // qmllint disable
-            && PlayQueue.playhead.row === PlayQueue.findBySource(modelData.source).row // qmllint disable
+        playing: playheadRowIdx >= 0 // qmllint disable
+            && index === playheadRowIdx // qmllint disable
 
         showSeparator: true
 
