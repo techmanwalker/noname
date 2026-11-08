@@ -6,6 +6,7 @@ import QtQuick
 QtObject {
     // action → key sequences (QKeySequence strings). The one place to rebind.
     readonly property var bindings: ({
+        backButton:      ["Esc"],   // when nothing is focused
         clearSearch:     ["Esc"],   // bar has a query
         leaveSearch:     ["Esc"],   // bar is empty
         seekBack:        ["Left"],

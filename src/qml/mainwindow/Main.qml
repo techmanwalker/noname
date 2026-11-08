@@ -100,6 +100,16 @@ T.ApplicationWindow {
         onActivated: PlayerPresenter.lowerVolume()
     }
 
+    // when no relevant item (the grid, the search box, etc) is focused, so global key
+    // negate any focus that conflicts with a global key
+    readonly property bool globalKeys: !searchBox.activeFocus || transportKeys
+
+    Shortcut {
+        sequences: Keyboard.bindings.backButton
+        enabled: root.globalKeys
+        onActivated: backButton.click()
+    }
+
     Component.onCompleted: {
         contentItem.Keys.pressed.connect(root.routeKey);
         contentItem.forceActiveFocus(); // with nothing focused, key events have no starting point
@@ -173,7 +183,7 @@ T.ApplicationWindow {
             Layout.preferredWidth: browser.vtabsColWidth - searchBox.leftPadding
 
             ResizableButton {
-                id: fullscreenToggle
+                id: backButton
                 iconName: "arrow-left"
 
                 visible: activeView.currentIndex === 1 || // we are in the player
@@ -194,7 +204,7 @@ T.ApplicationWindow {
 
                 spacing: 12
 
-                lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(fullscreenToggleBounds.bounds, bg, PlayerPresenter)
+                lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(backButtonBounds.bounds, bg, PlayerPresenter)
 
                 onClicked: {
                     
@@ -282,8 +292,8 @@ T.ApplicationWindow {
     }
 
     SceneRect {
-        id: fullscreenToggleBounds
-        target: fullscreenToggle
+        id: backButtonBounds
+        target: backButton
     }
 
     ResizeHandles {}
