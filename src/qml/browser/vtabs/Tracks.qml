@@ -88,7 +88,7 @@ ColumnLayout {
         additionalMenuActions: [
             T.Action {
                 text: qsTr("Play all")
-                onTriggered: () => PlayQueue.respawnQueue(LocalLibrary.flattenedSources())
+                onTriggered: () => PlayQueue.respawnQueue(root.displayedTracks)
             }
         ]
     }
