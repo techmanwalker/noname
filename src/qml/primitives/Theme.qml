@@ -65,8 +65,8 @@ QtObject {
             hoveredFilled: "#afafaf"
             clicked: "#969696"
 
-            songPlaying:  "#14c8c8c8"
-            songSelected: "#4da0a0a0"
+            songPlaying:  "#2faeaeae"
+            songSelected: "#6ea0a0a0"
             songHovered:  "#14a0a0a0"
 
             folder: "#1f1f1f"
@@ -97,8 +97,8 @@ QtObject {
             hoveredFilled: "#afafaf"
             clicked: "#969696"
 
-            songPlaying:  "#14141414"
-            songSelected: "#4d232323"
+            songPlaying:  "#2f222222"
+            songSelected: "#6e232323"
             songHovered:  "#14232323"
 
             folder: "#a0a0a0"
