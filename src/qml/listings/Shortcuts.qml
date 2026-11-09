@@ -3,6 +3,7 @@ import QtQuick
 
 import Player.Listings
 import Player.MediaTypes
+import Player.PlayQueue
 
 ListView {
     id: root
@@ -22,14 +23,25 @@ ListView {
 
     // selection
 
-    property list<url> selectedSources: []
+    property list<int> selectedIndices: []
     property alias additionalMenuActions: songContextMenu.extraActions
 
     SongContextMenu {
         id: songContextMenu
-        selectedUris: root.selectedSources
+        selectedIndices: root.selectedIndices
+        sourceModel: root.model
 
-        onClearSelectionRequested: root.selectedSources = []
+        onClearSelectionRequested: root.selectedIndices = []
+        onAddSelectionToQueue: {
+            // resolve tracks
+            let tracks = [];
+
+            root.selectedIndices.forEach((idx) => {
+                tracks.push(root.model[idx].source)
+            })
+
+            PlayQueue.batchAppend(tracks)
+        }
     }
 
     delegate: Song {
@@ -38,6 +50,7 @@ ListView {
         card: true
 
         required property song model
+        required property int  index
 
         title: model.title
         metadata: (model.artist.length > 0 ? model.artist : qsTr ("Unknown Artist"))
@@ -50,32 +63,32 @@ ListView {
         coverHeight: root.shortcutCoverHeight
 
         // to visually mark it selected
-        selected: root.selectedSources.includes(model.source)
+        selected: root.selectedIndices.includes(index)
 
         onClicked: {
             // Standard click clears multi-selection
-            root.selectedSources = []
+            root.selectedIndices = []
             root.songClicked(model)
         }
 
         onCtrlClicked: {
-            let sources = root.selectedSources
-            let idx = sources.indexOf(model.source)
+            let sources = root.selectedIndices
+            let idx = sources.indexOf(index)
             
             if (idx === -1) {
-                sources.push(model.source)
+                sources.push(index)
             } else {
                 sources.splice(idx, 1)
             }
             
             // Reassign with slice() to guarantee the QML property binding is triggered
-            root.selectedSources = sources.slice() 
+            root.selectedIndices = sources.slice() 
         }
 
         onRightClicked: {
             // If right-clicked song isn't in current selection, select only it
-            if (!root.selectedSources.includes(model.source)) {
-                root.selectedSources = [model.source]
+            if (!root.selectedIndices.includes(index)) {
+                root.selectedIndices = [index]
             }
             songContextMenu.popup()
         }

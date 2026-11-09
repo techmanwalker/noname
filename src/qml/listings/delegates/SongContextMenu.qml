@@ -3,19 +3,22 @@ import QtQuick
 import QtQuick.Templates as T
 
 import Player.Listings
+import Player.MediaTypes
 import Player.PlayQueue
 
 ActionMenu {
     id: root
 
-    property list<url> selectedUris
+    required property list<int>  selectedIndices
+    required property list<song> sourceModel // what do these indices stand for
 
+    signal addSelectionToQueue ()
     signal clearSelectionRequested ()
 
     actions: [
         T.Action {
             text: qsTr("Add to play queue")
-            onTriggered: PlayQueue.batchAppend(root.selectedUris)
+            onTriggered: root.addSelectionToQueue()
         },
         T.Action {
             text: qsTr("Clear selection")
@@ -24,7 +27,7 @@ ActionMenu {
     ]
 
     onClosed: {
-        if (root.selectedUris.length === 1) {
+        if (root.selectedIndices.length === 1) {
             root.clearSelectionRequested ()
         }
     }

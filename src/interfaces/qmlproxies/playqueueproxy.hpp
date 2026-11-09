@@ -8,6 +8,7 @@
 #include <QUrl>
 
 #include <memory>
+#include <qabstractitemmodel.h>
 #include <qtmetamacros.h>
 
 class PlayQueueProxy : public QIdentityProxyModel
@@ -89,11 +90,27 @@ public:
         m_iface->respawn_queue(sources);
     }
 
+    Q_INVOKABLE void remove (std::vector<int> indices) {
+        if (!m_iface) return;
+
+        QList<QPersistentModelIndex> qpindices;
+        qpindices.reserve(static_cast<qsizetype>(indices.size()));
+
+        for (int row : indices) {
+            const QModelIndex src = mapToSource(index(row, 0));
+            if (!src.isValid()) continue;
+            qpindices.append(QPersistentModelIndex(src));
+        }
+
+        if (qpindices.isEmpty()) return;
+        m_iface->batch_remove(qpindices);
+    }
+
     Q_INVOKABLE Types::Song itemAt (qsizetype idx) {
         if (!m_iface) return {};
 
         Types::Song result{};
-        m_iface->pointed_to(mapToSource(index(idx, idx)), [&result](const Types::Song &track_at_idx) {
+        m_iface->pointed_to(mapToSource(index(static_cast<int>(idx), 0)), [&result](const Types::Song &track_at_idx) {
             result = track_at_idx;
             return true;
         });

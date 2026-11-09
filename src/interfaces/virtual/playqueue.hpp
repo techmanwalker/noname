@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <optional>
+#include <qabstractitemmodel.h>
 
 #include "mediatypes.hpp"
 
@@ -39,6 +40,8 @@ public:
     
     virtual QFuture<void> respawn_queue (const QStringList &sources) = 0;
     virtual void respawn_queue (QList<Types::Song> songs) = 0;
+
+    virtual void batch_remove (const QList<QPersistentModelIndex> &indices) = 0;
 
     virtual bool shuffled () const = 0;
     virtual void set_shuffle (bool enabled) = 0;

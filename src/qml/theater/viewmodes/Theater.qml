@@ -331,6 +331,15 @@ Row {
                         }
 
                         additionalMenuActions: [
+
+                            T.Action {
+                                text: qsTr("Remove from queue")
+                                onTriggered: () => {
+                                    PlayQueue.remove(queueAndMetadata_c.selectedIndices)
+                                    queueAndMetadata_c.selectedIndices = []
+                                }
+                            },
+
                             T.Action {
                                 text: qsTr("Clear queue")
                                 onTriggered: () => PlayQueue.clear()

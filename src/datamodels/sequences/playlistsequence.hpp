@@ -25,6 +25,7 @@ public:
     USING_SEQUENCE_OPS(PlaylistSequence, Types::Song);
 
     using AbstractMediaSequence::clear;
+    using AbstractMediaSequence::batch_remove; // expose, supported
 
     /// clear and repopulate this playlist in one step
     template <media_sequence container>

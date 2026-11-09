@@ -128,15 +128,20 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
     std::vector<size_t> indices;
     indices.reserve(items.size());
 
+    const int count = rowCount();
     for (const QPersistentModelIndex &item : items) {
-        std::optional<size_t> prolly_exists = item.row();
-        if (!prolly_exists.has_value()) continue;
-        indices.push_back(prolly_exists.value());
+        if (!item.isValid()) continue;
+        const int row = item.row();
+        if (row < 0 || row >= count) continue;
+        indices.push_back(static_cast<size_t>(row));
     }
 
     if (indices.empty()) return;
 
+    // descending, deduplicated: the run-merging loop below relies on both
     std::ranges::sort(indices, std::greater<size_t>());
+    const auto dupes = std::ranges::unique(indices);
+    indices.erase(dupes.begin(), dupes.end());
     
     size_t i = 0;
     while (i < indices.size()) {

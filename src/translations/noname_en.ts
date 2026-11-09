@@ -4,7 +4,7 @@
 <context>
     <name>MinibarPlayer</name>
     <message numerus="yes">
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="109"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="103"/>
         <source>%n tracks in queue.</source>
         <translation type="unfinished">
             <numerusform></numerusform>

@@ -122,7 +122,7 @@
         <translation>Artista desconocido</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="109"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="103"/>
         <source>%n tracks in queue.</source>
         <translation>
             <numerusform>%n pistas en cola.</numerusform>
@@ -163,7 +163,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="120"/>
+        <location filename="../qml/listings/Playlist.qml" line="70"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -225,7 +225,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Shortcuts.qml" line="43"/>
+        <location filename="../qml/listings/Shortcuts.qml" line="56"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -262,12 +262,12 @@
         <translation type="vanished">Agregar a la cola de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="17"/>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="20"/>
         <source>Add to play queue</source>
         <translation>Agregar a la cola</translation>
     </message>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="21"/>
+        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="24"/>
         <source>Clear selection</source>
         <translation>Limpiar selección</translation>
     </message>
@@ -279,7 +279,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/SongGrid.qml" line="70"/>
+        <location filename="../qml/listings/SongGrid.qml" line="85"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -296,12 +296,17 @@
         <translation>Lista</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="344"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="336"/>
+        <source>Remove from queue</source>
+        <translation>Quitar de la cola</translation>
+    </message>
+    <message>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="353"/>
         <source>Details</source>
         <translation>Detalles</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="335"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="344"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>

@@ -11,6 +11,8 @@
 
 #include <memory>
 #include <optional>
+#include <qabstractitemmodel.h>
+#include <qlist.h>
 
 class PlayQueueLIPrivate 
 {
@@ -102,6 +104,22 @@ PlayQueueLI::respawn_queue(QList<Types::Song> songs)
     clear();
 
     m_d->sequence.batch_append(std::move(songs));
+}
+
+void
+PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
+{
+    QList<QPersistentModelIndex> mapped_indices;
+    mapped_indices.reserve(indices.size());
+
+    for (const QPersistentModelIndex &idx : indices) {
+        if (!idx.isValid()) continue;
+        const QModelIndex seq = to_sequence(idx);
+        if (!seq.isValid()) continue;
+        mapped_indices.append(QPersistentModelIndex(seq));
+    }
+
+    m_d->sequence.batch_remove(mapped_indices);
 }
 
 QPersistentModelIndex

@@ -90,8 +90,8 @@ ColumnLayout {
                 /* read only mode for now
                 onRightClicked: {
                     // If right-clicked song isn't in current selection, select only it
-                    if (!root.selectedSources.includes(model.source)) {
-                        root.selectedSources = [model.source]
+                    if (!root.selectedIndices.includes(index)) {
+                        root.selectedIndices = [index]
                     }
                     songContextMenu.popup()
                 }
