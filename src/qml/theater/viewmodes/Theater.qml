@@ -118,8 +118,8 @@ Row {
             target: controls
 
             /*
-            onBoundsChanged: console.log("controls backing luma: " + root.stateModel.backdropLumaForRect(controlsBounds.bounds) + ", "
-                + " ring luma: " + root.stateModel.ringLumaForRect(controlsBounds.bounds))
+            onBoundsChanged: console.log("controls backing lightness: " + root.stateModel.backdropLightnessForRect(controlsBounds.bounds) + ", "
+                + " ring lightness: " + root.stateModel.ringLightnessForRect(controlsBounds.bounds))
             */
         }
     }

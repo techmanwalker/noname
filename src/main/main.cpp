@@ -150,7 +150,7 @@ main (int argc, char ** argv)
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
 
-    pp->set_luma_awareness_enabled(!disable_lightness_awareness);
+    pp->set_lightness_awareness_enabled(!disable_lightness_awareness);
 
     pq->spawn_queue(arg_paths).then([&pp, &pq, &first_track]() {
         // load the remaining, the switch should be automagic

@@ -4,7 +4,7 @@
 #include "audioengine-in.hpp"
 
 #include "coverlogging.hpp"
-#include "coverluminance.hpp"
+#include "coverlightness.hpp"
 #include "coverstorage-in.hpp"
 #include "manager-in.hpp"
 #include "mediatypes.hpp"
@@ -63,94 +63,94 @@ quint8  PlayerPresenterLI::volume()          const { return playing->current_vol
 bool    PlayerPresenterLI::is_media_loaded() const { return playing->is_a_song_loaded();     }
 
 double
-PlayerPresenterLI::luma_of_ring (covers::luminance::luma_types ring) const
+PlayerPresenterLI::lightness_of_ring (covers::lightness::lightness_types ring) const
 {
-    if (!m_luma_awareness) return covers::luminance::default_lightness_value;
+    if (!m_lightness_awareness) return covers::lightness::default_lightness_value;
 
-    return covers::luminance::ring_of(m_cover_luma_rings, ring).value;
+    return covers::lightness::ring_of(m_cover_lightness_rings, ring).value;
 }
 
-double PlayerPresenterLI::cover_nuclear_luma() const { return luma_of_ring(covers::luminance::luma_types::nuclear); }
-double PlayerPresenterLI::cover_centric_luma() const { return luma_of_ring(covers::luminance::luma_types::centric); }
-double PlayerPresenterLI::cover_midring_luma() const { return luma_of_ring(covers::luminance::luma_types::midring); }
-double PlayerPresenterLI::cover_borders_luma() const { return luma_of_ring(covers::luminance::luma_types::borders); }
+double PlayerPresenterLI::cover_nuclear_lightness() const { return lightness_of_ring(covers::lightness::lightness_types::nuclear); }
+double PlayerPresenterLI::cover_centric_lightness() const { return lightness_of_ring(covers::lightness::lightness_types::centric); }
+double PlayerPresenterLI::cover_midring_lightness() const { return lightness_of_ring(covers::lightness::lightness_types::midring); }
+double PlayerPresenterLI::cover_borders_lightness() const { return lightness_of_ring(covers::lightness::lightness_types::borders); }
 
-double PlayerPresenterLI::cover_pondered_luma() const { return m_cover_pondered_luma; }
+double PlayerPresenterLI::cover_pondered_lightness() const { return m_cover_pondered_lightness; }
 
-bool PlayerPresenterLI::luma_awareness() const { return m_luma_awareness; }
-void PlayerPresenterLI::set_luma_awareness_enabled(bool enabled) { m_luma_awareness = enabled; emit lightness_awareness_changed(); }
+bool PlayerPresenterLI::lightness_awareness() const { return m_lightness_awareness; }
+void PlayerPresenterLI::set_lightness_awareness_enabled(bool enabled) { m_lightness_awareness = enabled; emit lightness_awareness_changed(); }
 
 QFuture<void>
-PlayerPresenterLI::recompute_lumas(const Types::Song &backdrop_source)
+PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source)
 {
-    if (!m_luma_awareness) return QtFuture::makeReadyVoidFuture();
+    if (!m_lightness_awareness) return QtFuture::makeReadyVoidFuture();
 
     // Last call wins: kill the previous request (best effort) and bump the epoch
     // so that whatever it still delivers is discarded.
-    m_lumas_future.cancel();
-    const quint64 epoch = ++m_lumas_epoch;
+    m_lightness_values_future.cancel();
+    const quint64 epoch = ++m_lightness_values_epoch;
 
-    m_lumas_future = cp->resolve(backdrop_source.source, {256, 256});
+    m_lightness_values_future = cp->resolve(backdrop_source.source, {256, 256});
 
-    return m_lumas_future.then(this, [this, epoch](QImage thumbnail) {
-        // A newer recompute_lumas() was issued while this one was in flight.
-        if (epoch != m_lumas_epoch) { return; }
+    return m_lightness_values_future.then(this, [this, epoch](QImage thumbnail) {
+        // A newer recompute_lightness_levels() was issued while this one was in flight.
+        if (epoch != m_lightness_values_epoch) { return; }
 
-        using namespace covers::luminance;
-        using enum luma_types;
+        using namespace covers::lightness;
+        using enum lightness_types;
 
-        covers::luminance::cover_rings rings;
-        ring_of(rings, nuclear) = percentile_luminance(thumbnail, 65, 0.00, 0.15);
-        ring_of(rings, centric) = percentile_luminance(thumbnail, 60, 0.15, 0.60);
-        ring_of(rings, midring) = percentile_luminance(thumbnail, 60, 0.60, 0.80);
-        ring_of(rings, borders) = percentile_luminance(thumbnail, 70, 0.80, 1.00);
+        covers::lightness::cover_rings rings;
+        ring_of(rings, nuclear) = percentile_lightness(thumbnail, 65, 0.00, 0.15);
+        ring_of(rings, centric) = percentile_lightness(thumbnail, 60, 0.15, 0.60);
+        ring_of(rings, midring) = percentile_lightness(thumbnail, 60, 0.60, 0.80);
+        ring_of(rings, borders) = percentile_lightness(thumbnail, 70, 0.80, 1.00);
 
-        double cover_pondered_luma = covers::luminance::pondered_luma(rings);
+        double cover_pondered_lightness = covers::lightness::pondered_lightness(rings);
 
         /*
         constexpr double precision = 17;
 
-        using covers::luminance::luma_types;
+        using covers::lightness::lightness_types;
         
-        qCDebug(l_playerpresenter) << "cover nuclear luma: " << QString::number(ring_of(rings, nuclear).value, 'f', precision);
-        qCDebug(l_playerpresenter) << "cover centric luma: " << QString::number(ring_of(rings, centric).value, 'f', precision);
-        qCDebug(l_playerpresenter) << "cover midring luma: " << QString::number(ring_of(rings, midring).value, 'f', precision);
-        qCDebug(l_playerpresenter) << "cover borders luma: " << QString::number(ring_of(rings, borders).value, 'f', precision);
+        qCDebug(l_playerpresenter) << "cover nuclear lightness: " << QString::number(ring_of(rings, nuclear).value, 'f', precision);
+        qCDebug(l_playerpresenter) << "cover centric lightness: " << QString::number(ring_of(rings, centric).value, 'f', precision);
+        qCDebug(l_playerpresenter) << "cover midring lightness: " << QString::number(ring_of(rings, midring).value, 'f', precision);
+        qCDebug(l_playerpresenter) << "cover borders lightness: " << QString::number(ring_of(rings, borders).value, 'f', precision);
 
-        qCDebug(l_playerpresenter) << "pondered cover luma: " << QString::number(cover_pondered_luma, 'f', precision);
+        qCDebug(l_playerpresenter) << "pondered cover lightness: " << QString::number(cover_pondered_lightness, 'f', precision);
         */
 
         // Reccheck once more befor writing to memory
-        if (epoch != m_lumas_epoch) { return; }
+        if (epoch != m_lightness_values_epoch) { return; }
 
-        m_cover_luma_rings = rings;
-        m_cover_luma_table = covers::luminance::luma_table_of_image(thumbnail, 55);
+        m_cover_lightness_rings = rings;
+        m_cover_lightness_table = covers::lightness::lightness_table_of_image(thumbnail, 55);
 
-        m_cover_pondered_luma = cover_pondered_luma;
+        m_cover_pondered_lightness = cover_pondered_lightness;
 
-        emit lumas_changed();
+        emit lightness_levels_changed();
     });
 }
 
 double
-PlayerPresenterLI::backdrop_luma_for_rect (QRect rect) const
+PlayerPresenterLI::backdrop_lightness_for_rect (QRect rect) const
 {
-    return m_cover_luma_table.backdrop_luma_for_rect (rect, QSize { wi->width(), wi->height() });
+    return m_cover_lightness_table.backdrop_lightness_for_rect (rect, QSize { wi->width(), wi->height() });
 }
 
 double
-PlayerPresenterLI::ring_luma_for_rect (QRect rect) const
+PlayerPresenterLI::ring_lightness_for_rect (QRect rect) const
 {
-    using namespace covers::luminance;
+    using namespace covers::lightness;
 
-    const std::optional<luma_types> ring = dominant_ring_for_rect(
-        m_cover_luma_rings,
-        m_cover_luma_table.m_aspect_ratio,
+    const std::optional<lightness_types> ring = dominant_ring_for_rect(
+        m_cover_lightness_rings,
+        m_cover_lightness_table.m_aspect_ratio,
         rect,
         QSize { wi->width(), wi->height() });
 
-    // Same "no data" value backdrop_luma_for_rect gives when nothing is visible.
-    return ring ? ring_of(m_cover_luma_rings, *ring).value : default_lightness_value;
+    // Same "no data" value backdrop_lightness_for_rect gives when nothing is visible.
+    return ring ? ring_of(m_cover_lightness_rings, *ring).value : default_lightness_value;
 }
 
 PlayerPresenterLI::PlaybackState
@@ -317,7 +317,7 @@ PlayerPresenterLI::handle_track_changed()
     emit track_changed();
     emit media_loaded_changed();
 
-    recompute_lumas(m_current_track);
+    recompute_lightness_levels(m_current_track);
 }
 
 void

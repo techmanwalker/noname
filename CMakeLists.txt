@@ -537,7 +537,7 @@ target_link_libraries(playerpresenter
         audioengine_in # only has control over what is currently playing, hands switches and playlist/queue progression to playqueue
         playqueue_in
 
-        covers # temporary, for quick integration with luma extraction
+        covers # temporary, for quick integration with lightness extraction
 
         configuration_in # load last volume from its save file
         mediatypes
@@ -753,11 +753,11 @@ if(PLAYER_BUILD_TESTS)
             theater
     )
 
-    qt_add_executable(luminancetest
-        src/tests/luminance.cpp
+    qt_add_executable(lightnesstest
+        src/tests/lightness.cpp
     )
 
-    target_link_libraries(luminancetest
+    target_link_libraries(lightnesstest
         PUBLIC
             covers
     )

@@ -16,11 +16,11 @@ QtObject {
     property Connections presenterSignals: Connections {
         target: PlayerPresenter
 
-        // Not invalidate() directly: lumasChanged is emitted from inside the presenter's
+        // Not invalidate() directly: lightnessLevelsChanged is emitted from inside the presenter's
         // future continuation, and Background's point* cascade runs right behind it.
         // Re-evaluate once, from the event loop, when that has settled. callLater
         // coalesces repeated requests into one pass.
-        function onLumasChanged () { root.invalidate() }
+        function onLightnessLevelsChanged () { root.invalidate() }
     }
 
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
@@ -40,10 +40,10 @@ QtObject {
         const x = bounds.x, y = bounds.y, w = bounds.width, h = bounds.height;
 
         // use the multiplier values background uses
-        let multiplier = background.lumaMultiplierAtCenter (Qt.rect(x, y, w, h));
+        let multiplier = background.lightnessMultiplierAtCenter (Qt.rect(x, y, w, h));
 
-        let m_backdrop = presenter.backdropLumaForRect(Qt.rect(x, y, w, h)) * multiplier;
-        let m_ring     = presenter.ringLumaForRect(Qt.rect(x, y, w, h))     * multiplier;
+        let m_backdrop = presenter.backdropLightnessForRect(Qt.rect(x, y, w, h)) * multiplier;
+        let m_ring     = presenter.ringLightnessForRect(Qt.rect(x, y, w, h))     * multiplier;
 
         /*
         let background_area = background.width    * background.height

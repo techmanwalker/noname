@@ -40,14 +40,14 @@ public:
 
     Q_PROPERTY(PlaybackState playbackState READ playback_state NOTIFY playbackStateChanged)
 
-    Q_PROPERTY(double coverNuclearLuma  READ cover_nuclear_luma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverCentricLuma  READ cover_centric_luma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverMidringLuma  READ cover_midring_luma NOTIFY lumasChanged)
-    Q_PROPERTY(double coverBordersLuma  READ cover_borders_luma NOTIFY lumasChanged)
+    Q_PROPERTY(double coverNuclearLightness  READ cover_nuclear_lightness NOTIFY lightnessLevelsChanged)
+    Q_PROPERTY(double coverCentricLightness  READ cover_centric_lightness NOTIFY lightnessLevelsChanged)
+    Q_PROPERTY(double coverMidringLightness  READ cover_midring_lightness NOTIFY lightnessLevelsChanged)
+    Q_PROPERTY(double coverBordersLightness  READ cover_borders_lightness NOTIFY lightnessLevelsChanged)
     
-    Q_PROPERTY(bool lightnessAwareness  READ luma_awareness WRITE set_luma_awareness_enabled NOTIFY lightnessAwarenessChanged)
+    Q_PROPERTY(bool lightnessAwareness  READ lightness_awareness WRITE set_lightness_awareness_enabled NOTIFY lightnessAwarenessChanged)
 
-    Q_PROPERTY(double coverPonderedLuma READ cover_pondered_luma     NOTIFY lumasChanged)
+    Q_PROPERTY(double coverPonderedLightness READ cover_pondered_lightness     NOTIFY lightnessLevelsChanged)
 
     explicit PlayerPresenterProxy(QObject *parent = nullptr)
         : QObject(parent),
@@ -56,7 +56,7 @@ public:
         // an interface cannot feature the implementation signals, need to be referred to by name
         if (auto *concrete = dynamic_cast<QObject*>(m_presenter.get())) {
             connect(concrete, SIGNAL(track_changed()),         this, SIGNAL(trackChanged()));
-            connect(concrete, SIGNAL(lumas_changed()),         this, SIGNAL(lumasChanged()));
+            connect(concrete, SIGNAL(lightness_levels_changed()),         this, SIGNAL(lightnessLevelsChanged()));
             connect(concrete, SIGNAL(volume_changed()),        this, SIGNAL(volumeChanged()));
             connect(concrete, SIGNAL(playback_state_changed()), this, SIGNAL(playbackStateChanged()));
             connect(concrete, SIGNAL(media_loaded_changed()),   this, SIGNAL(mediaLoadedChanged()));
@@ -75,17 +75,17 @@ public:
         return m_presenter->current_track();
     }
 
-    // todo: use covers::luminance::default_lightness_value as the third ternary component
-    double cover_nuclear_luma() const { return m_presenter ?  m_presenter->cover_nuclear_luma() : 0.5;       }
-    double cover_centric_luma() const { return m_presenter ?  m_presenter->cover_centric_luma() : 0.5;       }
-    double cover_midring_luma() const { return m_presenter ?  m_presenter->cover_midring_luma() : 0.5;       }
-    double cover_borders_luma() const { return m_presenter ?  m_presenter->cover_borders_luma() : 0.5;       }
+    // todo: use covers::lightness::default_lightness_value as the third ternary component
+    double cover_nuclear_lightness() const { return m_presenter ?  m_presenter->cover_nuclear_lightness() : 0.5;       }
+    double cover_centric_lightness() const { return m_presenter ?  m_presenter->cover_centric_lightness() : 0.5;       }
+    double cover_midring_lightness() const { return m_presenter ?  m_presenter->cover_midring_lightness() : 0.5;       }
+    double cover_borders_lightness() const { return m_presenter ?  m_presenter->cover_borders_lightness() : 0.5;       }
 
-    double cover_pondered_luma() const     { return m_presenter ? m_presenter->cover_pondered_luma()  : 0.0; }
+    double cover_pondered_lightness() const     { return m_presenter ? m_presenter->cover_pondered_lightness()  : 0.0; }
 
     // enabled by default
-    bool luma_awareness () const { return m_presenter ? m_presenter->luma_awareness() : true; }
-    void set_luma_awareness_enabled (bool enabled) { if (m_presenter) m_presenter->set_luma_awareness_enabled(enabled); }
+    bool lightness_awareness () const { return m_presenter ? m_presenter->lightness_awareness() : true; }
+    void set_lightness_awareness_enabled (bool enabled) { if (m_presenter) m_presenter->set_lightness_awareness_enabled(enabled); }
 
     QString title()            const { return m_presenter ?  m_presenter->current_track().title     : QString(); }
     QString artist()           const { return m_presenter ?  m_presenter->current_track().artist    : QString(); }
@@ -115,17 +115,17 @@ public:
     Q_INVOKABLE quint64 position_ms()       const { return m_presenter ? m_presenter->position_ms() : 0;     }
     Q_INVOKABLE void    seekTo (quint64 position) { if (m_presenter) m_presenter->set_position_ms(position); }
 
-    Q_INVOKABLE double backdropLumaForRect (QRect rect) const {
+    Q_INVOKABLE double backdropLightnessForRect (QRect rect) const {
         if (m_presenter) {
-            return m_presenter->backdrop_luma_for_rect(rect);
+            return m_presenter->backdrop_lightness_for_rect(rect);
         } else {
             return 0.5; 
         }
     }
 
-    Q_INVOKABLE double ringLumaForRect (QRect rect) const {
+    Q_INVOKABLE double ringLightnessForRect (QRect rect) const {
         if (m_presenter) {
-            return m_presenter->ring_luma_for_rect(rect);
+            return m_presenter->ring_lightness_for_rect(rect);
         } else {
             return 0.5;
         }
@@ -137,7 +137,7 @@ signals:
     void volumeChanged();
     void playbackStateChanged();
     void mediaLoadedChanged();
-    void lumasChanged();
+    void lightnessLevelsChanged();
     void seekFinished();
     void lightnessAwarenessChanged();
 

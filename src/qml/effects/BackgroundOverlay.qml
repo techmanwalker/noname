@@ -10,7 +10,7 @@ Item {
     // Control points: vec3(x_normalized, L_mult, C_mult)
     
     // x: 0.0 = left border, 1.0 = right border (bindable to UI items)
-    // L_mult: 0.0 = black, 1.0 = no brightness change
+    // L_mult: 0.0 = black, 1.0 = no lightness change
     // C_mult: 0.0 = gray, 1.0 = no saturation change
 
     property vector3d pointA:  ({ x: 0, y: 0.15, z: 0.2 }) // extreme left

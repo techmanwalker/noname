@@ -1,4 +1,4 @@
-#include "coverluminance.hpp"
+#include "coverlightness.hpp"
 
 #include <QImage>
 
@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <random>
 
-using namespace covers::luminance;
+using namespace covers::lightness;
 using namespace covers::transform;
 
 static double
@@ -22,7 +22,7 @@ kernel_L (int r, int g, int b)
 {
     QImage img(1, 1, QImage::Format_RGB32);
     img.setPixel(0, 0, qRgb(r, g, b));
-    return percentile_luminance(img, 50).value;
+    return percentile_lightness(img, 50).value;
 }
 
 int
@@ -52,7 +52,7 @@ main ()
     bool failed_ring_pick_test = false;
 
     {
-        using enum luma_types;
+        using enum lightness_types;
 
         cover_rings rings;
         ring_of(rings, nuclear) = { 0.1, 0.00, 0.15 };
@@ -63,7 +63,7 @@ main ()
         const QSize surface(1000, 1000);
         const ratio square{ 1, 1 };
 
-        auto expect = [&](QRect r, std::optional<luma_types> want) {
+        auto expect = [&](QRect r, std::optional<lightness_types> want) {
             if (dominant_ring_for_rect(rings, square, r, surface) != want) {
                 std::printf("FAIL rect (%d,%d %dx%d)\n", r.x(), r.y(), r.width(), r.height());
                 failed_ring_pick_test = true;

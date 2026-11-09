@@ -3,7 +3,7 @@
 #include "audioengine-in.hpp"
 
 #include "coverstorage-in.hpp"
-#include "coverluminance.hpp"
+#include "coverlightness.hpp"
 #include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
 #include "windowgeometry-in.hpp"
@@ -76,18 +76,18 @@ public:
     PlaybackState playback_state() const override;
     bool is_media_loaded() const override;
 
-    double cover_nuclear_luma() const override;
-    double cover_centric_luma() const override;
-    double cover_midring_luma() const override;
-    double cover_borders_luma() const override;
+    double cover_nuclear_lightness() const override;
+    double cover_centric_lightness() const override;
+    double cover_midring_lightness() const override;
+    double cover_borders_lightness() const override;
     
-    double cover_pondered_luma() const override;
+    double cover_pondered_lightness() const override;
 
-    bool luma_awareness () const override;
-    void set_luma_awareness_enabled (bool enabled) override;
+    bool lightness_awareness () const override;
+    void set_lightness_awareness_enabled (bool enabled) override;
 
-    double backdrop_luma_for_rect (QRect rect) const override;
-    double ring_luma_for_rect     (QRect rect) const override;
+    double backdrop_lightness_for_rect (QRect rect) const override;
+    double ring_lightness_for_rect     (QRect rect) const override;
 
     void set_position_ms (quint64 position) const override;
     void relative_seek (qint64 ms) const override;
@@ -117,7 +117,7 @@ signals:
     void volume_changed();
     void playback_state_changed();
     void media_loaded_changed();
-    void lumas_changed();
+    void lightness_levels_changed();
     void seek_finished();
     void lightness_awareness_changed();
 
@@ -128,7 +128,7 @@ public slots:
     void handle_volume_changed();
 
 private slots:
-    QFuture<void> recompute_lumas(const Types::Song &backdrop_source);
+    QFuture<void> recompute_lightness_levels(const Types::Song &backdrop_source);
 
 private:
     std::shared_ptr<configuration::manager> cm; // configuration
@@ -142,18 +142,18 @@ private:
     // do not access these directly from outside, these are guarded
     Types::Song m_current_track;
     
-    covers::luminance::cover_rings m_cover_luma_rings;
-    covers::luminance::table_luma  m_cover_luma_table;
-    double m_cover_pondered_luma = covers::luminance::default_lightness_value;
+    covers::lightness::cover_rings m_cover_lightness_rings;
+    covers::lightness::lightness_table  m_cover_lightness_table;
+    double m_cover_pondered_lightness = covers::lightness::default_lightness_value;
 
-    // latest recompute_lumas() request; older ones are cancelled/ignored
-    QFuture<QImage> m_lumas_future;
-    quint64 m_lumas_epoch = 0;
+    // latest recompute_lightness_levels() request; older ones are cancelled/ignored
+    QFuture<QImage> m_lightness_values_future;
+    quint64 m_lightness_values_epoch = 0;
 
-    // if false, all luma recalculation is skipped and assumed to be uninitialized
-    bool m_luma_awareness = false;
+    // if false, all lightness values recalculation is skipped and assumed to be uninitialized
+    bool m_lightness_awareness = false;
 
     quint8 m_last_nonzero_volume { 65 };
 
-    double luma_of_ring (covers::luminance::luma_types ring) const;
+    double lightness_of_ring (covers::lightness::lightness_types ring) const;
 };

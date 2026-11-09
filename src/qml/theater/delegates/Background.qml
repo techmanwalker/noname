@@ -25,7 +25,7 @@ Item {
     // cover_back_l below walks these as a Catmull-Rom-style cubic 
     // Hermite spline. Tune freely.
 
-    property var coverBackLumaStops: [
+    property var coverBackLightnessStops: [
         Qt.point(0.00, 1),
         Qt.point(0.15, 1),
         Qt.point(0.20, 0.8),
@@ -41,12 +41,12 @@ Item {
     ]
 
     // fallback for contentLightness < 0 (unset)
-    property real coverBackLumaFallback: 0.65
+    property real coverBackLightnessFallback: 0.65
 
     // base cover_back_l
     readonly property real implicitMultiplier: root.contentLightness < 0
-        ? root.coverBackLumaFallback
-        : root.clamp(root.curveValue(root.coverBackLumaStops, root.contentLightness))
+        ? root.coverBackLightnessFallback
+        : root.clamp(root.curveValue(root.coverBackLightnessStops, root.contentLightness))
 
     // OKLC value multipliers (from 0 to 1 as well)
     // ensure symmetric gradient
@@ -54,7 +54,7 @@ Item {
 
     // The control points the shader receives, vec3(x, L_mult, C_mult), as ONE value.
     // One binding means one change notification, so the overlay and
-    // lumaMultiplierAtCenter never see a half-updated curve.
+    // lightnessMultiplierAtCenter never see a half-updated curve.
     readonly property var curve: {
         const back  = root.cover_back_l
         const edges = back * (root.implicitMultiplier < 1 ? 0.4 : 1)   // symmetric gradient
@@ -121,13 +121,13 @@ Item {
         return h00 * p1.y + h10 * h * m1 + h01 * p2.y + h11 * h * m2
     }
 
-    // Luma multiplier the overlay shader applies at the horizontal center of
+    // Lightness multiplier the overlay shader applies at the horizontal center of
     // `region`. `region` is in this item's own coordinates (x = 0 is
     // Background's left edge); only its x and width matter. Both are divided
     // by this item's real width, not maximumWidth, so they land on the same
     // 0-1 axis the shader uses. The part of the segment outside the item is
     // ignored, so the center is that of the visible part.
-    function lumaMultiplierAtCenter (region: rect) : real {
+    function lightnessMultiplierAtCenter (region: rect) : real {
         if (root.width <= 0) return 1; // identity multiplier; nothing is drawn at zero width anyway
 
         const left  = root.clamp(region.x / root.width);

@@ -2,13 +2,13 @@
 
 #include <QJsonObject>
 
-namespace covers::luminance {
-    struct table_luma;
+namespace covers::lightness {
+    struct lightness_table;
 }
 
 namespace debug {
 
 QJsonObject
-serialize (const covers::luminance::table_luma &table);
+serialize (const covers::lightness::lightness_table &table);
 
 }

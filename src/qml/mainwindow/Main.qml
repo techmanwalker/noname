@@ -142,7 +142,7 @@ T.ApplicationWindow {
         maximumWidth: Screen.width
         maximumHeight: Screen.height
 
-        contentLightness: PlayerPresenter.coverPonderedLuma /* from 0 to 1 */
+        contentLightness: PlayerPresenter.coverPonderedLightness /* from 0 to 1 */
 
         // Math.max(1, root.width) prevents zero-division errors during
         // the brief moment when the window is still being constructed

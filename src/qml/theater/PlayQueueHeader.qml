@@ -16,7 +16,7 @@ Column {
 
     property bool lightMode
 
-    // no need to be very precise, used to calculate the backdrop luminance
+    // no need to be very precise, used to calculate the backdrop lightness
     readonly property int textContentWidth: Math.max(title.contentWidth, artist.contentWidth, album.contentWidth)
     readonly property int textContentHeight: title.contentHeight + artist.contentHeight + album.contentHeight + spacing * 2
 

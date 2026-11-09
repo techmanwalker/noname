@@ -32,21 +32,21 @@ public:
     /*  Percentile OkLab lightness of the current cover, in [0,1]. Backs the
         background darkener's contrast target. Refer to PlayerPresenterLI
         to assess its computation heuristics. */
-    virtual double cover_nuclear_luma() const = 0;
-    virtual double cover_centric_luma() const = 0;
-    virtual double cover_midring_luma() const = 0;
-    virtual double cover_borders_luma() const = 0;
+    virtual double cover_nuclear_lightness() const = 0;
+    virtual double cover_centric_lightness() const = 0;
+    virtual double cover_midring_lightness() const = 0;
+    virtual double cover_borders_lightness() const = 0;
 
-    virtual double cover_pondered_luma() const = 0;
+    virtual double cover_pondered_lightness() const = 0;
 
-    virtual bool   luma_awareness () const = 0;
-    virtual void   set_luma_awareness_enabled (bool enabled) = 0;
+    virtual bool   lightness_awareness () const = 0;
+    virtual void   set_lightness_awareness_enabled (bool enabled) = 0;
 
-    // get the luma of the pixels behind this rect from the cover
-    virtual double backdrop_luma_for_rect (QRect rect) const = 0;
+    // get the lightness of the pixels behind this rect from the cover
+    virtual double backdrop_lightness_for_rect (QRect rect) const = 0;
 
-    // luma of the ring that spans the bigger part of the area of this rect
-    virtual double ring_luma_for_rect (QRect rect) const = 0;
+    // lightness of the ring that spans the bigger part of the area of this rect
+    virtual double ring_lightness_for_rect (QRect rect) const = 0;
 
     virtual void set_position_ms(quint64 position) const = 0;
 

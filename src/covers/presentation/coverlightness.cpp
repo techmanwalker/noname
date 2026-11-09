@@ -1,4 +1,4 @@
-#include "coverluminance.hpp"
+#include "coverlightness.hpp"
 
 #include <algorithm>
 #include <array>
@@ -12,7 +12,7 @@
 #include <QImage>
 #include <QtConcurrent/QtConcurrent>
 
-namespace covers::luminance
+namespace covers::lightness
 {
 
 namespace {
@@ -82,7 +82,7 @@ srgb_to_linear (uint8_t channel_8bit)
 }
 
 // Björn Ottosson's OkLab forward transform — L channel only, since
-// that's all percentile_luminance needs.
+// that's all percentile_lightness needs.
 double
 oklab_lightness (double r_linear, double g_linear, double b_linear)
 {
@@ -151,11 +151,11 @@ struct run_set { std::array<run, 2> r{}; int n = 0; };
 
 }
 
-ring_luma
-percentile_luminance (const QImage &chunk, int percentile,
+ring_lightness
+percentile_lightness (const QImage &chunk, int percentile,
                       double ring_crop_begin, double ring_crop_end)
 {
-    ring_luma result_ring { .value = default_lightness_value,
+    ring_lightness result_ring { .value = default_lightness_value,
                             .ring_crop_begin = ring_crop_begin,
                             .ring_crop_end = ring_crop_end };
 
@@ -254,12 +254,12 @@ percentile_luminance (const QImage &chunk, int percentile,
 }
 
 double
-pondered_luma (const cover_rings &lumas)
+pondered_lightness (const cover_rings &rings)
 {
     double weighted_sum = 0.0;
     double total_weight = 0.0;
 
-    for (const ring_luma &ring : lumas) {
+    for (const ring_lightness &ring : rings) {
         const double begin = std::clamp(ring.ring_crop_begin, 0.0, 1.0);
         const double end   = std::clamp(ring.ring_crop_end,   0.0, 1.0);
 
@@ -348,11 +348,11 @@ overlap_with_centered_box (double left, double top, double right, double bottom,
 
 }
 
-table_luma
-luma_table_of_image (const QImage &image, int percentile)
+lightness_table
+lightness_table_of_image (const QImage &image, int percentile)
 {
-    // Zeroed: the same "no data" value percentile_luminance gives an empty chunk.
-    table_luma table{};
+    // Zeroed: the same "no data" value percentile_lightness gives an empty chunk.
+    lightness_table table{};
 
     if (image.isNull() || image.width() <= 0 || image.height() <= 0) {
         return table;
@@ -373,15 +373,15 @@ luma_table_of_image (const QImage &image, int percentile)
     const qsizetype  stride = rgb.bytesPerLine();
 
     // Widest cell of any table row: ceil(width / s_columns) <= width / s_columns + 1.
-    const size_t max_cell_w = width / table_luma::s_columns + 1;
+    const size_t max_cell_w = width / lightness_table::s_columns + 1;
 
     // One task = one table row. Each task writes only its own row of
     // m_table and owns its buffers, so there is nothing to lock.
     auto evaluate_row = [&](int row_index) {
         const auto row = static_cast<size_t>(row_index);
 
-        const int y0 = cell_edge(row, table_luma::s_rows, height);
-        const int y1 = std::max(cell_edge(row + 1, table_luma::s_rows, height), y0 + 1);
+        const int y0 = cell_edge(row, lightness_table::s_rows, height);
+        const int y1 = std::max(cell_edge(row + 1, lightness_table::s_rows, height), y0 + 1);
         const size_t band_h = static_cast<size_t>(y1 - y0);
 
         // 1. Lightness of the whole pixel band of this table row, computed once.
@@ -400,9 +400,9 @@ luma_table_of_image (const QImage &image, int percentile)
         //    that is allocated once per task and reused for all of its cells.
         const auto scratch = std::make_unique_for_overwrite<float[]>(band_h * max_cell_w);
 
-        for (size_t column = 0; column < table_luma::s_columns; ++column) {
-            const int x0 = cell_edge(column, table_luma::s_columns, width);
-            const int x1 = std::max(cell_edge(column + 1, table_luma::s_columns, width), x0 + 1);
+        for (size_t column = 0; column < lightness_table::s_columns; ++column) {
+            const int x0 = cell_edge(column, lightness_table::s_columns, width);
+            const int x1 = std::max(cell_edge(column + 1, lightness_table::s_columns, width), x0 + 1);
             const auto cell_w = static_cast<size_t>(x1 - x0);
 
             float *out = scratch.get();
@@ -413,14 +413,14 @@ luma_table_of_image (const QImage &image, int percentile)
 
             const size_t count = band_h * cell_w; // >= 1: both extents are forced to >= 1 pixel
 
-            // Same [0, 1] clamp percentile_luminance applies to its result.
+            // Same [0, 1] clamp percentile_lightness applies to its result.
             table.m_table[row][column] = std::clamp(
                 static_cast<double>(select_percentile(scratch.get(), count, percentile)),
                 0.0, 1.0);
         }
     };
 
-    std::array<int, table_luma::s_rows> rows;
+    std::array<int, lightness_table::s_rows> rows;
     std::iota(rows.begin(), rows.end(), 0);
 
     // Blocks until every row is done, so `rgb` outlives all the raw pointers.
@@ -430,9 +430,9 @@ luma_table_of_image (const QImage &image, int percentile)
 }
 
 double
-table_luma::backdrop_luma_for_rect (QRect rect, QSize reference_surface, int percentile) const
+lightness_table::backdrop_lightness_for_rect (QRect rect, QSize reference_surface, int percentile) const
 {
-    // Same "no data" value percentile_luminance gives an empty chunk.
+    // Same "no data" value percentile_lightness gives an empty chunk.
     constexpr double no_backing = 0.0;
 
     if (reference_surface.isEmpty()) {
@@ -495,7 +495,7 @@ table_luma::backdrop_luma_for_rect (QRect rect, QSize reference_surface, int per
         }
     }
 
-    // Same rank formula as percentile_luminance. `values` is never empty.
+    // Same rank formula as percentile_lightness. `values` is never empty.
     const int p = std::clamp(percentile, 0, 100);
     const auto rank = static_cast<std::ptrdiff_t>(
         (values.size() - 1) * static_cast<size_t>(p) / 100);
@@ -505,7 +505,7 @@ table_luma::backdrop_luma_for_rect (QRect rect, QSize reference_surface, int per
     return values[static_cast<size_t>(rank)];
 }
 
-std::optional<luma_types>
+std::optional<lightness_types>
 dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
                         QRect rect, QSize reference_surface)
 {
@@ -543,7 +543,7 @@ dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
                                          s * px_per_unit_x, s * px_per_unit_y);
     };
 
-    std::optional<luma_types> best;
+    std::optional<lightness_types> best;
     double best_area = 0.0;
 
     for (size_t i = 0; i < rings.size(); ++i) {
@@ -551,13 +551,13 @@ dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
         const double end   = std::clamp(rings[i].ring_crop_end,   0.0, 1.0);
 
         // Rings are nested boxes: this ring = box(end) minus box(begin). A
-        // malformed ring (begin >= end) gets zero area, as in pondered_luma.
+        // malformed ring (begin >= end) gets zero area, as in pondered_lightness.
         const double area = std::max(0.0, area_within(end) - area_within(begin));
 
         // Strict >: on an exact tie the earlier (inner) ring wins.
         if (area > best_area) {
             best_area = area;
-            best = static_cast<luma_types>(i);
+            best = static_cast<lightness_types>(i);
         }
     }
 
