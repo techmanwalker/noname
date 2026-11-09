@@ -5,8 +5,8 @@
 
 #include <memory>
 
-#include "manager-in.hpp"
-#include "windowgeometry-in.hpp"
+#include "virtual/manager.hpp"
+#include "virtual/windowgeometry.hpp"
 
 class WindowGeometryLI : public QObject, public WindowGeometry
 {

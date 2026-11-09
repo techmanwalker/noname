@@ -1,8 +1,8 @@
 #pragma once
 
 #include "abstractmediasequence.hpp"
-#include "locallibrary-in.hpp" // interface header
-#include "manager-in.hpp"
+#include "virtual/locallibrary.hpp" // interface header
+#include "virtual/manager.hpp"
 #include "mediatypes.hpp"
 
 #include <QFuture>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lyricsmanifest-in.hpp"
+#include "virtual/lyricsmanifest.hpp"
 
 #include <QIdentityProxyModel>
 

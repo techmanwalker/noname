@@ -28,14 +28,14 @@
 #include "soundio/backends.hpp"
 #include "windowgeometry.hpp"
 
-#include "locallibraryproxy.hpp"
-#include "lyricsmanifestproxy.hpp"
-#include "mediafilterproxy.hpp"
-#include "playerpresenterproxy.hpp"
-#include "playqueueproxy.hpp"
-#include "shortcutslistproxy.hpp"
-#include "playlistslistproxy.hpp"
-#include "windowgeometryproxy.hpp"
+#include "qmlproxies/locallibraryproxy.hpp"
+#include "qmlproxies/lyricsmanifestproxy.hpp"
+#include "qmlproxies/mediafilterproxy.hpp"
+#include "qmlproxies/playerpresenterproxy.hpp"
+#include "qmlproxies/playqueueproxy.hpp"
+#include "qmlproxies/shortcutslistproxy.hpp"
+#include "qmlproxies/playlistslistproxy.hpp"
+#include "qmlproxies/windowgeometryproxy.hpp"
 
 #include "backendstrings.hpp"
 

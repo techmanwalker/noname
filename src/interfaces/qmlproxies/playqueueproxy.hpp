@@ -1,6 +1,6 @@
 #pragma once
 
-#include "playqueue-in.hpp"
+#include "virtual/playqueue.hpp"
 
 #include <QFuture>
 #include <QIdentityProxyModel>

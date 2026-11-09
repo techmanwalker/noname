@@ -1,5 +1,5 @@
 #include "abstractmediasequence.hpp"
-#include "audioengine-in.hpp"
+#include "virtual/audioengine.hpp"
 
 #include "playqueue.hpp"
 #include "playlistsequence.hpp"

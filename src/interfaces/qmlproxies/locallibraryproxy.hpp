@@ -1,6 +1,6 @@
 #pragma once
 
-#include "locallibrary-in.hpp"
+#include "virtual/locallibrary.hpp"
 #include <QIdentityProxyModel>
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <memory>

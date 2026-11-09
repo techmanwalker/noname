@@ -2,7 +2,7 @@
 
 #include "mediatypes.hpp"
 #include "playlistsequence.hpp"
-#include "playqueue-in.hpp"
+#include "virtual/playqueue.hpp"
 
 #include <QIdentityProxyModel>
 #include <QFuture>

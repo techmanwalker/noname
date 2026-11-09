@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "lyricsmanifest-in.hpp"
-#include "audioengine-in.hpp"
+#include "virtual/lyricsmanifest.hpp"
+#include "virtual/audioengine.hpp"
 
 Q_DECLARE_LOGGING_CATEGORY(l_lyricsmanifest);
 

@@ -1,6 +1,6 @@
 #include "basicdiskio.hpp"
 #include "coveruris.hpp"
-#include "manager-in.hpp"
+#include "virtual/manager.hpp"
 #include "defaultroles.hpp"
 #include "locallibrary.hpp"
 #include "mediatypes.hpp"

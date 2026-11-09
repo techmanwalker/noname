@@ -11,7 +11,7 @@
 #include <QThreadPool>
 #include <memory>
 
-#include "coverstorage-in.hpp"
+#include "virtual/coverstorage.hpp"
 
 // covers::live: hot cache on memory right away to consume, already decoded and yet but cheap to decode
 

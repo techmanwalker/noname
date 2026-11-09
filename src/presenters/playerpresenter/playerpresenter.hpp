@@ -1,12 +1,12 @@
 #pragma once
 
-#include "audioengine-in.hpp"
+#include "virtual/audioengine.hpp"
 
-#include "coverstorage-in.hpp"
+#include "virtual/coverstorage.hpp"
 #include "presentation/lightness.hpp"
-#include "manager-in.hpp"
-#include "playerpresenter-in.hpp"
-#include "windowgeometry-in.hpp"
+#include "virtual/manager.hpp"
+#include "virtual/playerpresenter.hpp"
+#include "virtual/windowgeometry.hpp"
 
 #include <QFuture>
 #include <QImage>

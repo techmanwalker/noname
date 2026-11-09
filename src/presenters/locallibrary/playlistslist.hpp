@@ -3,9 +3,9 @@
 #include "abstractmediasequence.hpp"
 #include "basicsequenceops.hpp"
 
-#include "manager-in.hpp"
+#include "virtual/manager.hpp"
 #include "mediatypes.hpp"
-#include "playlistslist-in.hpp"
+#include "virtual/playlistslist.hpp"
 
 #include <memory>
 

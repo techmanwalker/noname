@@ -1,5 +1,5 @@
 #include "lyricsmanifest.hpp"
-#include "lyrictypes.hpp"
+#include "qmlproxies/lyrictypesproxy.hpp"
 
 // syrinc includes now strictly bound to the implementation file
 #include "globals.hpp" 

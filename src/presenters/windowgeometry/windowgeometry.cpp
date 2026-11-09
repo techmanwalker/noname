@@ -1,4 +1,4 @@
-#include "manager-in.hpp"
+#include "virtual/manager.hpp"
 #include "windowgeometry.hpp"
 
 #include <memory>

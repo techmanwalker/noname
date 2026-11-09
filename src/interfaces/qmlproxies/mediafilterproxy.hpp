@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mediafilter-in.hpp"
+#include "virtual/mediafilter.hpp"
 
 #include <QIdentityProxyModel>
 #include <QtQmlIntegration>

@@ -171,8 +171,8 @@ qt_add_qml_module (mediatransforms
     DEPENDENCIES
         Player.MediaTypes # search_results.items won't stop lint fail without this
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilter-in.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/mediafilter/mediafilterproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/virtual/mediafilter.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/mediafilterproxy.hpp"
         ${MEDIATRANSFORMS_SOURCES}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaTransforms"
@@ -196,10 +196,12 @@ target_link_libraries(mediatransforms
 target_include_directories(mediatransforms
     PUBLIC
         src/transforms/media
+    PRIVATE
+        src/interfaces/qmlproxies # registrar resolves proxy headers by bare name
 )
 
 add_library(mediafilter_in INTERFACE)
-target_include_directories(mediafilter_in INTERFACE src/interfaces/mediafilter)
+target_include_directories(mediafilter_in INTERFACE src/interfaces)
 target_link_libraries(mediafilter_in INTERFACE Qt6::Core mediatypes)
 
 # --- Pure I/O Tooling
@@ -242,7 +244,7 @@ target_include_directories(configuration
 
 
 add_library(configuration_in INTERFACE)
-target_include_directories(configuration_in INTERFACE src/interfaces/configuration)
+target_include_directories(configuration_in INTERFACE src/interfaces)
 target_link_libraries(configuration_in INTERFACE Qt6::Core)
 
 # --- Data ingest - data and metadata preprocessing
@@ -340,7 +342,7 @@ endif()
 
 
 add_library(audioengine_in INTERFACE)
-target_include_directories(audioengine_in INTERFACE src/interfaces/audioengine)
+target_include_directories(audioengine_in INTERFACE src/interfaces)
 target_link_libraries(audioengine_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 
@@ -353,9 +355,9 @@ qt_add_qml_module(locallibrary
     URI Player.LocalLibrary
     
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/locallibrary/locallibraryproxy.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playlistslist/playlistslistproxy.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/shortcutslist/shortcutslistproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/locallibraryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/playlistslistproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/shortcutslistproxy.hpp"
         ${LOCALLIBRARY_SOURCES}
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/Player/LocalLibrary"
@@ -385,18 +387,20 @@ target_link_libraries (locallibrary
 target_include_directories(locallibrary
     PUBLIC
         src/presenters/locallibrary
+    PRIVATE
+        src/interfaces/qmlproxies # registrar resolves proxy headers by bare name
 )
 
 add_library(locallibrary_in INTERFACE)
-target_include_directories(locallibrary_in INTERFACE src/interfaces/locallibrary)
+target_include_directories(locallibrary_in INTERFACE src/interfaces)
 target_link_libraries(locallibrary_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 add_library(playlistslist_in INTERFACE)
-target_include_directories(playlistslist_in INTERFACE src/interfaces/playlistslist)
+target_include_directories(playlistslist_in INTERFACE src/interfaces)
 target_link_libraries(playlistslist_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 add_library(shortcutslist_in INTERFACE)
-target_include_directories(shortcutslist_in INTERFACE src/interfaces/shortcutslist)
+target_include_directories(shortcutslist_in INTERFACE src/interfaces)
 target_link_libraries(shortcutslist_in INTERFACE Qt6::Core mediatypes constexprstrings)
 
 
@@ -433,7 +437,7 @@ target_include_directories(covers
 )
 
 add_library(coverstorage_in INTERFACE)
-target_include_directories(coverstorage_in INTERFACE src/interfaces/coverstorage)
+target_include_directories(coverstorage_in INTERFACE src/interfaces)
 target_link_libraries(coverstorage_in INTERFACE Qt6::Core Qt6::Gui)
 
 
@@ -445,8 +449,8 @@ qt_add_qml_module(lyricsmanifest
     STATIC
     URI Player.LyricsManifest
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsmanifest/lyricsmanifestproxy.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/lyricsmanifest/lyrictypes.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/lyricsmanifestproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/lyrictypesproxy.hpp"
         ${LYRICSMANIFEST_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/LyricsManifest"
 )
@@ -471,10 +475,12 @@ target_link_libraries(lyricsmanifest
 target_include_directories(lyricsmanifest
     PUBLIC
         src/presenters/lyrics
+    PRIVATE
+        src/interfaces/qmlproxies # registrar resolves proxy headers by bare name
 )
 
 add_library(lyricsmanifest_in INTERFACE)
-target_include_directories(lyricsmanifest_in INTERFACE src/interfaces/lyricsmanifest)
+target_include_directories(lyricsmanifest_in INTERFACE src/interfaces)
 target_link_libraries(lyricsmanifest_in INTERFACE Qt6::Core constexprstrings)
 
 
@@ -484,7 +490,7 @@ qt_add_qml_module(playqueue
     STATIC
     URI Player.PlayQueue
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playqueue/playqueueproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/playqueueproxy.hpp"
         ${PLAYQUEUE_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/PlayQueue"
 )
@@ -507,10 +513,12 @@ target_link_libraries(playqueue
 target_include_directories(playqueue
     PUBLIC
         src/presenters/playqueue
+    PRIVATE
+        src/interfaces/qmlproxies # registrar resolves proxy headers by bare name
 )
 
 add_library(playqueue_in INTERFACE)
-target_include_directories(playqueue_in INTERFACE src/interfaces/playqueue)
+target_include_directories(playqueue_in INTERFACE src/interfaces)
 target_link_libraries(playqueue_in INTERFACE Qt6::Core)
 
 
@@ -520,7 +528,7 @@ qt_add_qml_module(playerpresenter
     STATIC
     URI Player.Presenter
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/playerpresenter/playerpresenterproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/playerpresenterproxy.hpp"
         ${PLAYERPRESENTER_SOURCES}
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Player/Presenter"
 )
@@ -542,11 +550,13 @@ target_link_libraries(playerpresenter
 target_include_directories(playerpresenter
     PUBLIC
         src/presenters/playerpresenter
+    PRIVATE
+        src/interfaces/qmlproxies # registrar resolves proxy headers by bare name
 )
 
 
 add_library(playerpresenter_in INTERFACE)
-target_include_directories(playerpresenter_in INTERFACE src/interfaces/playerpresenter)
+target_include_directories(playerpresenter_in INTERFACE src/interfaces)
 target_link_libraries(playerpresenter_in INTERFACE Qt6::Core constexprstrings)
 
 
@@ -710,7 +720,7 @@ qt_add_qml_module(mainwindow
     STATIC
     URI Player.App
     SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/configuration/windowgeometryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/windowgeometryproxy.hpp"
         ${WINDOWGEOMETRY_SOURCES}
     QML_FILES
         ${MAINWINDOW_QMLS}
@@ -730,6 +740,8 @@ target_link_libraries(mainwindow
 target_include_directories(mainwindow
     PUBLIC
         src/presenters/windowgeometry
+    PRIVATE
+        src/interfaces/qmlproxies # registrar resolves proxy headers by bare name
 )
 
 qt_add_translations(${PROJECT_NAME}

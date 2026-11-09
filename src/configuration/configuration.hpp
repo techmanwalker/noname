@@ -7,7 +7,7 @@
 #include <QString>
 #include <QUrl>
 
-#include "manager-in.hpp"
+#include "virtual/manager.hpp"
 
 namespace configuration {
 

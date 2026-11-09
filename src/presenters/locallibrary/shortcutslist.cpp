@@ -1,4 +1,4 @@
-#include "manager-in.hpp"
+#include "virtual/manager.hpp"
 #include "defaultroles.hpp"
 #include "coveruris.hpp"
 #include "songfactory.hpp" // IWYU pragma: keep

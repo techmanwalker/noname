@@ -1,9 +1,9 @@
 #include "filter.hpp"
 #include "abstractmediasequence.hpp"
-#include "mediafilter-in.hpp"
+#include "virtual/mediafilter.hpp"
 #include "sort.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
-#include "locallibrary-in.hpp" // IWYU pragma: keep for qobject_cast<LocalLibrary*>
+#include "virtual/locallibrary.hpp" // IWYU pragma: keep for qobject_cast<LocalLibrary*>
 
 #include <QIdentityProxyModel>
 #include <QList>

@@ -1,14 +1,14 @@
 
 #include "playerpresenter.hpp"
 
-#include "audioengine-in.hpp"
+#include "virtual/audioengine.hpp"
 
 #include "logging/l_coverprovider.hpp"
 #include "presentation/lightness.hpp"
-#include "coverstorage-in.hpp"
-#include "manager-in.hpp"
+#include "virtual/coverstorage.hpp"
+#include "virtual/manager.hpp"
 #include "mediatypes.hpp"
-#include "playqueue-in.hpp"
+#include "virtual/playqueue.hpp"
 
 #include <QImage>
 #include <QPointer>

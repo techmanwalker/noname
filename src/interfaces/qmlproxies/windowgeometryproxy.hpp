@@ -1,6 +1,6 @@
 #pragma once
 
-#include "windowgeometry-in.hpp"
+#include "virtual/windowgeometry.hpp"
 
 #include <QObject>
 #include <QtQmlIntegration>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mediatypes.hpp"
-#include "playerpresenter-in.hpp"
+#include "virtual/playerpresenter.hpp"
 
 #include <QObject>
 #include <QString>

@@ -3,8 +3,8 @@
 #include "abstractmediasequence.hpp"
 
 #include "basicsequenceops.hpp"
-#include "manager-in.hpp"
-#include "shortcutslist-in.hpp"
+#include "virtual/manager.hpp"
+#include "virtual/shortcutslist.hpp"
 
 #include <memory>
 
