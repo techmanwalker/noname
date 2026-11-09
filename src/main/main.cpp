@@ -59,6 +59,9 @@ main (int argc, char ** argv)
         "coverprovider.debug=false"
     );
 
+    // whether to react to cobool enabledver lightness
+    bool disable_lightness_awareness = false;
+
     // default target backend for soundio
     audio_backend backend { audio_backend::pulseaudio };
 
@@ -82,6 +85,12 @@ main (int argc, char ** argv)
             "-b,--audio-backend",
             audio_backend_str,
             complete_help_view.data()
+        );
+        cli.add_flag(
+            "-l,--disable-light-awareness",
+            disable_lightness_awareness,
+            "Always keep the theater background at mid-brightness and \
+                disable automatic light/dark keying"
         );
 
         cli.allow_extras();
@@ -140,6 +149,8 @@ main (int argc, char ** argv)
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
+
+    pp->set_luma_awareness_enabled(!disable_lightness_awareness);
 
     pq->spawn_queue(arg_paths).then([&pp, &pq, &first_track]() {
         // load the remaining, the switch should be automagic

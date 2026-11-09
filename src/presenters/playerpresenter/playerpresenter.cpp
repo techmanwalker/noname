@@ -15,6 +15,7 @@
 #include <QtConcurrent/QtConcurrent>
 
 #include <memory>
+#include <qfuture.h>
 #include <utility>
 
 Q_LOGGING_CATEGORY(l_playerpresenter, "playerpresenter")
@@ -64,6 +65,8 @@ bool    PlayerPresenterLI::is_media_loaded() const { return playing->is_a_song_l
 double
 PlayerPresenterLI::luma_of_ring (covers::luminance::luma_types ring) const
 {
+    if (!m_luma_awareness) return covers::luminance::default_lightness_value;
+
     return covers::luminance::ring_of(m_cover_luma_rings, ring).value;
 }
 
@@ -74,9 +77,14 @@ double PlayerPresenterLI::cover_borders_luma() const { return luma_of_ring(cover
 
 double PlayerPresenterLI::cover_pondered_luma() const { return m_cover_pondered_luma; }
 
+bool PlayerPresenterLI::luma_awareness() const { return m_luma_awareness; }
+void PlayerPresenterLI::set_luma_awareness_enabled(bool enabled) { m_luma_awareness = enabled; emit lightness_awareness_changed(); }
+
 QFuture<void>
 PlayerPresenterLI::recompute_lumas(const Types::Song &backdrop_source)
 {
+    if (!m_luma_awareness) return QtFuture::makeReadyVoidFuture();
+
     // Last call wins: kill the previous request (best effort) and bump the epoch
     // so that whatever it still delivers is discarded.
     m_lumas_future.cancel();
@@ -142,7 +150,7 @@ PlayerPresenterLI::ring_luma_for_rect (QRect rect) const
         QSize { wi->width(), wi->height() });
 
     // Same "no data" value backdrop_luma_for_rect gives when nothing is visible.
-    return ring ? ring_of(m_cover_luma_rings, *ring).value : 0.0;
+    return ring ? ring_of(m_cover_luma_rings, *ring).value : default_lightness_value;
 }
 
 PlayerPresenterLI::PlaybackState

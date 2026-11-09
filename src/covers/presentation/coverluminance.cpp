@@ -155,7 +155,7 @@ ring_luma
 percentile_luminance (const QImage &chunk, int percentile,
                       double ring_crop_begin, double ring_crop_end)
 {
-    ring_luma result_ring { .value = 0.5,
+    ring_luma result_ring { .value = default_lightness_value,
                             .ring_crop_begin = ring_crop_begin,
                             .ring_crop_end = ring_crop_end };
 
@@ -273,7 +273,7 @@ pondered_luma (const cover_rings &lumas)
     }
 
     if (total_weight <= 0.0) {
-        return 0.5; // every ring contributed zero area -- neutral over undefined
+        return default_lightness_value; // every ring contributed zero area -- neutral over undefined
     }
 
     return std::clamp(weighted_sum / total_weight, 0.0, 1.0);

@@ -44,6 +44,8 @@ public:
     Q_PROPERTY(double coverCentricLuma  READ cover_centric_luma NOTIFY lumasChanged)
     Q_PROPERTY(double coverMidringLuma  READ cover_midring_luma NOTIFY lumasChanged)
     Q_PROPERTY(double coverBordersLuma  READ cover_borders_luma NOTIFY lumasChanged)
+    
+    Q_PROPERTY(bool lightnessAwareness  READ luma_awareness WRITE set_luma_awareness_enabled NOTIFY lightnessAwarenessChanged)
 
     Q_PROPERTY(double coverPonderedLuma READ cover_pondered_luma     NOTIFY lumasChanged)
 
@@ -59,6 +61,7 @@ public:
             connect(concrete, SIGNAL(playback_state_changed()), this, SIGNAL(playbackStateChanged()));
             connect(concrete, SIGNAL(media_loaded_changed()),   this, SIGNAL(mediaLoadedChanged()));
             connect(concrete, SIGNAL(seek_finished()), this, SIGNAL(seekFinished()));
+            connect(concrete, SIGNAL(lightness_awareness_changed()), this, SIGNAL(lightnessAwarenessChanged()));
         }
     }
 
@@ -72,12 +75,17 @@ public:
         return m_presenter->current_track();
     }
 
+    // todo: use covers::luminance::default_lightness_value as the third ternary component
     double cover_nuclear_luma() const { return m_presenter ?  m_presenter->cover_nuclear_luma() : 0.5;       }
     double cover_centric_luma() const { return m_presenter ?  m_presenter->cover_centric_luma() : 0.5;       }
     double cover_midring_luma() const { return m_presenter ?  m_presenter->cover_midring_luma() : 0.5;       }
     double cover_borders_luma() const { return m_presenter ?  m_presenter->cover_borders_luma() : 0.5;       }
 
     double cover_pondered_luma() const     { return m_presenter ? m_presenter->cover_pondered_luma()  : 0.0; }
+
+    // enabled by default
+    bool luma_awareness () const { return m_presenter ? m_presenter->luma_awareness() : true; }
+    void set_luma_awareness_enabled (bool enabled) { if (m_presenter) m_presenter->set_luma_awareness_enabled(enabled); }
 
     QString title()            const { return m_presenter ?  m_presenter->current_track().title     : QString(); }
     QString artist()           const { return m_presenter ?  m_presenter->current_track().artist    : QString(); }
@@ -131,6 +139,7 @@ signals:
     void mediaLoadedChanged();
     void lumasChanged();
     void seekFinished();
+    void lightnessAwarenessChanged();
 
 public slots:
     void raiseVolume()  { if (m_presenter) m_presenter->raise_lower_volume( 5); }

@@ -80,8 +80,11 @@ public:
     double cover_centric_luma() const override;
     double cover_midring_luma() const override;
     double cover_borders_luma() const override;
-
+    
     double cover_pondered_luma() const override;
+
+    bool luma_awareness () const override;
+    void set_luma_awareness_enabled (bool enabled) override;
 
     double backdrop_luma_for_rect (QRect rect) const override;
     double ring_luma_for_rect     (QRect rect) const override;
@@ -116,6 +119,7 @@ signals:
     void media_loaded_changed();
     void lumas_changed();
     void seek_finished();
+    void lightness_awareness_changed();
 
 public slots:
     // Formally expose as a metadata block receiver
@@ -140,11 +144,14 @@ private:
     
     covers::luminance::cover_rings m_cover_luma_rings;
     covers::luminance::table_luma  m_cover_luma_table;
-    double m_cover_pondered_luma = 0.5;
+    double m_cover_pondered_luma = covers::luminance::default_lightness_value;
 
     // latest recompute_lumas() request; older ones are cancelled/ignored
     QFuture<QImage> m_lumas_future;
     quint64 m_lumas_epoch = 0;
+
+    // if false, all luma recalculation is skipped and assumed to be uninitialized
+    bool m_luma_awareness = false;
 
     quint8 m_last_nonzero_volume { 65 };
 

@@ -29,7 +29,7 @@ QtObject {
         // A void root.epoch sentence is completely inert.
         // Force the reading and the dependency registration
         // preventing dead code elimination.
-        if (root.epoch < 0) return false;
+        if (!presenter.lightnessAwareness ||root.epoch < 0) return false;
 
         // dark by default
         if (bounds.width === 0 || bounds.height === 0) return false;

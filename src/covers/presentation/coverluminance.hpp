@@ -14,8 +14,10 @@ class QImage;
 namespace covers::luminance 
 {
 
+constexpr double default_lightness_value = 0.5;
+
 struct ring_luma {
-    double value = 0.5;
+    double value = default_lightness_value;
     double ring_crop_begin = 0.0;
     double ring_crop_end = 1.0;
 };

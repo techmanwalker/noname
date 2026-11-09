@@ -39,6 +39,9 @@ public:
 
     virtual double cover_pondered_luma() const = 0;
 
+    virtual bool   luma_awareness () const = 0;
+    virtual void   set_luma_awareness_enabled (bool enabled) = 0;
+
     // get the luma of the pixels behind this rect from the cover
     virtual double backdrop_luma_for_rect (QRect rect) const = 0;
 
