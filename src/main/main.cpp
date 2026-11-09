@@ -59,7 +59,7 @@ main (int argc, char ** argv)
         "coverprovider.debug=false"
     );
 
-    // whether to react to cobool enabledver lightness
+    // whether to react to cover lightness
     bool disable_lightness_awareness = false;
 
     // default target backend for soundio

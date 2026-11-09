@@ -136,6 +136,23 @@ vec3 gamutMapLinear(float L, float C, float H) {
     return oklabToLinear(vec3(L, lo * hue));
 }
 
+// Largest lightness in [L, Lwant] at which (L, C, H) is still a real sRGB color.
+// (L, C, H) must already be inside the gamut (true for a source pixel). The gamut's
+// upper boundary only descends as chroma grows, so a lift ends where the gamut ends
+// instead of being clipped to white afterwards.
+float srgbLiftLimit(float L, float Lwant, float C, float H) {
+    vec2 hue = vec2(cos(H), sin(H));
+    if (inGamut(oklabToLinear(vec3(Lwant, C * hue)))) return Lwant;
+
+    float lo = L, hi = Lwant;
+    for (int i = 0; i < 8; i++) {
+        float mid = 0.5 * (lo + hi);
+        if (inGamut(oklabToLinear(vec3(mid, C * hue)))) lo = mid;
+        else hi = mid;
+    }
+    return lo;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────
 
 void main() {
@@ -153,7 +170,8 @@ void main() {
 
     // Add gradient multipliers
     vec2 lc = evalPoints(qt_TexCoord0.x);
-    L *= lc.x;
+    float Lwant = L * lc.x;
+    L = Lwant > L ? srgbLiftLimit(L, Lwant, C, H) : Lwant; // C is still unscaled here
     C *= lc.y;
 
     // OKLCH → RGB
