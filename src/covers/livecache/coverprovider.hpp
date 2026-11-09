@@ -9,14 +9,14 @@
 namespace covers::live {
 
 // fwd
-class cover_storage;
+class cover_storage_LI;
 
 
 class cover_provider : public QQuickAsyncImageProvider
 {
 
 public:
-    explicit cover_provider(std::shared_ptr<covers::live::cover_storage> realProvider);
+    explicit cover_provider(std::shared_ptr<covers::live::cover_storage_LI> realProvider);
 
     // QQuickAsyncImageProvider interface
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
@@ -25,7 +25,7 @@ public:
     bool store(const QUrl &media_source, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
 
 private:
-    std::shared_ptr<covers::live::cover_storage> m_real;
+    std::shared_ptr<covers::live::cover_storage_LI> m_real;
 };
 
 

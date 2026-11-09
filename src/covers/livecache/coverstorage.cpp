@@ -6,12 +6,13 @@
 #include "mediatypes.hpp"
 #include "pixelformats.hpp"
 #include "thumbnails.hpp"
-#include <qtconcurrentrun.h>
+
+#include <QtConcurrent/QtConcurrent>
 
 namespace covers::live {
 
 
-cover_storage::cover_storage()
+cover_storage_LI::cover_storage_LI()
     : QQuickAsyncImageProvider()
 {
     // You MUST increase this total budget. 96 is not enough to prevent 
@@ -35,13 +36,13 @@ cover_storage::cover_storage()
     m_response_pool.setThreadPriority(QThread::Priority::LowPriority);
 }
 
-cover_storage::~cover_storage ()
+cover_storage_LI::~cover_storage_LI ()
 {
     m_response_pool.waitForDone();
 }
 
-cover_storage::cache_slot
-cover_storage::slot_for (const QUrl &media_source, const QSize &size)
+cover_storage_LI::cache_slot
+cover_storage_LI::slot_for (const QUrl &media_source, const QSize &size)
 {
     // the same hash that names the thumbnail on disk is the memory cache key
     QString key = covers::hash::payload_and_size(toBase64Url(media_source), size);
@@ -52,7 +53,7 @@ cover_storage::slot_for (const QUrl &media_source, const QSize &size)
 }
 
 QImage
-cover_storage::lookup_memory (const QUrl &media_source, const QSize &size)
+cover_storage_LI::lookup_memory (const QUrl &media_source, const QSize &size)
 {
     const cache_slot slot = slot_for(media_source, size);
 
@@ -71,7 +72,7 @@ cover_storage::lookup_memory (const QUrl &media_source, const QSize &size)
 }
 
 QImage
-cover_storage::lookup_disk (const QUrl &media_source, const QSize &size)
+cover_storage_LI::lookup_disk (const QUrl &media_source, const QSize &size)
 {
     QImage img = covers::disk::fetch_thumbnail(media_source, size);
 
@@ -87,7 +88,7 @@ cover_storage::lookup_disk (const QUrl &media_source, const QSize &size)
 }
 
 QImage
-cover_storage::lookup_source (const QUrl &media_source)
+cover_storage_LI::lookup_source (const QUrl &media_source)
 {
     const QByteArray local_path = media_source.toLocalFile().toUtf8();
     TagLib::FileRef file(local_path.constData());
@@ -110,7 +111,7 @@ cover_storage::lookup_source (const QUrl &media_source)
 }
 
 QQuickImageResponse *
-cover_storage::requestImageResponse(const QString &id, const QSize &requestedSize)
+cover_storage_LI::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
     auto state = std::make_shared<cover_response_state>();
 
@@ -127,7 +128,7 @@ cover_storage::requestImageResponse(const QString &id, const QSize &requestedSiz
 }
 
 QFuture<QImage>
-cover_storage::resolve(const QUrl &media_source, const QSize &requestedSize)
+cover_storage_LI::resolve(const QUrl &media_source, const QSize &requestedSize)
 {
     return QtConcurrent::run(&m_response_pool, [this, media_source, requestedSize]() {
         return resolve_blocking(media_source, requestedSize);
@@ -136,7 +137,7 @@ cover_storage::resolve(const QUrl &media_source, const QSize &requestedSize)
 
 // store for whatever size cover_from_metadata is
 bool
-cover_storage::store (
+cover_storage_LI::store (
     const QUrl &media_source, // source payload
     const QVariant &cover_from_metadata,
     bool save_to_disk_cache
@@ -174,7 +175,7 @@ cover_storage::store (
 }
 
 QImage
-cover_storage::resolve_blocking (
+cover_storage_LI::resolve_blocking (
     const QUrl &media_source,
     const QSize &requestedSize
 )
@@ -219,7 +220,7 @@ cover_storage::resolve_blocking (
 }
 
 bool
-cover_storage::is_cached(const QUrl &media_source, QSize size)
+cover_storage_LI::is_cached(const QUrl &media_source, QSize size)
 {
     const cache_slot slot = slot_for(media_source, size);
 

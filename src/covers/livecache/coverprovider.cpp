@@ -1,9 +1,9 @@
 #include "coverprovider.hpp"
-#include "coverstorage.hpp" // Included ONLY here
+#include "coverstorage.hpp"
 
 namespace covers::live {
 
-cover_provider::cover_provider(std::shared_ptr<covers::live::cover_storage> realProvider)
+cover_provider::cover_provider(std::shared_ptr<covers::live::cover_storage_LI> realProvider)
     : QQuickAsyncImageProvider(),
       m_real(std::move(realProvider)) 
 {

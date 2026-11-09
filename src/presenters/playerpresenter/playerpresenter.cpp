@@ -27,7 +27,7 @@ PlayerPresenterLI::PlayerPresenterLI(
     std::shared_ptr<audio_engine> audioengine,
     std::shared_ptr<PlayQueue> playqueue,
     std::shared_ptr<WindowGeometry> windowgeometry,
-    std::shared_ptr<cover_storage_in> coverprovider
+    std::shared_ptr<cover_storage> coverprovider
 )
     : QObject(parent),
       cm(std::move(confmanager)),

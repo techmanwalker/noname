@@ -63,7 +63,7 @@ public:
         std::shared_ptr<audio_engine> audioengine,
         std::shared_ptr<PlayQueue> playqueue,
         std::shared_ptr<WindowGeometry> windowgeometry,
-        std::shared_ptr<cover_storage_in> coverprovider
+        std::shared_ptr<cover_storage> coverprovider
     );
     
     using PlayerPresenter::PlaybackState;
@@ -135,7 +135,7 @@ private:
     std::shared_ptr<audio_engine> ae; // controller
     std::shared_ptr<PlayQueue> pq; // tape roll
     std::shared_ptr<WindowGeometry> wi; // information about the window
-    std::shared_ptr<cover_storage_in> cp; // cover provider
+    std::shared_ptr<cover_storage> cp; // cover provider
 
     std::atomic_bool m_slider_pressed {false};
 

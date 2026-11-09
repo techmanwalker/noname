@@ -137,9 +137,9 @@ main (int argc, char ** argv)
 
     using MediaTransforms::MediaFilterLI;
     using configuration::managerLI;
-    using covers::live::cover_storage;
+    using covers::live::cover_storage_LI;
 
-    auto cs = std::make_shared<cover_storage>     ();
+    auto cs = std::make_shared<cover_storage_LI>     ();
     auto cm = std::make_shared<managerLI>         (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);

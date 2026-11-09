@@ -18,7 +18,7 @@ cover_image_response::cancel()
     m_state->canceled.storeRelaxed(1);
 }
 
-cover_resolve_task::cover_resolve_task(covers::live::cover_storage *storage,
+cover_resolve_task::cover_resolve_task(covers::live::cover_storage_LI *storage,
                                        QByteArray id, QSize size,
                                        std::shared_ptr<cover_response_state> state,
                                        QPointer<cover_image_response> response,

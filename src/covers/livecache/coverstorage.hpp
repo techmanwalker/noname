@@ -26,13 +26,13 @@ struct cache_shard {
 };
 
 // Enables loading embedded thumbnails to memory.
-class cover_storage : public QQuickAsyncImageProvider, public cover_storage_in
+class cover_storage_LI : public QQuickAsyncImageProvider, public cover_storage
 {
     
 public:
     // Initialize indicating that this provider provides QImage objects
-    cover_storage();
-    ~cover_storage(); // shutdown and pool drain
+    cover_storage_LI();
+    ~cover_storage_LI(); // shutdown and pool drain
 
     // Save picture and return a generated UUID
     bool store(const QUrl &media_source, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
@@ -109,7 +109,7 @@ using mailbox_ptr = std::unique_ptr<QObject, deferred_delete>;
 class cover_resolve_task : public QRunnable
 {
 public:
-    cover_resolve_task(covers::live::cover_storage *storage,
+    cover_resolve_task(covers::live::cover_storage_LI *storage,
                        QByteArray id, QSize size,
                        std::shared_ptr<cover_response_state> state,
                        QPointer<cover_image_response> response,
@@ -118,7 +118,7 @@ public:
     void run() override;
 
 private:
-    covers::live::cover_storage          *m_storage;
+    covers::live::cover_storage_LI       *m_storage;
     QByteArray                            m_id;
     QSize                                 m_size;
     std::shared_ptr<cover_response_state> m_state;
