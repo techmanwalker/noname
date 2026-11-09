@@ -17,21 +17,21 @@ class PlayQueueLIPrivate
 public: 
     PlaylistSequence              sequence;
     MediaTransforms::ShuffleProxy order;
-    std::shared_ptr<audio_engine> playing;
+    std::shared_ptr<audio_engine> ae;
 
     PlayQueueLIPrivate(
-        std::shared_ptr<audio_engine> controller
+        std::shared_ptr<audio_engine> audioengine
     ) :
-        playing(std::move(controller))
+        ae(std::move(audioengine))
     {}
 };
 
 PlayQueueLI::PlayQueueLI (
     QObject *parent,
-    std::shared_ptr<audio_engine> controller
+    std::shared_ptr<audio_engine> audioengine
 )
     : QIdentityProxyModel(parent),
-      m_d(std::make_unique<PlayQueueLIPrivate> (controller))
+      m_d(std::make_unique<PlayQueueLIPrivate> (audioengine))
 {
     // Binds the hidden sequence so QIdentityProxyModel automatically forwards model data
     m_d->order.setSourceModel(&m_d->sequence);
@@ -63,8 +63,8 @@ void
 PlayQueueLI::clear ()
 { 
     m_d->sequence.clear();
-    m_d->playing->stop();
-    m_d->playing->unload();
+    m_d->ae->stop();
+    m_d->ae->unload();
 }
 
 QFuture<void>
@@ -107,7 +107,7 @@ PlayQueueLI::respawn_queue(QList<Types::Song> songs)
 QPersistentModelIndex
 PlayQueueLI::playhead ()
 {
-    QPersistentModelIndex src_idx = m_d->sequence.find(&Types::Song::source, m_d->playing->current_track_source());
+    QPersistentModelIndex src_idx = m_d->sequence.find(&Types::Song::source, m_d->ae->current_track_source());
     if (!src_idx.isValid()) return {};
     
     // Map the internal sequence index to the proxy index facing QML
@@ -118,10 +118,10 @@ void
 PlayQueueLI::switch_to(const Types::Song &song, bool play_afterwards)
 {
     m_d->sequence.respawn_list(std::array<Types::Song, 1>{song});
-    m_d->playing->load(items()[0]);
+    m_d->ae->load(items()[0]);
 
     if (play_afterwards) {
-        m_d->playing->play();
+        m_d->ae->play();
     }
 }
 
@@ -131,7 +131,7 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
     if (!song.isValid() || song.model() != this) return false;
 
     if (song == playhead()) {
-        if (play_afterwards) m_d->playing->play();
+        if (play_afterwards) m_d->ae->play();
         return true; 
     }
 
@@ -139,10 +139,10 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
     return m_d->sequence.pointed_to<const Types::Song &>(
         QPersistentModelIndex(to_sequence(song)), 
         [this, play_afterwards](const Types::Song &prolly_song) -> bool {
-            m_d->playing->load(prolly_song);
+            m_d->ae->load(prolly_song);
 
             if (play_afterwards) {
-                m_d->playing->play();
+                m_d->ae->play();
             }
 
             return true;
@@ -212,10 +212,10 @@ bool
 PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
 {   
     // step back
-    QUrl prolly_not_the_same_track = m_d->playing->current_track_source();
+    QUrl prolly_not_the_same_track = m_d->ae->current_track_source();
     prev();
 
-    auto playhead_item_ref = query_metadata_for_source(m_d->playing->current_track_source());
+    auto playhead_item_ref = query_metadata_for_source(m_d->ae->current_track_source());
 
     if (!playhead_item_ref.has_value()) {
         qCDebug(l_mediasequences) << "Current playing track not found on the queue.";
@@ -226,14 +226,14 @@ PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
         // still same track
 
         // seek back to beginning
-        m_d->playing->seek_to(0);
-        if (play_afterwards) m_d->playing->play();
+        m_d->ae->seek_to(0);
+        if (play_afterwards) m_d->ae->play();
 
         // never truly switched
         return false;
     }
 
-    Q_ASSERT_X(m_d->playing->current_track_source() == playhead_item_ref.value().source,
+    Q_ASSERT_X(m_d->ae->current_track_source() == playhead_item_ref.value().source,
         "PlayQueueLI::prev_at_end",
         "The supposed playhead track reference is not the current track according to audio_engine."
     );
@@ -241,12 +241,12 @@ PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
     quint64 track_duration = playhead_item_ref.value().duration;
 
     if (stepback_ms < track_duration) {
-        m_d->playing->seek_to(track_duration - stepback_ms);
+        m_d->ae->seek_to(track_duration - stepback_ms);
     } else [[unlikely]] {
-        m_d->playing->seek_to(0);
+        m_d->ae->seek_to(0);
     }
 
-    if (play_afterwards) m_d->playing->play();
+    if (play_afterwards) m_d->ae->play();
 
     return true;
 }
@@ -256,15 +256,15 @@ PlayQueueLI::preload_next_track_whenever_possible ()
 {
     const QPersistentModelIndex upcoming = successor_of(playhead());
 
-    if (!upcoming.isValid()) m_d->playing->undo_prepare_next_track();
+    if (!upcoming.isValid()) m_d->ae->undo_prepare_next_track();
 
     m_d->sequence.pointed_to<const Types::Song &>(
         QPersistentModelIndex(to_sequence(upcoming)), 
         [this](const Types::Song &prolly_song) {
             const Types::Song &song_item = prolly_song;
-            if (m_d->playing->next_track_prepared_source() == song_item.source) return;
+            if (m_d->ae->next_track_prepared_source() == song_item.source) return;
 
-            m_d->playing->prepare_next_track(song_item);
+            m_d->ae->prepare_next_track(song_item);
             qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
         }
     );
@@ -276,7 +276,7 @@ PlayQueueLI::handle_queued_tracks_finished()
     qCDebug (l_mediasequences) << "The chain of preloaded songs has finished.";
     
     if (!switch_to(successor_of(playhead()), true)) {
-        m_d->playing->pause(); 
+        m_d->ae->pause(); 
     }
 }
 

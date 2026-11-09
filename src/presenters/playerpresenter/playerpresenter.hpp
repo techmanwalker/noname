@@ -60,9 +60,9 @@ public:
     explicit PlayerPresenterLI(
         QObject *parent,
         std::shared_ptr<configuration::manager> confmanager,
-        std::shared_ptr<audio_engine> controller,
-        std::shared_ptr<PlayQueue> pqueue,
-        std::shared_ptr<WindowGeometry> wgeometry,
+        std::shared_ptr<audio_engine> audioengine,
+        std::shared_ptr<PlayQueue> playqueue,
+        std::shared_ptr<WindowGeometry> windowgeometry,
         std::shared_ptr<cover_storage_in> coverprovider
     );
     
@@ -132,8 +132,8 @@ private slots:
 
 private:
     std::shared_ptr<configuration::manager> cm; // configuration
-    std::shared_ptr<audio_engine> playing; // controller
-    std::shared_ptr<PlayQueue> queue; // tape roll
+    std::shared_ptr<audio_engine> ae; // controller
+    std::shared_ptr<PlayQueue> pq; // tape roll
     std::shared_ptr<WindowGeometry> wi; // information about the window
     std::shared_ptr<cover_storage_in> cp; // cover provider
 

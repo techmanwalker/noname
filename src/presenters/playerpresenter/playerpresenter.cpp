@@ -24,16 +24,16 @@ Q_LOGGING_CATEGORY(l_playerpresenter, "playerpresenter")
 PlayerPresenterLI::PlayerPresenterLI(
     QObject *parent, 
     std::shared_ptr<configuration::manager> confmanager,
-    std::shared_ptr<audio_engine> controller,
-    std::shared_ptr<PlayQueue> pqueue,
-    std::shared_ptr<WindowGeometry> wgeometry,
+    std::shared_ptr<audio_engine> audioengine,
+    std::shared_ptr<PlayQueue> playqueue,
+    std::shared_ptr<WindowGeometry> windowgeometry,
     std::shared_ptr<cover_storage_in> coverprovider
 )
     : QObject(parent),
       cm(std::move(confmanager)),
-      playing(std::move(controller)),
-      queue(std::move(pqueue)),
-      wi(std::move(wgeometry)),
+      ae(std::move(audioengine)),
+      pq(std::move(playqueue)),
+      wi(std::move(windowgeometry)),
       cp(std::move(coverprovider))
 {
     connect (this, &PlayerPresenterLI::volume_changed,
@@ -58,9 +58,9 @@ PlayerPresenterLI::PlayerPresenterLI(
 // Getters block
 const Types::Song & PlayerPresenterLI::current_track() const { return m_current_track; }
 
-quint64 PlayerPresenterLI::position_ms()     const { return playing->current_position_ms();  }
-quint8  PlayerPresenterLI::volume()          const { return playing->current_volume();       }
-bool    PlayerPresenterLI::is_media_loaded() const { return playing->is_a_song_loaded();     }
+quint64 PlayerPresenterLI::position_ms()     const { return ae->current_position_ms();  }
+quint8  PlayerPresenterLI::volume()          const { return ae->current_volume();       }
+bool    PlayerPresenterLI::is_media_loaded() const { return ae->is_a_song_loaded();     }
 
 double
 PlayerPresenterLI::lightness_of_ring (covers::lightness::lightness_types ring) const
@@ -156,12 +156,12 @@ PlayerPresenterLI::ring_lightness_for_rect (QRect rect) const
 PlayerPresenterLI::PlaybackState
 PlayerPresenterLI::playback_state() const
 {
-    using ae = audio_engine::playback_state;
+    using ps = audio_engine::playback_state;
 
-    switch (playing->get_playback_state()) {
-        case ae::paused:  return PlaybackState::paused;
-        case ae::playing: return PlaybackState::playing;
-        case ae::stopped: return PlaybackState::stopped;
+    switch (ae->get_playback_state()) {
+        case ps::paused:  return PlaybackState::paused;
+        case ps::playing: return PlaybackState::playing;
+        case ps::stopped: return PlaybackState::stopped;
     }
 
     Q_UNREACHABLE(); // audio_engine::playback_state has no other members
@@ -172,7 +172,7 @@ void
 PlayerPresenterLI::seek_to(quint64 position_ms) const
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
-    playing->seek_to(position_ms);
+    ae->seek_to(position_ms);
 }
 
 void
@@ -193,13 +193,13 @@ PlayerPresenterLI::relative_seek(qint64 ms) const
         return;
     }
 
-    playing->relative_seek(ms);
+    ae->relative_seek(ms);
 }
 
 void
 PlayerPresenterLI::set_volume(quint8 volume) const
 {
-    playing->set_volume(volume);
+    ae->set_volume(volume);
 }
 
 void
@@ -236,41 +236,41 @@ PlayerPresenterLI::save_volume () const
 // Proxies for QML to be able to perform play, pause and more actions
 void
 PlayerPresenterLI::play() const {
-    if (!queue->playhead().isValid() && queue->item_count() >= 0) {
+    if (!pq->playhead().isValid() && pq->item_count() >= 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
-        queue->switch_to(0);
+        pq->switch_to(0);
     }
 
-    playing->play();
+    ae->play();
 }
 
 void
 PlayerPresenterLI::pause() const
 {
-    playing->pause();
+    ae->pause();
 }
 
 void
 PlayerPresenterLI::stop() const
 {
-    playing->stop();
+    ae->stop();
 }
 
 void
 PlayerPresenterLI::next() const
 {
-    queue->next();
+    pq->next();
 }
 
 void
 PlayerPresenterLI::prev() const
 {
-    if (playing->current_position_ms() > 5000) {
-        playing->seek_to(0); // start over
+    if (ae->current_position_ms() > 5000) {
+        ae->seek_to(0); // start over
         return;
     }
 
-    queue->prev();
+    pq->prev();
 }
 
 void
@@ -286,7 +286,7 @@ PlayerPresenterLI::toggle_play_pause() const
 void
 PlayerPresenterLI::load(Types::Song &song) const
 {
-    playing->load(song);
+    ae->load(song);
 }
 
 // --- Signal handlers
@@ -294,19 +294,19 @@ PlayerPresenterLI::load(Types::Song &song) const
 void
 PlayerPresenterLI::handle_track_changed()
 {
-    QUrl current_track_source = playing->current_track_source();
+    QUrl current_track_source = ae->current_track_source();
 
     // get the song struct from the play queue
-    m_current_track = queue->query_metadata_for_source(current_track_source).value_or({});
+    m_current_track = pq->query_metadata_for_source(current_track_source).value_or({});
 
     // if not matched, this is a race condition or someone forgot to update this
     Q_ASSERT_X (
-        playing->current_track_source() == m_current_track.source,
+        ae->current_track_source() == m_current_track.source,
         "PlayerPresenterLI::handle_track_changed",
         std::string(
             std::string("The player presenter current track metadata was not updated. ") +
-            std::string("audio_engine reports the track playing is ") + 
-            playing->current_track_source().toString().toStdString() +
+            std::string("audio_engine reports the track ae is ") + 
+            ae->current_track_source().toString().toStdString() +
             std::string(" while the presenter internal struct is ") +
             (!m_current_track.source.isEmpty() ? m_current_track.source.toString().toStdString() : "{empty}")
 

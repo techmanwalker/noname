@@ -25,7 +25,7 @@ class PlayQueueLI : public QIdentityProxyModel, public PlayQueue
 public:
     explicit PlayQueueLI(
         QObject *parent,
-        std::shared_ptr<audio_engine> controller);
+        std::shared_ptr<audio_engine> audioengine);
 
 
     // Required in the header for std::unique_ptr to destroy the incomplete type

@@ -137,15 +137,15 @@ main (int argc, char ** argv)
 
     using MediaTransforms::MediaFilterLI;
     using configuration::managerLI;
+    using covers::live::cover_storage;
 
-    // cover cache to hold the shortcuts covers across the entire session
-    auto cs = std::make_shared<covers::live::cover_storage>();
+    auto cs = std::make_shared<cover_storage>     ();
     auto cm = std::make_shared<managerLI>         (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
     auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
     auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi, cs);
-    auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to track position
+    auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to request current track source
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
     auto mf = std::make_shared<MediaFilterLI>     ();
