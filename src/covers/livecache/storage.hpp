@@ -13,8 +13,6 @@
 
 #include "coverstorage-in.hpp"
 
-Q_DECLARE_LOGGING_CATEGORY(l_coverprovider)
-
 // covers::live: hot cache on memory right away to consume, already decoded and yet but cheap to decode
 
 namespace covers::live {

@@ -14,8 +14,8 @@
 
 #include "audioengine.hpp"
 #include "configuration.hpp"
-#include "coverprovider.hpp"
-#include "coverstorage.hpp"
+#include "livecache/provider.hpp"
+#include "livecache/storage.hpp"
 #include "dump.hpp"
 #include "filter.hpp"
 #include "locallibrary.hpp"

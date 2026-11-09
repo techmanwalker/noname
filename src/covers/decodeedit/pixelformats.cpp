@@ -1,4 +1,4 @@
-#include "pixelformats.hpp"
+#include "decodeedit/pixelformats.hpp"
 
 AVPixelFormat av_format_for_qimage(QImage::Format f)
 {

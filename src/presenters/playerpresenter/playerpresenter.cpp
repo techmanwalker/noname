@@ -3,8 +3,8 @@
 
 #include "audioengine-in.hpp"
 
-#include "coverlogging.hpp"
-#include "coverlightness.hpp"
+#include "logging/l_coverprovider.hpp"
+#include "presentation/lightness.hpp"
 #include "coverstorage-in.hpp"
 #include "manager-in.hpp"
 #include "mediatypes.hpp"

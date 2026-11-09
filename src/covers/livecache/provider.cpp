@@ -1,5 +1,5 @@
-#include "coverprovider.hpp"
-#include "coverstorage.hpp"
+#include "livecache/provider.hpp"
+#include "livecache/storage.hpp"
 
 namespace covers::live {
 

@@ -1,6 +1,6 @@
-#include "coverdecode.hpp"
-#include "covertransform.hpp"
-#include "pixelformats.hpp"
+#include "decodeedit/decode.hpp"
+#include "decodeedit/transform.hpp"
+#include "decodeedit/pixelformats.hpp"
 #include <libswscale/swscale.h>
 
 namespace covers::transform

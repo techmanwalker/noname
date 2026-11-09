@@ -1,4 +1,4 @@
-#include "coverdecode.hpp"
+#include "decodeedit/decode.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -15,7 +15,7 @@ extern "C" {
 #include <cstring>
 #include <memory>
 
-#include "pixelformats.hpp"
+#include "decodeedit/pixelformats.hpp"
 
 namespace covers::decode {
 

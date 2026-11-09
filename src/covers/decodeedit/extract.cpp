@@ -1,6 +1,6 @@
-#include "coverdecode.hpp"
-#include "coverextract.hpp"
-#include "pixelformats.hpp"
+#include "decodeedit/decode.hpp"
+#include "decodeedit/extract.hpp"
+#include "decodeedit/pixelformats.hpp"
 
 namespace covers {
 namespace live {

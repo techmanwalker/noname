@@ -1,8 +1,8 @@
-#include "hashing.hpp"
+#include "livecache/hashing.hpp"
 #include "mediatypes.hpp"
-#include "pixelformats.hpp"
+#include "decodeedit/pixelformats.hpp"
 #include "standardpaths.hpp"
-#include "thumbnails.hpp"
+#include "thumbnaildiskio/thumbnails.hpp"
 
 #include <QDir>
 #include <QFile>

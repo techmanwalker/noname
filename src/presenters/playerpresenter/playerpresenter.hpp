@@ -3,7 +3,7 @@
 #include "audioengine-in.hpp"
 
 #include "coverstorage-in.hpp"
-#include "coverlightness.hpp"
+#include "presentation/lightness.hpp"
 #include "manager-in.hpp"
 #include "playerpresenter-in.hpp"
 #include "windowgeometry-in.hpp"

@@ -1,4 +1,4 @@
-#include "coverstorage.hpp"
+#include "livecache/storage.hpp"
 #include "mediatypes.hpp"
 
 cover_image_response::cover_image_response(std::shared_ptr<cover_response_state> state)

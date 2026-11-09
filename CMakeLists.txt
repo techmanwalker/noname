@@ -429,11 +429,7 @@ target_link_libraries(covers
 
 target_include_directories(covers
     PUBLIC
-        src/covers/decodeedit
-        src/covers/livecache
-        src/covers/logging
-        src/covers/presentation
-        src/covers/thumbnaildiskio
+        src/covers
 )
 
 add_library(coverstorage_in INTERFACE)

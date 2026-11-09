@@ -1,6 +1,5 @@
-#include "coverlogging.hpp"
-#include "coverlightness.hpp"
-#include "coverstorage.hpp"
+#include "logging/l_coverprovider.hpp"
+#include "presentation/lightness.hpp"
 
 #include <QJsonArray>
 

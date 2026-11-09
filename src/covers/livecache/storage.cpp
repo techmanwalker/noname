@@ -1,11 +1,12 @@
-#include "coverextract.hpp"
-#include "coverstorage.hpp"
-#include "covertransform.hpp"
+#include "decodeedit/extract.hpp"
+#include "livecache/storage.hpp"
+#include "decodeedit/transform.hpp"
 #include "coveruris.hpp"
-#include "hashing.hpp"
+#include "livecache/hashing.hpp"
 #include "mediatypes.hpp"
-#include "pixelformats.hpp"
-#include "thumbnails.hpp"
+#include "decodeedit/pixelformats.hpp"
+#include "thumbnaildiskio/thumbnails.hpp"
+#include "logging/l_coverprovider.hpp"
 
 #include <QtConcurrent/QtConcurrent>
 
