@@ -53,10 +53,23 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
+            MediaSelection {
+                id: selection
+                model: root.lists
+
+                // a playlist stands for all of its tracks
+                sourcesOf: (row) => {
+                    const out = []
+                    root.lists[row].songs.forEach(s => out.push(s.source))
+                    return out
+                }
+            }
+
             delegate: Song {
                 id: song
 
                 required property playlist model
+                required property int index
 
                 width: pl.width
 
@@ -77,25 +90,19 @@ ColumnLayout {
 
                 clip: true
 
-                selected: false
+                selected: selection.isSelected(index)
 
                 onClicked: {
+                    selection.clear()
+
                     // lacking the source file still
                     root.selectedPlaylist = model
 
                     // switch the stack to single playlist view
                     pl_stack.currentIndex = 1
                 }
-
-                /* read only mode for now
-                onRightClicked: {
-                    // If right-clicked song isn't in current selection, select only it
-                    if (!root.selectedIndices.includes(index)) {
-                        root.selectedIndices = [index]
-                    }
-                    songContextMenu.popup()
-                }
-                */
+                onCtrlClicked: selection.toggle(index)
+                onRightClicked: selection.openMenuFor(index)
             }
         }
 

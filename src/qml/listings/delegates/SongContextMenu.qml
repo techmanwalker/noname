@@ -10,7 +10,6 @@ ActionMenu {
     id: root
 
     required property list<int>  selectedIndices
-    required property list<song> sourceModel // what do these indices stand for
 
     signal addSelectionToQueue ()
     signal clearSelectionRequested ()
