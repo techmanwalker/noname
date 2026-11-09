@@ -5,8 +5,8 @@ import QtQuick.Controls
 
 import Player.Listings
 import Player.MediaTypes
-import Player.Primitives
 import Player.PlayQueue
+import Player.Primitives
 
 AutoscrollListView {
     id: root
@@ -19,7 +19,7 @@ AutoscrollListView {
     focusIndex: playheadRowIdx
     focusPosition: ListView.Beginning
     focusMarginRatio: 0.4
-    autoscrollCooldownMs: 15000
+    autoscrollCooldownMs: Animations.scroll.playlist.cooldown
 
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth

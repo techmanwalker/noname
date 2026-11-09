@@ -84,17 +84,18 @@ module_sources(SONGFACTORY_SOURCES      "src/ingest/songfactory/*.cpp")
 
 ## QML files
 
-module_sources(PLAYER_QMLS      "src/qml/theater/*.qml")
-module_sources(BROWSER_QMLS     "src/qml/browser/*.qml")
+module_sources(PLAYER_QMLS        "src/qml/theater/*.qml")
+module_sources(BROWSER_QMLS       "src/qml/browser/*.qml")
 module_sources(UIPRIMITIVES_QMLS  "src/qml/primitives/*.qml")
-module_sources(EFFECTS_QMLS     "src/qml/effects/*.qml")
-module_sources(LISTINGS_QMLS    "src/qml/listings/*.qml")
-module_sources(MAINWINDOW_QMLS  "src/qml/mainwindow/*.qml")
+module_sources(EFFECTS_QMLS       "src/qml/effects/*.qml")
+module_sources(LISTINGS_QMLS      "src/qml/listings/*.qml")
+module_sources(MAINWINDOW_QMLS    "src/qml/mainwindow/*.qml")
 
 # otherwise Qt gets grumpy
 set_source_files_properties(
-    "src/qml/primitives/Theme.qml"
+    "src/qml/primitives/Animations.qml"
     "src/qml/primitives/Keyboard.qml"
+    "src/qml/primitives/Theme.qml"
     "src/qml/theater/delegates/Light.qml"
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )

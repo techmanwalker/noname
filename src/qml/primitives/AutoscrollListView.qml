@@ -3,6 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
+import Player.Primitives
+
 // A ListView that follows one row (the "focus" row): whenever focusIndex
 // changes it scrolls that row to a fixed spot, unless the user is driving the
 // view. Autoscroll stays suspended while they interact and for a cooldown
@@ -28,10 +30,10 @@ ListView {
     property real focusMarginRatio: 0
 
     // Duration of the scroll transition
-    property int autoscrollDurationMs: 125
+    property int autoscrollDurationMs: Animations.scroll.lyrics.transition
 
     // Idle time after the last user interaction before autoscroll resumes
-    property int autoscrollCooldownMs: 5000
+    property int autoscrollCooldownMs: Animations.scroll.lyrics.cooldown
 
     property bool autoscrollEnabled: true
 
