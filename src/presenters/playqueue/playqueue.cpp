@@ -226,7 +226,7 @@ PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
         // still same track
 
         // seek back to beginning
-        m_d->playing->set_position(0);
+        m_d->playing->seek_to(0);
         if (play_afterwards) m_d->playing->play();
 
         // never truly switched
@@ -241,9 +241,9 @@ PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
     quint64 track_duration = playhead_item_ref.value().duration;
 
     if (stepback_ms < track_duration) {
-        m_d->playing->set_position(track_duration - stepback_ms);
+        m_d->playing->seek_to(track_duration - stepback_ms);
     } else [[unlikely]] {
-        m_d->playing->set_position(0);
+        m_d->playing->seek_to(0);
     }
 
     if (play_afterwards) m_d->playing->play();

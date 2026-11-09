@@ -39,7 +39,7 @@ public:
     void prepare_B(const QUrl &source);
     void undo_prepare_B();
 
-    void set_position(uint64_t position_ms);
+    void seek_to(uint64_t position_ms);
     void set_volume_multiplier(float hw_multiplier);
 
     bool is_song_loaded() const;

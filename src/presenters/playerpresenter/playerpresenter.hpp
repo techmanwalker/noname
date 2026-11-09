@@ -89,7 +89,7 @@ public:
     double backdrop_lightness_for_rect (QRect rect) const override;
     double ring_lightness_for_rect     (QRect rect) const override;
 
-    void set_position_ms (quint64 position) const override;
+    void seek_to (quint64 position_ms) const override;
     void relative_seek (qint64 ms) const override;
 
     void set_volume (quint8 volume) const override;

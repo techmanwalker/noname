@@ -169,10 +169,10 @@ PlayerPresenterLI::playback_state() const
 
 
 void
-PlayerPresenterLI::set_position_ms(quint64 position) const
+PlayerPresenterLI::seek_to(quint64 position_ms) const
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
-    playing->set_position(position);
+    playing->seek_to(position_ms);
 }
 
 void
@@ -266,7 +266,7 @@ void
 PlayerPresenterLI::prev() const
 {
     if (playing->current_position_ms() > 5000) {
-        playing->set_position(0); // start over
+        playing->seek_to(0); // start over
         return;
     }
 

@@ -29,7 +29,7 @@ public:
     void pause() override;
     void stop() override;
     void unload() override;
-    void set_position(const quint64 position_ms) override;
+    void seek_to(const quint64 position_ms) override;
     void relative_seek (qint64 step_ms) override;
     void set_volume(quint8 volume_percent) override;
     // keep audio_engine's Types::Song overloads visible through audio_engine_LI

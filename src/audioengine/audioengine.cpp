@@ -117,17 +117,17 @@ audio_engine_LI::relative_seek(qint64 step_ms)
         return;
     }
 
-    set_position(current_position + step_ms);
+    seek_to(current_position + step_ms);
 }
 
 void
-audio_engine_LI::set_position(const quint64 position_ms)
+audio_engine_LI::seek_to(const quint64 position_ms)
 {
     // Computed against track A . If the boundary hit was overdue it has just been
     // consumed: that A is gone, drop the request, the UI re-derives from track_changed.
     if (catch_up_on_boundary_hit()) return;
 
-    m_internal->set_position(position_ms);
+    m_internal->seek_to(position_ms);
 }
 
 void

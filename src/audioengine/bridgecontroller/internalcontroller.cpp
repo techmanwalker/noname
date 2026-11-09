@@ -214,7 +214,7 @@ audio_internal_controller::undo_prepare_B()
 }
 
 void
-audio_internal_controller::set_position(uint64_t position_ms)
+audio_internal_controller::seek_to(uint64_t position_ms)
 {
     // The epoch this seek is issued under: the decoder refuses it if a ceremony ran since
     const uint64_t epoch = m_ring->boundary_snapshot().epoch;

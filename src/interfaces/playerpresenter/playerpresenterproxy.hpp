@@ -110,10 +110,10 @@ public:
 
     void set_volume(quint8 volume) { if (m_presenter) m_presenter->set_volume(volume); }
     
-    Q_INVOKABLE void toggleMute ()            { if (m_presenter) m_presenter->toggle_mute();      }
+    Q_INVOKABLE void toggleMute () { if (m_presenter) m_presenter->toggle_mute();      }
 
-    Q_INVOKABLE quint64 position_ms()       const { return m_presenter ? m_presenter->position_ms() : 0;     }
-    Q_INVOKABLE void    seekTo (quint64 position) { if (m_presenter) m_presenter->set_position_ms(position); }
+    Q_INVOKABLE quint64 position_ms()          const { return m_presenter ? m_presenter->position_ms() : 0;  }
+    Q_INVOKABLE void    seekTo (quint64 position_ms) { if (m_presenter) m_presenter->seek_to(position_ms);   }
 
     Q_INVOKABLE double backdropLightnessForRect (QRect rect) const {
         if (m_presenter) {
