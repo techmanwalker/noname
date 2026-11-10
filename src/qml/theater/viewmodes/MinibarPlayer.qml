@@ -99,7 +99,6 @@ ColumnLayout {
                         if (root.stateModel.isMediaLoaded) {
                             return root.stateModel.title.length > 0 ? root.stateModel.title : root.noTitleText
                         } else {
-                            // Llamada a qsTr() completamente limpia y directa
                             return qsTr("%n tracks in queue.", "", PlayQueue.count)
                         }
                     }
