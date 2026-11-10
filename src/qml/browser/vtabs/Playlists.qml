@@ -77,7 +77,7 @@ ColumnLayout {
 
                 title:      model.title
                 cover:      model.cover
-                metadata:   qsTr("%n track(s)", "number of tracks in this playlist", root.lists.count)
+                metadata:   qsTr("%n track(s)", "number of tracks in this playlist", model.songs.length)
                 duration:   model.duration_mmss
 
                 coverWidth: root.songCoverWidth
