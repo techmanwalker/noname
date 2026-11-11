@@ -10,6 +10,7 @@ namespace MediaTransforms
 
 /// Flat-list proxy: presents its source in source order, or as a random
 /// permutation of it. Rows are never copied; data() is read live from the source.
+/// Reordering the presentation (reshuffle, move_presented) never touches the source.
 class ShuffleProxy : public QAbstractProxyModel
 {
     Q_OBJECT
@@ -21,8 +22,17 @@ public:
 
     bool shuffled() const { return m_shuffled; }
 
-    /// pinned_source_row >= 0 is moved to the head of the new order
-    void setShuffled(bool enabled, int pinned_source_row = -1);
+    /// `lead` is an index of the SOURCE model; it becomes the first row of the new shuffled
+    /// order. Ignored when disabling.
+    void set_shuffled(bool enabled, const QPersistentModelIndex &lead = {});
+
+    /// New random order. Only while shuffled; persistent indices follow their items.
+    void reshuffle();
+
+    /// The item at presented row `src` ends up at presented row `dest`; the rows in between
+    /// shift by one. Reorders the presentation only: the source is untouched.
+    /// False if not shuffled, or either index is invalid or not this model's.
+    bool move_presented(const QPersistentModelIndex &src, const QPersistentModelIndex &dest);
 
     QModelIndex mapToSource   (const QModelIndex &proxy)  const override;
     QModelIndex mapFromSource (const QModelIndex &source) const override;
@@ -36,7 +46,8 @@ protected:
     void resetInternalData() override;
 
 private:
-    void rebuild_order (int pinned_source_row = -1);
+    void rebuild_order (const QPersistentModelIndex &lead = {});
+    void reorder (bool enabled, const QPersistentModelIndex &lead);
     void rebuild_rank ();
 
     void on_source_rows_about_to_be_inserted (const QModelIndex &parent, int first, int last);

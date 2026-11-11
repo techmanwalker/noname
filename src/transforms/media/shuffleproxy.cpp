@@ -26,7 +26,6 @@ ShuffleProxy::setSourceModel(QAbstractItemModel *source)
             connect(source, &QAbstractItemModel::rowsInserted,          this, &ShuffleProxy::on_source_rows_inserted),
             connect(source, &QAbstractItemModel::rowsAboutToBeRemoved,  this, &ShuffleProxy::on_source_rows_about_to_be_removed),
             connect(source, &QAbstractItemModel::rowsRemoved,           this, &ShuffleProxy::on_source_rows_removed),
-            connect(source, &QAbstractItemModel::rowsRemoved,           this, &ShuffleProxy::on_source_rows_removed),
             connect(source, &QAbstractItemModel::rowsAboutToBeMoved,    this, &ShuffleProxy::on_source_rows_about_to_be_moved),
             connect(source, &QAbstractItemModel::rowsMoved,             this, &ShuffleProxy::on_source_rows_moved),
             connect(source, &QAbstractItemModel::dataChanged,           this, &ShuffleProxy::on_source_data_changed),
@@ -46,7 +45,7 @@ void ShuffleProxy::resetInternalData()
 }
 
 void
-ShuffleProxy::rebuild_order(int pinned_source_row)
+ShuffleProxy::rebuild_order(const QPersistentModelIndex &lead)
 {
     const int n = sourceModel() ? sourceModel()->rowCount() : 0;
 
@@ -56,8 +55,9 @@ ShuffleProxy::rebuild_order(int pinned_source_row)
         std::iota(m_order.begin(), m_order.end(), 0);
         std::shuffle(m_order.begin(), m_order.end(), m_rng);
 
-        if (pinned_source_row >= 0 && pinned_source_row < n) {
-            std::iter_swap(m_order.begin(), std::ranges::find(m_order, pinned_source_row));
+        // the lead item goes to the head of the new order
+        if (lead.isValid() && lead.model() == sourceModel() && lead.row() < n) {
+            std::iter_swap(m_order.begin(), std::ranges::find(m_order, lead.row()));
         }
     }
     rebuild_rank();
@@ -76,10 +76,43 @@ ShuffleProxy::rebuild_rank()
 }
 
 void
-ShuffleProxy::setShuffled(bool enabled, int pinned_source_row)
+ShuffleProxy::set_shuffled(bool enabled, const QPersistentModelIndex &lead)
 {
     if (enabled == m_shuffled) return;
+    reorder(enabled, lead);
+}
 
+void
+ShuffleProxy::reshuffle()
+{
+    if (m_shuffled) reorder(true, {});
+}
+
+bool
+ShuffleProxy::move_presented(const QPersistentModelIndex &src, const QPersistentModelIndex &dest)
+{
+    if (!m_shuffled || src.model() != this || dest.model() != this) return false;
+
+    const int from = src.row();
+    const int to   = dest.row();
+    if (from == to) return true;
+
+    // same convention as AbstractMediaSequence::move_item: the destination is "insert before"
+    // in pre-move numbering, so moving down must target the row after dest
+    if (!beginMoveRows({}, from, from, {}, (from < to) ? to + 1 : to)) return false;
+
+    // the entry at `from` ends at `to`; the entries in between shift by one
+    if (from < to) std::rotate(m_order.begin() + from, m_order.begin() + from + 1, m_order.begin() + to + 1);
+    else           std::rotate(m_order.begin() + to,   m_order.begin() + from,     m_order.begin() + from + 1);
+    rebuild_rank();
+
+    endMoveRows();
+    return true;
+}
+
+void
+ShuffleProxy::reorder(bool enabled, const QPersistentModelIndex &lead)
+{
     emit layoutAboutToBeChanged({}, QAbstractItemModel::VerticalSortHint);
 
     // remember where every persistent index points in the *source* ...
@@ -89,7 +122,7 @@ ShuffleProxy::setShuffled(bool enabled, int pinned_source_row)
     for (const QModelIndex &p : stale) sources.append(mapToSource(p));
 
     m_shuffled = enabled;
-    rebuild_order(pinned_source_row);
+    rebuild_order(lead);
 
     // ... and re-resolve them under the new projection
     QModelIndexList fresh;
@@ -172,9 +205,10 @@ ShuffleProxy::on_source_rows_inserted(const QModelIndex &parent, int first, int 
             if (source_row >= first) source_row += count;
         }
 
+        // appended rows keep their source order at the tail, so the new rows have the same
+        // indices in the source and in the shuffled view
         const auto tail = m_order.insert(m_order.end(), count, 0);
         std::iota(tail, m_order.end(), first);
-        std::shuffle(tail, m_order.end(), m_rng); // shuffled among themselves
 
         rebuild_rank();
     }

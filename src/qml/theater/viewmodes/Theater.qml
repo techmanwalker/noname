@@ -326,7 +326,7 @@ Row {
 
                         lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
-                        reorderable: !PlayQueue.shuffle
+                        reorderable: true
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 
                         onSongClicked: (song) => PlayQueue.playhead = PlayQueue.findBySource(song.source)

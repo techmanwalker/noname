@@ -2,8 +2,7 @@
 #include "virtual/audioengine.hpp"
 
 #include "playqueue.hpp"
-#include "playlistsequence.hpp"
-#include "shuffleproxy.hpp"
+#include "playqueuesequence.hpp"
 #include "songfactory.hpp"
 
 #include <QLoggingCategory>
@@ -17,8 +16,7 @@
 class PlayQueueLIPrivate 
 {
 public: 
-    PlaylistSequence              sequence;
-    MediaTransforms::ShuffleProxy order;
+    sequence::State               state;
     std::shared_ptr<audio_engine> ae;
 
     PlayQueueLIPrivate(
@@ -35,18 +33,12 @@ PlayQueueLI::PlayQueueLI (
     : QIdentityProxyModel(parent),
       m_d(std::make_unique<PlayQueueLIPrivate> (audioengine))
 {
-    // Do not forget that PlayQueue is actually two switching models and one is not
-    // a plain PlaylistSequence, so be careful with signal handling and data writes
-    // that affect either model.
+    // There are two lists behind this queue (the source and its shuffled view) and only the
+    // sequence namespace may touch them. We present whatever it projects.
+    setSourceModel(sequence::projection(m_d->state));
 
+    sequence::on_count_changed(m_d->state, this, [this] { emit count_changed(); });
 
-    // Binds the hidden sequence so QIdentityProxyModel automatically forwards model data
-    m_d->order.setSourceModel(&m_d->sequence);
-    setSourceModel(&m_d->order);
-    
-    connect (&m_d->sequence, &PlaylistSequence::count_changed,
-            this, &PlayQueueLI::count_changed);
-            
     connect (this, &PlayQueueLI::count_changed,
             this, &PlayQueueLI::preload_next_track_whenever_possible);
 }
@@ -57,19 +49,19 @@ PlayQueueLI::~PlayQueueLI() = default;
 QList<Types::Song>
 PlayQueueLI::items () const
 { 
-    return m_d->sequence.items(); 
+    return sequence::items(m_d->state); // projected order
 }
 
 int
 PlayQueueLI::item_count () const
 {
-    return m_d->sequence.rowCount();
+    return sequence::item_count(m_d->state);
 }
 
 void
 PlayQueueLI::clear ()
 { 
-    m_d->sequence.clear();
+    sequence::clear(m_d->state);
     m_d->ae->stop();
     m_d->ae->unload();
 }
@@ -78,7 +70,7 @@ QFuture<void>
 PlayQueueLI::batch_append (const QList<QUrl> &sources)
 {
     return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Song> to_append) {
-        m_d->sequence.batch_append(std::move(to_append));
+        sequence::batch_append(m_d->state, std::move(to_append));
     });
 }
 
@@ -92,13 +84,23 @@ PlayQueueLI::spawn_queue(const QStringList &sources)
         uri_sources.emplace_back(QUrl::fromLocalFile(source));
     }
 
-    return batch_append(uri_sources);
+    return song_factory::batch_extract(uri_sources, {}).then(this, [this] (QList<Types::Song> to_spawn) {
+        sequence::spawn(m_d->state, std::move(to_spawn));
+
+        // the reshuffle emits nothing the queue listens to: QML must re-read the playhead
+        // and the upcoming track changed
+        handle_track_changed();
+    });
 }
 
 bool
 PlayQueueLI::move_item(const QPersistentModelIndex &src, const QPersistentModelIndex &dest)
 {
-    if (!m_d->sequence.move_item(to_sequence(src), to_sequence(dest))) return false;
+    if (src.model() != this || dest.model() != this) return false;
+
+    if (!sequence::move_item(m_d->state,
+                             QPersistentModelIndex(mapToSource(src)),
+                             QPersistentModelIndex(mapToSource(dest)))) return false;
 
     // same track, maybe a different row: QML only re-reads PlayQueue.playhead on track_changed,
     // and the upcoming track may have changed
@@ -120,7 +122,8 @@ PlayQueueLI::respawn_queue(QList<Types::Song> songs)
 {
     clear();
 
-    m_d->sequence.batch_append(std::move(songs));
+    sequence::spawn(m_d->state, std::move(songs));
+    handle_track_changed();
 }
 
 void
@@ -136,24 +139,33 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
         mapped_indices.append(QPersistentModelIndex(seq));
     }
 
-    m_d->sequence.batch_remove(mapped_indices);
+    sequence::batch_remove(m_d->state, mapped_indices);
 }
 
 QPersistentModelIndex
 PlayQueueLI::playhead ()
 {
-    QPersistentModelIndex src_idx = m_d->sequence.find(&Types::Song::source, m_d->ae->current_track_source());
-    if (!src_idx.isValid()) return {};
-    
-    // Map the internal sequence index to the proxy index facing QML
-    return from_sequence(src_idx);
+    const QUrl &playing = m_d->ae->current_track_source();
+
+    const QPersistentModelIndex head = find_by_source(playing);
+    if (!head.isValid()) return {};
+
+#ifndef QT_NO_DEBUG
+    QUrl at_head;
+    pointed_to(head, [&at_head](const Types::Song &song) { at_head = song.source; return true; });
+    Q_ASSERT_X(at_head == playing, "PlayQueueLI::playhead",
+        "The song at the projected playhead is not the track the audio engine is playing.");
+#endif
+
+    return head;
 }
 
 void
 PlayQueueLI::switch_to(const Types::Song &song, bool play_afterwards)
 {
-    m_d->sequence.respawn_list(std::array<Types::Song, 1>{song});
-    m_d->ae->load(items()[0]);
+    sequence::clear(m_d->state);
+    sequence::batch_append(m_d->state, QList<Types::Song>{song});
+    m_d->ae->load(song);
 
     if (play_afterwards) {
         m_d->ae->play();
@@ -170,19 +182,15 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
         return true; 
     }
 
-    // Map the external proxy index down to the hidden sequence index
-    return m_d->sequence.pointed_to<const Types::Song &>(
-        QPersistentModelIndex(to_sequence(song)), 
-        [this, play_afterwards](const Types::Song &prolly_song) -> bool {
-            m_d->ae->load(prolly_song);
+    return pointed_to(song, [this, play_afterwards](const Types::Song &prolly_song) -> bool {
+        m_d->ae->load(prolly_song);
 
-            if (play_afterwards) {
-                m_d->ae->play();
-            }
-
-            return true;
+        if (play_afterwards) {
+            m_d->ae->play();
         }
-    );
+
+        return true;
+    });
 }
 
 bool
@@ -293,16 +301,13 @@ PlayQueueLI::preload_next_track_whenever_possible ()
 
     if (!upcoming.isValid()) m_d->ae->undo_prepare_next_track();
 
-    m_d->sequence.pointed_to<const Types::Song &>(
-        QPersistentModelIndex(to_sequence(upcoming)), 
-        [this](const Types::Song &prolly_song) {
-            const Types::Song &song_item = prolly_song;
-            if (m_d->ae->next_track_prepared_source() == song_item.source) return;
+    pointed_to(upcoming, [this](const Types::Song &song_item) {
+        if (m_d->ae->next_track_prepared_source() == song_item.source) return true;
 
-            m_d->ae->prepare_next_track(song_item);
-            qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
-        }
-    );
+        m_d->ae->prepare_next_track(song_item);
+        qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
+        return true;
+    });
 }
 
 void
@@ -318,7 +323,7 @@ PlayQueueLI::handle_queued_tracks_finished()
 QPersistentModelIndex
 PlayQueueLI::find_by_source(const QUrl &needle)
 {
-    return from_sequence(m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle));
+    return QPersistentModelIndex(mapFromSource(sequence::find_by_source(m_d->state, needle)));
 }
 
 std::optional<Types::Song>
@@ -326,10 +331,12 @@ PlayQueueLI::query_metadata_for_source(const QUrl &needle) const
 {
     std::optional<Types::Song> result = std::nullopt;
 
-    bool success = m_d->sequence.pointed_to<const Types::Song &> (
-        m_d->sequence.find<Types::Song, QUrl>(&Types::Song::source, needle), 
-        [&result](const Types::Song &prolly_song) -> void {
+    const bool success = sequence::pointed_to(
+        m_d->state,
+        sequence::find_by_source(m_d->state, needle),
+        [&result](const Types::Song &prolly_song) {
             result = prolly_song;
+            return true;
         }
     );
 
@@ -348,26 +355,19 @@ PlayQueueLI::handle_track_changed ()
 QModelIndex
 PlayQueueLI::to_sequence (const QModelIndex &mine) const
 {
-    return m_d->order.mapToSource(mapToSource(mine));
-}
-
-QPersistentModelIndex
-PlayQueueLI::from_sequence (const QModelIndex &seq) const
-{
-    return QPersistentModelIndex(mapFromSource(m_d->order.mapFromSource(seq)));
+    return sequence::to_source(m_d->state, mapToSource(mine));
 }
 
 QPersistentModelIndex
 PlayQueueLI::successor_of (const QPersistentModelIndex &mine) const
 {
-    if (!mine.isValid() || mine.row() + 1 >= rowCount()) return {};
-    return QPersistentModelIndex(index(mine.row() + 1, 0));
+    return QPersistentModelIndex(mapFromSource(sequence::successor_of(m_d->state, mapToSource(mine))));
 }
 
 bool
 PlayQueueLI::shuffled () const
 {
-    return m_d->order.shuffled();
+    return sequence::shuffled(m_d->state);
 }
 
 void
@@ -375,15 +375,13 @@ PlayQueueLI::set_shuffle (bool enabled)
 {
     if (enabled == shuffled()) return;
 
-    // The playing song becomes the head of the shuffled order, so "next" is a
-    // random upcoming track instead of the song drifting to a random slot.
-    int pinned = -1;
-    if (enabled) {
-        const QModelIndex now = to_sequence(playhead());
-        if (now.isValid()) pinned = now.row();
-    }
+    // The playing song leads the shuffled order, so "next" is a random upcoming track
+    // instead of the song drifting to a random slot. Its index in the source is all
+    // the proxy needs; it is only meaningful when enabling.
+    const QPersistentModelIndex lead = enabled ? QPersistentModelIndex(to_sequence(playhead()))
+                                               : QPersistentModelIndex();
 
-    m_d->order.setShuffled(enabled, pinned);
+    sequence::set_shuffled(m_d->state, enabled, lead);
 
     emit shuffle_changed();
     emit track_changed(); // same track, different row: QML must re-read PlayQueue.playhead
@@ -393,11 +391,5 @@ PlayQueueLI::set_shuffle (bool enabled)
 bool
 PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback)
 {
-    return pointed_to_t<Types::Song>(idx, callback);
-}
-
-PlaylistSequence &
-PlayQueueLI::_sequence() const
-{
-    return m_d->sequence;
+    return sequence::pointed_to(m_d->state, QPersistentModelIndex(mapToSource(idx)), callback);
 }
