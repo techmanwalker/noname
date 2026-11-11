@@ -113,15 +113,19 @@ ColumnLayout {
                 Label {
                     id: artistalbum
 
-                    text: metadata.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
+                    text: {
+                        if (root.stateModel.isMediaLoaded) {
+                            metadata.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
+                        } else {
+                            return qsTr("Next: %1").arg(PlayQueue.count > 0 ? PlayQueue.itemAt(0).title : "")
+                        }
+                    }
 
                     color: Theme.dark.texts.tertiaryText
 
                     elide: Text.ElideRight
 
                     Layout.fillWidth: true
-
-                    visible: root.stateModel.isMediaLoaded
                 }
             }
         }

@@ -129,6 +129,11 @@
             <numerusform>%n pistas en cola.</numerusform>
         </translation>
     </message>
+    <message>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="120"/>
+        <source>Next: %1</source>
+        <translation type="unfinished">A continuación: %1</translation>
+    </message>
     <message numerus="yes">
         <source>%1 tracks in queue.</source>
         <translation type="vanished">
@@ -163,7 +168,8 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="56"/>
+        <location filename="../qml/listings/Playlist.qml" line="120"/>
+        <location filename="../qml/listings/Playlist.qml" line="138"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -296,17 +302,17 @@
         <translation>Lista</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="336"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="337"/>
         <source>Remove from queue</source>
         <translation>Quitar de la cola</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="353"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="354"/>
         <source>Details</source>
         <translation>Detalles</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="344"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="345"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
