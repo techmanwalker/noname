@@ -65,12 +65,11 @@ main (int argc, char ** argv)
     // default target backend for soundio
     audio_backend backend { audio_backend::pulseaudio };
 
-    // song paths listed as command line arguments
-    QStringList arg_paths;
-
     // try to kick in as fast as possible
     QUrl first_track_source;
-    QFuture<Types::Song> first_track;
+
+    // song paths listed as command line arguments
+    QStringList arg_paths;
 
     {
         // short lived
@@ -96,7 +95,6 @@ main (int argc, char ** argv)
         cli.allow_extras();
 
         
-
         using enum audio_backend;
 
         try {
@@ -110,12 +108,9 @@ main (int argc, char ** argv)
         // Add to the play queue any path that's readable by song_factory as a track
         if (cli.remaining().size() > 0) {
 
-            // preemptt first song with default settings
-            first_track_source = QUrl::fromLocalFile(QString::fromStdString(cli.remaining()[0]));
-            first_track = song_factory::extract(
-                first_track_source, 
-                {}
-            );
+            // preempt first song with default settings
+            // do not wait for metadata to be read
+            first_track_source  = QUrl::fromLocalFile(QString::fromStdString(cli.remaining()[0]));
 
             // morph std::vector<std::string> -> QStringList
             std::ranges::transform (cli.remaining(), std::back_inserter(arg_paths), &QString::fromStdString);
@@ -126,11 +121,9 @@ main (int argc, char ** argv)
         composition root: instantiate each component separately, in order.
     */
 
-    // boot ae and immediately load and play the first track
-    auto ae = std::make_shared<audio_engine_LI>    (nullptr, backend);
-    // do not wait for the metadata to be read
+    // boot ae to immediately load and play the first track when cli11 kicks in
+    auto ae = std::make_shared<audio_engine_LI> (nullptr, backend);
     if (!first_track_source.isEmpty()) {
-        qCDebug (l_main) << "Trying to play the first track provided. The source is " << first_track_source;
         ae->load(first_track_source);
         ae->play();
     }
@@ -139,7 +132,7 @@ main (int argc, char ** argv)
     using configuration::managerLI;
     using covers::live::cover_storage_LI;
 
-    auto cs = std::make_shared<cover_storage_LI>     ();
+    auto cs = std::make_shared<cover_storage_LI>  ();
     auto cm = std::make_shared<managerLI>         (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
@@ -152,20 +145,14 @@ main (int argc, char ** argv)
 
     pp->set_lightness_awareness_enabled(!disable_lightness_awareness);
 
-    pq->spawn_queue(arg_paths).then([&pp, &pq, &first_track]() {
+    pq->spawn_queue(arg_paths).then([&pp, &pq]() {
         // load the remaining, the switch should be automagic
-
         int c = pq->item_count();
 
         qCDebug(l_main) << c << QLatin1StringView("track") + (c == 1 ? "" : "s") << "loaded from command line.";
 
-        first_track.then([&pp](const Types::Song &first) {
-            qCDebug (l_main) << "Acknowledging the presenter for first track " << first.source;
-            if (!first.is_valid()) return;
-
-            // make pp aware of the first track
-            pp->handle_track_changed();
-        });
+        // no matter if a track was preempted or not
+        pp->handle_track_changed();
     });
 
     // bind concrete<->concrete signals
