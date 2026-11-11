@@ -5,6 +5,7 @@
 #include "mediatypes.hpp"
 #include "songfactory.hpp" // IWYU pragma: keep
 #include "standardpaths.hpp"
+#include <qhashfunctions.h>
 #include "playlistslist.hpp"
 
 PlaylistsListLI::PlaylistsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
@@ -13,8 +14,9 @@ PlaylistsListLI::PlaylistsListLI(QObject *parent, std::shared_ptr<configuration:
 {}
 
 QFuture<void>
-PlaylistsListLI::read_conf_and_load ()
+PlaylistsListLI::refresh ()
 {
+    clear();
     using configuration::conf_file_type::shortcuts;
 
     // Every text file containing one path by line counts as a playlist
@@ -50,4 +52,25 @@ PlaylistsListLI::read_conf_and_load ()
     // Finishes once every continuation above has run (or been cancelled).
     return QtFuture::whenAll(pending.begin(), pending.end())
         .then(this, [](const QList<QFuture<void>> &) {});
+}
+
+QFuture<bool>
+PlaylistsListLI::save_playlist_to_disk(const QString &name, QList<QUrl> sources)
+{
+    QStringList source_lines;
+
+    for (QUrl source: sources) {
+        // treat paths with no schema as local files
+        source_lines.append(
+            source.isLocalFile() ?
+                source.toLocalFile() :
+                source.toString()
+        );
+    }
+
+    // commit the write to disk, wait for the future as needed
+    return diskio::write_lines(
+        QDir(standardpaths::dir(standardpaths::standard_dirs::playlists)).filePath(name),
+        source_lines
+    );
 }

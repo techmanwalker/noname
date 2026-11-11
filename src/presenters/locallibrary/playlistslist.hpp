@@ -28,7 +28,9 @@ public:
     using AbstractMediaSequence::clear;
 
     // shorthand
-    QFuture<void> read_conf_and_load ();
+    QFuture<void> refresh ();
+
+    QFuture<bool> save_playlist_to_disk (const QString &name, QList<QUrl> sources);
 
 private:
     std::shared_ptr<configuration::manager> cm;

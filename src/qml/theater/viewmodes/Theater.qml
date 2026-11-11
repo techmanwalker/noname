@@ -332,6 +332,13 @@ Row {
                         additionalMenuActions: [
 
                             T.Action {
+                                text: qsTr("Save as playlist (UUID name)")
+                                onTriggered: () => {
+                                    PlayQueue.saveToDisk();
+                                }
+                            },
+
+                            T.Action {
                                 text: qsTr("Remove from queue")
                                 onTriggered: () => {
                                     PlayQueue.remove(queueAndMetadata_c.selectedIndices)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QFuture>
 #include <QList>
 #include <QLoggingCategory>
 
@@ -11,6 +12,8 @@ Q_DECLARE_LOGGING_CATEGORY(l_diskio)
 QStringList list_dir (const QString &dir, bool recursive = false);
 
 [[nodiscard]]
-std::optional<QStringList> read_lines (const QString &file);
+std::optional<QStringList> read_lines (const QString &path);
+
+QFuture<bool> write_lines (const QString &path, QStringList lines);
 
 }

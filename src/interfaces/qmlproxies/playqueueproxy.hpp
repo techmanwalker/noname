@@ -128,6 +128,12 @@ public:
         return m_iface->move_item(QPersistentModelIndex(src), QPersistentModelIndex(dest));
     }
 
+    Q_INVOKABLE void saveToDisk () {
+        if (!m_iface) return;
+
+        // currently there is no way to input the name
+        m_iface->save_as_playlist_to_disk(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    }
 
 signals:
     void trackChanged();

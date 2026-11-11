@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mediatypes.hpp"
+#include "virtual/playlistslist.hpp"
 #include "virtual/playqueue.hpp"
 
 #include <QIdentityProxyModel>
@@ -25,7 +26,9 @@ class PlayQueueLI : public QIdentityProxyModel, public PlayQueue
 public:
     explicit PlayQueueLI(
         QObject *parent,
-        std::shared_ptr<audio_engine> audioengine);
+        std::shared_ptr<audio_engine> audioengine,
+        std::shared_ptr<PlaylistsList> playlistslist
+    );
 
 
     // Required in the header for std::unique_ptr to destroy the incomplete type
@@ -36,6 +39,9 @@ public:
 
     // all items
     QList<Types::Song> items() const;
+
+    // or their sources
+    QList<QUrl> sources() const;
 
     int item_count () const override;
 
@@ -63,9 +69,11 @@ public:
     bool shuffled () const override;
     void set_shuffle (bool enabled) override;
 
-    QFuture<void> spawn_queue (const QStringList &sources);
+    QFuture<void> spawn_queue   (const QStringList &sources);
     QFuture<void> respawn_queue (const QStringList &sources) override;
     void respawn_queue (QList<Types::Song> songs) override;
+
+    QFuture<bool> save_as_playlist_to_disk (const QString &name) override;
 
     bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest) override;
 

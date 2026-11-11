@@ -136,11 +136,12 @@ main (int argc, char ** argv)
     auto cm = std::make_shared<managerLI>         (nullptr);
     auto ll = std::make_shared<LocalLibraryLI>    (nullptr, cm);
     auto wi = std::make_shared<WindowGeometryLI>  (nullptr, cm);
-    auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae);
-    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi, cs);
-    auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to request current track source
     auto sl = std::make_shared<ShortcutsListLI>   (nullptr, cm);
     auto pl = std::make_shared<PlaylistsListLI>   (nullptr, cm);
+    auto pq = std::make_shared<PlayQueueLI>       (nullptr, ae, pl);
+    auto pp = std::make_shared<PlayerPresenterLI> (nullptr, cm, ae, pq, wi, cs);
+    auto lm = std::make_shared<LyricsManifestLI>  (nullptr, ae); // ae to request current track source
+
     auto mf = std::make_shared<MediaFilterLI>     ();
 
     pp->set_lightness_awareness_enabled(!disable_lightness_awareness);
@@ -186,7 +187,7 @@ main (int argc, char ** argv)
 
     // load shortcuts and user-defined playlists to display
     sl->read_conf_and_load();
-    pl->read_conf_and_load().then(&app, [&pl]() {
+    pl->refresh().then(&app, [&pl]() {
         debug::dump_list_model(l_main(), *pl, "PlaylistsList", true);
     });
 

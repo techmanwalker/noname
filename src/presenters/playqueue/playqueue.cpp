@@ -4,6 +4,7 @@
 #include "playqueue.hpp"
 #include "playqueuesequence.hpp"
 #include "songfactory.hpp"
+#include "virtual/playlistslist.hpp"
 
 #include <QLoggingCategory>
 #include <QtAssert>
@@ -11,27 +12,33 @@
 #include <memory>
 #include <optional>
 #include <qabstractitemmodel.h>
+#include <qfuture.h>
 #include <qlist.h>
+#include <quuid.h>
 
 class PlayQueueLIPrivate 
 {
 public: 
-    sequence::State               state;
-    std::shared_ptr<audio_engine> ae;
+    sequence::State                state;
+    std::shared_ptr<audio_engine>  ae;
+    std::shared_ptr<PlaylistsList> pl;
 
     PlayQueueLIPrivate(
-        std::shared_ptr<audio_engine> audioengine
+        std::shared_ptr<audio_engine> audioengine,
+        std::shared_ptr<PlaylistsList> playlistslist
     ) :
-        ae(std::move(audioengine))
+        ae(std::move(audioengine)),
+        pl(std::move(playlistslist))
     {}
 };
 
 PlayQueueLI::PlayQueueLI (
     QObject *parent,
-    std::shared_ptr<audio_engine> audioengine
+    std::shared_ptr<audio_engine> audioengine,
+    std::shared_ptr<PlaylistsList> playlistslist
 )
     : QIdentityProxyModel(parent),
-      m_d(std::make_unique<PlayQueueLIPrivate> (audioengine))
+      m_d(std::make_unique<PlayQueueLIPrivate> (audioengine, playlistslist))
 {
     // There are two lists behind this queue (the source and its shuffled view) and only the
     // sequence namespace may touch them. We present whatever it projects.
@@ -50,6 +57,18 @@ QList<Types::Song>
 PlayQueueLI::items () const
 { 
     return sequence::items(m_d->state); // projected order
+}
+
+QList<QUrl>
+PlayQueueLI::sources() const
+{
+    QList<QUrl> uris;
+
+    for (Types::Song item : items()) {
+        uris.append(std::move(item.source));
+    }
+
+    return uris;
 }
 
 int
@@ -392,4 +411,13 @@ bool
 PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback)
 {
     return sequence::pointed_to(m_d->state, QPersistentModelIndex(mapToSource(idx)), callback);
+}
+
+QFuture<bool>
+PlayQueueLI::save_as_playlist_to_disk (const QString &name)
+{
+    return m_d->pl->save_playlist_to_disk(name, sources()).then(this, [this](bool succeeded) {
+        m_d->pl->refresh();
+        return succeeded;
+    });
 }

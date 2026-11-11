@@ -48,6 +48,8 @@ public:
 
     virtual bool shuffled () const = 0;
     virtual void set_shuffle (bool enabled) = 0;
+
+    virtual QFuture<bool> save_as_playlist_to_disk (const QString &name) = 0;
 };
 
 Q_DECLARE_INTERFACE(PlayQueue, "com.noname.PlayQueue")
