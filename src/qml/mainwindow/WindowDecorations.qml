@@ -15,6 +15,16 @@ Row {
 
     property bool lightMode: false
 
+    signal toggleMaximize_b () // top to bottom or vice versa, bidirectional
+
+    onToggleMaximize_b: {
+        if (root.window.visibility === Window.Maximized) {
+            root.window.showNormal()
+        } else {
+            root.window.showMaximized()
+        }
+    }
+
     ResizableButton {
         id: close
         icon.name: "window-close"
@@ -25,13 +35,7 @@ Row {
 
     ResizableButton {
         icon.name: "window-maximize"
-        onClicked: {
-                if (root.window.visibility === Window.Maximized) {
-                    root.window.showNormal()
-                } else {
-                    root.window.showMaximized()
-                }
-            }
+        onClicked: root.toggleMaximize_b()
 
         lightMode: root.lightMode
     }

@@ -201,12 +201,13 @@ T.ApplicationWindow {
 
         opacity: (activeView.currentIndex === 0 || !stack_player.immersive || navbar_hover.hovered) ? 1 : 0
 
+
         HoverHandler {
             id: navbar_hover
         }
 
-        Row {
-            Layout.preferredWidth: browser.vtabsColWidth - searchBox.leftPadding
+        RowLayout {
+            Layout.maximumWidth: browser.vtabsColWidth - searchBox.leftPadding
 
             ResizableButton {
                 id: backButton
@@ -218,7 +219,7 @@ T.ApplicationWindow {
                         browser.aDirectoryIsOpen
                     ))
 
-                anchors.verticalCenter: parent.verticalCenter
+                Layout.alignment: Qt.AlignVCenter
 
                 text: qsTr("Back")
 
@@ -241,6 +242,25 @@ T.ApplicationWindow {
                         if (root.inVtabWBackButton) { // playlists vtab
                             browser.backButtonClicked_r()
                     }}
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                TapHandler {
+                    onDoubleTapped: windex.toggleMaximize_b()
+                }
+
+                DragHandler {
+                    target: null                
+                    
+                    onActiveChanged: {
+                        if (active) {
+                            root.startSystemMove();
+                        }
+                    }
                 }
             }
         }
@@ -284,18 +304,24 @@ T.ApplicationWindow {
             }
         }
 
-        DragHandler {
-            target: null
-            
-            onActiveChanged: {
-                if (active) {
-                    root.startSystemMove();
+        Item {
+            id: navbarFiller
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            TapHandler {
+                onDoubleTapped: windex.toggleMaximize_b()
+            }
+
+            DragHandler {
+                target: null
+                
+                onActiveChanged: {
+                    if (active) {
+                        root.startSystemMove();
+                    }
                 }
             }
-        }
-
-        Item {
-            Layout.fillWidth: true
         }
 
         Row {
