@@ -772,7 +772,6 @@ if(PLAYER_BUILD_TESTS)
     )
 endif()
 
-option(ENABLE_QML_PROFILING "Enable QML debugging and profiling globally" OFF)
 if(ENABLE_QML_PROFILING)
     add_compile_definitions(QT_QML_DEBUG)
 endif()
