@@ -265,7 +265,12 @@ PlayerPresenterLI::next() const
 void
 PlayerPresenterLI::prev() const
 {
-    if (ae->current_position_ms() > 5000) {
+    if (
+        ae->current_position_ms() > 5000 ||
+
+        // the only track in queue
+        (pq->playhead().row() == 0 && pq->item_count() == 1)
+    ) {
         ae->seek_to(0); // start over
         return;
     }
