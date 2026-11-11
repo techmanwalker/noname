@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import Player.Theater
 import Player.LyricsManifest
 import Player.Primitives
-import Player.Presenter
+import Player.PlayQueue
 
 Item {
     id: root
@@ -29,6 +29,16 @@ Item {
             playerLyrics = 0;
         } else {
             backToBrowser()
+        }
+    }
+
+    Connections {
+        target: PlayQueue
+
+        function onCountChanged () {
+            if (PlayQueue.count === 0) {
+                root.immersive = false;
+            } 
         }
     }
 
