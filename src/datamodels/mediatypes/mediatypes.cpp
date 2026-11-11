@@ -4,6 +4,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QStandardPaths>
+#include <qobject.h>
 #include <qurl.h>
 
 Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
@@ -15,10 +16,14 @@ printable_time (quint64 ms)
 {
     quint64 total_seconds =  ms / 1000;
 
-    quint64 mm = total_seconds / 60;
-    quint8 ss = total_seconds % 60;
+    quint64 hh = total_seconds / 3600;
+    quint64 mm = total_seconds / 60 - hh * 60;
+    quint8  ss = total_seconds % 60;
 
-    return QString::number(mm) + ":" + (ss < 10 ? "0" : "") + QString::number(ss);
+    return 
+        (hh > 0 ? QString::number(hh) + ":" : "") +
+        (mm < 10 && hh > 0 ? "0" : "") + QString::number(mm) + ":" +
+        (ss < 10 ? "0" : "") + QString::number(ss);
 }
 
 }

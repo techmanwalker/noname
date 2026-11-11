@@ -43,6 +43,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
         
         dir_index_to_refresh = 
             append(Types::Directory {
+                { .title=QUrl(dir_path).fileName() },
                 dir_path
             });
 

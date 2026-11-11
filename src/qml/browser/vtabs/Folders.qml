@@ -78,7 +78,8 @@ ColumnLayout {
 
                 title:      model.title
                 cover:      model.cover
-                metadata:   qsTr("%n track(s)", "number of tracks in this directory", model.songs.length)
+                metadata:   qsTr("%n track(s)", "number of tracks in this directory", model.songs.length) + " · " + model.path
+                duration:   model.duration_mmss
 
                 coverWidth: root.directoryCoverHeight
 
