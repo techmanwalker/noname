@@ -137,7 +137,7 @@ Item {
                 elide: Text.ElideRight
                 wrapMode: Text.WordWrap
 
-                visible: root.metadata != ""
+                visible: root.metadata !== ""
 
                 color: root.lightMode ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
             }
@@ -151,6 +151,8 @@ Item {
             visible: !root.hideDuration
 
             color: root.lightMode ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
+
+            Layout.alignment: Qt.AlignBottom
         }
     }
 }
