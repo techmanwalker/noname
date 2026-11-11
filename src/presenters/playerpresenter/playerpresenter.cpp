@@ -56,7 +56,12 @@ PlayerPresenterLI::PlayerPresenterLI(
 }
 
 // Getters block
-const Types::Song & PlayerPresenterLI::current_track() const { return m_current_track; }
+const Types::Song & PlayerPresenterLI::current_track() const {
+    Q_ASSERT_X(m_current_track.source == ae->current_track_source(), "PlayerPresenterLI::current_track",
+    "The current playing track reported is not the track audio engine is playing.");
+    
+    return m_current_track;
+}
 
 quint64 PlayerPresenterLI::position_ms()     const { return ae->current_position_ms();  }
 quint8  PlayerPresenterLI::volume()          const { return ae->current_volume();       }
