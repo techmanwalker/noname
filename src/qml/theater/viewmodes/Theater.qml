@@ -168,8 +168,6 @@ Row {
 
                 onClicked: root.immersive = !root.immersive
 
-                usedInImmersiveMode: root.immersive
-
                 property rect globalBounds: ({
                     x: metadataContainerBounds.x,
                     y: metadataContainerBounds.y,

@@ -12,8 +12,6 @@ Column {
     property string artist
     property string album
 
-    property bool usedInImmersiveMode
-
     property bool lightMode
 
     // no need to be very precise, used to calculate the backdrop lightness
