@@ -5,13 +5,12 @@
 #include <QSize>
 #include <QString>
 #include <QUrl>
-#include <qhashfunctions.h>
+#include <qobject.h>
+#include <qtmetamacros.h>
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediatypes)
 
-/// All the forms of identifiable structures of audio that this player supports.
 namespace Types {
-
     struct Song {
         Q_GADGET
 
@@ -58,82 +57,53 @@ namespace Types {
 
         bool operator==(const Song&) const = default; 
     };
+}
 
-    struct Album {
+struct base_media_container_ {
+    Q_GADGET
+
+    Q_PROPERTY(QString title MEMBER title)
+    Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
+    Q_PROPERTY(QUrl cover READ firstcover)
+    Q_PROPERTY(quint64 duration READ duration)
+
+    Q_PROPERTY(QString duration_mmss READ duration_mmss)
+
+public:
+    QString     title;
+    QList<Types::Song> songs;
+
+    // cover of the first element
+    QUrl firstcover () const;
+
+    // sum of all the children
+    quint64 duration() const;
+    QString duration_mmss () const;
+
+    bool operator==(const base_media_container_&) const = default;
+};
+
+/// All the forms of identifiable structures of audio that this player supports.
+namespace Types {
+
+    struct Album     : public base_media_container_{
         Q_GADGET
-
-        Q_PROPERTY(QString title MEMBER title)
         Q_PROPERTY(QString artist MEMBER artist)
-        Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
-        Q_PROPERTY(quint64 duration READ duration)
-
     public:
-
-        QString      title;
-        QString      artist;
-        QList<Song>  songs;
-
-        // sum of all the children
-        quint64 duration() const;
-
-        bool operator==(const Album&) const = default; 
-
-        // An empty Album doesn't make it invalid
+        QString artist;
     };
 
-    struct Playlist {
+    struct Playlist  : public base_media_container_ {
         Q_GADGET
-        Q_PROPERTY(QString title MEMBER title)
-        Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
-        Q_PROPERTY(QUrl cover READ firstcover)
-        Q_PROPERTY(quint64 duration READ duration)
-
-        Q_PROPERTY(QString duration_mmss READ duration_mmss)
-
-    public:
-        QString     title;
-        QList<Song> songs;
-
-        // cover of the first element
-        QUrl firstcover () const;
-
-        // sum of all the children
-        quint64 duration() const;
-        QString duration_mmss () const;
-
-        bool operator==(const Playlist&) const = default; 
     };
 
-    struct Directory {
+    struct Directory : public base_media_container_ {
         Q_GADGET
         Q_PROPERTY(QString path MEMBER path)
-        Q_PROPERTY(QString title MEMBER title)
-        Q_PROPERTY(QUrl cover READ firstcover)
-        Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
-
-        Q_PROPERTY(quint64 duration READ duration)
-        Q_PROPERTY(QString duration_mmss READ duration_mmss)
-        
         
     public:
-
-        Directory () = default;
-        explicit Directory (const QString &source_path);
-
         QString path;
-        QString title;
-
-        QList<Song> songs;
-
-        // cover of the first element
-        QUrl firstcover () const;
-        
-        quint64 duration() const;
-        QString duration_mmss () const;
-
         bool is_valid () const;
-
-        bool operator==(const Directory&) const = default; 
     };
 
     using Any = std::variant<Types::Song, Types::Album, Types::Playlist, Types::Directory>;

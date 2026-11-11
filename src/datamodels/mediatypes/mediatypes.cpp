@@ -8,20 +8,6 @@
 
 Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
 
-QByteArray
-toBase64Url (const QUrl &uri)
-{
-    return uri.toEncoded().toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
-}
-
-QUrl
-fromBase64Url (const QByteArray &base64url)
-{
-    return QUrl::fromEncoded(
-        QByteArray::fromBase64(base64url, QByteArray::Base64UrlEncoding)
-    );
-}
-
 namespace {
 
 QString
@@ -38,64 +24,43 @@ printable_time (quint64 ms)
 }
 
 
+QByteArray
+toBase64Url (const QUrl &uri)
+{
+    return uri.toEncoded().toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+}
+
+QUrl
+fromBase64Url (const QByteArray &base64url)
+{
+    return QUrl::fromEncoded(
+        QByteArray::fromBase64(base64url, QByteArray::Base64UrlEncoding)
+    );
+}
+
+quint64
+base_media_container_::duration() const {
+    quint64 total = 0;
+    for (const Types::Song &s : songs)
+        total += s.duration;
+    return total;
+}
+
+QString
+base_media_container_::duration_mmss() const {
+    return printable_time(duration());
+}
+
+QUrl
+base_media_container_::firstcover() const
+{
+    if (songs.size() == 0) return {};
+
+    return songs.at(0).coveruri();
+}
+
 namespace Types {
-
-quint64
-Album::duration() const {
-    quint64 total = 0;
-    for (const Song &s : songs)
-        total += s.duration;
-    return total;
-}
-
-quint64
-Playlist::duration() const {
-    quint64 total = 0;
-    for (const Song &s : songs)
-        total += s.duration;
-    return total;
-}
-
-QString
-Playlist::duration_mmss() const {
-    return printable_time(duration());
-}
-
-QUrl
-Playlist::firstcover() const
-{
-    if (songs.size() == 0) return {};
-
-    return songs.at(0).coveruri();
-}
-
-Directory::Directory (const QString &source_path)
-    : path(source_path),
-      title(QFileInfo(source_path).fileName())
-{
-}
-
-quint64
-Directory::duration() const {
-    quint64 total = 0;
-    for (const Song &s : songs)
-        total += s.duration;
-    return total;
-}
-
-QString
-Directory::duration_mmss() const {
-    return printable_time(duration());
-}
-
-QUrl
-Directory::firstcover() const
-{
-    if (songs.size() == 0) return {};
-
-    return songs.at(0).coveruri();
-}
-
+    
 // validity semantics
 
 bool
