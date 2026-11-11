@@ -35,6 +35,9 @@ ListView {
 
         card: true
 
+        width: dummycard.width
+        height: dummycard.height
+
         required property song model
         required property int  index
 
@@ -57,5 +60,13 @@ ListView {
         }
         onCtrlClicked: selection.toggle(index)
         onRightClicked: selection.openMenuFor(index)
+    }
+
+    TallestDummyCard {
+        id: dummycard
+        visible: false
+
+        coverWidth: root.shortcutCoverWidth
+        coverHeight: root.shortcutCoverHeight
     }
 }
