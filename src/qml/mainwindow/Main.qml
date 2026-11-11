@@ -41,7 +41,8 @@ T.ApplicationWindow {
         searchBox.enabled &&             // can type
         !searchBox.activeFocus           // not focused
 
-    readonly property bool typeToSearchFocused: 
+    readonly property bool typeToSearchFocused:
+        activeView.currentIndex === 0 &&
         searchBox.activeFocus && // focused
         searchBox.clearable // enabled and not empty
 
@@ -60,6 +61,7 @@ T.ApplicationWindow {
     }
 
     Shortcut {
+        id: clearSearchShortcut
         sequences: Keyboard.bindings.clearSearch
         enabled: searchBox.activeFocus && searchBox.clearable
         onActivated: searchBox.clearQuery()
@@ -68,6 +70,7 @@ T.ApplicationWindow {
     // Focus must land on contentItem, not nowhere: routeKey only receives
     // events when something in the window has focus.
     Shortcut {
+        id: leaveSearchShortcut
         sequences: Keyboard.bindings.leaveSearch
         enabled: searchBox.activeFocus && !searchBox.clearable
         onActivated: root.contentItem.forceActiveFocus()
@@ -121,11 +124,15 @@ T.ApplicationWindow {
 
     // when no relevant item (the grid, the search box, etc) is focused, so global key
     // negate any focus that conflicts with a global key
-    readonly property bool globalKeys: !root.typeToSearchAwaiting && !root.typeToSearchFocused && !searchBox.activeFocus
+    readonly property bool inVtabWBackButton: (
+        // vtabs with back button support
+        browser.activeVtab === browser.vtabs.playlists
+    ||  browser.activeVtab === browser.vtabs.folders
+    )
 
     Shortcut {
         sequences: Keyboard.bindings.backButton
-        enabled: root.globalKeys
+        enabled: !clearSearchShortcut.enabled && !leaveSearchShortcut.enabled
         onActivated: backButton.click()
     }
 
@@ -231,10 +238,7 @@ T.ApplicationWindow {
                     if (activeView.currentIndex === 1) { // if we are in the player
                         stack_player.backButtonClicked_r()
                     } else {
-                        if (
-                            browser.activeVtab === browser.vtabs.playlists
-                        ||  browser.activeVtab === browser.vtabs.folders
-                        ) { // playlists vtab
+                        if (root.inVtabWBackButton) { // playlists vtab
                             browser.backButtonClicked_r()
                     }}
                 }
