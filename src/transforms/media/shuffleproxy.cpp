@@ -26,6 +26,9 @@ ShuffleProxy::setSourceModel(QAbstractItemModel *source)
             connect(source, &QAbstractItemModel::rowsInserted,          this, &ShuffleProxy::on_source_rows_inserted),
             connect(source, &QAbstractItemModel::rowsAboutToBeRemoved,  this, &ShuffleProxy::on_source_rows_about_to_be_removed),
             connect(source, &QAbstractItemModel::rowsRemoved,           this, &ShuffleProxy::on_source_rows_removed),
+            connect(source, &QAbstractItemModel::rowsRemoved,           this, &ShuffleProxy::on_source_rows_removed),
+            connect(source, &QAbstractItemModel::rowsAboutToBeMoved,    this, &ShuffleProxy::on_source_rows_about_to_be_moved),
+            connect(source, &QAbstractItemModel::rowsMoved,             this, &ShuffleProxy::on_source_rows_moved),
             connect(source, &QAbstractItemModel::dataChanged,           this, &ShuffleProxy::on_source_data_changed),
             connect(source, &QAbstractItemModel::modelAboutToBeReset,   this, [this] { beginResetModel(); }),
             connect(source, &QAbstractItemModel::modelReset,            this, [this] { endResetModel(); }), // -> resetInternalData() rebuilds from the new source
@@ -33,7 +36,7 @@ ShuffleProxy::setSourceModel(QAbstractItemModel *source)
     }
 
     endResetModel(); // -> resetInternalData() builds the order
-    // Not handled: layoutChanged / rowsMoved. AbstractMediaSequence never emits them.
+    // Not handled: layoutChanged. AbstractMediaSequence never emits it.
 }
 
 void ShuffleProxy::resetInternalData()
@@ -219,6 +222,48 @@ ShuffleProxy::on_source_rows_removed(const QModelIndex &parent, int first, int l
     const int count = last - first + 1;
     for (int &source_row : m_order) {
         if (source_row > last) source_row -= count;
+    }
+    rebuild_rank();
+}
+
+void
+ShuffleProxy::on_source_rows_about_to_be_moved(const QModelIndex &source_parent, int first, int last,
+                                               const QModelIndex &dest_parent, int dest_child)
+{
+    if (source_parent.isValid() || dest_parent.isValid()) return;
+
+    // shuffled: the presented order doesn't move, nothing to announce (see on_source_rows_moved)
+    if (m_shuffled) return;
+
+    // identity mapping: same rows, same destination
+    const bool ok = beginMoveRows({}, first, last, {}, dest_child);
+    Q_ASSERT(ok);
+    Q_UNUSED(ok);
+}
+
+void
+ShuffleProxy::on_source_rows_moved(const QModelIndex &source_parent, int first, int last,
+                                   const QModelIndex &dest_parent, int dest_child)
+{
+    if (source_parent.isValid() || dest_parent.isValid()) return;
+
+    if (!m_shuffled) {
+        endMoveRows();
+        return;
+    }
+
+    // The same items sit at the same presented rows; only the source numbering shifted.
+    // Renumber m_order so every entry keeps following its item. No signals: the view sees no change.
+    const int count  = last - first + 1;
+    const int landed = dest_child > last ? dest_child - count : dest_child; // first row of the block afterwards
+
+    for (int &source_row : m_order) {
+        if (source_row >= first && source_row <= last)
+            source_row += landed - first;                                      // the moved block
+        else if (dest_child > last && source_row > last && source_row < dest_child)
+            source_row -= count;                                               // moved down: rows in between shift up
+        else if (dest_child < first && source_row >= dest_child && source_row < first)
+            source_row += count;                                               // moved up: rows in between shift down
     }
     rebuild_rank();
 }

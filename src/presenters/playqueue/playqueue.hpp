@@ -71,6 +71,8 @@ public:
     QFuture<void> respawn_queue (const QStringList &sources) override;
     void respawn_queue (QList<Types::Song> songs) override;
 
+    bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest) override;
+
     void batch_remove (const QList<QPersistentModelIndex> &indices) override;
 
 signals:

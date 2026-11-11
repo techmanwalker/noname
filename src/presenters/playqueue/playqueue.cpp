@@ -35,6 +35,11 @@ PlayQueueLI::PlayQueueLI (
     : QIdentityProxyModel(parent),
       m_d(std::make_unique<PlayQueueLIPrivate> (audioengine))
 {
+    // Do not forget that PlayQueue is actually two switching models and one is not
+    // a plain PlaylistSequence, so be careful with signal handling and data writes
+    // that affect either model.
+
+
     // Binds the hidden sequence so QIdentityProxyModel automatically forwards model data
     m_d->order.setSourceModel(&m_d->sequence);
     setSourceModel(&m_d->order);
@@ -88,6 +93,18 @@ PlayQueueLI::spawn_queue(const QStringList &sources)
     }
 
     return batch_append(uri_sources);
+}
+
+bool
+PlayQueueLI::move_item(const QPersistentModelIndex &src, const QPersistentModelIndex &dest)
+{
+    if (!m_d->sequence.move_item(to_sequence(src), to_sequence(dest))) return false;
+
+    // same track, maybe a different row: QML only re-reads PlayQueue.playhead on track_changed,
+    // and the upcoming track may have changed
+    emit track_changed();
+    preload_next_track_whenever_possible();
+    return true;
 }
 
 QFuture<void>

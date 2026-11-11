@@ -25,4 +25,6 @@ QtObject {
         }
 
     }
+
+    final readonly property int dragThreshold: 300
 }

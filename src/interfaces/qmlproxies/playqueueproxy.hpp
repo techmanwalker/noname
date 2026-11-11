@@ -117,6 +117,18 @@ public:
         return result;
     }
 
+    // rows arrive in THIS proxy's space; map down before crossing the interface
+    Q_INVOKABLE bool move (int from, int to) {
+        if (!m_iface) return false;
+
+        const QModelIndex src  = mapToSource(index(from, 0));
+        const QModelIndex dest = mapToSource(index(to, 0));
+        if (!src.isValid() || !dest.isValid()) return false;
+
+        return m_iface->move_item(QPersistentModelIndex(src), QPersistentModelIndex(dest));
+    }
+
+
 signals:
     void trackChanged();
     void countChanged();

@@ -182,6 +182,48 @@ AbstractMediaSequence::clear()
     emit count_changed();
 }
 
+bool
+AbstractMediaSequence::move_item(
+    const QPersistentModelIndex &src,
+    const QPersistentModelIndex &dest
+)
+{
+    // also rejects invalid indices: an invalid QPersistentModelIndex has no model
+    if (src.model() != this || dest.model() != this) return false;
+
+    int from = 0;
+    int to   = 0;
+    {
+        QReadLocker locker (&m_d->m_lock);
+
+        const std::optional<size_t> src_row  = __row_pointed_to_unlocked(src);
+        const std::optional<size_t> dest_row = __row_pointed_to_unlocked(dest);
+        if (!src_row.has_value() || !dest_row.has_value()) return false;
+
+        from = static_cast<int>(src_row.value());
+        to   = static_cast<int>(dest_row.value());
+    }
+
+    // nothing to move, but not a failure
+    if (from == to) return true;
+
+    // Qt's destinationChild means "insert before this row" in pre-move numbering,
+    // so moving downwards must target the row after dest to land exactly on it.
+    const int destination_child = (from < to) ? to + 1 : to;
+
+    // The rows were read above, before this call: the persistent indices
+    // are rewritten by Qt as part of endMoveRows().
+    if (!beginMoveRows({}, from, from, {}, destination_child)) return false;
+
+    {
+        QWriteLocker locker (&m_d->m_lock);
+        m_d->m_items.move(from, to);
+    }
+
+    endMoveRows();
+    return true;
+}
+
 QList<Types::Any>
 AbstractMediaSequence::items() const
 {

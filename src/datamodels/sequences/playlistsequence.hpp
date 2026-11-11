@@ -24,8 +24,10 @@ public:
     // both bases declare these names, so the leaf picks the typed ones
     USING_SEQUENCE_OPS(PlaylistSequence, Types::Song);
 
+    // expose, supported
     using AbstractMediaSequence::clear;
-    using AbstractMediaSequence::batch_remove; // expose, supported
+    using AbstractMediaSequence::batch_remove; 
+    using AbstractMediaSequence::move_item;
 
     /// clear and repopulate this playlist in one step
     template <media_sequence container>

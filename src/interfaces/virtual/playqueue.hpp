@@ -37,6 +37,9 @@ public:
     virtual std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const = 0;
 
     virtual QFuture<void> batch_append (const QList<QUrl> &sources) = 0;
+
+    // Move an item and rearrange the rest
+    virtual bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest) = 0;
     
     virtual QFuture<void> respawn_queue (const QStringList &sources) = 0;
     virtual void respawn_queue (QList<Types::Song> songs) = 0;

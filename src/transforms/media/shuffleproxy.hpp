@@ -43,6 +43,8 @@ private:
     void on_source_rows_inserted             (const QModelIndex &parent, int first, int last);
     void on_source_rows_about_to_be_removed  (const QModelIndex &parent, int first, int last);
     void on_source_rows_removed              (const QModelIndex &parent, int first, int last);
+    void on_source_rows_about_to_be_moved    (const QModelIndex &source_parent, int first, int last, const QModelIndex &dest_parent, int dest_child);
+    void on_source_rows_moved                (const QModelIndex &source_parent, int first, int last, const QModelIndex &dest_parent, int dest_child);
     void on_source_data_changed (const QModelIndex &top_left, const QModelIndex &bottom_right, const QList<int> &roles);
 
     bool m_shuffled {false};

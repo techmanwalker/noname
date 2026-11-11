@@ -94,6 +94,10 @@ protected:
     void remove(size_t index);
     void clear();
 
+    // Moves the item at src so that it ends up at dest's row; everything in between shifts by one.
+    // Returns false if either index is invalid, foreign to this model, or out of range.
+    bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest);
+
 private:
     // the typed facade is the only outsider allowed to reach the protected writers
     template <typename, typename> friend class BasicSequenceOps;
