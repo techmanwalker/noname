@@ -75,6 +75,27 @@ Directory::Directory (const QString &source_path)
 {
 }
 
+quint64
+Directory::duration() const {
+    quint64 total = 0;
+    for (const Song &s : songs)
+        total += s.duration;
+    return total;
+}
+
+QString
+Directory::duration_mmss() const {
+    return printable_time(duration());
+}
+
+QUrl
+Directory::firstcover() const
+{
+    if (songs.size() == 0) return {};
+
+    return songs.at(0).coveruri();
+}
+
 // validity semantics
 
 bool

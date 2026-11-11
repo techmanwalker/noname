@@ -2,6 +2,18 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en" sourcelanguage="en">
 <context>
+    <name>Folders</name>
+    <message numerus="yes">
+        <location filename="../qml/browser/vtabs/Folders.qml" line="81"/>
+        <source>%n track(s)</source>
+        <comment>number of tracks in this directory</comment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>MinibarPlayer</name>
     <message numerus="yes">
         <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="102"/>

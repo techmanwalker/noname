@@ -108,7 +108,12 @@ namespace Types {
         Q_GADGET
         Q_PROPERTY(QString path MEMBER path)
         Q_PROPERTY(QString title MEMBER title)
+        Q_PROPERTY(QUrl cover READ firstcover)
         Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
+
+        Q_PROPERTY(quint64 duration READ duration)
+        Q_PROPERTY(QString duration_mmss READ duration_mmss)
+        
         
     public:
 
@@ -119,6 +124,12 @@ namespace Types {
         QString title;
 
         QList<Song> songs;
+
+        // cover of the first element
+        QUrl firstcover () const;
+        
+        quint64 duration() const;
+        QString duration_mmss () const;
 
         bool is_valid () const;
 

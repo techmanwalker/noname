@@ -21,7 +21,8 @@ RowLayout {
     // name -> stack index, generated from the TabPages in activeView: vtabs.<name>
     readonly property alias vtabs: vtabList.indices
 
-    readonly property bool aPlaylistIsOpen: activeVtab === vtabs.playlists && playlistsitem.aPlaylistIsOpen
+    readonly property bool aPlaylistIsOpen:  activeVtab === vtabs.playlists && playlistsitem.aPlaylistIsOpen
+    readonly property bool aDirectoryIsOpen: activeVtab === vtabs.folders   && foldersitem.aDirectoryIsOpen
 
     // Vertical tabs switch and window decorations for bigscreen
     ColumnLayout {
@@ -121,7 +122,16 @@ RowLayout {
             Connections {
                 target: root
                 function onBackButtonClicked_r () {
-                    playlistsitem.backButtonClicked_r()
+                    switch (root.activeVtab) {
+                        case root.vtabs.playlists:
+                            playlistsitem.backButtonClicked_r();
+                            break;
+                        case root.vtabs.folders: {
+                            foldersitem.backButtonClicked_r();
+                            break
+                        }
+                    }
+                    
                 }
             }
         }

@@ -207,7 +207,8 @@ T.ApplicationWindow {
 
                 visible: activeView.currentIndex === 1 || // we are in the player
                     (activeView.currentIndex === 0 && ( // we are in the browser
-                        browser.aPlaylistIsOpen
+                        browser.aPlaylistIsOpen ||
+                        browser.aDirectoryIsOpen
                     ))
 
                 anchors.verticalCenter: parent.verticalCenter
@@ -229,9 +230,13 @@ T.ApplicationWindow {
                     
                     if (activeView.currentIndex === 1) { // if we are in the player
                         stack_player.backButtonClicked_r()
-                    } else if (browser.activeVtab === browser.vtabs.playlists) { // playlists vtab
-                        browser.backButtonClicked_r()
-                    }
+                    } else {
+                        if (
+                            browser.activeVtab === browser.vtabs.playlists
+                        ||  browser.activeVtab === browser.vtabs.folders
+                        ) { // playlists vtab
+                            browser.backButtonClicked_r()
+                    }}
                 }
             }
         }

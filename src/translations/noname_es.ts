@@ -31,27 +31,27 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="51"/>
+        <location filename="../qml/browser/Browser.qml" line="52"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="78"/>
+        <location filename="../qml/browser/Browser.qml" line="79"/>
         <source>Home</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="89"/>
+        <location filename="../qml/browser/Browser.qml" line="90"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="100"/>
+        <location filename="../qml/browser/Browser.qml" line="101"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="111"/>
+        <location filename="../qml/browser/Browser.qml" line="112"/>
         <source>Tracks</source>
         <translation>Pistas</translation>
     </message>
@@ -63,9 +63,23 @@
 <context>
     <name>Folders</name>
     <message>
-        <location filename="../qml/browser/vtabs/Folders.qml" line="21"/>
+        <location filename="../qml/browser/vtabs/Folders.qml" line="40"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/browser/vtabs/Folders.qml" line="81"/>
+        <source>%n track(s)</source>
+        <comment>number of tracks in this directory</comment>
+        <translation>
+            <numerusform>%n pista</numerusform>
+            <numerusform>%n pistas</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/vtabs/Folders.qml" line="124"/>
+        <source>Play all</source>
+        <translation>Reproducir todo</translation>
     </message>
 </context>
 <context>
@@ -95,12 +109,12 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="261"/>
+        <location filename="../qml/mainwindow/Main.qml" line="266"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="215"/>
+        <location filename="../qml/mainwindow/Main.qml" line="216"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -132,7 +146,7 @@
     <message>
         <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="120"/>
         <source>Next: %1</source>
-        <translation type="unfinished">A continuación: %1</translation>
+        <translation>A continuación: %1</translation>
     </message>
     <message numerus="yes">
         <source>%1 tracks in queue.</source>
