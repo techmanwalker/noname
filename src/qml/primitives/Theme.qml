@@ -31,6 +31,8 @@ QtObject {
         required final property color songSelected
         required final property color songHovered
 
+        required final property color rejectedDrop
+
         required final property color folder
     }
 
@@ -69,6 +71,8 @@ QtObject {
             songSelected: "#6ea0a0a0"
             songHovered:  "#14a0a0a0"
 
+            rejectedDrop:   "#8ce62626"
+
             folder: "#1f1f1f"
         }
         iconColor: "black"
@@ -100,6 +104,8 @@ QtObject {
             songPlaying:  "#2f222222"
             songSelected: "#6e232323"
             songHovered:  "#14232323"
+
+            rejectedDrop:   "#8ce62626"
 
             folder: "#a0a0a0"
         }

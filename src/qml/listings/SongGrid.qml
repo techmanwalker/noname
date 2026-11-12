@@ -218,7 +218,7 @@ GridView {
         Rectangle {
             anchors.fill: parent
             radius: 8
-            color: Qt.rgba(0.9, 0.15, 0.15, 0.55) // the ghosts sit at 0.4 opacity, so this reads faint
+            color: Theme.dark.elementbg.rejectedDrop
             visible: ghosts.releasing && !ghosts.accepted
         }
 
