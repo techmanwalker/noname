@@ -31,27 +31,27 @@
 <context>
     <name>Browser</name>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="52"/>
+        <location filename="../qml/browser/Browser.qml" line="59"/>
         <source>Theater mode</source>
         <translation>Modo teatro</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="79"/>
+        <location filename="../qml/browser/Browser.qml" line="112"/>
         <source>Home</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="90"/>
+        <location filename="../qml/browser/Browser.qml" line="123"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="101"/>
+        <location filename="../qml/browser/Browser.qml" line="134"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="112"/>
+        <location filename="../qml/browser/Browser.qml" line="145"/>
         <source>Tracks</source>
         <translation>Pistas</translation>
     </message>
@@ -109,12 +109,12 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="290"/>
+        <location filename="../qml/mainwindow/Main.qml" line="292"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="224"/>
+        <location filename="../qml/mainwindow/Main.qml" line="226"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -135,16 +135,33 @@
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
+    <message>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="105"/>
+        <source>No tracks in queue.</source>
+        <translation>No hay pistas en cola.</translation>
+    </message>
     <message numerus="yes">
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="102"/>
-        <source>%n tracks in queue.</source>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="107"/>
+        <source>%n track(s) in queue.</source>
         <translation>
             <numerusform>%n pista en cola.</numerusform>
             <numerusform>%n pistas en cola.</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="120"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="124"/>
+        <source>Drop here to add to the queue…</source>
+        <translation>Suelta aquí para añadir a la cola…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tracks in queue.</source>
+        <translation type="vanished">
+            <numerusform>%n pista en cola.</numerusform>
+            <numerusform>%n pistas en cola.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="129"/>
         <source>Next: %1</source>
         <translation>A continuación: %1</translation>
     </message>
@@ -182,8 +199,8 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="120"/>
-        <location filename="../qml/listings/Playlist.qml" line="138"/>
+        <location filename="../qml/listings/Playlist.qml" line="102"/>
+        <location filename="../qml/listings/Playlist.qml" line="121"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -245,7 +262,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Shortcuts.qml" line="42"/>
+        <location filename="../qml/listings/Shortcuts.qml" line="45"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -299,7 +316,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/SongGrid.qml" line="71"/>
+        <location filename="../qml/listings/SongGrid.qml" line="73"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -318,7 +335,7 @@
     <message>
         <location filename="../qml/theater/viewmodes/Theater.qml" line="335"/>
         <source>Save as playlist (UUID name)</source>
-        <translation type="unfinished">Guardar lista de reproducción (nombre por UUID)</translation>
+        <translation>Guardar lista de reproducción (nombre por UUID)</translation>
     </message>
     <message>
         <location filename="../qml/theater/viewmodes/Theater.qml" line="342"/>
@@ -422,7 +439,7 @@
         <translation>La pista que buscas probablemente no está en tu biblioteca.</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="90"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="99"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>

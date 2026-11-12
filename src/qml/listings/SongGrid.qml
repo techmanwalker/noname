@@ -47,6 +47,10 @@ GridView {
     // drag is cancelled
     readonly property alias isDragging: selectionDrag.armed
 
+    // true while tracks are really being dragged: from the first movement until AFTER the
+    // drop was delivered (armed is already false by then, active is not)
+    readonly property alias isCarrying: selectionDrag.active
+
     clip: true
 
     // Reduce frame drops while scrolling

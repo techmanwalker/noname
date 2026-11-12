@@ -31,6 +31,8 @@ ColumnLayout {
 
     property bool insetDurationBarInPadding: true
 
+    property bool showDropHereBanner: false
+
     signal metadataClicked () // the box containing the cover, title, album and/or artist
 
     DurationControl {
@@ -99,7 +101,11 @@ ColumnLayout {
                         if (root.stateModel.isMediaLoaded) {
                             return root.stateModel.title.length > 0 ? root.stateModel.title : root.noTitleText
                         } else {
-                            return qsTr("%n tracks in queue.", "", PlayQueue.count)
+                            if (PlayQueue.count === 0) {
+                                return qsTr("No tracks in queue.");
+                            } else {
+                                return qsTr("%n track(s) in queue.", "", PlayQueue.count)
+                            }
                         }
                     }
 
@@ -114,10 +120,14 @@ ColumnLayout {
                     id: artistalbum
 
                     text: {
-                        if (root.stateModel.isMediaLoaded) {
-                            metadata.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
+                        if (root.showDropHereBanner) {
+                            return qsTr("Drop here to add to the queue…")
                         } else {
-                            return qsTr("Next: %1").arg(PlayQueue.count > 0 ? PlayQueue.itemAt(0).title : "")
+                            if (root.stateModel.isMediaLoaded) {
+                                return metadata.displayArtist + ((root.stateModel.album.length > 0) ? (" · " + root.stateModel.album) : "")
+                            } else {
+                                return qsTr("Next: %1").arg(PlayQueue.count > 0 ? PlayQueue.itemAt(0).title : "")
+                            }
                         }
                     }
 

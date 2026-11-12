@@ -28,6 +28,9 @@ RowLayout {
     // tracks are being dragged out of the Tracks grid; Esc cancels that (see Main)
     readonly property bool isDraggingTracks: tracksitem.isDragging
 
+    // tracks are being carried out of the Tracks grid, until their drop was delivered
+    readonly property bool isCarryingTracks: tracksitem.isCarrying
+
     // Vertical tabs switch and window decorations for bigscreen
     ColumnLayout {
         id: vtabsCol
@@ -179,7 +182,9 @@ RowLayout {
 
                 stateModel: PlayerPresenter
 
-                visible: stateModel.isMediaLoaded || PlayQueue.count > 0
+                visible: stateModel.isMediaLoaded || PlayQueue.count > 0 || root.isCarryingTracks
+
+                showDropHereBanner: root.isCarryingTracks
 
                 coverToMetadataSpacing: 8
                 volumeControlBottomPadding: 12

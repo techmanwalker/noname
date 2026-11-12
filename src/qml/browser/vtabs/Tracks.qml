@@ -72,6 +72,7 @@ ColumnLayout {
 
     // true while tracks are being dragged out of the grid (see SongGrid)
     readonly property alias isDragging: grid.isDragging
+    readonly property alias isCarrying: grid.isCarrying
 
     // what the drag of tracks is tagged with, for a DropArea to listen for
     readonly property alias dragKey: grid.dragKey
