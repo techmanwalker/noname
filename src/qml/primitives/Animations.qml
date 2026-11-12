@@ -21,7 +21,7 @@ QtObject {
         }
         playlist: ScrollDuration {
             transition: 125
-            cooldown: 15000
+            cooldown: 10000
         }
 
     }

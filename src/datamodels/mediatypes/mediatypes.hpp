@@ -7,6 +7,7 @@
 #include <QUrl>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include <qtypes.h>
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediatypes)
 
@@ -70,7 +71,7 @@ struct base_media_container_ {
     Q_PROPERTY(QString duration_mmss READ duration_mmss)
 
 public:
-    QString     title;
+    QString            title;
     QList<Types::Song> songs;
 
     // cover of the first element

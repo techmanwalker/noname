@@ -63,7 +63,7 @@ T.ApplicationWindow {
     Shortcut {
         id: clearSearchShortcut
         sequences: Keyboard.bindings.clearSearch
-        enabled: searchBox.activeFocus && searchBox.clearable
+        enabled: searchBox.activeFocus && searchBox.clearable && !browser.isDraggingTracks
         onActivated: searchBox.clearQuery()
     }
 
@@ -72,7 +72,7 @@ T.ApplicationWindow {
     Shortcut {
         id: leaveSearchShortcut
         sequences: Keyboard.bindings.leaveSearch
-        enabled: searchBox.activeFocus && !searchBox.clearable
+        enabled: searchBox.activeFocus && !searchBox.clearable && !browser.isDraggingTracks
         onActivated: root.contentItem.forceActiveFocus()
     }
 
@@ -132,7 +132,9 @@ T.ApplicationWindow {
 
     Shortcut {
         sequences: Keyboard.bindings.backButton
-        enabled: !clearSearchShortcut.enabled && !leaveSearchShortcut.enabled
+        // Esc cancels a drag of tracks instead (SongGrid). Both Esc shortcuts above step aside
+        // too: with the search bar focused, any of the three would make Esc ambiguous.
+        enabled: !clearSearchShortcut.enabled && !leaveSearchShortcut.enabled && !browser.isDraggingTracks
         onActivated: backButton.click()
     }
 

@@ -70,7 +70,15 @@ ColumnLayout {
         bottomPadding: 10
     }
 
+    // true while tracks are being dragged out of the grid (see SongGrid)
+    readonly property alias isDragging: grid.isDragging
+
+    // what the drag of tracks is tagged with, for a DropArea to listen for
+    readonly property alias dragKey: grid.dragKey
+
     SongGrid {
+        id: grid
+
         model: root.displayedTracks
 
         Layout.fillWidth: true

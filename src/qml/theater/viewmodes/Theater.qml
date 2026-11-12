@@ -304,6 +304,7 @@ Row {
                         anchors.fill: parent
 
                         model: PlayQueue
+                        songAt: (row) => PlayQueue.itemAt(row)
 
                         scrollBarWidth: rightCol.scrollBarWidth
 
@@ -324,7 +325,6 @@ Row {
 
                         lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
-                        reorderable: true
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 
                         onSongClicked: (song) => PlayQueue.playhead = PlayQueue.findBySource(song.source)

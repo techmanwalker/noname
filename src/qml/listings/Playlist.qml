@@ -21,8 +21,8 @@ AutoscrollListView {
     focusMarginRatio: 0.4
     autoscrollCooldownMs: Animations.scroll.playlist.cooldown
 
-    // a DragHandler drag never makes the ListView "move", so userInteracting is blind to it
-    autoscrollEnabled: dragFromRow < 0
+    // a drag never makes the ListView "move", so userInteracting is blind to it
+    autoscrollEnabled: !mediaDrag.armed
 
     property int songCoverWidth:  48
     property int songCoverHeight: songCoverWidth
@@ -40,91 +40,74 @@ AutoscrollListView {
     signal songClicked(song clicked_song)
 
     // This list only reports the gesture; committing the move is the consumer's job.
-    // Leave `reorderable` false when the model can't move items: rows aren't draggable at all.
-    property bool reorderable: false
     signal moveRequested(int from, int to)
 
-    // gesture state lives here, not in the delegate: delegates are pooled/recreated
-    // dragFromRow >= 0 from the moment a long press arms the drag until the release
-    property int dragFromRow: -1
-    property int dragOverRow: -1
-
-    // drag ghost
-    property bool dragActive: false // the pointer is really dragging (armed AND moved)
-    property song dragSong          // snapshot of the grabbed row, taken when the long press arms
-    property point dragGhostPos     // ghost's top-left, in viewport coordinates
-
-    // an armed press belongs to the drag: the Flickable must not steal it
-    interactive: dragFromRow < 0
-
-    // Ends the gesture, whichever handler notices the release first. Idempotent.
-    // State is reset BEFORE emitting: re-enabling autoscroll restarts its cooldown, so the
-    // playhead-row change caused by the move is deferred instead of yanking the view.
-    function finishReorder(): void {
-        const from = dragFromRow
-        const to = dragOverRow
-        dragFromRow = -1
-        dragOverRow = -1
-
-        if (from >= 0 && to >= 0 && to !== from) {
-            selection.clear() // selected rows are raw ints, stale after a move
-            moveRequested(from, to)
-        }
-    }
-
     // selection
-    property alias selectedIndices: selection.indices
-    property alias additionalMenuActions: selection.extraActions
+    property alias selectedIndices: mediaSelection.indices
+    property alias additionalMenuActions: mediaSelection.extraActions
+    property alias songAt: mediaSelection.songAt
 
     MediaSelection {
-        id: selection
+        id: mediaSelection
         model: root.model
     }
 
-    // Drop marker. Moving down lands below the target row, moving up lands above it,
-    // matching move_item's "ends up at dest's row" semantics.
-    Rectangle {
-        parent: root // overlay on the viewport, not inside the scrolling content
-        z: 10
+    SelectionDrag {
+        id: mediaDrag
+        view: root
+        selection: mediaSelection
+    }
 
-        readonly property Item target: root.dragOverRow >= 0 ? root.itemAtIndex(root.dragOverRow) : null
+    // A lone dragged row is a move; any other number of rows is not
+    SingleRowMove {
+        id: rowMove
+        view: root
+        selectionDrag: mediaDrag
+        lightMode: root.lightMode
 
-        visible: target !== null && root.dragOverRow !== root.dragFromRow
-        width: root.width - root.rightMargin
-        height: 2
-        y: target
-            ? target.y - root.contentY + (root.dragFromRow < root.dragOverRow ? target.height : 0) - height / 2
-            : 0
-
-        color: root.lightMode ? "black" : "white" // swap for your Theme color
+        onMoveRequested: (from, to) => {
+            mediaSelection.clear() // selected rows are raw ints, stale after a move
+            root.moveRequested(from, to)
+        }
     }
 
     // The grabbed row, following the pointer. It paints as selected so it reads as lifted
     // above the rows it crosses.
-    Song {
+    Loader {
         parent: root // viewport overlay, not scrolling content
         z: 20
-        visible: root.dragActive
+        active: rowMove.moving
         enabled: false // never takes input
 
-        x: root.dragGhostPos.x
-        y: root.dragGhostPos.y
-        width: root.width - root.rightMargin
-        height: 80
+        // top-left in viewport coordinates; keeps the grab offset, so the row doesn't
+        // jump to the pointer when the drag starts
+        readonly property point topLeft: {
+            const p = root.mapFromItem(null, mediaDrag.pointer.x, mediaDrag.pointer.y)
+            return Qt.point(p.x - mediaDrag.grabOffset.x, p.y - mediaDrag.grabOffset.y)
+        }
+        x: topLeft.x
+        y: topLeft.y
 
-        selected: true
-        lightMode: root.lightMode
+        sourceComponent: Song {
+            readonly property song grabbed: mediaDrag.items[0]
 
-        title:    root.dragSong.title
-        cover:    root.dragSong.cover
-        metadata: (root.dragSong.artist.length > 0 ? root.dragSong.artist : qsTr ("Unknown Artist"))
-            + (root.dragSong.album.length > 0 ? " · " + root.dragSong.album : "")
-        duration: root.dragSong.duration_mmss
+            width: root.width - root.rightMargin
+            height: 80
 
-        coverWidth:     root.songCoverWidth
-        innerSpacing:   root.songInnerSpacing
-        fadePadding:    root.songFadePadding
-        lateralPadding: root.songLateralPadding
+            selected: true
+            lightMode: root.lightMode
+
+            title:    grabbed.title
+            cover:    grabbed.cover
+            metadata: (grabbed.artist.length > 0 ? grabbed.artist : qsTr ("Unknown Artist"))
+                + (grabbed.album.length > 0 ? " · " + grabbed.album : "")
+            duration: grabbed.duration_mmss
+
+            coverWidth:     root.songCoverWidth
+            innerSpacing:   root.songInnerSpacing
+            fadePadding:    root.songFadePadding
+            lateralPadding: root.songLateralPadding
+        }
     }
 
     delegate: Song {
@@ -159,63 +142,19 @@ AutoscrollListView {
 
         clip: true
 
-        selected: selection.isSelected(index)
+        selected: mediaSelection.isSelected(index)
 
-        opacity: root.dragFromRow === index ? 0.4 : 1
+        opacity: mediaDrag.carries(index) ? 0.4 : 1
 
-        // Arms the drag. Moving past the drag threshold before the timer fires cancels this
-        // handler, so a scroll sweep never arms.
-        TapHandler {
-            enabled: root.reorderable
-            acceptedButtons: Qt.LeftButton
-            acceptedModifiers: Qt.NoModifier
-            longPressThreshold: Animations.dragThreshold / 1000 // seconds
-
-            onLongPressed: {
-                root.dragSong = song.modelData  // snapshot for the ghost
-                root.dragFromRow = song.index   // dims the row, pauses autoscroll, locks the Flickable
-            }
-
-            // Ends an armed press that never became a drag. When it does become one, the
-            // DragHandler (threshold 0) is already active before this handler gives up at the
-            // system drag distance, so this must leave the gesture alone.
-            onPressedChanged: if (!pressed && !reorderDrag.active) root.finishReorder()
-        }
-
-        DragHandler {
-            id: reorderDrag
-            enabled: root.reorderable
-            target: null // the row stays where the ListView put it; only the gesture is tracked
-
-            // Unarmed, no axis is draggable, so a sweep can't start this handler and stays the
-            // Flickable's. Armed, the first movement starts the drag.
-            xAxis.enabled: root.dragFromRow === song.index
-            yAxis.enabled: root.dragFromRow === song.index
-            dragThreshold: 0
-
-            onActiveChanged: {
-                root.dragActive = active
-                if (!active) root.finishReorder()
-            }
-
-            onCentroidChanged: {
-                if (!active) return
-                const p = root.mapFromItem(null, centroid.scenePosition.x, centroid.scenePosition.y)
-                // keep the grab offset, so the row doesn't jump to the pointer when the drag starts
-                root.dragGhostPos = Qt.point(p.x - centroid.pressPosition.x, p.y - centroid.pressPosition.y)
-                const y = root.contentY + p.y
-                const row = root.indexAt(root.contentX, y)
-                // below the last row is a legal drop: it means "to the end"
-                root.dragOverRow = row >= 0 ? row : (y > root.contentHeight ? root.count - 1 : -1)
-            }
-        }
+        SelectionDrag.Arm   { controller: mediaDrag; row: song.index }
+        SelectionDrag.Track { controller: mediaDrag; row: song.index }
 
         onClicked: {
-            selection.clear() // a plain click drops the multi-selection
+            mediaSelection.clear() // a plain click drops the multi-selection
             root.songClicked(modelData)
         }
-        onCtrlClicked: selection.toggle(index)
-        onRightClicked: selection.openMenuFor(index)
+        onCtrlClicked: mediaSelection.toggle(index)
+        onRightClicked: mediaSelection.openMenuFor(index)
     }
 
     ScrollBar.vertical: AccessibleScrollBar {
