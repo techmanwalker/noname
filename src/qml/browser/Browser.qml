@@ -74,12 +74,16 @@ RowLayout {
 
         onDropped: (drop) => {
             const dragged = drop.source as SelectionDrag
-            if (!dragged || !nowplayingbar.visible)
+            if (!dragged || !nowplayingbar.visible) {
+                drop.accepted = false
                 return
+            }
 
             const p = nowplayingbar.mapFromItem(rightCol_d, drop.x, drop.y)
-            if (!nowplayingbar.contains(p))
+            if (!nowplayingbar.contains(p)) {
+                drop.accepted = false
                 return
+            }
 
             PlayQueue.batchAppend(dragged.sources)
             drop.acceptProposedAction()

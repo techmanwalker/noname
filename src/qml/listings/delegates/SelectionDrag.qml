@@ -148,7 +148,7 @@ Item {
 
         acceptedButtons: Qt.LeftButton
         acceptedModifiers: Qt.NoModifier
-        longPressThreshold: Animations.dragThreshold / 1000 // seconds
+        longPressThreshold: Animations.dragging.threshold / 1000 // seconds
 
         onLongPressed: controller.arm(row)
 
