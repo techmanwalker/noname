@@ -5,7 +5,6 @@
 #include "mediatypes.hpp"
 #include "songfactory.hpp" // IWYU pragma: keep
 #include "standardpaths.hpp"
-#include <qhashfunctions.h>
 #include "playlistslist.hpp"
 
 PlaylistsListLI::PlaylistsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)

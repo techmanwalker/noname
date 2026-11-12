@@ -2,7 +2,7 @@
 
 #include <QObject>
 #include <QString>
-#include <QtQmlIntegration/qqmlintegration.h>
+#include <QtQmlIntegration>
 
 struct Lyric {
     Q_GADGET

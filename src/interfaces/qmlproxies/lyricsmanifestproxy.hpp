@@ -3,8 +3,7 @@
 #include "virtual/lyricsmanifest.hpp"
 
 #include <QIdentityProxyModel>
-
-#include <QtQmlIntegration//qqmlintegration.h>
+#include <QtQmlIntegration>
 
 #include <memory>
 

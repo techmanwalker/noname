@@ -4,7 +4,6 @@
 #include <QMetaProperty>
 #include <QMetaSequence>
 #include <QVariant>
-#include <qtypes.h>
 
 namespace
 {

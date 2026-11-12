@@ -15,7 +15,6 @@
 #include <QtConcurrent/QtConcurrent>
 
 #include <memory>
-#include <qfuture.h>
 #include <utility>
 
 Q_LOGGING_CATEGORY(l_playerpresenter, "playerpresenter")

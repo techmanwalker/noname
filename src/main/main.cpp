@@ -10,7 +10,6 @@
 #include <memory>
 
 #include <CLI/CLI.hpp>
-#include <qbytearrayview.h>
 
 #include "audioengine.hpp"
 #include "configuration.hpp"

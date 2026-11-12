@@ -5,7 +5,6 @@
 
 #include <functional>
 #include <optional>
-#include <qabstractitemmodel.h>
 
 #include "mediatypes.hpp"
 

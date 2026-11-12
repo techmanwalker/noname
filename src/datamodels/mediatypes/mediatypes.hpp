@@ -5,9 +5,6 @@
 #include <QSize>
 #include <QString>
 #include <QUrl>
-#include <qobject.h>
-#include <qtmetamacros.h>
-#include <qtypes.h>
 
 Q_DECLARE_LOGGING_CATEGORY(l_mediatypes)
 

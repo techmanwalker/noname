@@ -11,10 +11,6 @@
 
 #include <memory>
 #include <optional>
-#include <qabstractitemmodel.h>
-#include <qfuture.h>
-#include <qlist.h>
-#include <quuid.h>
 
 class PlayQueueLIPrivate 
 {

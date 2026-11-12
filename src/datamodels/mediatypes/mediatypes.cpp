@@ -4,10 +4,6 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QStandardPaths>
-#include <qloggingcategory.h>
-#include <qobject.h>
-#include <qtypes.h>
-#include <qurl.h>
 
 Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
 

@@ -15,9 +15,6 @@
 #include <jxl/decode.h>
 #include <jxl/decode_cxx.h>
 #include <jxl/resizable_parallel_runner_cxx.h>
-#include <qdeadlinetimer.h>
-#include <qobject.h>
-#include <qsize.h>
 
 namespace covers::disk {
 
