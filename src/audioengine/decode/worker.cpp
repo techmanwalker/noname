@@ -179,7 +179,9 @@ init_resampler (open_ctx &c)
     return std::nullopt;
 }
 
-// The whole open sequence: failures are early returns, success is the straight line.
+// The whole open sequence:
+// failures are early returns,
+// success is the straight line.
 open_status
 open_pipeline (open_ctx &c, const QUrl &source)
 {
