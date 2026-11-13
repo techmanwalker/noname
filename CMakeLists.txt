@@ -151,8 +151,8 @@ target_link_libraries(mediasequences
     PUBLIC
         mediatypes
 
-        
-        
+
+
     PRIVATE
         Qt6::Core
 
@@ -166,7 +166,7 @@ target_include_directories(mediasequences
         src/datamodels/sequences # to make qmltyperegistrar happy
 )
 
-qt_add_qml_module (mediatransforms 
+qt_add_qml_module (mediatransforms
     STATIC
     URI Player.MediaTransforms
     DEPENDENCIES
@@ -299,7 +299,7 @@ target_include_directories(debugtools
 add_library(rolecompiler INTERFACE)
 
 target_include_directories(rolecompiler
-    INTERFACE 
+    INTERFACE
         src/datamodels/rolecompiler
 
 )
@@ -321,7 +321,7 @@ add_library(audioengine STATIC
 )
 
 target_link_libraries(audioengine
-    PUBLIC 
+    PUBLIC
         audioengine_in # its interface
 
     PRIVATE
@@ -354,7 +354,7 @@ target_link_libraries(audioengine_in INTERFACE Qt6::Core mediatypes constexprstr
 qt_add_qml_module(locallibrary
     STATIC
     URI Player.LocalLibrary
-    
+
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/locallibraryproxy.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/playlistslistproxy.hpp"
@@ -369,9 +369,9 @@ target_link_libraries (locallibrary
         locallibrary_in
         playlistslist_in
         shortcutslist_in
-        
+
         mediasequences
-        
+
     PRIVATE
         diskio
         configuration_in
@@ -457,7 +457,7 @@ qt_add_qml_module(lyricsmanifest
 )
 
 target_link_libraries(lyricsmanifest
-    PUBLIC 
+    PUBLIC
         lyricsmanifest_in
 
     PRIVATE
@@ -499,15 +499,15 @@ qt_add_qml_module(playqueue
 target_link_libraries(playqueue
     PUBLIC
         playqueue_in
-        
+
     PRIVATE
         audioengine_in # coordinates the progression and flow of the batch that's currently playing, controls what will play
-        
+
         mediasequences
         songfactory # qml can drop songs to the play queue graphically, needs to read them
 
         mediatransforms
-        
+
         rolecompiler
 )
 
@@ -722,6 +722,8 @@ qt_add_qml_module(mainwindow
     URI Player.App
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/windowgeometryproxy.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/listproxybase.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/objectproxybase.hpp"
         ${WINDOWGEOMETRY_SOURCES}
     QML_FILES
         ${MAINWINDOW_QMLS}

@@ -7,9 +7,13 @@
 #include <QtQmlIntegration>
 #include <QUrl>
 
+#include "listproxybase.hpp"
+
 #include <memory>
 
-class PlayQueueProxy : public QIdentityProxyModel
+class PlayQueueProxy
+    : public QIdentityProxyModel,
+      public ListProxyBase<PlayQueueProxy, PlayQueue, Types::Song, &PlayQueue::item_count>
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(PlayQueue)
@@ -21,75 +25,48 @@ class PlayQueueProxy : public QIdentityProxyModel
     Q_PROPERTY(bool shuffle READ shuffled WRITE set_shuffle NOTIFY shuffleChanged)
 
 public:
-    explicit PlayQueueProxy(QObject *parent = nullptr)
-        : QIdentityProxyModel(parent),
-          m_queue(s_injectedQueue), // Copies shared_ptr, incrementing ref count
-          m_iface(qobject_cast<PlayQueue*>(m_queue.get()))
-    {
-        if (m_queue) {
-            setSourceModel(m_queue.get());
-
-            connect(m_queue.get(), SIGNAL(track_changed()), this, SIGNAL(trackChanged()));
-            connect(m_queue.get(), SIGNAL(count_changed()), this, SIGNAL(countChanged()));
-            connect(m_queue.get(), SIGNAL(shuffle_changed()), this, SIGNAL(shuffleChanged()));
-        }
+    explicit PlayQueueProxy(QObject *parent = nullptr) : QIdentityProxyModel (parent) {
+        forward(SIGNAL(track_changed()),   SIGNAL(trackChanged()));
+        forward(SIGNAL(count_changed()),   SIGNAL(countChanged()));
+        forward(SIGNAL(shuffle_changed()), SIGNAL(shuffleChanged()));
     }
 
-    // PlayQueueLI is itself a QIdentityProxyModel, not a flat QAbstractListModel like
-    // LyricsManifest/LocalLibraryLDB — so this has to be typed at the common
-    // QAbstractItemModel base, or setSourceModel() below wouldn't even compile.
-    static void inject(const std::shared_ptr<QAbstractItemModel> &queue) {
-        s_injectedQueue = queue; // Ref count incremented, caller's instance unaffected
-    }
-
-    int item_count() const {
-        if (!m_iface) return 0;
-        
-        return m_iface->item_count();
-    }
-
-    // Same QObject* -> interface* direction as LocalLibrary/LyricsManifest — qobject_cast
-    // works fine here (unlike PlayerPresenterProxy, which needed the reverse direction).
+    // mapFromSource() already maps an invalid index to an invalid one
     QPersistentModelIndex playhead() const {
-        if (!m_iface) return {};
-
-        QPersistentModelIndex src_idx = m_iface->playhead();        // PlayQueue's own space
-        if (!src_idx.isValid()) return {};
-        return QPersistentModelIndex(mapFromSource(src_idx)); // -> this proxy's space
+        return QPersistentModelIndex(mapFromSource(call(&PlayQueue::playhead)));
     }
 
-    bool shuffled() const { return m_iface && m_iface->shuffled(); }
-    void set_shuffle(bool enabled) { if (m_iface) m_iface->set_shuffle(enabled); }
+    bool shuffled() const { return call(&PlayQueue::shuffled); }
+    void set_shuffle(bool enabled) { call(&PlayQueue::set_shuffle, enabled); }
 
     void qml_switch_to(const QModelIndex &index) {
-        if (!m_iface) return; 
+        if (!iface()) return;
 
         // index arrives in THIS proxy's space — map down before crossing the
         // interface, the reverse trip of playhead() above.
-        m_iface->switch_to(QPersistentModelIndex(mapToSource(index)), true);
+        iface()->switch_to(QPersistentModelIndex(mapToSource(index)), true);
     }
 
-    Q_INVOKABLE QModelIndex findBySource (const QString &needle) {
-        if (!m_iface) return QPersistentModelIndex();
-        return mapFromSource(m_iface->find_by_source(needle));
+    Q_INVOKABLE QModelIndex findBySource(const QString &needle) {
+        return mapFromSource(call(&PlayQueue::find_by_source, needle));
     }
 
     Q_INVOKABLE QFuture<void> batchAppend(const QList<QUrl> &sources) {
-        if (!m_iface) return QtFuture::makeReadyVoidFuture(); 
-        return m_iface->batch_append(sources);
+        return call_or(QtFuture::makeReadyVoidFuture(), &PlayQueue::batch_append, sources);
     }
 
     Q_INVOKABLE void respawnQueue(const QList<Types::Song> &songs) {
-        m_iface->respawn_queue(songs);
+        if (!iface()) return;
+        iface()->respawn_queue(songs);
     }
 
     Q_INVOKABLE void respawnQueue(const QStringList &sources) {
-        if (!m_iface) return;
-        m_iface->respawn_queue(sources);
+        if (!iface()) return;
+        iface()->respawn_queue(sources);
     }
 
     Q_INVOKABLE void remove (std::vector<int> indices) {
-        if (!m_iface) return;
+        if (!iface()) return;
 
         QList<QPersistentModelIndex> qpindices;
         qpindices.reserve(static_cast<qsizetype>(indices.size()));
@@ -101,36 +78,27 @@ public:
         }
 
         if (qpindices.isEmpty()) return;
-        m_iface->batch_remove(qpindices);
+        iface()->batch_remove(qpindices);
     }
 
-    Q_INVOKABLE Types::Song itemAt (int idx) {
-        if (!m_iface) return {};
-
-        Types::Song result{};
-        m_iface->pointed_to(mapToSource(index(idx, 0)), [&result](const Types::Song &track_at_idx) {
-            result = track_at_idx;
-            return true;
-        });
-        return result;
-    }
+    Q_INVOKABLE Types::Song itemAt(int idx) const { return item_at(idx); }
 
     // rows arrive in THIS proxy's space; map down before crossing the interface
     Q_INVOKABLE bool move (int from, int to) {
-        if (!m_iface) return false;
+        if (!iface()) return false;
 
         const QModelIndex src  = mapToSource(index(from, 0));
         const QModelIndex dest = mapToSource(index(to, 0));
         if (!src.isValid() || !dest.isValid()) return false;
 
-        return m_iface->move_item(QPersistentModelIndex(src), QPersistentModelIndex(dest));
+        return iface()->move_item(QPersistentModelIndex(src), QPersistentModelIndex(dest));
     }
 
     Q_INVOKABLE void saveToDisk () {
-        if (!m_iface) return;
+        if (!iface()) return;
 
         // currently there is no way to input the name
-        m_iface->save_as_playlist_to_disk(QUuid::createUuid().toString(QUuid::WithoutBraces));
+        iface()->save_as_playlist_to_disk(QUuid::createUuid().toString(QUuid::WithoutBraces));
     }
 
 signals:
@@ -140,28 +108,11 @@ signals:
 
 public slots:
     void switchTo(const QUrl &source) {
-        if (!m_iface) return; 
-        m_iface->switch_to(source);
+        if (!iface()) return;
+        iface()->switch_to(source);
     }
 
-    void next() {
-        if (!m_iface) return;
-        m_iface->next();
-    }
-
-    void prev() {
-        if (!m_iface) return; 
-        m_iface->prev();
-    }
-
-    void clear() {
-        if (!m_iface) return; 
-        m_iface->clear();
-    }
-
-private:
-    std::shared_ptr<QAbstractItemModel> m_queue;
-    inline static std::shared_ptr<QAbstractItemModel> s_injectedQueue = nullptr;
-
-    PlayQueue *m_iface = nullptr;
+    bool next()  { return call(&PlayQueue::next); }
+    bool prev()  { return call(&PlayQueue::prev, false); }
+    void clear() { call(&PlayQueue::clear); }
 };
