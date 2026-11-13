@@ -155,14 +155,33 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
     QList<QPersistentModelIndex> mapped_indices;
     mapped_indices.reserve(indices.size());
 
+    QSet<int> doomed_rows; // projected rows, read before the removal shifts them
+
     for (const QPersistentModelIndex &idx : indices) {
         if (!idx.isValid()) continue;
         const QModelIndex seq = to_sequence(idx);
         if (!seq.isValid()) continue;
         mapped_indices.append(QPersistentModelIndex(seq));
+        doomed_rows.insert(idx.row());
+    }
+
+    const bool playhead_doomed = m_playhead.isValid() && doomed_rows.contains(m_playhead.row());
+
+    // After the removal the nearest survivor behind the playhead sits right after the
+    // survivors that were in front of it
+    int heir_row = 0;
+    if (playhead_doomed) {
+        const int doomed_in_front = std::ranges::count_if(doomed_rows,
+            [this](int row) { return row < m_playhead.row(); });
+        heir_row = m_playhead.row() - doomed_in_front;
     }
 
     sequence::batch_remove(m_d->state, mapped_indices);
+
+    if (!playhead_doomed) return;
+
+    // no survivor behind the playhead (or none at all): fall back to the first row
+    switch_to(index(heir_row < rowCount() ? heir_row : 0, 0), false);
 }
 
 void
