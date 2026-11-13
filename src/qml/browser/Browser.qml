@@ -26,10 +26,10 @@ RowLayout {
     readonly property bool aDirectoryIsOpen: activeVtab === vtabs.folders   && foldersitem.aDirectoryIsOpen
 
     // tracks are being dragged out of the Tracks grid; Esc cancels that (see Main)
-    readonly property bool isDraggingTracks: tracksitem.isDragging
+    readonly property bool isDraggingTracks: tracksitem.isDragging || playlistsitem.isDragging
 
     // tracks are being carried out of the Tracks grid, until their drop was delivered
-    readonly property bool isCarryingTracks: tracksitem.isCarrying
+    readonly property bool isCarryingTracks: tracksitem.isCarrying || playlistsitem.isCarrying
 
     // Vertical tabs switch and window decorations for bigscreen
     ColumnLayout {
@@ -159,7 +159,7 @@ RowLayout {
 
             stateModel: PlayerPresenter
 
-            dropKeys: [tracksitem.dragKey]
+            dropKeys: [tracksitem.dragKey, playlistsitem.dragKey]
 
             // Up while tracks are carried (so there is a target even with nothing loaded, and
             // it stays until the drop was delivered) and until a drop into an empty queue

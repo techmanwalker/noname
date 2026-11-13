@@ -78,7 +78,7 @@ Item {
         // would act on.
         rows = selection.indices.slice(0, maxSelectedItems)
         items = rows.map(r => selection.songAt(r))
-        sources = selection.sourcesFor(rows)
+        sources = selection.sourcesFor(selection.indices) // only the ghosts are capped
 
         // last: this is what locks the view and dims the rows
         grabbedRow = row

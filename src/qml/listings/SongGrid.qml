@@ -35,9 +35,9 @@ GridView {
     }
 
     // drag
-    // The ghost grid is one card per carried track, so this is what keeps it from
-    // growing to the size of the window.
-    property int maxDraggedSongs: 9
+    // The ghost spawner should handle excessively big selections by showing
+    // "+N more…"
+    property int maxDraggedSongs: Infinity
 
     // Tags this grid's drags, so a DropArea can tell them from other drags (file drops)
     readonly property string dragKey: "noname/tracks"

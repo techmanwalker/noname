@@ -42,6 +42,15 @@ AutoscrollListView {
     // This list only reports the gesture; committing the move is the consumer's job.
     signal moveRequested(int from, int to)
 
+    // Most rows a drag carries. 1: a lone row is a reorder, as in the queue.
+    property int maxDraggedSongs: 1
+
+    // Tags this list's drags for a DropArea. Empty: nothing takes them.
+    property string dragKey
+
+    readonly property alias isDragging: mediaDrag.armed
+    readonly property alias isCarrying: mediaDrag.active
+
     // selection
     property alias selectedIndices: mediaSelection.indices
     property alias additionalMenuActions: mediaSelection.extraActions
@@ -56,7 +65,8 @@ AutoscrollListView {
         id: mediaDrag
         view: root
         selection: mediaSelection
-        maxSelectedItems: 1
+        maxSelectedItems: root.maxDraggedSongs
+        cancelSequences: root.dragKey !== "" ? [StandardKey.Cancel] : []
     }
 
     // A lone dragged row is a move; any other number of rows is not
@@ -77,6 +87,7 @@ AutoscrollListView {
     GhostSpawner {
         selectionDrag: mediaDrag
         cards: false
+        dragKey: root.dragKey
 
         // a reorder inside this list is taken by the list itself, no DropArea answers it
         acceptsDrop: rowMove.willMove

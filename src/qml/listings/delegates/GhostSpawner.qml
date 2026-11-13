@@ -47,6 +47,9 @@ Item {
 
     // ---
 
+    property var metadataOf: (item) => (item.artist.length > 0 ? item.artist : qsTr("Unknown Artist"))
+        + (item.album.length > 0 ? " · " + item.album : "")
+
     // Tags the drag, so a DropArea can tell it from other drags (file drops)
     property string dragKey
 
@@ -137,14 +140,14 @@ Item {
             model: root.carried
 
             MediaDelegate {
-                required property song modelData
+                required property var modelData // a song, or whatever metadataOf understands
 
                 card: root.cards
                 lightMode: root.lightMode
 
                 title: modelData.title
-                metadata: (modelData.artist.length > 0 ? modelData.artist : qsTr ("Unknown Artist"))
-                    + (modelData.album.length > 0 ? " · " + modelData.album : "")
+                metadata: root.metadataOf(modelData)
+                
                 cover: modelData.cover
                 duration: modelData.duration_mmss
 

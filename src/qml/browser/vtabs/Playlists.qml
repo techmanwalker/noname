@@ -26,10 +26,17 @@ ColumnLayout {
 
     onBackButtonClicked_r: {
         pl_stack.currentIndex = 0
+        openPlaylist.selectedIndices = []
     }
 
     readonly property bool aPlaylistIsOpen: pl_stack.currentIndex === 1
 
+    // Tags this tab's drags (playlists, or tracks of the open one) for the minibar
+    readonly property string dragKey: "noname/playlists"
+    readonly property int maxDraggedRows: 5
+
+    readonly property bool isDragging: selectionDrag.armed  || openPlaylist.isDragging
+    readonly property bool isCarrying: selectionDrag.active || openPlaylist.isCarrying
     SectionHeading {
         id: shortcutsHeading
 
@@ -40,15 +47,17 @@ ColumnLayout {
         id: selection
         model: root.lists
 
-        // sources = names in this case; must be an array, sourcesFor() iterates it
-        sourcesOf: (row) => [PlaylistsList.itemAt(row).title]
+        // a row is a playlist; its sources are those of its tracks
+        songAt:    (row) => PlaylistsList.itemAt(row)
+        sourcesOf: (row) => PlaylistsList.itemAt(row).songs.map(s => s.source)
 
         extraActions: [
             T.Action {
                 text: qsTr("Delete playlist(s)", "in the tab that displays your Playlists", selection.indices.length)
 
                 onTriggered: {
-                    PlaylistsList.deletePlaylists(selection.sourcesFor(selection.indices))
+                    PlaylistsList.deletePlaylists(selection.indices.map(row => PlaylistsList.itemAt(row).title))
+
                     // the model resets after the refresh, so the selected rows no longer mean anything
                     selection.clear()
                 }
@@ -67,8 +76,25 @@ ColumnLayout {
 
             model: root.lists
 
-            Layout.fillWidth: true
+                        Layout.fillWidth: true
             Layout.fillHeight: true
+
+            SelectionDrag {
+                id: selectionDrag
+                view: pl
+                selection: selection
+                maxSelectedItems: root.maxDraggedRows
+                cancelSequences: [StandardKey.Cancel]
+            }
+
+            GhostSpawner {
+                selectionDrag: selectionDrag
+                cards: false
+                dragKey: root.dragKey
+                rowWidth: pl.width
+
+                metadataOf: (playlist) => qsTr("%n track(s)", "number of tracks in this playlist", playlist.songs.length)
+            }
 
             delegate: MediaDelegate {
                 id: song
@@ -95,6 +121,11 @@ ColumnLayout {
 
                 selected: selection.isSelected(index)
 
+                opacity: selectionDrag.carries(index) ? 0.4 : 1
+
+                SelectionDrag.Arm   { controller: selectionDrag; row: song.index }
+                SelectionDrag.Track { controller: selectionDrag; row: song.index }
+
                 onClicked: {
                     selection.clear()
 
@@ -110,7 +141,12 @@ ColumnLayout {
         }
 
         Playlist {
+            id: openPlaylist
+
             model: root.selectedPlaylist.songs
+
+            maxDraggedSongs: root.maxDraggedRows
+            dragKey: root.dragKey
 
             onSongClicked: (clicked_song) => {
                 // every tab manages click behavior on their own, Browser doesn't
