@@ -91,6 +91,9 @@ public slots:
     void handle_tape_ran_out ();
     void handle_ab_boundary_crossed ();
 
+private slots:
+    void handle_zero_item_count ();
+
 private:
     // PlayQueueLI space -> source space (the identity hop, then the sequence namespace's)
     QModelIndex to_sequence (const QModelIndex &mine) const;

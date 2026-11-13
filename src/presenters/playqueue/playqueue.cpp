@@ -47,6 +47,9 @@ PlayQueueLI::PlayQueueLI (
     connect (this, &PlayQueueLI::count_changed,
             this, &PlayQueueLI::preload_next_track_whenever_possible);
 
+    connect (this, &PlayQueueLI::count_changed,
+            this, &PlayQueueLI::handle_zero_item_count);
+
     connect (this, &PlayQueueLI::track_changed,
             this, &PlayQueueLI::preload_next_track_whenever_possible);
 }
@@ -82,10 +85,6 @@ void
 PlayQueueLI::clear ()
 { 
     sequence::clear(m_d->state);
-    m_d->ae->stop();
-    m_d->ae->unload();
-
-    invalidate_playhead_();
 }
 
 QFuture<void>
@@ -164,6 +163,17 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
     }
 
     sequence::batch_remove(m_d->state, mapped_indices);
+}
+
+void
+PlayQueueLI::handle_zero_item_count ()
+{
+    if (item_count() == 0) {
+        m_d->ae->stop();
+        m_d->ae->unload();
+
+        invalidate_playhead_();
+    }
 }
 
 QPersistentModelIndex
