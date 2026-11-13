@@ -112,8 +112,15 @@ concept media_type =
     std::convertible_to<std::remove_cvref_t<T>, Types::Any>;
 
 // shortcuts
+// the bytes behind a base64url string, or nothing if it is not exactly what the encoder makes
+std::optional<QByteArray>
+decodeBase64Url (const QByteArray &base64url);
+
 QByteArray
 toBase64Url (const QUrl &uri);
 
 QUrl
 fromBase64Url (const QByteArray &base64url);
+
+bool
+isBase64Url (const QByteArray &s);

@@ -9,6 +9,11 @@ Q_LOGGING_CATEGORY(l_mediatypes, "mediatypes")
 
 namespace {
 
+constexpr auto base64url_encode_options =
+    QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals;
+constexpr auto base64url_decode_options =
+    QByteArray::Base64UrlEncoding;
+
 QString
 printable_time (quint64 ms)
 {
@@ -26,19 +31,37 @@ printable_time (quint64 ms)
 
 }
 
+std::optional<QByteArray>
+decodeBase64Url (const QByteArray &base64url)
+{
+    const QByteArray bytes = QByteArray::fromBase64(base64url, base64url_decode_options);
+    if (bytes.toBase64(base64url_encode_options) != base64url)
+        return std::nullopt;
+    return bytes;
+}
+
 
 QByteArray
 toBase64Url (const QUrl &uri)
 {
-    return uri.toEncoded().toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+    return uri.toEncoded().toBase64(base64url_encode_options);
 }
 
 QUrl
 fromBase64Url (const QByteArray &base64url)
 {
-    return QUrl::fromEncoded(
-        QByteArray::fromBase64(base64url, QByteArray::Base64UrlEncoding)
-    );
+    const auto bytes = decodeBase64Url(base64url);
+    if (!bytes.has_value()) {
+        qCWarning(l_mediatypes) << "Not a base64url payload:" << base64url;
+        return QUrl();
+    }
+    return QUrl::fromEncoded(bytes.value());
+}
+
+bool
+isBase64Url (const QByteArray &s)
+{
+    return decodeBase64Url(s).has_value();
 }
 
 quint64
