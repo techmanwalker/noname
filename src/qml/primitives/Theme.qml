@@ -29,6 +29,7 @@ QtObject {
 
         required final property color songPlaying
         required final property color songSelected
+        required final property color songPlayingSelected
         required final property color songHovered
 
         required final property color rejectedDrop
@@ -79,9 +80,10 @@ QtObject {
             hoveredFilled: "#afafaf"
             clicked: "#969696"
 
-            songPlaying:  "#2faeaeae"
-            songSelected: "#6ea0a0a0"
-            songHovered:  "#14a0a0a0"
+            songPlaying:         "#2faeaeae"
+            songSelected:        "#6ea0a0a0"
+            songPlayingSelected: "#74c4c4c4"
+            songHovered:         "#14a0a0a0"
 
             rejectedDrop:   "#8ce62626"
 
@@ -113,9 +115,10 @@ QtObject {
             hoveredFilled: "#afafaf"
             clicked: "#969696"
 
-            songPlaying:  "#2f222222"
-            songSelected: "#6e232323"
-            songHovered:  "#14232323"
+            songPlaying:         "#2f222222"
+            songSelected:        "#6e232323"
+            songPlayingSelected: "#78181818"
+            songHovered:         "#14232323"
 
             rejectedDrop:   "#8ce62626"
 

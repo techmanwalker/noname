@@ -26,6 +26,18 @@ Item {
 
         states: [
             State {
+                name: "playing and selected"
+
+                PropertyChanges {
+                    background.color: root.lightMode ?
+                        Theme.light.elementbg.songPlayingSelected :
+                        Theme.dark.elementbg.songPlayingSelected
+                }
+
+                when: root.playing && root.selected
+            },
+
+            State {
                 name: "playing"
 
                 PropertyChanges {
