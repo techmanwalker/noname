@@ -36,22 +36,22 @@
         <translation>Modo teatro</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="112"/>
+        <location filename="../qml/browser/Browser.qml" line="86"/>
         <source>Home</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="123"/>
+        <location filename="../qml/browser/Browser.qml" line="97"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="134"/>
+        <location filename="../qml/browser/Browser.qml" line="108"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
     <message>
-        <location filename="../qml/browser/Browser.qml" line="145"/>
+        <location filename="../qml/browser/Browser.qml" line="119"/>
         <source>Tracks</source>
         <translation>Pistas</translation>
     </message>
@@ -63,12 +63,12 @@
 <context>
     <name>Folders</name>
     <message>
-        <location filename="../qml/browser/vtabs/Folders.qml" line="40"/>
+        <location filename="../qml/browser/vtabs/Folders.qml" line="36"/>
         <source>Folders</source>
         <translation>Carpetas</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/browser/vtabs/Folders.qml" line="81"/>
+        <location filename="../qml/browser/vtabs/Folders.qml" line="77"/>
         <source>%n track(s)</source>
         <comment>number of tracks in this directory</comment>
         <translation>
@@ -77,7 +77,7 @@
         </translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Folders.qml" line="125"/>
+        <location filename="../qml/browser/vtabs/Folders.qml" line="116"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>
@@ -85,7 +85,7 @@
 <context>
     <name>Home</name>
     <message>
-        <location filename="../qml/browser/vtabs/Home.qml" line="18"/>
+        <location filename="../qml/browser/vtabs/Home.qml" line="15"/>
         <source>Shortcuts</source>
         <translation>Accesos directos</translation>
     </message>
@@ -120,28 +120,36 @@
     </message>
 </context>
 <context>
+    <name>MediaDelegate</name>
+    <message>
+        <location filename="../qml/listings/delegates/MediaDelegate.qml" line="12"/>
+        <source>Untitled track</source>
+        <translation>Pista sin título</translation>
+    </message>
+</context>
+<context>
     <name>MinibarPlayer</name>
     <message>
         <source>Fullscreen</source>
         <translation type="vanished">Pantalla completa</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="16"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="20"/>
         <source>Untitled track</source>
         <translation>Pista sin título</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="17"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="21"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="105"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="132"/>
         <source>No tracks in queue.</source>
         <translation>No hay pistas en cola.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="107"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="134"/>
         <source>%n track(s) in queue.</source>
         <translation>
             <numerusform>%n pista en cola.</numerusform>
@@ -149,7 +157,7 @@
         </translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="124"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="151"/>
         <source>Drop here to add to the queue…</source>
         <translation>Suelta aquí para añadir a la cola…</translation>
     </message>
@@ -161,7 +169,7 @@
         </translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="129"/>
+        <location filename="../qml/theater/viewmodes/MinibarPlayer.qml" line="156"/>
         <source>Next: %1</source>
         <translation>A continuación: %1</translation>
     </message>
@@ -200,7 +208,7 @@
     </message>
     <message>
         <location filename="../qml/listings/Playlist.qml" line="102"/>
-        <location filename="../qml/listings/Playlist.qml" line="121"/>
+        <location filename="../qml/listings/Playlist.qml" line="122"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -208,12 +216,25 @@
 <context>
     <name>Playlists</name>
     <message>
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="39"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="36"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="80"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="48"/>
+        <source>Delete playlist(s)</source>
+        <comment>in the tab that displays your Playlists</comment>
+        <translation>
+            <numerusform>Eliminar lista de reproducción</numerusform>
+            <numerusform>Eliminar listas de reproducción</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Delete playlist</source>
+        <translation type="vanished">Eliminar lista de reproducción</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="85"/>
         <source>%n track(s)</source>
         <comment>number of tracks in this playlist</comment>
         <translation>
@@ -287,9 +308,8 @@
 <context>
     <name>Song</name>
     <message>
-        <location filename="../qml/listings/delegates/Song.qml" line="12"/>
         <source>Untitled track</source>
-        <translation>Pista sin título</translation>
+        <translation type="vanished">Pista sin título</translation>
     </message>
 </context>
 <context>
@@ -316,7 +336,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/SongGrid.qml" line="73"/>
+        <location filename="../qml/listings/SongGrid.qml" line="72"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -333,22 +353,22 @@
         <translation>Lista</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="335"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="332"/>
         <source>Save as playlist (UUID name)</source>
         <translation>Guardar lista de reproducción (nombre por UUID)</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="342"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="339"/>
         <source>Remove from queue</source>
         <translation>Quitar de la cola</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="359"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="356"/>
         <source>Details</source>
         <translation>Detalles</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="350"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="347"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -424,22 +444,22 @@
 <context>
     <name>Tracks</name>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="50"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
         <source>Your library</source>
         <translation>Tu biblioteca</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="50"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
         <source>Search results</source>
         <translation>Resultados de búsqueda</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="67"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="64"/>
         <source>The track you are looking for is likely not in your Library.</source>
         <translation>La pista que buscas probablemente no está en tu biblioteca.</translation>
     </message>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="99"/>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="93"/>
         <source>Play all</source>
         <translation>Reproducir todo</translation>
     </message>

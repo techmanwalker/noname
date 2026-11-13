@@ -412,8 +412,5 @@ PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(co
 QFuture<bool>
 PlayQueueLI::save_as_playlist_to_disk (const QString &name)
 {
-    return m_d->pl->save_playlist_to_disk(name, sources()).then(this, [this](bool succeeded) {
-        m_d->pl->refresh();
-        return succeeded;
-    });
+    return m_d->pl->save_playlist_to_disk(name, sources());
 }

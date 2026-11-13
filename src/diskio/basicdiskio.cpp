@@ -86,4 +86,20 @@ write_lines(const QString &path, QStringList lines)
     return QtConcurrent::run(deferred_write, path, std::move(lines));
 }
 
+bool
+move_to_trash(const QString &path)
+{
+    QFile file(path);
+    if (!file.exists() || !QFile::supportsMoveToTrash()) {
+        return false;
+    }
+    
+    if (!file.moveToTrash()) {
+        qCWarning (l_diskio) << "Failed to move file to trash:" << file.errorString();
+        return false;
+    }
+
+    return true;
+}
+
 }

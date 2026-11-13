@@ -104,11 +104,11 @@ public:
         m_iface->batch_remove(qpindices);
     }
 
-    Q_INVOKABLE Types::Song itemAt (qsizetype idx) {
+    Q_INVOKABLE Types::Song itemAt (int idx) {
         if (!m_iface) return {};
 
         Types::Song result{};
-        m_iface->pointed_to(mapToSource(index(static_cast<int>(idx), 0)), [&result](const Types::Song &track_at_idx) {
+        m_iface->pointed_to(mapToSource(index(idx, 0)), [&result](const Types::Song &track_at_idx) {
             result = track_at_idx;
             return true;
         });

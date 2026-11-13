@@ -16,4 +16,6 @@ std::optional<QStringList> read_lines (const QString &path);
 
 QFuture<bool> write_lines (const QString &path, QStringList lines);
 
+bool move_to_trash(const QString &path);
+
 }

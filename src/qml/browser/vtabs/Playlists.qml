@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import Player.Primitives
 import Player.PlayQueue
@@ -34,6 +35,26 @@ ColumnLayout {
 
         text: pl_stack.currentIndex == 0 ? qsTr("Playlists") : root.selectedPlaylist.title;
     }
+
+    MediaSelection {
+        id: selection
+        model: root.lists
+
+        // sources = names in this case; must be an array, sourcesFor() iterates it
+        sourcesOf: (row) => [PlaylistsList.itemAt(row).title]
+
+        extraActions: [
+            T.Action {
+                text: qsTr("Delete playlist(s)", "in the tab that displays your Playlists", selection.indices.length)
+
+                onTriggered: {
+                    PlaylistsList.deletePlaylists(selection.sourcesFor(selection.indices))
+                    // the model resets after the refresh, so the selected rows no longer mean anything
+                    selection.clear()
+                }
+            }
+        ]
+    }
     
     StackLayout {
         id: pl_stack
@@ -48,18 +69,6 @@ ColumnLayout {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-
-            MediaSelection {
-                id: selection
-                model: root.lists
-
-                // a playlist stands for all of its tracks
-                sourcesOf: (row) => {
-                    const out = []
-                    root.lists[row].songs.forEach(s => out.push(s.source))
-                    return out
-                }
-            }
 
             delegate: MediaDelegate {
                 id: song

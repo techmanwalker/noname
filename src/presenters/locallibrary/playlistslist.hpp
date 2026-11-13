@@ -26,12 +26,22 @@ public:
 
     USING_SEQUENCE_OPS(PlaylistsListLI, Types::Playlist);
     using AbstractMediaSequence::clear;
+    QList<Types::Playlist> items () const override;
 
+    static QString file_path_by_name (const QString &name);
+
+    bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Playlist &)> callback) override;
+
+    QFuture<bool> save_playlist_to_disk (const QString &name, QList<QUrl> sources) override;
+    QFuture<bool> delete_playlists (const QStringList &names) override;
+
+public slots:
     // shorthand
-    QFuture<void> refresh ();
-
-    QFuture<bool> save_playlist_to_disk (const QString &name, QList<QUrl> sources);
+    QFuture<void> refresh () override;
 
 private:
     std::shared_ptr<configuration::manager> cm;
+    quint64 m_refresh_generation = 0; // bumped per refresh; stale continuations discard their results
+
+    static QDir directory ();
 };
