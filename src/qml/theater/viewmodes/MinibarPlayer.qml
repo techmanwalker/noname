@@ -33,8 +33,8 @@ Item {
 
     property real volumeControlBottomPadding: 0 // visual compensation
 
-    property real coverWidth: 48
-    property real coverHeight: coverWidth
+    property real coverWidth:  Theme.sizes.rowTrackCoverWidth
+    property real coverHeight: Theme.sizes.rowTrackCoverHeight
 
     property real coverToMetadataSpacing: 0
 
@@ -79,7 +79,7 @@ Item {
             Layout.rightMargin: root.rightPadding
             Layout.bottomMargin: root.bottomPadding
 
-            Layout.preferredHeight: 48
+            Layout.preferredHeight: root.coverHeight
 
             spacing: root.spacing
 

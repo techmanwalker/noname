@@ -3,13 +3,13 @@ import QtQuick
 
 import Player.Listings
 import Player.MediaTypes
-import Player.PlayQueue
+import Player.Primitives
 
 ListView {
     id: root
 
-    property real shortcutCoverWidth: 72
-    property real shortcutCoverHeight: shortcutCoverWidth
+    property real shortcutCoverWidth:  Theme.sizes.cardCoverWidth
+    property real shortcutCoverHeight: Theme.sizes.cardCoverHeight
 
     orientation: ListView.Horizontal
 

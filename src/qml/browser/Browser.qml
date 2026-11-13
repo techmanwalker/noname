@@ -3,9 +3,9 @@ import QtQuick.Layouts
 
 import Player.Browser
 import Player.Theater
-import Player.Listings
 import Player.Presenter
 import Player.PlayQueue
+import Player.Primitives
 
 RowLayout {
     id: root
@@ -155,7 +155,7 @@ RowLayout {
 
             // this match may explain why this drifts below the window when it is too small
             Layout.preferredHeight: implicitHeight
-            coverWidth: 48
+            coverWidth: Theme.sizes.rowTrackCoverWidth
 
             stateModel: PlayerPresenter
 

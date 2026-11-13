@@ -13,10 +13,6 @@ ColumnLayout {
     id: root
     property var directories: LocalLibrary
 
-    property int directoryCoverWidth:  48
-    property int directoryCoverHeight: directoryCoverWidth
-    property int scrollBarWidth: 4
-
     // expose to Theater
     property real songInnerSpacing: 8
     property real songFadePadding: 10
@@ -81,8 +77,6 @@ ColumnLayout {
                 metadata:   qsTr("%n track(s)", "number of tracks in this directory", model.songs.length) + " · " + model.path
                 duration:   model.duration_mmss
 
-                coverWidth: root.directoryCoverHeight
-
                 innerSpacing:   root.songInnerSpacing
                 fadePadding:    root.songFadePadding
                 lateralPadding: root.songLateralPadding
@@ -110,9 +104,6 @@ ColumnLayout {
         SongGrid {
             id: grid
             model: root.selectedDirectory.songs
-
-            songCoverWidth: 144
-            scrollBarWidth: 4
 
             reuseItems: true
 

@@ -151,7 +151,7 @@ Row {
             height: leftCol.height
 
             // + scrollbar padding
-            property int scrollBarWidth: 4
+            property int scrollBarWidth: Theme.sizes.scrollBarWidth
             width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
             spacing: root.songCoverHeight * .2
@@ -307,9 +307,6 @@ Row {
                         songAt: (row) => PlayQueue.itemAt(row)
 
                         scrollBarWidth: rightCol.scrollBarWidth
-
-                        songCoverWidth: root.songCoverWidth
-                        songInnerSpacing: root.songInnerSpacing
 
                         clip: true
                         reuseItems: true // tons of songs moving

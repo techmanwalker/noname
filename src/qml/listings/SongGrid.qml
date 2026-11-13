@@ -5,16 +5,15 @@ import QtQuick.Controls
 import Player.Listings
 import Player.MediaTypes
 import Player.Primitives
-import Player.PlayQueue
 
 GridView {
     id: root
 
     // model: the current folder model with members name, song
-    property real songCoverWidth: 72
-    property real songCoverHeight: songCoverWidth
+    property real songCoverWidth:  Theme.sizes.cardCoverWidth
+    property real songCoverHeight: Theme.sizes.cardCoverHeight
 
-    property int scrollBarWidth: 4
+    property int  scrollBarWidth:  Theme.sizes.scrollBarWidth
 
     property bool lightMode: false
 
@@ -114,7 +113,7 @@ GridView {
         }
     }
 
-        SelectionDrag {
+    SelectionDrag {
         id: selectionDrag
         view: root
         selection: selection

@@ -44,6 +44,18 @@ QtObject {
         required final property color iconColor
     }
 
+    component ItemSizes: QtObject {
+        required final property int cardCoverWidth
+        required final property int cardCoverHeight
+
+        required final property int rowTrackCoverWidth
+        required final property int rowTrackCoverHeight
+        required final property int rowTrackFadePadding
+        required final property int rowTrackLateralPadding
+
+        required final property int scrollBarWidth
+    }
+
     final readonly property Palette dark: Palette {
         texts: TextPalette {
             primaryText: "white"
@@ -110,5 +122,17 @@ QtObject {
             folder: "#a0a0a0"
         }
         iconColor: "white"
+    }
+
+    final readonly property ItemSizes sizes: ItemSizes {
+        cardCoverWidth:   144
+        cardCoverHeight:  cardCoverWidth
+
+        rowTrackCoverWidth:     48
+        rowTrackCoverHeight:    rowTrackCoverWidth
+        rowTrackFadePadding:    10
+        rowTrackLateralPadding: 15
+
+        scrollBarWidth: 4
     }
 }

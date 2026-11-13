@@ -13,9 +13,6 @@ import Player.Primitives
 ColumnLayout {
     id: root
 
-    property real shortcutCoverWidth: 144
-    property real shortcutCoverHeight: shortcutCoverWidth
-
     required property SearchBar searchBarItem
 
     property list<song> displayedTracks
@@ -49,7 +46,7 @@ ColumnLayout {
 
         text: !root.searchBarItem.clearable ? qsTr("Your library") : qsTr("Search results")
 
-        Layout.bottomMargin: root.shortcutCoverHeight / 16
+        Layout.bottomMargin: grid.songCoverHeight / 16
     }
 
     Connections {
@@ -84,9 +81,6 @@ ColumnLayout {
 
         Layout.fillWidth: true
         Layout.fillHeight: true
-
-        songCoverWidth: 144
-        scrollBarWidth: 4
 
         reuseItems: true
 

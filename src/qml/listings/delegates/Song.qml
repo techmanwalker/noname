@@ -17,8 +17,8 @@ Item {
 
     property url cover: ""
 
-    property int coverWidth: root.card ? 144 : 48
-    property int coverHeight: coverWidth
+    property int coverWidth:  root.card ? Theme.sizes.cardCoverWidth     : Theme.sizes.rowTrackCoverWidth
+    property int coverHeight: root.card ? Theme.sizes.cardCoverHeight    : Theme.sizes.rowTrackCoverHeight
 
     property int innerSpacing: coverWidth / 8
 
@@ -30,10 +30,10 @@ Item {
 
     required property bool selected // governed by its container list
 
-    property int lateralPadding
-    property int fadePadding
+    property int lateralPadding: card ? 0 : Theme.sizes.rowTrackLateralPadding
+    property int fadePadding:    card ? 0 : Theme.sizes.rowTrackFadePadding
 
-    property int maxFirstLineLines: root.card ? 2 : 1
+    property int maxFirstLineLines:  root.card ? 2 : 1
     property int maxSecondLineLines: root.card ? 2 : 1
 
     implicitWidth: content.implicitWidth

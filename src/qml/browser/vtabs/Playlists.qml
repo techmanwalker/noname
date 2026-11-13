@@ -12,10 +12,6 @@ ColumnLayout {
     id: root
     property var lists: PlaylistsList
 
-    property int songCoverWidth:  48
-    property int songCoverHeight: songCoverWidth
-    property int scrollBarWidth: 4
-
     // expose to Theater
     property real songInnerSpacing: 8
     property real songFadePadding: 10
@@ -79,8 +75,6 @@ ColumnLayout {
                 cover:      model.cover
                 metadata:   qsTr("%n track(s)", "number of tracks in this playlist", model.songs.length)
                 duration:   model.duration_mmss
-
-                coverWidth: root.songCoverWidth
 
                 innerSpacing:   root.songInnerSpacing
                 fadePadding:    root.songFadePadding

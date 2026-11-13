@@ -24,14 +24,14 @@ AutoscrollListView {
     // a drag never makes the ListView "move", so userInteracting is blind to it
     autoscrollEnabled: !mediaDrag.armed
 
-    property int songCoverWidth:  48
-    property int songCoverHeight: songCoverWidth
-    property int scrollBarWidth: 4
+    property int scrollBarWidth: Theme.sizes.scrollBarWidth
 
     // expose to Theater
-    property real songInnerSpacing: 8
-    property real songFadePadding: 10
-    property real songLateralPadding: 15
+    readonly property int songCoverWidth:     Theme.sizes.rowTrackCoverWidth
+    readonly property int songCoverHeight:    Theme.sizes.rowTrackCoverWidth
+    readonly property int songInnerSpacing:   songCoverWidth / 8
+    readonly property int songFadePadding:    Theme.sizes.rowTrackFadePadding
+    readonly property int songLateralPadding: Theme.sizes.rowTrackLateralPadding
 
     // Right padding reserves space for the scrollbar so it appears
     // to float outside the list content without overlapping it
@@ -104,6 +104,7 @@ AutoscrollListView {
             duration: grabbed.duration_mmss
 
             coverWidth:     root.songCoverWidth
+            coverHeight:    root.songCoverHeight
             innerSpacing:   root.songInnerSpacing
             fadePadding:    root.songFadePadding
             lateralPadding: root.songLateralPadding
@@ -127,12 +128,6 @@ AutoscrollListView {
         height: 80
 
         lightMode: root.lightMode
-
-        coverWidth: root.songCoverWidth
-
-        innerSpacing:   root.songInnerSpacing
-        fadePadding:    root.songFadePadding
-        lateralPadding: root.songLateralPadding
 
         // findBySource returns a different object from memory, hence comparing .row instead
         playing: playheadRowIdx >= 0 // qmllint disable
