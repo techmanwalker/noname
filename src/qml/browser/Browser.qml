@@ -63,135 +63,119 @@ RowLayout {
         }
     }
 
-    // This page heading and browsing.
-    // Wraps the column, like Theater's right column, so the minibar's layout is untouched:
-    // the whole column hears the drag, the minibar is the only place that takes the drop.
-    DropArea {
-        id: rightCol_d
-
-        keys: [tracksitem.dragKey]
+    // This page heading and browsing
+    ColumnLayout {
+        id: rightCol
 
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.minimumHeight: 0
 
-        onDropped: (drop) => {
-            const dragged = drop.source as SelectionDrag
-            if (!dragged || !nowplayingbar.visible) {
-                drop.accepted = false
-                return
+        StackLayout {
+            id: activeView
+
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 0
+            clip: true
+
+            Component.onCompleted: currentIndex = root.vtabs.tracks
+
+            TabPage {
+                name: "home"
+                title: qsTr("Home")
+                iconName: "user-home-symbolic"
+
+                Home {
+                    id: homeitem
+                    anchors.fill: parent
+                }
             }
 
-            const p = nowplayingbar.mapFromItem(rightCol_d, drop.x, drop.y)
-            if (!nowplayingbar.contains(p)) {
-                drop.accepted = false
-                return
+            TabPage {
+                name: "playlists"
+                title: qsTr("Playlists")
+                iconName: "view-media-playlist"
+
+                Playlists {
+                    id: playlistsitem
+                    anchors.fill: parent
+                }
             }
 
-            PlayQueue.batchAppend(dragged.sources)
-            drop.acceptProposedAction()
-        }
+            TabPage {
+                name: "folders"
+                title: qsTr("Folders")
+                iconName: "folder-symbolic"
 
-        ColumnLayout {
-            id: rightCol
-
-            anchors.fill: parent
-
-            StackLayout {
-                id: activeView
-
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumHeight: 0
-                clip: true
-
-                Component.onCompleted: currentIndex = root.vtabs.tracks
-
-                TabPage {
-                    name: "home"
-                    title: qsTr("Home")
-                    iconName: "user-home-symbolic"
-
-                    Home {
-                        id: homeitem
-                        anchors.fill: parent
-                    }
+                Folders {
+                    id: foldersitem
+                    anchors.fill: parent
                 }
+            }
 
-                TabPage {
-                    name: "playlists"
-                    title: qsTr("Playlists")
-                    iconName: "view-media-playlist"
+            TabPage {
+                name: "tracks"
+                title: qsTr("Tracks")
+                iconName: "library-music-symbolic"
 
-                    Playlists {
-                        id: playlistsitem
-                        anchors.fill: parent
-                    }
+                Tracks {
+                    id: tracksitem
+                    anchors.fill: parent
+                    searchBarItem: root.searchBar
                 }
+            }
 
-                TabPage {
-                    name: "folders"
-                    title: qsTr("Folders")
-                    iconName: "folder-symbolic"
-
-                    Folders {
-                        id: foldersitem
-                        anchors.fill: parent
-                    }
-                }
-
-                TabPage {
-                    name: "tracks"
-                    title: qsTr("Tracks")
-                    iconName: "library-music-symbolic"
-
-                    Tracks {
-                        id: tracksitem
-                        anchors.fill: parent
-                        searchBarItem: root.searchBar
-                    }
-                }
-
-                Connections {
-                    target: root
-                    function onBackButtonClicked_r () {
-                        switch (root.activeVtab) {
-                            case root.vtabs.playlists:
-                                playlistsitem.backButtonClicked_r();
-                                break;
-                            case root.vtabs.folders: {
-                                foldersitem.backButtonClicked_r();
-                                break
-                            }
+            Connections {
+                target: root
+                function onBackButtonClicked_r () {
+                    switch (root.activeVtab) {
+                        case root.vtabs.playlists:
+                            playlistsitem.backButtonClicked_r();
+                            break;
+                        case root.vtabs.folders: {
+                            foldersitem.backButtonClicked_r();
+                            break
                         }
-                    
                     }
+                
                 }
             }
-
-            MinibarPlayer {
-                id: nowplayingbar
-
-                topPadding: 20
-
-                Layout.rightMargin: 24 // scrollBarWidth (4) * 6
-
-                // this match may explain why this drifts below the window when it is too small
-                Layout.preferredHeight: implicitHeight
-                coverWidth: 48
-
-                stateModel: PlayerPresenter
-
-                visible: stateModel.isMediaLoaded || PlayQueue.count > 0 || root.isCarryingTracks
-
-                showDropHereBanner: root.isCarryingTracks
-
-                coverToMetadataSpacing: 8
-                volumeControlBottomPadding: 12
-
-                onMetadataClicked: root.requestTheaterMode() // clicking cover and metadata also opens theater mode
-            }
-
         }
+
+        // The only place that takes a drop of tracks: it owns its DropArea. Anywhere else
+        // there is none, so the drop reports Qt.IgnoreAction and the ghosts play "rejected".
+        MinibarPlayer {
+            id: nowplayingbar
+
+            topPadding: 20
+
+            Layout.fillWidth: true
+            Layout.rightMargin: 24 // scrollBarWidth (4) * 6
+
+            // this match may explain why this drifts below the window when it is too small
+            Layout.preferredHeight: implicitHeight
+            coverWidth: 48
+
+            stateModel: PlayerPresenter
+
+            dropKeys: [tracksitem.dragKey]
+
+            // Up while tracks are carried (so there is a target even with nothing loaded, and
+            // it stays until the drop was delivered) and until a drop into an empty queue
+            // has its tracks on it (batchAppend is asynchronous).
+            visible: stateModel.isMediaLoaded
+                || PlayQueue.count > 0
+                || root.isCarryingTracks
+                || nowplayingbar.isAcceptingADrop
+
+            showDropHereBanner: root.isCarryingTracks
+
+            coverToMetadataSpacing: 8
+            volumeControlBottomPadding: 12
+
+            onMetadataClicked: root.requestTheaterMode() // clicking cover and metadata also opens theater mode
+        }
+
     }
 }
