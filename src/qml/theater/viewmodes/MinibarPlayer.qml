@@ -20,6 +20,8 @@ Item {
     readonly property string noTitleText: qsTr("Untitled track")
     readonly property string noArtistText: qsTr("Unknown Artist")
 
+    readonly property alias containsDrag: dropArea.containsDrag
+
     // was the ColumnLayout's own: still the spacing of the rows below
     property real spacing: 5
 
@@ -38,11 +40,14 @@ Item {
 
     property bool insetDurationBarInPadding: true
 
-    property bool showDropHereBanner: false
+    property bool showDropHereBanner: containsDrag
 
     // Drags carrying one of these keys can be dropped here. Empty: nothing is accepted
     // (a DropArea without keys would take any drag).
     property var dropKeys: []
+
+    // File/URL drops from outside the app (a file manager, say) are accepted too
+    property bool acceptUrls: true
 
     // From an accepted drop until its tracks are on the queue. batchAppend is asynchronous,
     // so an owner that hides this bar while the queue is empty should keep it up meanwhile.
@@ -188,12 +193,16 @@ Item {
         id: dropArea
 
         anchors.fill: parent
-        keys: root.dropKeys
-        enabled: root.dropKeys.length > 0
+        keys: root.acceptUrls ? ["text/uri-list"].concat(root.dropKeys) : root.dropKeys
+        enabled: keys.length > 0
 
         onDropped: (drop) => {
-            // whatever carries the drag exposes the playable sources it holds
-            const sources = drop.source?.sources ?? []
+            // our own drags expose the playable sources they carry; a drag from outside the
+            // app carries URLs
+            let sources = drop.source?.sources ?? []
+            if (sources.length === 0 && drop.hasUrls)
+                sources = drop.urls
+
             if (sources.length === 0) {
                 drop.accepted = false
                 return

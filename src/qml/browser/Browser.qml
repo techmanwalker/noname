@@ -169,7 +169,7 @@ RowLayout {
                 || root.isCarryingTracks
                 || nowplayingbar.isAcceptingADrop
 
-            showDropHereBanner: root.isCarryingTracks
+            showDropHereBanner: root.isCarryingTracks || containsDrag
 
             coverToMetadataSpacing: 8
             volumeControlBottomPadding: 12
