@@ -62,7 +62,7 @@ ColumnLayout {
                 }
             }
 
-            delegate: Song {
+            delegate: MediaDelegate {
                 id: song
 
                 required property directory model

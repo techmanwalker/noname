@@ -30,7 +30,7 @@ ListView {
         model: root.model
     }
 
-    delegate: Song {
+    delegate: MediaDelegate {
         id: shortcut
 
         card: true

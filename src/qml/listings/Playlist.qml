@@ -88,7 +88,7 @@ AutoscrollListView {
         x: topLeft.x
         y: topLeft.y
 
-        sourceComponent: Song {
+        sourceComponent: MediaDelegate {
             readonly property song grabbed: mediaDrag.items[0]
 
             width: root.width - root.rightMargin
@@ -111,7 +111,7 @@ AutoscrollListView {
         }
     }
 
-    delegate: Song {
+    delegate: MediaDelegate {
         id: song
 
         required property song modelData

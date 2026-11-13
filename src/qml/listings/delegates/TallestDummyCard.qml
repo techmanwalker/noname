@@ -1,6 +1,6 @@
 import Player.Browser
 
-Song {
+MediaDelegate {
     card: true
     
     title: `two

@@ -63,7 +63,7 @@ GridView {
 
     // A song card. The delegate and the drag ghosts are both made from it, so a ghost
     // can't drift from what it was picked up from.
-    component Card: Song {
+    component Card: MediaDelegate {
         required property song songItem
 
         card: true

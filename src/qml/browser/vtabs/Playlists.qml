@@ -61,7 +61,7 @@ ColumnLayout {
                 }
             }
 
-            delegate: Song {
+            delegate: MediaDelegate {
                 id: song
 
                 required property playlist model
