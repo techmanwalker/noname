@@ -36,13 +36,16 @@ Item {
         return row >= 0 ? row : (y > view.contentHeight ? view.count - 1 : -1)
     }
 
+    // Releasing now would move the row. Also what tells the ghosts the drop is accepted.
+    readonly property bool willMove:
+        moving && overRow >= 0 && overRow !== (selectionDrag.rows[0] ?? -1)
+
     Connections {
         target: root.selectionDrag
 
         function onReleased(): void {
-            const from = root.selectionDrag.rows[0]
-            if (root.moving && root.overRow >= 0 && root.overRow !== from)
-                root.moveRequested(from, root.overRow)
+            if (root.willMove)
+                root.moveRequested(root.selectionDrag.rows[0], root.overRow)
         }
     }
 

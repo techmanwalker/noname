@@ -56,6 +56,7 @@ AutoscrollListView {
         id: mediaDrag
         view: root
         selection: mediaSelection
+        maxSelectedItems: 1
     }
 
     // A lone dragged row is a move; any other number of rows is not
@@ -71,44 +72,20 @@ AutoscrollListView {
         }
     }
 
-    // The grabbed row, following the pointer. It paints as selected so it reads as lifted
-    // above the rows it crosses.
-    Loader {
-        parent: root // viewport overlay, not scrolling content
-        z: 20
-        active: rowMove.moving
-        enabled: false // never takes input
+    // Several dragged rows travel as a ghost playlist. A lone row is SingleRowMove's, and
+    // the Loader below already draws it.
+    GhostSpawner {
+        selectionDrag: mediaDrag
+        cards: false
 
-        // top-left in viewport coordinates; keeps the grab offset, so the row doesn't
-        // jump to the pointer when the drag starts
-        readonly property point topLeft: {
-            const p = root.mapFromItem(null, mediaDrag.pointer.x, mediaDrag.pointer.y)
-            return Qt.point(p.x - mediaDrag.grabOffset.x, p.y - mediaDrag.grabOffset.y)
-        }
-        x: topLeft.x
-        y: topLeft.y
+        // a reorder inside this list is taken by the list itself, no DropArea answers it
+        acceptsDrop: rowMove.willMove
 
-        sourceComponent: MediaDelegate {
-            readonly property song grabbed: mediaDrag.items[0]
+        lightMode: root.lightMode
+        rowWidth: root.width - root.rightMargin
 
-            width: root.width - root.rightMargin
-            height: 80
-
-            selected: true
-            lightMode: root.lightMode
-
-            title:    grabbed.title
-            cover:    grabbed.cover
-            metadata: (grabbed.artist.length > 0 ? grabbed.artist : qsTr ("Unknown Artist"))
-                + (grabbed.album.length > 0 ? " · " + grabbed.album : "")
-            duration: grabbed.duration_mmss
-
-            coverWidth:     root.songCoverWidth
-            coverHeight:    root.songCoverHeight
-            innerSpacing:   root.songInnerSpacing
-            fadePadding:    root.songFadePadding
-            lateralPadding: root.songLateralPadding
-        }
+        coverWidth: root.songCoverWidth
+        coverHeight: root.songCoverHeight
     }
 
     delegate: MediaDelegate {
