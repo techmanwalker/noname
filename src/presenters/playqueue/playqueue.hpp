@@ -9,6 +9,8 @@
 
 #include <memory>
 
+Q_DECLARE_LOGGING_CATEGORY(l_playqueue)
+
 namespace covers::live {
     class cover_provider;
 }
@@ -34,7 +36,7 @@ public:
     ~PlayQueueLI() override;
 
     // getters
-    QPersistentModelIndex playhead() override;
+    QPersistentModelIndex playhead() const override;
 
     // all items
     QList<Types::Song> items() const;
@@ -58,7 +60,7 @@ public:
 
     void clear () override;
 
-    bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) override;
+    bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) const override;
 
     QPersistentModelIndex find_by_source (const QUrl &needle) override;
     std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const override;
@@ -79,14 +81,15 @@ public:
     void batch_remove (const QList<QPersistentModelIndex> &indices) override;
 
 signals:
+    // to qml
     void track_changed ();
     void count_changed ();
     void shuffle_changed ();
 
 public slots:
     void preload_next_track_whenever_possible ();
-    void handle_queued_tracks_finished ();
-    void handle_track_changed ();
+    void handle_tape_ran_out ();
+    void handle_ab_boundary_crossed ();
 
 private:
     // PlayQueueLI space -> source space (the identity hop, then the sequence namespace's)
@@ -94,6 +97,12 @@ private:
 
     // what comes after `mine` in the order the user *sees*
     QPersistentModelIndex successor_of (const QPersistentModelIndex &mine) const;
+    
+    QPersistentModelIndex m_playhead;
+
+    void set_playhead_  (const QPersistentModelIndex &to); // leaves the engine intact
+    void move_playhead_ (const QPersistentModelIndex &to); // invokes ae->load
+    void invalidate_playhead_ ();
 
     std::unique_ptr<PlayQueueLIPrivate> m_d;
 };

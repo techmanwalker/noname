@@ -64,6 +64,9 @@ signals:
     void volume_changed();
     void relative_seek_before_zero_performed(quint64 stepback_ms, bool play_afterwards);
 
+    // exposure
+    void ab_boundary_crossed ();
+
 public slots:
     void handle_track_changed();
 

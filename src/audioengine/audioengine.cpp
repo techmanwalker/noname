@@ -215,6 +215,7 @@ audio_engine_LI::on_boundary_hit()
         undo_prepare_next_track();
 
         emit track_changed();
+        emit ab_boundary_crossed();
 
         // Everything the ceremony and the track_changed handlers asked of the B slot is queued
         // ahead of this, so the decoder reads a settled slot

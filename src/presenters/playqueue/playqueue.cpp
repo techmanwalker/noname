@@ -12,6 +12,8 @@
 #include <memory>
 #include <optional>
 
+Q_LOGGING_CATEGORY(l_playqueue, "playqueue")
+
 class PlayQueueLIPrivate 
 {
 public: 
@@ -43,6 +45,9 @@ PlayQueueLI::PlayQueueLI (
     sequence::on_count_changed(m_d->state, this, [this] { emit count_changed(); });
 
     connect (this, &PlayQueueLI::count_changed,
+            this, &PlayQueueLI::preload_next_track_whenever_possible);
+
+    connect (this, &PlayQueueLI::track_changed,
             this, &PlayQueueLI::preload_next_track_whenever_possible);
 }
 
@@ -79,6 +84,8 @@ PlayQueueLI::clear ()
     sequence::clear(m_d->state);
     m_d->ae->stop();
     m_d->ae->unload();
+
+    invalidate_playhead_();
 }
 
 QFuture<void>
@@ -87,6 +94,8 @@ PlayQueueLI::batch_append (const QList<QUrl> &sources)
     return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Song> to_append) {
         sequence::batch_append(m_d->state, std::move(to_append));
     });
+
+    // append is done at the end of both projections, playhead remains unchanged
 }
 
 QFuture<void>
@@ -104,7 +113,7 @@ PlayQueueLI::spawn_queue(const QStringList &sources)
 
         // the reshuffle emits nothing the queue listens to: QML must re-read the playhead
         // and the upcoming track changed
-        handle_track_changed();
+        emit track_changed();
     });
 }
 
@@ -138,7 +147,7 @@ PlayQueueLI::respawn_queue(QList<Types::Song> songs)
     clear();
 
     sequence::spawn(m_d->state, std::move(songs));
-    handle_track_changed();
+    emit track_changed();
 }
 
 void
@@ -158,21 +167,68 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
 }
 
 QPersistentModelIndex
-PlayQueueLI::playhead ()
+PlayQueueLI::playhead () const
 {
-    const QUrl &playing = m_d->ae->current_track_source();
-
-    const QPersistentModelIndex head = find_by_source(playing);
-    if (!head.isValid()) return {};
+    if (!m_playhead.isValid()) return {};
 
 #ifndef QT_NO_DEBUG
     QUrl at_head;
-    pointed_to(head, [&at_head](const Types::Song &song) { at_head = song.source; return true; });
-    Q_ASSERT_X(at_head == playing, "PlayQueueLI::playhead",
-        "The song at the projected playhead is not the track the audio engine is playing.");
+    pointed_to(m_playhead, [&at_head](const Types::Song &song) { at_head = song.source; return true; });
+
+    QUrl actually_playing = m_d->ae->current_track_source();
+
+    Q_ASSERT_X(at_head == actually_playing, "PlayQueueLI::playhead",
+        QStringLiteral("The track at the projected playhead is not the track the audio engine is playing. Expected %1, got %2 and playhead points to row %3.")
+            .arg(actually_playing.toString(), at_head.toString(), QString::number(m_playhead.row())).toUtf8().constData());
 #endif
 
-    return head;
+    return m_playhead;
+}
+
+void
+PlayQueueLI::set_playhead_(const QPersistentModelIndex &to)
+{
+    // bookkeeping only, never touches the engine's tape
+    m_playhead = to;
+    preload_next_track_whenever_possible();
+}
+
+void
+PlayQueueLI::move_playhead_(const QPersistentModelIndex &to)
+{
+    if (!to.isValid()) return;
+
+    Types::Song at_playhead {};
+
+    bool executed = pointed_to(to, [&at_playhead](const Types::Song &prolly_requested) {
+        at_playhead = prolly_requested;
+        return true;
+    });
+
+    Q_ASSERT_X(
+        executed && at_playhead.is_valid(),
+        "PlayQueueLI::move_playhead_",
+        "Attempted to move playhead, but the index pointed to an invalid position."
+    );
+
+    m_d->ae->load(at_playhead);
+    set_playhead_(to);
+
+#ifndef QT_NO_DEBUG
+    // fresh confirmation
+    (void) playhead(); // sentinel: asserts if the playhead landed on the wrong spot
+#endif
+
+    emit track_changed();
+    return;
+}
+
+void
+PlayQueueLI::invalidate_playhead_()
+{
+    m_playhead = QPersistentModelIndex ();
+
+    emit track_changed();
 }
 
 void
@@ -180,7 +236,8 @@ PlayQueueLI::switch_to(const Types::Song &song, bool play_afterwards)
 {
     sequence::clear(m_d->state);
     sequence::batch_append(m_d->state, QList<Types::Song>{song});
-    m_d->ae->load(song);
+
+    move_playhead_(index(0, 0));
 
     if (play_afterwards) {
         m_d->ae->play();
@@ -197,8 +254,8 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
         return true; 
     }
 
-    return pointed_to(song, [this, play_afterwards](const Types::Song &prolly_song) -> bool {
-        m_d->ae->load(prolly_song);
+    return pointed_to(song, [this, song, play_afterwards](const Types::Song &prolly_song) -> bool {
+        move_playhead_(song);
 
         if (play_afterwards) {
             m_d->ae->play();
@@ -326,7 +383,7 @@ PlayQueueLI::preload_next_track_whenever_possible ()
 }
 
 void
-PlayQueueLI::handle_queued_tracks_finished()
+PlayQueueLI::handle_tape_ran_out()
 {
     qCDebug (l_mediasequences) << "The chain of preloaded songs has finished.";
     
@@ -360,13 +417,6 @@ PlayQueueLI::query_metadata_for_source(const QUrl &needle) const
     return result;
 }
 
-void
-PlayQueueLI::handle_track_changed ()
-{
-    emit track_changed();
-    preload_next_track_whenever_possible();
-}
-
 QModelIndex
 PlayQueueLI::to_sequence (const QModelIndex &mine) const
 {
@@ -376,6 +426,9 @@ PlayQueueLI::to_sequence (const QModelIndex &mine) const
 QPersistentModelIndex
 PlayQueueLI::successor_of (const QPersistentModelIndex &mine) const
 {
+    // the successor of an invalid playhead is zero
+    if (!m_playhead.isValid()) return QPersistentModelIndex (index (0, 0));
+
     return QPersistentModelIndex(mapFromSource(sequence::successor_of(m_d->state, mapToSource(mine))));
 }
 
@@ -404,7 +457,7 @@ PlayQueueLI::set_shuffle (bool enabled)
 }
 
 bool
-PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback)
+PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) const
 {
     return sequence::pointed_to(m_d->state, QPersistentModelIndex(mapToSource(idx)), callback);
 }
@@ -413,4 +466,22 @@ QFuture<bool>
 PlayQueueLI::save_as_playlist_to_disk (const QString &name)
 {
     return m_d->pl->save_playlist_to_disk(name, sources());
+}
+
+void
+PlayQueueLI::handle_ab_boundary_crossed ()
+{
+    // readback on natural progression of the tape which crossed to track B
+
+    // the engine already crossed to B, just follow it
+    // do not use the asserted playhead(), the assert below exists for that
+    set_playhead_(successor_of(m_playhead));
+
+#ifndef QT_NO_DEBUG
+    Q_ASSERT_X(m_playhead.isValid(), "PlayQueueLI::handle_ab_boundary_crossed",
+            "The engine crossed to B, but the queue has no successor to follow it.");
+    (void) playhead(); // sentinel: asserts if the playhead landed on the wrong spot
+#endif
+
+    emit track_changed();
 }

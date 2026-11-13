@@ -16,7 +16,7 @@ public:
 
     virtual int item_count () const = 0;
 
-    virtual QPersistentModelIndex playhead () = 0;
+    virtual QPersistentModelIndex playhead () const = 0;
 
     virtual void switch_to (const QUrl &source) = 0;
     virtual bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) = 0;
@@ -30,7 +30,7 @@ public:
 
     virtual void clear () = 0;
 
-    virtual bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) = 0;
+    virtual bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) const = 0;
 
     virtual QPersistentModelIndex find_by_source (const QUrl &needle) = 0;
     virtual std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const = 0;

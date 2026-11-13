@@ -156,11 +156,11 @@ main (int argc, char ** argv)
     });
 
     // bind concrete<->concrete signals
-    QObject::connect (ae.get(), &audio_engine_LI::track_changed,
-            pq.get(), &PlayQueueLI::handle_track_changed);
+    QObject::connect (ae.get(), &audio_engine_LI::ab_boundary_crossed,
+            pq.get(), &PlayQueueLI::handle_ab_boundary_crossed);
 
     QObject::connect(ae.get(), &audio_engine_LI::tape_ran_out,
-            pq.get(), &PlayQueueLI::handle_queued_tracks_finished);
+            pq.get(), &PlayQueueLI::handle_tape_ran_out);
 
     QObject::connect(ae.get(), &audio_engine_LI::track_changed,
             pp.get(), &PlayerPresenterLI::handle_track_changed);
