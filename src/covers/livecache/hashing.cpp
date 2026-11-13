@@ -11,9 +11,9 @@ payload_and_size (
     QSize target_thumbnail_size
 )
 {
-    // at the file system level we need short names, no bijective encoding needed here
-    // whatever string comes out of here is fine as long as it does not collide
-    // or is unusably long or has any non alphanumeric character
+    // File names need to be short, alphanumeric and filesystem-safe, so the key is hashed:
+    // not reversible, collisions negligible. The key itself must be injective: '|' cannot
+    // occur in a base64url payload, and the size is digits around an 'x'.
 
     QByteArray key = 
         payload
