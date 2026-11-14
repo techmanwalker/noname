@@ -772,6 +772,18 @@ if(PLAYER_BUILD_TESTS)
         PUBLIC
             covers
     )
+
+    qt_add_executable(tooklabbw
+        src/tests/tooklabbw.cpp
+    )
+
+    target_link_libraries(tooklabbw
+        PRIVATE
+            covers
+            CLI11::CLI11
+            Qt6::Concurrent
+            FFmpeg::avutil # decode.hpp / pixelformats.hpp expose AVPixelFormat; covers links FFmpeg PRIVATE
+    )
 endif()
 
 if(ENABLE_QML_PROFILING)
