@@ -43,7 +43,7 @@ AutoscrollListView {
     signal moveRequested(int from, int to)
 
     // Most rows a drag carries. 1: a lone row is a reorder, as in the queue.
-    property int maxDraggedSongs: 1
+    property real maxDraggedSongs: 1
 
     // Tags this list's drags for a DropArea. Empty: nothing takes them.
     property string dragKey
@@ -104,7 +104,7 @@ AutoscrollListView {
 
         required property song modelData
         required property int index
-        
+
         title:      modelData.title
         cover:      modelData.cover
         metadata:   (modelData.artist.length > 0 ? modelData.artist : qsTr ("Unknown Artist"))

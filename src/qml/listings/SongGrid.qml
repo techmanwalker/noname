@@ -37,7 +37,7 @@ GridView {
     // drag
     // The ghost spawner should handle excessively big selections by showing
     // "+N more…"
-    property int maxDraggedSongs: Infinity
+    property real maxDraggedSongs: Infinity
 
     // Tags this grid's drags, so a DropArea can tell them from other drags (file drops)
     readonly property string dragKey: "noname/tracks"
@@ -120,6 +120,7 @@ GridView {
         selectionDrag: selectionDrag
         cards: true
         dragKey: root.dragKey
+        lightMode: root.lightMode
 
         coverWidth: root.songCoverWidth
         coverHeight: root.songCoverHeight
