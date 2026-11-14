@@ -83,6 +83,14 @@
     </message>
 </context>
 <context>
+    <name>GhostSpawner</name>
+    <message>
+        <location filename="../qml/listings/delegates/GhostSpawner.qml" line="50"/>
+        <source>Unknown Artist</source>
+        <translation>Artista desconocido</translation>
+    </message>
+</context>
+<context>
     <name>Home</name>
     <message>
         <location filename="../qml/browser/vtabs/Home.qml" line="15"/>
@@ -207,8 +215,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="102"/>
-        <location filename="../qml/listings/Playlist.qml" line="122"/>
+        <location filename="../qml/listings/Playlist.qml" line="110"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -216,12 +223,12 @@
 <context>
     <name>Playlists</name>
     <message>
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="36"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="43"/>
         <source>Playlists</source>
         <translation>Listas de reproducción</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="48"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="56"/>
         <source>Delete playlist(s)</source>
         <comment>in the tab that displays your Playlists</comment>
         <translation>
@@ -234,7 +241,8 @@
         <translation type="vanished">Eliminar lista de reproducción</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/browser/vtabs/Playlists.qml" line="85"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="96"/>
+        <location filename="../qml/browser/vtabs/Playlists.qml" line="111"/>
         <source>%n track(s)</source>
         <comment>number of tracks in this playlist</comment>
         <translation>
@@ -336,7 +344,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/SongGrid.qml" line="72"/>
+        <location filename="../qml/listings/SongGrid.qml" line="80"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -348,27 +356,27 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="299"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="298"/>
         <source>Queue</source>
         <translation>Lista</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="332"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="331"/>
         <source>Save as playlist (UUID name)</source>
         <translation>Guardar lista de reproducción (nombre por UUID)</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="339"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="338"/>
         <source>Remove from queue</source>
         <translation>Quitar de la cola</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="356"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="355"/>
         <source>Details</source>
         <translation>Detalles</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="347"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="346"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -444,14 +452,18 @@
 <context>
     <name>Tracks</name>
     <message>
-        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
         <source>Your library</source>
-        <translation>Tu biblioteca</translation>
+        <translation type="vanished">Tu biblioteca</translation>
     </message>
     <message>
         <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
         <source>Search results</source>
         <translation>Resultados de búsqueda</translation>
+    </message>
+    <message>
+        <location filename="../qml/browser/vtabs/Tracks.qml" line="47"/>
+        <source>Tracks</source>
+        <translation>Pistas</translation>
     </message>
     <message>
         <location filename="../qml/browser/vtabs/Tracks.qml" line="64"/>

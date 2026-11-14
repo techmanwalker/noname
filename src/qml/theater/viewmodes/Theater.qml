@@ -319,7 +319,7 @@ Row {
                                 Math.min(queueAndMetadata_c.contentHeight, queueAndMetadata_c.height)
                             )
 
-                        lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter, "queueAndMetadata.c")
+                        lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
 
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 

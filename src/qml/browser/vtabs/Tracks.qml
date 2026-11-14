@@ -44,7 +44,7 @@ ColumnLayout {
     SectionHeading {
         id: shortcutsHeading
 
-        text: !root.searchBarItem.clearable ? qsTr("Your library") : qsTr("Search results")
+        text: !root.searchBarItem.clearable ? qsTr("Tracks") : qsTr("Search results")
 
         Layout.bottomMargin: grid.songCoverHeight / 16
     }
@@ -54,7 +54,7 @@ ColumnLayout {
 
         function onTextChanged() {
             let response = MediaFilter.search(root.searchBarItem.text, LocalLibrary);
-            root.displayedTracks =  response.items 
+            root.displayedTracks =  response.items
             root.searchHighScore =  response.highScore
         }
     }
