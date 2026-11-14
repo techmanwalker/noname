@@ -45,9 +45,19 @@ ColumnLayout {
             id: lyricsRows_p
             text: qsTr("No lyrics available.")
 
-            color: Light.lightModeForBounds (lyricsRows_pBounds.bounds, root.background, root.stateModel)
-                ? Theme.light.texts.unhighlightedLyric :
-                  Theme.dark.texts.unhighlightedLyric
+            // SceneRect returns the item’s rect.
+            // lyricsRows_p is a BigThinLabel placed in a StackLayout,
+            // so the item is the whole cell, roughly the full window.
+            // The glyphs are only a contentWidth × contentHeight box
+            // in the middle, because of AlignHCenter and AlignVCenter.
+            property rect inkBounds: Qt.rect(
+                lyricsRows_pBounds.x + (lyricsRows_pBounds.width  - contentWidth)  / 2,
+                lyricsRows_pBounds.y + (lyricsRows_pBounds.height - contentHeight) / 2,
+                contentWidth, contentHeight)
+
+            color: Light.lightModeForBounds (inkBounds, root.background, root.stateModel)
+                    ? Theme.light.texts.unhighlightedLyric
+                    : Theme.dark.texts.unhighlightedLyric
 
             TapHandler {
                 onTapped: root.clickedOnEmptySpace()
@@ -62,7 +72,10 @@ ColumnLayout {
             focusIndex: root.highlightedRowIndex
             autoscrollEnabled: root.autoscrollEnabled
 
-            readonly property bool lightMode: Light.lightModeForBounds(lyricsRows_cBounds.bounds, root.background, root.stateModel) // context is everything
+            readonly property bool lightMode: Light.lightModeForBounds(
+                Qt.rect(lyricsRows_cBounds.x + (lyricsRows_cBounds.width - interactiveWidth) / 2,
+                        lyricsRows_cBounds.y, interactiveWidth, lyricsRows_cBounds.height),
+                root.background, root.stateModel)
 
             readonly property color highlightedColor:   lightMode ? Theme.light.texts.highlightedLyric   : Theme.dark.texts.highlightedLyric
             readonly property color unhighlightedColor: lightMode ? Theme.light.texts.unhighlightedLyric : Theme.dark.texts.unhighlightedLyric
@@ -102,7 +115,7 @@ ColumnLayout {
 
             readonly property int interactiveWidth: root.width * 0.6
             readonly property int wrapWidth: root.width * 0.4
-            
+
             delegate: Item {
                 id: delegateRoot
 
@@ -127,7 +140,7 @@ ColumnLayout {
                 }
 
                 Item {
-                    id: delegateWidth 
+                    id: delegateWidth
 
                     width: lyricsRows_c.interactiveWidth
                     height: del.height

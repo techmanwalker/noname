@@ -146,6 +146,10 @@ select_percentile (T *first, size_t count, int percentile) noexcept
     return first[rank];
 }
 
+// reach of DualKawaseBlur { passes, offset } as a fraction of the width of the texture it starts from
+// 1080 is a good default just to smooth down a wall of noise.
+constexpr double blur_sigma_fraction = std::numbers::sqrt2 * 1.5 * 16 / 1080;
+
 struct run     { int x_begin = 0, x_end = 0; };
 struct run_set { std::array<run, 2> r{}; int n = 0; };
 
@@ -263,7 +267,7 @@ pondered_lightness (const cover_rings &rings)
         const double begin = std::clamp(ring.ring_crop_begin, 0.0, 1.0);
         const double end   = std::clamp(ring.ring_crop_end,   0.0, 1.0);
 
-        /*  Area fraction of a Chebyshev ring is exactly end^2 - begin^2. max(0, ...) 
+        /*  Area fraction of a Chebyshev ring is exactly end^2 - begin^2. max(0, ...)
             so a malformed ring (begin >= end) contributes zero weight instead of
             a negative one. */
         const double weight = std::max(0.0, end * end - begin * begin);
@@ -333,23 +337,42 @@ visible_cover_fraction (transform::ratio cover_aspect, QSize surface) noexcept
     return { fit.width() / cover_area.width(), fit.height() / cover_area.height() };
 }
 
-/*  Area of [left, right) x [top, bottom) that lies inside the box centered on
-    `center` with the given half-extents.
-    */
-[[nodiscard]] double
-overlap_with_centered_box (double left, double top, double right, double bottom,
-                           QPointF center, double half_w, double half_h) noexcept
+// Separable Gaussian, clamp-to-edge.
+template <size_t N>
+void
+blur_in_place (std::array<std::array<double, N>, N> &grid, double sigma)
 {
-    const double w = std::min(right,  center.x() + half_w) - std::max(left, center.x() - half_w);
-    const double h = std::min(bottom, center.y() + half_h) - std::max(top,  center.y() - half_h);
+    const int radius = std::max(1, static_cast<int>(std::ceil(3.0 * sigma)));
+    std::vector<double> kernel(static_cast<size_t>(2 * radius + 1));
+    double norm = 0.0;
+    for (int i = -radius; i <= radius; ++i)
+        norm += kernel[static_cast<size_t>(i + radius)] = std::exp(-0.5 * i * i / (sigma * sigma));
+    for (double &k : kernel) k /= norm;
 
-    return std::max(0.0, w) * std::max(0.0, h);
+    const int n = static_cast<int>(N);
+
+    // `at(line, i)` addresses element i of a line; called once per axis
+    auto pass = [&](auto at) {
+        std::array<double, N> out;
+        for (int line = 0; line < n; ++line) {
+            for (int i = 0; i < n; ++i) {
+                double acc = 0.0;
+                for (int k = -radius; k <= radius; ++k)
+                    acc += kernel[static_cast<size_t>(k + radius)] * at(line, std::clamp(i + k, 0, n - 1));
+                out[static_cast<size_t>(i)] = acc;
+            }
+            for (int i = 0; i < n; ++i) at(line, i) = out[static_cast<size_t>(i)];
+        }
+    };
+
+    pass([&](int line, int i) -> double & { return grid[line][i]; });  // rows
+    pass([&](int line, int i) -> double & { return grid[i][line]; });  // columns
 }
 
 }
 
 lightness_table
-lightness_table_of_image (const QImage &image, int percentile)
+lightness_table_of_image (const QImage &image)
 {
     // Zeroed: the same "no data" value percentile_lightness gives an empty chunk.
     lightness_table table{};
@@ -372,11 +395,8 @@ lightness_table_of_image (const QImage &image, int percentile)
     const uchar     *base   = rgb.constBits();
     const qsizetype  stride = rgb.bytesPerLine();
 
-    // Widest cell of any table row: ceil(width / s_columns) <= width / s_columns + 1.
-    const size_t max_cell_w = width / lightness_table::s_columns + 1;
+    std::array<std::array<double, lightness_table::s_columns>, lightness_table::s_rows> cells;
 
-    // One task = one table row. Each task writes only its own row of
-    // m_table and owns its buffers, so there is nothing to lock.
     auto evaluate_row = [&](int row_index) {
         const auto row = static_cast<size_t>(row_index);
 
@@ -395,28 +415,18 @@ lightness_table_of_image (const QImage &image, int percentile)
             lightness_run(src, band.get() + y * width, static_cast<int>(width));
         }
 
-        // 2. One percentile per cell, gathered from the band. nth_element
-        //    reorders its input, so each cell is copied into a scratch buffer
-        //    that is allocated once per task and reused for all of its cells.
-        const auto scratch = std::make_unique_for_overwrite<float[]>(band_h * max_cell_w);
-
         for (size_t column = 0; column < lightness_table::s_columns; ++column) {
             const int x0 = cell_edge(column, lightness_table::s_columns, width);
             const int x1 = std::max(cell_edge(column + 1, lightness_table::s_columns, width), x0 + 1);
             const auto cell_w = static_cast<size_t>(x1 - x0);
 
-            float *out = scratch.get();
+            double sum = 0.0;
             for (size_t y = 0; y < band_h; ++y) {
                 const float *line = band.get() + y * width + static_cast<size_t>(x0);
-                out = std::copy_n(line, cell_w, out);
+                sum += std::accumulate(line, line + cell_w, 0.0);
             }
 
-            const size_t count = band_h * cell_w; // >= 1: both extents are forced to >= 1 pixel
-
-            // Same [0, 1] clamp percentile_lightness applies to its result.
-            table.m_table[row][column] = std::clamp(
-                static_cast<double>(select_percentile(scratch.get(), count, percentile)),
-                0.0, 1.0);
+            cells[row][column] = sum / static_cast<double>(band_h * cell_w);
         }
     };
 
@@ -426,11 +436,21 @@ lightness_table_of_image (const QImage &image, int percentile)
     // Blocks until every row is done, so `rgb` outlives all the raw pointers.
     QtConcurrent::blockingMap(rows.begin(), rows.end(), evaluate_row);
 
+    blur_in_place(cells, blur_sigma_fraction * lightness_table::s_columns);
+
+    for (size_t r = 0; r < lightness_table::s_rows; ++r) {
+        double running = 0.0;
+        for (size_t c = 0; c < lightness_table::s_columns; ++c) {
+            running += cells[r][c];
+            table.m_sat[r + 1][c + 1] = table.m_sat[r][c + 1] + running;
+        }
+    }
+
     return table;
 }
 
 double
-lightness_table::backdrop_lightness_for_rect (QRect rect, QSize reference_surface, int percentile) const
+lightness_table::backdrop_lightness_for_rect (QRect rect, QSize reference_surface) const
 {
     // Same "no data" value percentile_lightness gives an empty chunk.
     constexpr double no_backing = 0.0;
@@ -484,84 +504,11 @@ lightness_table::backdrop_lightness_for_rect (QRect rect, QSize reference_surfac
                                                     origin_y + bottom * cells_per_px_y,
                                                     s_rows);
 
-    // 4. Percentile of the spanned cells (not the mean: 1 1 1 1 0 0 0 must
-    //    not average into a gray that matches neither side).
-    std::vector<double> values;
-    values.reserve((row_end - row_begin) * (col_end - col_begin));
+    // mean of the spanned cells, O(1)
+    const double sum = m_sat[row_end][col_end]   - m_sat[row_begin][col_end]
+                     - m_sat[row_end][col_begin] + m_sat[row_begin][col_begin];
 
-    for (size_t r = row_begin; r < row_end; ++r) {
-        for (size_t c = col_begin; c < col_end; ++c) {
-            values.push_back(m_table[r][c]);
-        }
-    }
-
-    // Same rank formula as percentile_lightness. `values` is never empty.
-    const int p = std::clamp(percentile, 0, 100);
-    const auto rank = static_cast<std::ptrdiff_t>(
-        (values.size() - 1) * static_cast<size_t>(p) / 100);
-
-    std::nth_element(values.begin(), values.begin() + rank, values.end());
-
-    return values[static_cast<size_t>(rank)];
-}
-
-std::optional<lightness_types>
-dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
-                        QRect rect, QSize reference_surface)
-{
-    if (reference_surface.isEmpty()) {
-        return std::nullopt;
-    }
-
-    // Clip to bounds: only the part of rect on the surface shows the cover.
-    const QRect visible = rect.intersected(QRect(QPoint(0, 0), reference_surface));
-    if (visible.isEmpty()) {
-        return std::nullopt;
-    }
-
-    const QSizeF shown = visible_cover_fraction(cover_aspect, reference_surface);
-    if (shown.isEmpty()) {
-        return std::nullopt;
-    }
-
-    // Ring bounds are Chebyshev distances in the cover's own normalized axes
-    // (center = 0, edge = 1), but the surface only shows `shown` of the cover
-    // per axis. So a ring at distance s is a box centered on the surface with
-    // half-extents s * (half the surface) / shown.
-    const QPointF center(reference_surface.width() / 2.0, reference_surface.height() / 2.0);
-    const double px_per_unit_x = center.x() / shown.width();
-    const double px_per_unit_y = center.y() / shown.height();
-
-    const double left   = visible.x();
-    const double top    = visible.y();
-    const double right  = left + visible.width();   // exclusive edge
-    const double bottom = top  + visible.height();
-
-    // area of the visible rect inside the box at Chebyshev distance s
-    auto area_within = [&](double s) {
-        return overlap_with_centered_box(left, top, right, bottom, center,
-                                         s * px_per_unit_x, s * px_per_unit_y);
-    };
-
-    std::optional<lightness_types> best;
-    double best_area = 0.0;
-
-    for (size_t i = 0; i < rings.size(); ++i) {
-        const double begin = std::clamp(rings[i].ring_crop_begin, 0.0, 1.0);
-        const double end   = std::clamp(rings[i].ring_crop_end,   0.0, 1.0);
-
-        // Rings are nested boxes: this ring = box(end) minus box(begin). A
-        // malformed ring (begin >= end) gets zero area, as in pondered_lightness.
-        const double area = std::max(0.0, area_within(end) - area_within(begin));
-
-        // Strict >: on an exact tie the earlier (inner) ring wins.
-        if (area > best_area) {
-            best_area = area;
-            best = static_cast<lightness_types>(i);
-        }
-    }
-
-    return best;
+    return sum / static_cast<double>((row_end - row_begin) * (col_end - col_begin));
 }
 
 }

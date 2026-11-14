@@ -21,7 +21,7 @@ Q_LOGGING_CATEGORY(l_playerpresenter, "playerpresenter")
 
 // Private constructor
 PlayerPresenterLI::PlayerPresenterLI(
-    QObject *parent, 
+    QObject *parent,
     std::shared_ptr<configuration::manager> confmanager,
     std::shared_ptr<audio_engine> audioengine,
     std::shared_ptr<PlayQueue> playqueue,
@@ -58,7 +58,7 @@ PlayerPresenterLI::PlayerPresenterLI(
 const Types::Song & PlayerPresenterLI::current_track() const {
     Q_ASSERT_X(m_current_track.source == ae->current_track_source(), "PlayerPresenterLI::current_track",
     "The current playing track reported is not the track audio engine is playing.");
-    
+
     return m_current_track;
 }
 
@@ -115,7 +115,7 @@ PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source
         constexpr double precision = 17;
 
         using covers::lightness::lightness_types;
-        
+
         qCDebug(l_playerpresenter) << "cover nuclear lightness: " << QString::number(ring_of(rings, nuclear).value, 'f', precision);
         qCDebug(l_playerpresenter) << "cover centric lightness: " << QString::number(ring_of(rings, centric).value, 'f', precision);
         qCDebug(l_playerpresenter) << "cover midring lightness: " << QString::number(ring_of(rings, midring).value, 'f', precision);
@@ -128,7 +128,7 @@ PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source
         if (epoch != m_lightness_values_epoch) { return; }
 
         m_cover_lightness_rings = rings;
-        m_cover_lightness_table = covers::lightness::lightness_table_of_image(thumbnail, 55);
+        m_cover_lightness_table = covers::lightness::lightness_table_of_image(thumbnail);
 
         m_cover_pondered_lightness = cover_pondered_lightness;
 
@@ -140,21 +140,6 @@ double
 PlayerPresenterLI::backdrop_lightness_for_rect (QRect rect) const
 {
     return m_cover_lightness_table.backdrop_lightness_for_rect (rect, QSize { wi->width(), wi->height() });
-}
-
-double
-PlayerPresenterLI::ring_lightness_for_rect (QRect rect) const
-{
-    using namespace covers::lightness;
-
-    const std::optional<lightness_types> ring = dominant_ring_for_rect(
-        m_cover_lightness_rings,
-        m_cover_lightness_table.m_aspect_ratio,
-        rect,
-        QSize { wi->width(), wi->height() });
-
-    // Same "no data" value backdrop_lightness_for_rect gives when nothing is visible.
-    return ring ? ring_of(m_cover_lightness_rings, *ring).value : default_lightness_value;
 }
 
 PlayerPresenterLI::PlaybackState
@@ -188,7 +173,7 @@ PlayerPresenterLI::relative_seek(qint64 ms) const
     qint64 ms_abs = std::abs(ms);
 
     // back/forward stepping by ms would wrap around or misbehave
-    bool over_max_limit  = ms > 0 && 
+    bool over_max_limit  = ms > 0 &&
         (current_position + ms_abs > track_duration ||  // seeked over track
          current_position + ms_abs < current_position); // wrap around, ms > 0
 
@@ -227,7 +212,7 @@ PlayerPresenterLI:: toggle_mute() const
 void
 PlayerPresenterLI::save_volume () const
 {
-    
+
     cm->write_lines(
         configuration::conf_file_type::volume,
         { QString::number(volume()) }
@@ -314,7 +299,7 @@ PlayerPresenterLI::handle_track_changed()
         "PlayerPresenterLI::handle_track_changed",
         std::string(
             std::string("The player presenter current track metadata was not updated. ") +
-            std::string("audio_engine reports the track ae is ") + 
+            std::string("audio_engine reports the track ae is ") +
             ae->current_track_source().toString().toStdString() +
             std::string(" while the presenter internal struct is ") +
             (!m_current_track.source.isEmpty() ? m_current_track.source.toString().toStdString() : "{empty}")

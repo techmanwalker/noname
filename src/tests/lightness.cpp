@@ -25,6 +25,50 @@ kernel_L (int r, int g, int b)
     return percentile_lightness(img, 50).value;
 }
 
+static QImage
+filled (int w, int h, QRgb c) { QImage i(w, h, QImage::Format_RGB32); i.fill(c); return i; }
+
+static bool
+table_tests () {
+    bool failed = false;
+
+    //  A constant image gives that constant under any rect: catches SAT indexing and normalization.
+    {
+        const auto table = lightness_table_of_image(filled(300, 300, qRgb(128, 128, 128)));
+        const double want = reference_L(128, 128, 128);
+        for (QRect r : { QRect(0, 0, 1000, 1000), QRect(333, 71, 12, 640), QRect(900, 900, 100, 100) })
+            failed |= std::abs(table.backdrop_lightness_for_rect(r, QSize(1000, 1000)) - want) > 1e-3;
+    }
+
+    //  Black | white split on a square cover. Far sides read ~0 and ~1;
+    //    a rect centered on the edge reads 0.5 (blurred step, symmetric window).
+    {
+        QImage img = filled(512, 512, qRgb(0, 0, 0));
+        for (int y = 0; y < 512; ++y)
+            for (int x = 256; x < 512; ++x) img.setPixel(x, y, qRgb(255, 255, 255));
+
+        const auto table = lightness_table_of_image(img);
+        const QSize s(1000, 1000);
+        failed |= table.backdrop_lightness_for_rect({  50, 400, 100, 100 }, s) > 1e-3;
+        failed |= table.backdrop_lightness_for_rect({ 850, 400, 100, 100 }, s) < 1.0 - 1e-3;
+        failed |= std::abs(table.backdrop_lightness_for_rect({ 450, 400, 100, 100 }, s) - 0.5) > 1e-3;
+    }
+
+    //  Aspect mapping: a 2:1 cover (black | white | black) seen through a square surface shows
+    //    only its center half. The surface's left edge sits on the white/black boundary, so a rect
+    //    just inside it must read bright. If the mapping ignored the aspect, it would read ~0.
+    {
+        QImage img = filled(200, 100, qRgb(0, 0, 0));
+        for (int y = 0; y < 100; ++y)
+            for (int x = 50; x < 150; ++x) img.setPixel(x, y, qRgb(255, 255, 255));
+
+        const auto table = lightness_table_of_image(img);
+        failed |= table.backdrop_lightness_for_rect({ 100, 400, 100, 200 }, QSize(1000, 1000)) < 0.9;
+    }
+
+    return failed;
+}
+
 int
 main ()
 {
@@ -49,35 +93,5 @@ main ()
 
     std::printf("max abs error %.3e at (%d, %d, %d)\n", worst, wr, wg, wb);
 
-    bool failed_ring_pick_test = false;
-
-    {
-        using enum lightness_types;
-
-        cover_rings rings;
-        ring_of(rings, nuclear) = { 0.1, 0.00, 0.15 };
-        ring_of(rings, centric) = { 0.2, 0.15, 0.60 };
-        ring_of(rings, midring) = { 0.3, 0.60, 0.80 };
-        ring_of(rings, borders) = { 0.4, 0.80, 1.00 };
-
-        const QSize surface(1000, 1000);
-        const ratio square{ 1, 1 };
-
-        auto expect = [&](QRect r, std::optional<lightness_types> want) {
-            if (dominant_ring_for_rect(rings, square, r, surface) != want) {
-                std::printf("FAIL rect (%d,%d %dx%d)\n", r.x(), r.y(), r.width(), r.height());
-                failed_ring_pick_test = true;
-            }
-        };
-
-        expect({ 480, 480,  40,  40 }, nuclear);
-        expect({ 300, 300, 100, 100 }, centric);
-        expect({ 120, 400,  60, 100 }, midring);
-        expect({  10,  10,  60,  60 }, borders);
-        expect({  50, 400, 100, 100 }, midring);       // exact 50/50 tie: inner ring wins
-        expect({ 950, 400, 100, 100 }, borders);       // clipped to the surface
-        expect({ 1100, 400,  50,  50 }, std::nullopt); // entirely outside
-    }
-
-    return (worst < 1e-4 ? 0 : 1) || failed_ring_pick_test;
+    return (worst < 1e-4 ? 0 : 1) || table_tests();
 }

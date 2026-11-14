@@ -13,6 +13,9 @@ QtObject {
 
     function invalidate () { root.epoch++; }
 
+    // Backdrop lightness above which dark glyphs read better. Calibrated on rendered pixels.
+    readonly property real darkGlyphThreshold: 0.5
+
     property Connections presenterSignals: Connections {
         target: PlayerPresenter
 
@@ -42,33 +45,21 @@ QtObject {
         // use the multiplier values background uses
         let multiplier = background.lightnessMultiplierAtCenter (Qt.rect(x, y, w, h));
 
-        let m_backdrop = presenter.backdropLightnessForRect(Qt.rect(x, y, w, h)) * multiplier;
-        let m_ring     = presenter.ringLightnessForRect(Qt.rect(x, y, w, h))     * multiplier;
-
-        /*
-        let background_area = background.width    * background.height
-        let bounds_area = bounds.width            * bounds.height
-        let bounds_background_ratio = bounds_area / Math.max(background_area, 1)
-        */
-
-        if (m_backdrop > 0.90) return true;   // always light
-        if (m_backdrop < 0.05) return false;  // always dark (redundant while the gate below is 0.48)
-
-        let did_pick_light = m_backdrop > 0.7 && m_ring > 0.6;
+        const l = presenter.backdropLightnessForRect(Qt.rect(x, y, w, h)) * multiplier;
+        const did_pick_light = l > root.darkGlyphThreshold;
 
         if (log_item_name && log_item_name !== "undefined") {
             console.log(
                 "Light mode for " + log_item_name + ":\n"
             +   "bounds: " + Qt.rect(x, y, w, h).toString() + "\n"
             +   "multiplier: " + multiplier + "\n"
-            +   "multiplied backdrop L: " + m_backdrop + "\n"
-            +   "multiplied ring L: " + m_ring + "\n"
+            +   "multiplied backdrop L: " + l + "\n"
         //  +   "area ratio bounds/bg: " + bounds_background_ratio.toString() + "\n"
             +   "light mode picked: " + (did_pick_light ? "light" : "dark")
 
             )
         }
-        
+
         return did_pick_light
     }
 }

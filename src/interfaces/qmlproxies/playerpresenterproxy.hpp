@@ -107,9 +107,6 @@ public:
         return call_or(0.5, &PlayerPresenter::backdrop_lightness_for_rect, rect);
     }
 
-    Q_INVOKABLE double ringLightnessForRect(QRect rect) const {
-        return call_or(0.5, &PlayerPresenter::ring_lightness_for_rect, rect);
-    }
 
 signals:
     void trackChanged();

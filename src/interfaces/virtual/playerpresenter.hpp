@@ -45,9 +45,6 @@ public:
     // get the lightness of the pixels behind this rect from the cover
     virtual double backdrop_lightness_for_rect (QRect rect) const = 0;
 
-    // lightness of the ring that spans the bigger part of the area of this rect
-    virtual double ring_lightness_for_rect (QRect rect) const = 0;
-
     virtual void seek_to(quint64 position_ms) const = 0;
 
     // respect to current pos

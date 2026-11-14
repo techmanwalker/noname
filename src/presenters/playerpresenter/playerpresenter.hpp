@@ -33,22 +33,22 @@ namespace Types {
     @brief Declarative and reactive representation of the playback state for the user interface.
 
     This class acts as the view model within the application architecture,
-    serving as the single source of truth for visual components (QML) regarding the current 
-    state of the audio engine. Its fundamental purpose is to structure and expose playback data 
+    serving as the single source of truth for visual components (QML) regarding the current
+    state of the audio engine. Its fundamental purpose is to structure and expose playback data
     efficiently, completely decoupling business logic and audio processing from the interface.
 
     @section Data flow (detachment)
     The information flow is strictly compartmentalized on the C++ axis:
-    - Input (Visual Update): A low-level audio controller (e.g., %PlaybackController) 
-    manipulates the audio hardware/backend and updates the data of this class through its public slots 
+    - Input (Visual Update): A low-level audio controller (e.g., %PlaybackController)
+    manipulates the audio hardware/backend and updates the data of this class through its public slots
     (@ref updateMetadata, @ref updatePosition).
-    - Output (User Requests): When the user interacts with the interface (such as dragging a progress 
-    bar or changing the volume), the class does not modify the internal state directly; instead, it emits 
-    request signals (@ref requestSeek, @ref requestVolumeChange) so that the C++ controller validates and executes 
+    - Output (User Requests): When the user interacts with the interface (such as dragging a progress
+    bar or changing the volume), the class does not modify the internal state directly; instead, it emits
+    request signals (@ref requestSeek, @ref requestVolumeChange) so that the C++ controller validates and executes
     the action on the audio engine.
 
-    @note This class is designed as a Singleton managed by the QML engine (@c QML_SINGLETON) and exposes 
-    read-only properties for static metadata, ensuring that the interface cannot corrupt 
+    @note This class is designed as a Singleton managed by the QML engine (@c QML_SINGLETON) and exposes
+    read-only properties for static metadata, ensuring that the interface cannot corrupt
     the current media state directly.
 */
 class PlayerPresenterLI : public QObject, public PlayerPresenter
@@ -65,7 +65,7 @@ public:
         std::shared_ptr<WindowGeometry> windowgeometry,
         std::shared_ptr<cover_storage> coverprovider
     );
-    
+
     using PlayerPresenter::PlaybackState;
     Q_ENUM(PlaybackState)
 
@@ -80,14 +80,13 @@ public:
     double cover_centric_lightness() const override;
     double cover_midring_lightness() const override;
     double cover_borders_lightness() const override;
-    
+
     double cover_pondered_lightness() const override;
 
     bool lightness_awareness () const override;
     void set_lightness_awareness_enabled (bool enabled) override;
 
     double backdrop_lightness_for_rect (QRect rect) const override;
-    double ring_lightness_for_rect     (QRect rect) const override;
 
     void seek_to (quint64 position_ms) const override;
     void relative_seek (qint64 ms) const override;
@@ -110,7 +109,7 @@ public:
 
     // save volume level to disk on demand
     void save_volume () const override;
-    
+
 signals:
     // Needed signals for QML to be reactive
     void track_changed();
@@ -141,7 +140,7 @@ private:
 
     // do not access these directly from outside, these are guarded
     Types::Song m_current_track;
-    
+
     covers::lightness::cover_rings m_cover_lightness_rings;
     covers::lightness::lightness_table  m_cover_lightness_table;
     double m_cover_pondered_lightness = covers::lightness::default_lightness_value;

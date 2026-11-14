@@ -47,7 +47,7 @@ Row {
     readonly property real controlsHeight:  controls.implicitHeight + 40
     readonly property real verticalPadding: 80  // top + bottom breathing room
 
-    
+
     // Actual size: shrinks when the window is too small, floats freely otherwise
     readonly property real coverSize: Math.max(0, Math.min(
         coverIdealSize,
@@ -179,7 +179,7 @@ Row {
             }
 
             Row {
-                id: queueAndMetadataTabs 
+                id: queueAndMetadataTabs
 
                 visible: queueAndMetadata_s.visible && !queueAndMetadata_s.is_showing_no_tracks_placeholder
                 Layout.leftMargin: metadataContainer.Layout.leftMargin
@@ -282,10 +282,9 @@ Row {
                         font.weight: Font.Medium
 
                         property rect globalBounds: Qt.rect(
-                                queueAndMetadata_pBounds.x,
-                                queueAndMetadata_pBounds.y,
-                                queueAndMetadata_p.contentWidth,
-                                queueAndMetadata_p.contentHeight
+                                queueAndMetadata_pBounds.x + (queueAndMetadata_pBounds.width  - contentWidth)  / 2,
+                                queueAndMetadata_pBounds.y + (queueAndMetadata_pBounds.height - contentHeight) / 2,
+                                contentWidth, contentHeight
                             )
 
                         property bool lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
@@ -320,7 +319,7 @@ Row {
                                 Math.min(queueAndMetadata_c.contentHeight, queueAndMetadata_c.height)
                             )
 
-                        lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                        lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter, "queueAndMetadata.c")
 
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 
@@ -355,7 +354,7 @@ Row {
                     name: "details"
                     title: qsTr("Details")
                     iconName: "tag-properties"
-                    
+
                     TrackDetails {
                         id: queueAndMetadata_d
 

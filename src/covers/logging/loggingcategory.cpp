@@ -17,12 +17,12 @@ serialize (const covers::lightness::lightness_table &table)
     out["rows"]    = static_cast<qint64>(lightness_table::s_rows);
     out["columns"] = static_cast<qint64>(lightness_table::s_columns);
 
-    // row-major: table[row][column], same layout as m_table
+    // row-major: [row][column]; blurred mean lightness of each cell
     QJsonArray rows;
-    for (const auto &row : table.m_table) {
+    for (size_t r = 0; r < lightness_table::s_rows; ++r) {
         QJsonArray cells;
-        for (const double lightness : row) {
-            cells.append(lightness);
+        for (size_t c = 0; c < lightness_table::s_columns; ++c) {
+            cells.append(table.cell(r, c));
         }
         rows.append(cells);
     }

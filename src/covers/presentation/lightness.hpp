@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "decodeedit/transform.hpp"
 
@@ -11,7 +11,7 @@
 
 class QImage;
 
-namespace covers::lightness 
+namespace covers::lightness
 {
 
 constexpr double default_lightness_value = 0.5;
@@ -52,26 +52,26 @@ ring_of (const cover_rings &rings, lightness_types type) noexcept
     [N][M] = [row][column]
 */
 struct lightness_table {
-    // NxM size
-    static constexpr size_t s_rows = 512, s_columns = 512;
+    // The backdrop is shown blurred, so a glyph sees a local mean. Cells finer
+    // than the blur are wasted (the old 512² was sub-pixel for a 256px thumbnail).
+    static constexpr size_t s_rows = 128, s_columns = 128;
 
-    // percentile lightness of each equally sized region
-    std::array<
-        std::array <
-            double,
-            s_columns
-        >,
-        s_rows
-    > m_table {};
+    // summed-area table of the blurred lightness: m_sat[r][c] = sum of cells [0,r) x [0,c)
+    std::array<std::array<double, s_columns + 1>, s_rows + 1> m_sat {};
 
     transform::ratio m_aspect_ratio; // of the original image buffer
 
-    // use the table lightness values to find an average or percentile
-    // lightness behind rect, given that it is located respect to the
-    // corners of reference_surface.
-    [[nodiscard]] double backdrop_lightness_for_rect (QRect rect, QSize reference_surface,
-                                                 int percentile = 60) const;
+    [[nodiscard]] double backdrop_lightness_for_rect (QRect rect, QSize reference_surface) const;
+
+    // blurred lightness of one cell, recovered from the summed-area table (debug dumps)
+    [[nodiscard]] double cell (size_t row, size_t column) const noexcept
+    {
+        return m_sat[row + 1][column + 1] - m_sat[row][column + 1]
+             - m_sat[row + 1][column]     + m_sat[row][column];
+    }
 };
+
+
 
 double srgb_to_linear(uint8_t channel_8bit);
 
@@ -85,22 +85,14 @@ ring_lightness percentile_lightness (const QImage &chunk, int percentile,
 
 /*  Based on the set of rings of a cover, calculate their weights over
     the entire expressed buffer [0, 1] and return its overall lightness.
-    The returned magnitude is the overall value of L. 
+    The returned magnitude is the overall value of L.
     */
 double pondered_lightness (const cover_rings &rings);
 
-/*  Which ring covers the largest part of `rect`; rect is relative to the
-    top-left corner of `reference_surface`, nullopt if no ring covers a
-    visible part of the rect.
+/*  Divides `image` into s_rows x s_columns cells, takes the mean lightness of each,
+    blurs the grid like the backdrop is blurred on screen, and stores it as a
+    summed-area table. A null image yields an all-zero table with ratio {0, 0}.
     */
-[[nodiscard]] std::optional<lightness_types>
-dominant_ring_for_rect (const cover_rings &rings, transform::ratio cover_aspect,
-                        QRect rect, QSize reference_surface);
-
-/*  Divides `image` into s_rows x s_columns cells and stores the percentile
-    lightness of each one. Cell edges are rounded, but every pixel belongs to
-    at least one cell. A null image yields an all-zero table with ratio {0, 0}.
-    */
-lightness_table lightness_table_of_image (const QImage &image, int percentile);
+lightness_table lightness_table_of_image (const QImage &image);
 
 }
