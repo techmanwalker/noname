@@ -23,7 +23,7 @@ QtObject {
         // future continuation, and Background's point* cascade runs right behind it.
         // Re-evaluate once, from the event loop, when that has settled. callLater
         // coalesces repeated requests into one pass.
-        function onLightnessLevelsChanged () { root.invalidate() }
+        function onLightnessLevelsChanged () { Qt.callLater(root.invalidate) }
     }
 
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {

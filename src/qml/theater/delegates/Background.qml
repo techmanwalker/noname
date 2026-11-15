@@ -169,8 +169,8 @@ Item {
     DualKawaseBlur {
         id: blur
         anchors.fill: parent
-        maximumWidth: root.maximumWidth
-        maximumHeight: root.maximumHeight
+        maximumWidth: Screen.width
+        maximumHeight: Screen.height
         source: root.darken ? bgOverlay.outputSource : img
         passes: 4
         offset: 1.5

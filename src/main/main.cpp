@@ -45,7 +45,7 @@ main (int argc, char ** argv)
 {
     // main executable
     mallopt(M_MMAP_THRESHOLD, 128 * 1024);   // big buffers always mmap, so free() returns them to the OS
-    mallopt(M_ARENA_MAX, 2);
+    mallopt(M_ARENA_MAX, 16);
 
     QGuiApplication app(argc, argv);
 

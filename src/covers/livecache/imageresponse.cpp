@@ -33,7 +33,8 @@ void
 cover_resolve_task::run()
 {
     if (m_storage && !m_state->canceled.loadRelaxed()) {
-        m_state->image = m_storage->resolve_blocking(fromBase64Url(m_id), m_size);
+        m_state->image = m_storage->resolve_blocking(fromBase64Url(m_id), m_size,
+            [state = m_state.get()] { return state->canceled.loadRelaxed() != 0; });
     }
 
     // Hand off to the response's thread. The response is only dereferenced

@@ -134,8 +134,9 @@ cover_storage_LI::requestImageResponse(const QString &id, const QSize &requested
 QFuture<QImage>
 cover_storage_LI::resolve(const QUrl &media_source, const QSize &requestedSize)
 {
-    return QtConcurrent::task([this, media_source, requestedSize] {
-               return resolve_blocking(media_source, requestedSize);
+    return QtConcurrent::task([this, media_source, requestedSize](QPromise<QImage> &promise) {
+               promise.addResult(resolve_blocking(media_source, requestedSize,
+                                                 [&promise] { return promise.isCanceled(); }));
            })
         .onThreadPool(m_response_pool)
         .withPriority(next_priority())
@@ -194,7 +195,8 @@ void demote_this_thread()
 QImage
 cover_storage_LI::resolve_blocking (
     const QUrl &media_source,
-    const QSize &requestedSize)
+    const QSize &requestedSize,
+    const std::function<bool()> &stale)
 {
     demote_this_thread();
 
@@ -209,6 +211,8 @@ cover_storage_LI::resolve_blocking (
     const bool already_cached = !img.isNull();
 
     if (img.isNull()) img = lookup_disk(media_source, target);
+
+    if (img.isNull() && stale && stale()) return QImage();
     if (img.isNull()) img = lookup_source(media_source);
 
     if (img.isNull()) {
@@ -220,6 +224,7 @@ cover_storage_LI::resolve_blocking (
         // The center bit comes because crop_largest_aspect fits the largest centered N:M rect.
         // Skipped when the image already is exactly the requested size (every cache hit).
         if (img.size() != target) {
+            if (stale && stale()) return QImage();   // skips the resize and the store
             img = transform::crop_largest_aspect(img, target.width(), target.height());
             img = transform::lanczos_resize(img,
                                             static_cast<size_t>(target.width()),
