@@ -47,7 +47,7 @@ public:
     /*  Blocking resolution chain: memory cache -> disk cache -> decode from
     registered source. Called from a worker thread only
     (cover_image_response::run()) — never the GUI thread. */
-    // stale() true = nobody wants the result any more; checked before the expensive stages
+    // stale() true = nobody wants the result any more
     QImage resolve_blocking(const QUrl &media_source, const QSize &requestedSize,
                             const std::function<bool()> &stale = {});
 

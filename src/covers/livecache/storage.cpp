@@ -224,7 +224,6 @@ cover_storage_LI::resolve_blocking (
         // The center bit comes because crop_largest_aspect fits the largest centered N:M rect.
         // Skipped when the image already is exactly the requested size (every cache hit).
         if (img.size() != target) {
-            if (stale && stale()) return QImage();   // skips the resize and the store
             img = transform::crop_largest_aspect(img, target.width(), target.height());
             img = transform::lanczos_resize(img,
                                             static_cast<size_t>(target.width()),
