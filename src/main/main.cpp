@@ -93,7 +93,7 @@ main (int argc, char ** argv)
 
         cli.allow_extras();
 
-        
+
         using enum audio_backend;
 
         try {
@@ -116,7 +116,7 @@ main (int argc, char ** argv)
         }
     }
 
-    /*  
+    /*
         composition root: instantiate each component separately, in order.
     */
 
@@ -211,7 +211,7 @@ main (int argc, char ** argv)
     // create base engine
     QQmlApplicationEngine engine;
 
-    /* 
+    /*
         Give the QML engine its own proxy instance allocating a secondary wrapper.
         It will safely invoke 'delete' on this proxy without corrupting the heap
         or interfering with the 'covers' shared_ptr used by the C++ models.

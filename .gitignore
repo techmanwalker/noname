@@ -2,3 +2,5 @@
 .qtcreator
 build*
 *.qtd
+perf.data
+perf.data.old
