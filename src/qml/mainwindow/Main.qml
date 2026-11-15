@@ -36,7 +36,7 @@ T.ApplicationWindow {
         PlayerPresenter.saveVolume();
     }
 
-    readonly property bool typeToSearchAwaiting: 
+    readonly property bool typeToSearchAwaiting:
         activeView.currentIndex === 0 && // in browser
         searchBox.enabled &&             // can type
         !searchBox.activeFocus           // not focused
@@ -94,6 +94,18 @@ T.ApplicationWindow {
         sequences: Keyboard.bindings.seekForward
         enabled: root.transportKeys
         onActivated: PlayerPresenter.shortSeekForward()
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.prevTrack
+        enabled: root.transportKeys
+        onActivated: PlayerPresenter.prev()
+    }
+
+    Shortcut {
+        sequences: Keyboard.bindings.nextTrack
+        enabled: root.transportKeys
+        onActivated: PlayerPresenter.next()
     }
 
     Shortcut {
@@ -237,7 +249,7 @@ T.ApplicationWindow {
                 lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(backButtonBounds.bounds, bg, PlayerPresenter)
 
                 onClicked: {
-                    
+
                     if (activeView.currentIndex === 1) { // if we are in the player
                         stack_player.backButtonClicked_r()
                     } else {
@@ -256,8 +268,8 @@ T.ApplicationWindow {
                 }
 
                 DragHandler {
-                    target: null                
-                    
+                    target: null
+
                     onActiveChanged: {
                         if (active) {
                             root.startSystemMove();
@@ -317,7 +329,7 @@ T.ApplicationWindow {
 
             DragHandler {
                 target: null
-                
+
                 onActiveChanged: {
                     if (active) {
                         root.startSystemMove();
@@ -328,7 +340,7 @@ T.ApplicationWindow {
 
         Row {
             Layout.alignment: Qt.AlignVCenter
-            
+
             WindowDecorations {
                 id: windex
                 window: root

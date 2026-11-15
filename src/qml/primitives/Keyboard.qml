@@ -14,7 +14,9 @@ QtObject {
         togglePlayPause: ["Space"],
         raiseVolume:     ["Up"],
         lowerVolume:     ["Down"],
-        muteVolume:      ["M"]
+        muteVolume:      ["M"],
+        prevTrack:       ["Ctrl+Left"],
+        nextTrack:       ["Ctrl+Right"]
     })
 
     // A chord carrying any of these is a shortcut, never text. Shift is
