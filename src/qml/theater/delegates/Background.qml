@@ -147,6 +147,7 @@ Item {
         source: root.source
         fillMode: Image.PreserveAspectCrop
         visible: false
+        sourceSize: Qt.size(512, 512)
 
         mipmap: true
     }
