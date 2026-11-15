@@ -105,7 +105,7 @@ Row {
         PlaybackControls {
             id: controls
 
-            lightMode: Light.lightModeForBounds(controlsBounds.bounds, root.background, PlayerPresenter)
+            lightMode: Light.lightModeWithPrior(controlsBounds.bounds, root.background, PlayerPresenter, metadataContainer.lightMode)
 
             visible: !root.immersive || leftCol_hover.hovered
 
@@ -185,7 +185,7 @@ Row {
                 Layout.leftMargin: metadataContainer.Layout.leftMargin
                                    - (tabButtons.count > 0 ? tabButtons.itemAt(0).leftPadding : 0)
 
-                property bool lightMode: Light.lightModeForBounds(queueAndMetadataTabsBounds.bounds, root.background, PlayerPresenter)
+                property bool lightMode: Light.lightModeWithPrior(queueAndMetadataTabsBounds.bounds, root.background, PlayerPresenter, metadataContainer.lightMode)
 
                 Repeater {
                     id: tabButtons
@@ -319,7 +319,7 @@ Row {
                                 Math.min(queueAndMetadata_c.contentHeight, queueAndMetadata_c.height)
                             )
 
-                        lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                        lightMode: Light.lightModeWithPrior(globalBounds, root.background, PlayerPresenter, metadataContainer.lightMode)
 
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 
@@ -362,7 +362,7 @@ Row {
 
                         model: root.stateModel.currentTrack
 
-                        lightMode: Light.lightModeForBounds(queueAndMetadata_dBounds.bounds, root.background, PlayerPresenter)
+                        lightMode: Light.lightModeWithPrior(queueAndMetadata_dBounds.bounds, root.background, PlayerPresenter, metadataContainer.lightMode)
 
                         spacing: 10
                     }

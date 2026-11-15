@@ -13,9 +13,6 @@ QtObject {
 
     function invalidate () { root.epoch++; }
 
-    // Backdrop lightness above which dark glyphs read better. Calibrated on rendered pixels.
-    readonly property real darkGlyphThreshold: 0.5
-
     property Connections presenterSignals: Connections {
         target: PlayerPresenter
 
@@ -26,17 +23,19 @@ QtObject {
         function onLightnessLevelsChanged () { Qt.callLater(root.invalidate) }
     }
 
-    function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
-        // Subscribe to the epoch. Tracking only covers what evaluation reaches: an operand
-        // that short-circuits is itself tracked, so flipping it re-runs this and reaches the
-        // rest. What must hold is that the epoch is read before the first untracked read
-        // (backdropLightnessForRect). A void root.epoch sentence is completely inert,
-        // hence the comparison, so the read is not dead code.
+    // Backdrop lightness above which dark glyphs read better. Calibrated on rendered pixels.
+    readonly property real darkGlyphThreshold: 0.5
+    // inside ±margin neither polarity is clearly better, so follow the neighbours
+    readonly property real ambiguityMargin: 0.08
+
+    // multiplied backdrop lightness under bounds
+    function backdropLightness (bounds: rect, background: Background, presenter: PlayerPresenter) : real {
+        // Subscribe to the epoch.
         // Not ready: no cover on screen yet, so the backdrop is black. Dark by default.
-        if (!presenter.lightnessAwareness || root.epoch < 0 || !background.ready) return false;
+        if (!presenter.lightnessAwareness || root.epoch < 0 || !background.ready) return NaN;
 
         // dark by default
-        if (bounds.width === 0 || bounds.height === 0) return false;
+        if (bounds.width === 0 || bounds.height === 0) return NaN;
 
         // qmlsc won't read a rect parameter, or pass it to a method, once any
         // method call has happened. Copy the scalars out first and hand each
@@ -46,21 +45,33 @@ QtObject {
         // use the multiplier values background uses
         let multiplier = background.lightnessMultiplierAtCenter (Qt.rect(x, y, w, h));
 
-        const l = presenter.backdropLightnessForRect(Qt.rect(x, y, w, h)) * multiplier;
-        const did_pick_light = l > root.darkGlyphThreshold;
+        return presenter.backdropLightnessForRect(Qt.rect(x, y, w, h)) * multiplier;
+    }
+
+    function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
+        const l = root.backdropLightness(bounds, background, presenter);
+
+        const did_pick_light = l > root.darkGlyphThreshold
 
         if (log_item_name && log_item_name !== "undefined") {
             console.log(
                 "Light mode for " + log_item_name + ":\n"
             +   "bounds: " + Qt.rect(x, y, w, h).toString() + "\n"
-            +   "multiplier: " + multiplier + "\n"
             +   "multiplied backdrop L: " + l + "\n"
         //  +   "area ratio bounds/bg: " + bounds_background_ratio.toString() + "\n"
-            +   "light mode picked: " + (did_pick_light ? "light" : "dark")
+            +   "light mode picked: " + did_pick_light
 
             )
         }
 
-        return did_pick_light
+        return did_pick_light;      // NaN is false: white glyphs, as before
+    }
+
+    function lightModeWithPrior (bounds: rect, background: Background, presenter: PlayerPresenter, prior: bool) : bool {
+        const l = root.backdropLightness(bounds, background, presenter);
+        if (isNaN(l)) return false;
+        return Math.abs(l - root.darkGlyphThreshold) < root.ambiguityMargin
+            ? prior
+            : l > root.darkGlyphThreshold;
     }
 }
