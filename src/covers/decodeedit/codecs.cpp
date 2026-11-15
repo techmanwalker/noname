@@ -1,4 +1,7 @@
-#include "decodeedit/decode.hpp"
+#include "decodeedit/codecs.hpp"
+#include "decodeedit/pixelformats.hpp"
+
+#include "logging/l_coverprovider.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -9,15 +12,20 @@ extern "C" {
 #include <libavutil/mathematics.h>
 }
 
+#include <jxl/encode.h>
+#include <jxl/encode_cxx.h>
+#include <jxl/decode.h>
+#include <jxl/decode_cxx.h>
+#include <jxl/resizable_parallel_runner_cxx.h>
+
+#include <QFile>
 #include <QImage>
 
 #include <algorithm>
 #include <cstring>
 #include <memory>
 
-#include "decodeedit/pixelformats.hpp"
-
-namespace covers::decode {
+namespace covers::codecs {
 
 struct BufferData {
     const uint8_t *ptr;
@@ -225,14 +233,14 @@ decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format)
     // avformat_open_input takes ownership and frees the context on failure.
     // Relinquish ownership explicitly beforehand.
     AVFormatContext *raw_fmt = fmt_ctx.release();
-    
+
     if (avformat_open_input(&raw_fmt, nullptr, nullptr, nullptr) < 0) {
         if (raw_fmt) {                   // very old FFmpeg kept it allocated
             avformat_free_context(raw_fmt);
         }
         return {};
     }
-    
+
     // Re-acquire ownership on success so AVFormatCtxDeleter manages it safely
     fmt_ctx.reset(raw_fmt);
 
@@ -403,5 +411,243 @@ decode_video_frame_at_fraction (const QString &local_path, double fraction,
     return {};
 }
 
+QImage
+read_jpegxl(const QString &path)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        /*
+        qCWarning(l_coverprovider) << "failed to open thumbnail" << path
+                                << file.errorString();
+                                */
+        return QImage();
+    }
 
-} // namespace covers::decode
+    const QByteArray compressed = file.readAll();
+    if (compressed.isEmpty()) {
+        qCWarning(l_coverprovider) << "empty JPEG XL file" << path;
+        return QImage();
+    }
+
+    auto dec = JxlDecoderMake(nullptr);
+    if (!dec) {
+        qCWarning(l_coverprovider) << "failed to create JxlDecoder for" << path;
+        return QImage();
+    }
+
+    auto runner = JxlResizableParallelRunnerMake(nullptr);
+    if (JXL_DEC_SUCCESS != JxlDecoderSetParallelRunner(dec.get(),
+            JxlResizableParallelRunner, runner.get()))
+    {
+        qCWarning(l_coverprovider) << "failed to set decoder parallel runner" << path;
+        return QImage();
+    }
+
+    if (JXL_DEC_SUCCESS != JxlDecoderSubscribeEvents(dec.get(),
+            JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE))
+    {
+        qCWarning(l_coverprovider) << "JxlDecoderSubscribeEvents failed" << path;
+        return QImage();
+    }
+
+    JxlDecoderSetInput(dec.get(),
+                        reinterpret_cast<const uint8_t*>(compressed.constData()),
+                        size_t(compressed.size()));
+    JxlDecoderCloseInput(dec.get());
+
+    JxlBasicInfo info;
+    JxlPixelFormat format = {4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0};
+
+    std::vector<uint8_t> pixels;
+    bool got_image = false;
+
+    for (;;) {
+        JxlDecoderStatus status = JxlDecoderProcessInput(dec.get());
+
+        if (status == JXL_DEC_ERROR) {
+            qCWarning(l_coverprovider) << "JPEG XL decoder error" << path;
+            return QImage();
+        }
+        if (status == JXL_DEC_NEED_MORE_INPUT) {
+            qCWarning(l_coverprovider) << "JPEG XL needs more input (truncated?)" << path;
+            return QImage();
+        }
+        if (status == JXL_DEC_BASIC_INFO) {
+            if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo(dec.get(), &info)) {
+                qCWarning(l_coverprovider) << "JxlDecoderGetBasicInfo failed" << path;
+                return QImage();
+            }
+            if (info.xsize == 0 || info.ysize == 0) {
+                qCWarning(l_coverprovider) << "invalid dimensions in" << path;
+                return QImage();
+            }
+        }
+        else if (status == JXL_DEC_NEED_IMAGE_OUT_BUFFER) {
+            size_t buffer_size = 0;
+            if (JXL_DEC_SUCCESS != JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
+                qCWarning(l_coverprovider) << "JxlDecoderImageOutBufferSize failed" << path;
+                return QImage();
+            }
+
+            pixels.resize(buffer_size);
+            if (JXL_DEC_SUCCESS != JxlDecoderSetImageOutBuffer(dec.get(), &format,
+                                                                pixels.data(), buffer_size))
+            {
+                qCWarning(l_coverprovider) << "JxlDecoderSetImageOutBuffer failed" << path;
+                return QImage();
+            }
+        }
+        else if (status == JXL_DEC_FULL_IMAGE) {
+            got_image = true;
+        }
+        else if (status == JXL_DEC_SUCCESS) {
+            break;
+        }
+    }
+
+    if (!got_image || pixels.empty()) {
+        qCWarning(l_coverprovider) << "no image decoded from" << path;
+        return QImage();
+    }
+
+    // Force deep copy
+    QImage image(pixels.data(),
+                    int(info.xsize), int(info.ysize),
+                    qsizetype(info.xsize) * 4,
+                    pixelformat_qimage);
+
+    return image.copy();
+}
+
+bool
+write_jpegxl(const QString &path, QImage image, QImage::Format format)
+{
+    if (image.isNull()) {
+        qCWarning(l_coverprovider) << "refusing to write a null thumbnail for " << path;
+        return false;
+    }
+
+    const QImage converted_buffer = image.format() == format
+        ? image
+        : image.convertToFormat(format);
+
+    const int width  = converted_buffer.width();
+    const int height = converted_buffer.height();
+    const size_t pixels = size_t(width) * size_t(height);
+    const size_t bytes  = pixels * 4;
+
+    // Tightly packed RGBA8888 buffer
+    const size_t row_bytes = size_t(width) * 4;
+    std::vector<uint8_t> packed(bytes);
+    for (int y = 0; y < height; ++y) {
+        std::memcpy(packed.data() + size_t(y) * row_bytes,
+                    converted_buffer.constScanLine(y),
+                    row_bytes);
+    }
+
+    auto enc = JxlEncoderMake(nullptr);
+    if (!enc) {
+        qCWarning(l_coverprovider) << "failed to create JxlEncoder for" << path;
+        return false;
+    }
+
+    auto runner = JxlResizableParallelRunnerMake(nullptr);
+    if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
+            JxlResizableParallelRunner, runner.get()))
+    {
+        qCWarning(l_coverprovider) << "failed to set parallel runner for" << path;
+        return false;
+    }
+
+    JxlBasicInfo basic_info;
+    JxlEncoderInitBasicInfo(&basic_info);
+    basic_info.xsize = width;
+    basic_info.ysize = height;
+    basic_info.bits_per_sample = 8;
+    basic_info.alpha_bits = 8;
+    basic_info.num_color_channels = 3;
+    basic_info.num_extra_channels = 1;          // alpha
+    basic_info.uses_original_profile = JXL_FALSE;
+
+    if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
+        qCWarning(l_coverprovider) << "JxlEncoderSetBasicInfo failed for" << path;
+        return false;
+    }
+
+    JxlColorEncoding color_encoding;
+    JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray=*/JXL_FALSE);
+    if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
+        qCWarning(l_coverprovider) << "JxlEncoderSetColorEncoding failed for" << path;
+        return false;
+    }
+
+    JxlEncoderFrameSettings *frame_settings = JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
+
+    // Requested settings
+    JxlEncoderSetFrameDistance(frame_settings, 1.0f);                 // distance = 1
+    JxlEncoderFrameSettingsSetOption(frame_settings,
+                                     JXL_ENC_FRAME_SETTING_EFFORT, 7); // effort = 7
+
+    JxlPixelFormat pixel_format = {
+        4,                      // num_channels (RGBA)
+        JXL_TYPE_UINT8,
+        JXL_NATIVE_ENDIAN,
+        0                       // align
+    };
+
+    if (JXL_ENC_SUCCESS != JxlEncoderAddImageFrame(frame_settings,
+                                                   &pixel_format,
+                                                   packed.data(),
+                                                   bytes))
+    {
+        qCWarning(l_coverprovider) << "JxlEncoderAddImageFrame failed for" << path;
+        return false;
+    }
+
+    JxlEncoderCloseInput(enc.get());
+
+    std::vector<uint8_t> compressed;
+    compressed.resize(size_t{64} * 1024);   // start with 64 KiB, grow as needed
+
+    uint8_t *next_out = compressed.data();
+    size_t avail_out = compressed.size();
+
+    JxlEncoderStatus status = JXL_ENC_NEED_MORE_OUTPUT;
+    while (status == JXL_ENC_NEED_MORE_OUTPUT) {
+        status = JxlEncoderProcessOutput(enc.get(), &next_out, &avail_out);
+
+        if (status == JXL_ENC_NEED_MORE_OUTPUT) {
+            size_t offset = next_out - compressed.data();
+            compressed.resize(compressed.size() * 2);
+            next_out = compressed.data() + offset;
+            avail_out = compressed.size() - offset;
+        }
+    }
+
+    if (status != JXL_ENC_SUCCESS) {
+        qCWarning(l_coverprovider) << "JxlEncoderProcessOutput failed for" << path;
+        return false;
+    }
+
+    compressed.resize(next_out - compressed.data());
+
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qCWarning(l_coverprovider) << "failed to open thumbnail for writing" << path
+                                << file.errorString();
+        return false;
+    }
+
+    if (file.write(reinterpret_cast<const char*>(compressed.data()),
+                   qint64(compressed.size())) != qint64(compressed.size()))
+    {
+        qCWarning(l_coverprovider) << "failed to write JPEG XL data" << path
+                                << file.errorString();
+        file.remove();
+        return false;
+    }
+
+    return true;
+}
+
+} // namespace covers::codecs

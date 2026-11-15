@@ -1,4 +1,4 @@
-#include "decodeedit/decode.hpp"
+#include "decodeedit/codecs.hpp"
 #include "decodeedit/transform.hpp"
 #include "decodeedit/pixelformats.hpp"
 #include <libswscale/swscale.h>
@@ -66,17 +66,17 @@ lanczos_resize(const QImage &image, size_t width, size_t height)
     if (image.isNull()) {
         return {};
     }
-    
+
     if (width == 0 || height == 0) {
         return image; // unspecified size = full res
     }
 
     const QImage src = image.convertToFormat(pixelformat_qimage);
-    
+
     const uint8_t *src_slices[1] = { src.constScanLine(0) };
     int src_strides[1] = { static_cast<int>(src.bytesPerLine()) };
 
-    return decode::sws_convert_to_qimage(src_slices, src_strides,
+    return codecs::sws_convert_to_qimage(src_slices, src_strides,
                                  src.width(), src.height(), av_format_for_qimage(pixelformat_qimage),
                                  static_cast<int>(width), static_cast<int>(height), SWS_LANCZOS,
                                  av_format_for_qimage(pixelformat_qimage), pixelformat_qimage);

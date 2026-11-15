@@ -1,4 +1,4 @@
-#include "decodeedit/decode.hpp"
+#include "decodeedit/codecs.hpp"
 #include "decodeedit/extract.hpp"
 #include "decodeedit/pixelformats.hpp"
 
@@ -30,9 +30,9 @@ extract_cover (TagLib::File *file)
     if (data.isEmpty()) {
         return QImage();
     }
-    QImage cover = decode::decode_cover_ffmpeg(
-        reinterpret_cast<const uchar*>(data.data()), 
-        data.size(), 
+    QImage cover = codecs::decode_cover_ffmpeg(
+        reinterpret_cast<const uchar*>(data.data()),
+        data.size(),
         pixelformat_qimage
     );
 
@@ -56,7 +56,7 @@ make_thumbnail (const QUrl &file)
         return {};
     }
 
-    return decode::decode_video_frame_at_fraction(
+    return codecs::decode_video_frame_at_fraction(
         file.toLocalFile(), thumbnail_position, pixelformat_qimage);
 }
 

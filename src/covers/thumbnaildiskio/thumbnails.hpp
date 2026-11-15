@@ -18,13 +18,15 @@ thumbnail_file_path (
     QSize target_size
 );
 
-bool 
+bool
 thumbnail_file_exists(
     const QUrl &media_source,
     QSize target_size
 );
 
 // whether the file in disk actually exists
+// resolve_blocking, which lives as a task or runnable, invokes this
+// size determines what thumbnail to look at
 [[nodiscard ("Useless decoding work.")]]
 QImage
 fetch_thumbnail (

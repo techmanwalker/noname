@@ -6,7 +6,7 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 }
 
-namespace covers::decode {
+namespace covers::codecs {
 
 // What the source's YUV values mean. The defaults (BT.601, full range) are the
 // JPEG/MJPEG case used by embedded covers; video callers pass the AVFrame's values.
@@ -31,5 +31,8 @@ QImage decode_video_frame_at_fraction(const QString &local_path, double fraction
                                       QImage::Format out_format);
 
 QImage decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format);
+
+QImage read_jpegxl  (const QString &path);
+bool   write_jpegxl (const QString &path, QImage image, QImage::Format format);
 
 }

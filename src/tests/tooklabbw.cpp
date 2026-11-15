@@ -3,7 +3,7 @@
 // Renders an image as the OkLab lightness of every pixel: decoded through the
 // covers ffmpeg tooling, written as a 16 bpc grayscale-in-RGB PNG.
 
-#include "decodeedit/decode.hpp"
+#include "decodeedit/codecs.hpp"
 #include "decodeedit/pixelformats.hpp"
 #include "presentation/lightness.hpp"
 
@@ -102,7 +102,7 @@ main (int argc, char *argv[])
     }
     const QByteArray bytes = file.readAll();
 
-    const QImage decoded = covers::decode::decode_cover_ffmpeg(
+    const QImage decoded = covers::codecs::decode_cover_ffmpeg(
         reinterpret_cast<const uchar *>(bytes.constData()),
         static_cast<size_t>(bytes.size()),
         pixelformat_qimage);

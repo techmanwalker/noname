@@ -79,11 +79,6 @@ cover_storage_LI::lookup_disk (const QUrl &media_source, const QSize &size)
 {
     QImage img = covers::disk::fetch_thumbnail(media_source, size);
 
-    // No thumbnail at this size: an original kept at full resolution ({0, 0}) can still be
-    // cropped and rescaled by the caller. For size == {0, 0} it would be the same probe.
-    if (img.isNull() && !size.isEmpty())
-        img = covers::disk::fetch_thumbnail(media_source, QSize(0, 0));
-
     if (!img.isNull())
         qCDebug(l_coverprovider) << "Stored/overwritten by reading from the thumbnails cache.";
 

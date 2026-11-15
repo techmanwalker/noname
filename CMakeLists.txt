@@ -782,7 +782,7 @@ if(PLAYER_BUILD_TESTS)
             covers
             CLI11::CLI11
             Qt6::Concurrent
-            FFmpeg::avutil # decode.hpp / pixelformats.hpp expose AVPixelFormat; covers links FFmpeg PRIVATE
+            FFmpeg::avutil # codecs.hpp / pixelformats.hpp expose AVPixelFormat; covers links FFmpeg PRIVATE
     )
 endif()
 
