@@ -27,12 +27,13 @@ QtObject {
     }
 
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
-        // Subscribe to the epoch. Must stay ABOVE every early return,
-        // since reads after a return are never tracked.
-        // A void root.epoch sentence is completely inert.
-        // Force the reading and the dependency registration
-        // preventing dead code elimination.
-        if (!presenter.lightnessAwareness ||root.epoch < 0) return false;
+        // Subscribe to the epoch. Tracking only covers what evaluation reaches: an operand
+        // that short-circuits is itself tracked, so flipping it re-runs this and reaches the
+        // rest. What must hold is that the epoch is read before the first untracked read
+        // (backdropLightnessForRect). A void root.epoch sentence is completely inert,
+        // hence the comparison, so the read is not dead code.
+        // Not ready: no cover on screen yet, so the backdrop is black. Dark by default.
+        if (!presenter.lightnessAwareness || root.epoch < 0 || !background.ready) return false;
 
         // dark by default
         if (bounds.width === 0 || bounds.height === 0) return false;

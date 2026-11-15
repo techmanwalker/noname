@@ -6,6 +6,9 @@ Item {
     id: root
     property url  source
 
+    // The provider has answered and the image is what the shader chain shows
+    readonly property bool ready: img.status === Image.Ready
+
     property real maximumWidth: Screen.width
     property real maximumHeight: Screen.height
 
@@ -22,7 +25,7 @@ Item {
 
     // Curve stops (ascending x), mapping contentLightness -> cover_back_l.
     // Both axes range 0 to 1. Non-monotonic (a hump, not an inverse);
-    // cover_back_l below walks these as a Catmull-Rom-style cubic 
+    // cover_back_l below walks these as a Catmull-Rom-style cubic
     // Hermite spline. Tune freely.
 
     property var coverBackLightnessStops: [
@@ -137,7 +140,7 @@ Item {
         // floor at 0. The overlay is bound to root.curve too, so they cannot drift.
         return Math.max(0, root.curveValue(root.curve, (left + right) / 2));
     }
-    
+
     Image {
         id: img
         anchors.fill: parent
