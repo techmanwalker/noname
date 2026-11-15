@@ -4,6 +4,7 @@
 #include <QString>
 #include <QUrl>
 
+#include <atomic>
 #include <memory>
 
 #include "decode/worker.hpp"
@@ -54,6 +55,7 @@ public:
 signals:
     void seeked();
     void load_failed(const QUrl &source, const QString &reason);   // a file could not be opened (load, or B at the gapless handoff)
+    void load_settled(bool loaded);   // a load() job finished, true = the decoder holds the file. Emitted from the decoder thread
     void boundary_hit();   // emitted by rt_event_pump (this thread): A's samples ended, B follows
     void tape_ran_out();   // emitted by rt_event_pump (this thread): A's samples ended, no B
 
@@ -71,6 +73,8 @@ private:
     struct SoundIoOutStream *m_outstream = nullptr;
 
     rt_event_pump *m_rt_pump = nullptr;
+
+    std::atomic<uint64_t> m_load_generation { 0 };   // load() calls so far: a job older than this is superseded
 };
 
 #include "logging/prettyerrors.tpp" // IWYU pragma: keep

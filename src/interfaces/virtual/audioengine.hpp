@@ -1,11 +1,12 @@
 #pragma once
 
+#include <QFuture>
 #include <QObject>
 #include <QUrl>
 #include <QtTypes>
 
 #include "interfaceid.hpp"
-#include "mediatypes.hpp" 
+#include "mediatypes.hpp"
 
 namespace Types {
     struct Song;
@@ -31,7 +32,7 @@ namespace Types {
 class audio_engine
 {
 
-public: 
+public:
     enum class playback_state {
         paused,
         playing,
@@ -47,15 +48,15 @@ public:
     virtual void seek_to(const quint64 position_ms) = 0;
     virtual void relative_seek (qint64 step_ms) = 0; // + advances, - goes back
     virtual void set_volume(quint8 volume_percent) = 0;
-    virtual void load(const QUrl &source) = 0;                // designates A
+    virtual QFuture<void> load(const QUrl &source) = 0;       // designates A
     virtual void prepare_next_track(const QUrl &source) = 0;  // designates B
     virtual void undo_prepare_next_track() = 0;               // drops B
 
     // no Types::Song below this point; the engine only sees sources
-    void load(const Types::Song &song)
+    QFuture<void> load (const Types::Song &song)
     {
-        if (!song.is_valid()) return;
-        load(song.source);
+        if (!song.is_valid()) return QtFuture::makeReadyVoidFuture();
+        return load(song.source);
     }
     void prepare_next_track(const Types::Song &song) { prepare_next_track(song.source); }
 

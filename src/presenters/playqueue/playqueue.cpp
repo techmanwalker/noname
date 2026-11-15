@@ -14,9 +14,9 @@
 
 Q_LOGGING_CATEGORY(l_playqueue, "playqueue")
 
-class PlayQueueLIPrivate 
+class PlayQueueLIPrivate
 {
-public: 
+public:
     sequence::State                state;
     std::shared_ptr<audio_engine>  ae;
     std::shared_ptr<PlaylistsList> pl;
@@ -59,7 +59,7 @@ PlayQueueLI::~PlayQueueLI() = default;
 
 QList<Types::Song>
 PlayQueueLI::items () const
-{ 
+{
     return sequence::items(m_d->state); // projected order
 }
 
@@ -83,7 +83,7 @@ PlayQueueLI::item_count () const
 
 void
 PlayQueueLI::clear ()
-{ 
+{
     sequence::clear(m_d->state);
 }
 
@@ -223,7 +223,7 @@ PlayQueueLI::set_playhead_(const QPersistentModelIndex &to)
 }
 
 void
-PlayQueueLI::move_playhead_(const QPersistentModelIndex &to)
+PlayQueueLI::move_playhead_(const QPersistentModelIndex &to, bool play_afterwards)
 {
     if (!to.isValid()) return;
 
@@ -240,7 +240,7 @@ PlayQueueLI::move_playhead_(const QPersistentModelIndex &to)
         "Attempted to move playhead, but the index pointed to an invalid position."
     );
 
-    m_d->ae->load(at_playhead);
+    QFuture<void> loaded = m_d->ae->load(at_playhead);
     set_playhead_(to);
 
 #ifndef QT_NO_DEBUG
@@ -249,6 +249,12 @@ PlayQueueLI::move_playhead_(const QPersistentModelIndex &to)
 #endif
 
     emit track_changed();
+
+    // wait for loaded, a newer load cancels this so a superseded request never starts playback
+    if (play_afterwards) {
+        loaded.then(this, [this] { m_d->ae->play(); });
+    }
+
     return;
 }
 
@@ -266,11 +272,7 @@ PlayQueueLI::switch_to(const Types::Song &song, bool play_afterwards)
     sequence::clear(m_d->state);
     sequence::batch_append(m_d->state, QList<Types::Song>{song});
 
-    move_playhead_(index(0, 0));
-
-    if (play_afterwards) {
-        m_d->ae->play();
-    }
+    move_playhead_(index(0, 0), play_afterwards);
 }
 
 bool
@@ -280,15 +282,12 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 
     if (song == playhead()) {
         if (play_afterwards) m_d->ae->play();
-        return true; 
+        return true;
     }
 
     return pointed_to(song, [this, song, play_afterwards](const Types::Song &prolly_song) -> bool {
-        move_playhead_(song);
-
-        if (play_afterwards) {
-            m_d->ae->play();
-        }
+        move_playhead_(song, play_afterwards);
+                return true;
 
         return true;
     });
@@ -329,7 +328,7 @@ PlayQueueLI::next ()
         // switch to first track
         return switch_to(0, true);
     };
-    
+
     const QPersistentModelIndex upcoming = successor_of(current);
     if (upcoming.isValid()) {
         return switch_to(upcoming, true);
@@ -343,7 +342,7 @@ bool
 PlayQueueLI::prev (bool play_afterwards)
 {
     int last_index = rowCount() - 1;
-    if (last_index < 0) return false; 
+    if (last_index < 0) return false;
 
     if (!playhead().isValid() || playhead().row() == 0) {
         return switch_to(index(last_index, 0));
@@ -354,7 +353,7 @@ PlayQueueLI::prev (bool play_afterwards)
 
 bool
 PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
-{   
+{
     // step back
     QUrl prolly_not_the_same_track = m_d->ae->current_track_source();
     prev();
@@ -415,9 +414,9 @@ void
 PlayQueueLI::handle_tape_ran_out()
 {
     qCDebug (l_mediasequences) << "The chain of preloaded songs has finished.";
-    
+
     if (!switch_to(successor_of(playhead()), true)) {
-        m_d->ae->pause(); 
+        m_d->ae->pause();
     }
 }
 

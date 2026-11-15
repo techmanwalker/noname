@@ -18,7 +18,11 @@ audio_engine_LI::audio_engine_LI(QObject *parent, audio_backend backend)
 
     connect(m_internal.get(), &audio_internal_controller::load_failed,
             this, &audio_engine_LI::load_failed);
-            
+
+    // emitted from the decoder thread, delivered here
+    connect(m_internal.get(), &audio_internal_controller::load_settled,
+            this, &audio_engine_LI::on_load_settled, Qt::QueuedConnection);
+
     /*  Explicit Qt::QueuedConnection, kept on purpose: these signals are emitted by
         rt_event_pump on the main thread (never from the RT callback), so thread safety no
         longer depends on it. Queued still defers the slots out of the pump's drain loop,
@@ -61,12 +65,17 @@ audio_engine_LI::stop()
     emit playback_state_changed();
 }
 
-void
+QFuture<void>
 audio_engine_LI::load(const QUrl &source)
 {
-    if (source.isEmpty()) return;
+    if (source.isEmpty()) return {};   // a default-constructed future is cancelled
 
     m_current_transaction_id++;
+
+    // before anything below can catch up on a hit of the old tape
+    m_load_promises.emplace_back();
+    m_load_promises.back().start();
+    QFuture<void> loaded = m_load_promises.back().future();
 
     // The decoder decides between rewind and reopen: it knows what is actually open
     m_internal->load(source);
@@ -75,6 +84,7 @@ audio_engine_LI::load(const QUrl &source)
     undo_prepare_next_track();
 
     emit track_changed();
+    return loaded;
 }
 
 void
@@ -98,7 +108,7 @@ audio_engine_LI::undo_prepare_next_track()
 void
 audio_engine_LI::unload()
 {
-    m_current_transaction_id++; 
+    m_current_transaction_id++;
     stop();
 
     m_track_A_source.clear();
@@ -152,7 +162,7 @@ quint8
 audio_engine_LI::current_volume() const
 {
     if (m_log_volume <= -std::numeric_limits<double>::infinity()) return 0;
-    
+
     double amplitude = std::pow(10.0, m_log_volume / 20.0);
     double volume_percent = std::cbrt(amplitude) * 100.0;
     return static_cast<quint8>(qRound(volume_percent));
@@ -199,10 +209,32 @@ audio_engine_LI::handle_track_changed()
     emit playback_state_changed();
 }
 
+void
+audio_engine_LI::on_load_settled(bool loaded)
+{
+    Q_ASSERT(!m_load_promises.empty());
+    if (m_load_promises.empty()) return;
+
+    QPromise<void> promise = std::move(m_load_promises.front());
+    m_load_promises.pop_front();
+
+    if (!loaded) promise.future().cancel();   // superseded, or the open failed (load_failed says why)
+    promise.finish();
+
+    // track_changed went out before the decoder was ready: state and position are only true now
+    if (m_load_promises.empty()) {
+        emit playback_state_changed();
+        emit seek_finished();
+    }
+}
+
 // To reactively trigger the changes signals
 void
 audio_engine_LI::on_boundary_hit()
 {
+    // the load in flight replaces this tape and resets the ring: a hit on the old one is moot
+    if (load_in_flight()) return;
+
     QUrl track_B_opened;
     if (m_internal->consume_boundary_hit(track_B_opened)) {
         // The decoder is the authority on what B really was, not what the engine prepared
@@ -229,13 +261,14 @@ audio_engine_LI::on_boundary_hit()
 void
 audio_engine_LI::on_tape_ran_out()
 {
+    if (load_in_flight()) return;   // same as on_boundary_hit
     emit tape_ran_out();
 }
 
 bool
 audio_engine_LI::catch_up_on_boundary_hit ()
 {
-    if (!m_internal->boundary_hit_pending()) return false;
+    if (load_in_flight() || !m_internal->boundary_hit_pending()) return false;
     on_boundary_hit();   // idempotent: the queued copy of this event becomes a no-op
     return true;
 }

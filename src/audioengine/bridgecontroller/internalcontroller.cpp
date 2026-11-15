@@ -131,7 +131,7 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
 
     m_decoder_worker->moveToThread(m_audio_decoding_thread);
 
-    connect(m_audio_decoding_thread, &QThread::started, 
+    connect(m_audio_decoding_thread, &QThread::started,
             m_decoder_worker, &audio_decode_worker::start_decoding);
 
     connect(m_decoder_worker, &audio_decode_worker::seeked,
@@ -139,7 +139,7 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
 
     connect(m_decoder_worker, &audio_decode_worker::song_load_failed,
             this, &audio_internal_controller::load_failed);
-            
+
     m_audio_decoding_thread->start();
 }
 
@@ -167,7 +167,7 @@ audio_internal_controller::~audio_internal_controller()
 
     m_audio_decoding_thread->quit();
     m_audio_decoding_thread->wait();
-    
+
     if (m_device) soundio_device_unref(m_device);
     if (m_soundio) soundio_destroy(m_soundio);
 }
@@ -183,18 +183,33 @@ audio_internal_controller::stop()
 {
     m_ring->set_paused(true);
     m_ring->cancel_blocking_push();
-    
+
     QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::clean, Qt::BlockingQueuedConnection);
-    
+
     m_ring->reset_cancel();
 }
 
 void
 audio_internal_controller::load(const QUrl &source)
 {
+    const uint64_t generation = m_load_generation.fetch_add(1, std::memory_order_acq_rel) + 1;
+
+    // frees a decoder blocked in push_blocking, or the job below would queue behind it
     m_ring->cancel_blocking_push();
-    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::load, Qt::BlockingQueuedConnection, source);
-    m_ring->reset_cancel();
+
+    QMetaObject::invokeMethod(m_decoder_worker, [this, source, generation] {
+        // A newer load is queued behind this one and resets the decoder and ring all the same: skip the open.
+        // The cancel flag stays up for it
+        if (generation != m_load_generation.load(std::memory_order_acquire)) {
+            emit load_settled(false);
+            return;
+        }
+
+        m_decoder_worker->load(source);   // clean/rewind left the ring empty
+        m_ring->reset_cancel();
+
+        emit load_settled(m_decoder_worker->is_song_loaded());
+    }, Qt::QueuedConnection);
 }
 
 void

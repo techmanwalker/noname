@@ -100,11 +100,11 @@ private:
 
     // what comes after `mine` in the order the user *sees*
     QPersistentModelIndex successor_of (const QPersistentModelIndex &mine) const;
-    
+
     QPersistentModelIndex m_playhead;
 
     void set_playhead_  (const QPersistentModelIndex &to); // leaves the engine intact
-    void move_playhead_ (const QPersistentModelIndex &to); // invokes ae->load
+    void move_playhead_ (const QPersistentModelIndex &to, bool play_afterwards); // invokes ae->load
     void invalidate_playhead_ ();
 
     std::unique_ptr<PlayQueueLIPrivate> m_d;

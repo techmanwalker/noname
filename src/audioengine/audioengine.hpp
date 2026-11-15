@@ -4,7 +4,11 @@
 
 #include "bridgecontroller/internalcontroller.hpp"
 
+#include <deque>
+
 #include <QLoggingCategory>
+#include <QPromise>
+#include <QFuture>
 
 enum class audio_backend;
 
@@ -37,7 +41,9 @@ public:
     using audio_engine::load;
     using audio_engine::prepare_next_track;
 
-    void load(const QUrl &source) override;
+    // Returns at once. A is set and track_changed is out before it returns; the future finishes when
+    // the decoder holds the file, and is cancelled if superseded by a newer load or the file failed to open
+    QFuture<void> load(const QUrl &source) override;
     void prepare_next_track(const QUrl &source) override;
     void undo_prepare_next_track() override;
 
@@ -69,6 +75,7 @@ signals:
 
 public slots:
     void handle_track_changed();
+    void on_load_settled(bool loaded);
 
 private:
     std::unique_ptr<audio_internal_controller> m_internal;
@@ -82,4 +89,8 @@ private:
     // The RT thread already hit the boundary but on_boundary_hit() has not run yet (it is queued):
     // run it now. true = it ran, so the request being served was issued against an A that is gone.
     bool catch_up_on_boundary_hit ();
+
+    // One per load() in flight, settled in issue order (the decoder runs them FIFO)
+    std::deque<QPromise<void>> m_load_promises;
+    bool load_in_flight () const { return !m_load_promises.empty(); }
 };
