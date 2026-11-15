@@ -118,7 +118,7 @@ ListView {
     // owner adds or removes header/footer space) before it scrolls.
     onAutoscrollEnabledChanged: cooldownTimer.restart()
 
-    onFocusIndexChanged: autoscroll()
+    onFocusIndexChanged: Qt.callLater(autoscroll)
 
     Component.onCompleted: Qt.callLater(autoscroll)
 }
