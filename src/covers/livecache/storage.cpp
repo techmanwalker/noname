@@ -10,17 +10,19 @@
 
 #include <QtConcurrent/QtConcurrent>
 
+#include <sys/resource.h>
+
 namespace covers::live {
 
 
 cover_storage_LI::cover_storage_LI()
     : QQuickAsyncImageProvider()
 {
-    // You MUST increase this total budget. 96 is not enough to prevent 
+    // You MUST increase this total budget. 96 is not enough to prevent
     // thrashing during scrolling. Let's allocate enough for ~1000 thumbnails.
     static const qsizetype thumbnail_cost = QImage(
-        default_cover_thumbnail_size, 
-        default_cover_thumbnail_size, 
+        default_cover_thumbnail_size,
+        default_cover_thumbnail_size,
         pixelformat_qimage
     ).sizeInBytes();
 
@@ -32,9 +34,9 @@ cover_storage_LI::cover_storage_LI()
         shard->cache.setMaxCost(budget_per_shard);
     }
 
-    m_response_pool.setMaxThreadCount(QThread::idealThreadCount());
+    // leave cores for the GUI, render, decoder and RT threads
+    m_response_pool.setMaxThreadCount(std::max(2, QThread::idealThreadCount() / 2));
     m_response_pool.setExpiryTimeout(30000);
-    m_response_pool.setThreadPriority(QThread::Priority::LowPriority);
 }
 
 cover_storage_LI::~cover_storage_LI ()
@@ -123,7 +125,8 @@ cover_storage_LI::requestImageResponse(const QString &id, const QSize &requested
 
     m_response_pool.start(new cover_resolve_task(
         !disabled ? this : nullptr, id.toUtf8(), requestedSize,
-        state, QPointer<cover_image_response>(response), std::move(mailbox)));
+        state, QPointer<cover_image_response>(response), std::move(mailbox)),
+        next_priority());
 
     return response;
 }
@@ -131,9 +134,12 @@ cover_storage_LI::requestImageResponse(const QString &id, const QSize &requested
 QFuture<QImage>
 cover_storage_LI::resolve(const QUrl &media_source, const QSize &requestedSize)
 {
-    return QtConcurrent::run(&m_response_pool, [this, media_source, requestedSize]() {
-        return resolve_blocking(media_source, requestedSize);
-    });
+    return QtConcurrent::task([this, media_source, requestedSize] {
+               return resolve_blocking(media_source, requestedSize);
+           })
+        .onThreadPool(m_response_pool)
+        .withPriority(next_priority())
+        .spawn();
 }
 
 // store for whatever size cover_from_metadata is
@@ -145,7 +151,7 @@ cover_storage_LI::store (
 )
 {
     if (disabled) return false;
-    
+
     if (!cover_from_metadata.canConvert<QImage>()) {
         return false;
     }
@@ -175,12 +181,23 @@ cover_storage_LI::store (
     return true;
 }
 
+namespace {
+// pool threads outlive tasks: demote each one once
+void demote_this_thread()
+{
+    thread_local const bool done = [] { setpriority(PRIO_PROCESS, 0, 19); return true; }();
+    (void) done;
+}
+}
+
+
 QImage
 cover_storage_LI::resolve_blocking (
     const QUrl &media_source,
-    const QSize &requestedSize
-)
+    const QSize &requestedSize)
 {
+    demote_this_thread();
+
     if (media_source.isEmpty()) return QImage();
 
     // No usable size (invalid, or 0 on a side) means full resolution, spelled {0, 0} from here on

@@ -84,6 +84,17 @@ double PlayerPresenterLI::cover_pondered_lightness() const { return m_cover_pond
 bool PlayerPresenterLI::lightness_awareness() const { return m_lightness_awareness; }
 void PlayerPresenterLI::set_lightness_awareness_enabled(bool enabled) { m_lightness_awareness = enabled; emit lightness_awareness_changed(); }
 
+namespace {
+
+// wrrapper
+struct luma_computation_results {
+    covers::lightness::cover_rings     rings {};
+    covers::lightness::lightness_table table {};
+    double                             pondered_lightness {};
+};
+
+}
+
 QFuture<void>
 PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source)
 {
@@ -96,10 +107,7 @@ PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source
 
     m_lightness_values_future = cp->resolve(backdrop_source.source, {256, 256});
 
-    return m_lightness_values_future.then(this, [this, epoch](QImage thumbnail) {
-        // A newer recompute_lightness_levels() was issued while this one was in flight.
-        if (epoch != m_lightness_values_epoch) { return; }
-
+    return m_lightness_values_future.then([epoch](QImage thumbnail) {
         using namespace covers::lightness;
         using enum lightness_types;
 
@@ -108,8 +116,6 @@ PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source
         ring_of(rings, centric) = percentile_lightness(thumbnail, 60, 0.15, 0.60);
         ring_of(rings, midring) = percentile_lightness(thumbnail, 60, 0.60, 0.80);
         ring_of(rings, borders) = percentile_lightness(thumbnail, 70, 0.80, 1.00);
-
-        double cover_pondered_lightness = covers::lightness::pondered_lightness(rings);
 
         /*
         constexpr double precision = 17;
@@ -124,13 +130,17 @@ PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source
         qCDebug(l_playerpresenter) << "pondered cover lightness: " << QString::number(cover_pondered_lightness, 'f', precision);
         */
 
-        // Reccheck once more befor writing to memory
+        return luma_computation_results {
+            .rings=rings,
+            .table=covers::lightness::lightness_table_of_image(thumbnail),
+            .pondered_lightness=covers::lightness::pondered_lightness(rings)
+        };
+    }).then(this, [this, epoch](luma_computation_results results) {
         if (epoch != m_lightness_values_epoch) { return; }
 
-        m_cover_lightness_rings = rings;
-        m_cover_lightness_table = covers::lightness::lightness_table_of_image(thumbnail);
-
-        m_cover_pondered_lightness = cover_pondered_lightness;
+        m_cover_lightness_rings    = results.rings;
+        m_cover_lightness_table    = results.table;
+        m_cover_pondered_lightness = results.pondered_lightness;
 
         emit lightness_levels_changed();
     });

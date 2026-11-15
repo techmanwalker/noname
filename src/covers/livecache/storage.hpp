@@ -9,6 +9,8 @@
 #include <QReadWriteLock>
 #include <QRunnable>
 #include <QThreadPool>
+
+#include <atomic>
 #include <memory>
 
 #include "virtual/coverstorage.hpp"
@@ -26,7 +28,7 @@ struct cache_shard {
 // Enables loading embedded thumbnails to memory.
 class cover_storage_LI : public QQuickAsyncImageProvider, public cover_storage
 {
-    
+
 public:
     // Initialize indicating that this provider provides QImage objects
     cover_storage_LI();
@@ -68,6 +70,10 @@ private:
     std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;
 
     QThreadPool m_response_pool; // dedicated so cover decoding never queues behind (or blocks) song_factory's metadata scan
+
+    // later request = higher priority: the newest track's covers run first, stale ones sink
+    std::atomic<int> m_request_seq { 0 };
+    int next_priority() { return m_request_seq.fetch_add(1, std::memory_order_relaxed); }
 };
 
 }

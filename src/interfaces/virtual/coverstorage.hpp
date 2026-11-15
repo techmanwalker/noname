@@ -4,7 +4,6 @@
 #include <QImage>
 
 class cover_storage {
-
 public:
     virtual ~cover_storage () = default;
 
