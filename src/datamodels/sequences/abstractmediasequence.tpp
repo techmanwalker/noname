@@ -37,7 +37,7 @@ AbstractMediaSequence::items_of_types () const
 
 
 template <media_type T>
-QList<T> 
+QList<T>
 AbstractMediaSequence::items () const
 {
     auto [list] = items_of_types<T>();
@@ -54,9 +54,9 @@ AbstractMediaSequence::sources (const container &items)
     uri_sources.reserve(std::ranges::distance(items));
 
     for (const auto &item : items) {
-        std::visit([&uri_sources](const auto &resolved_item) { 
+        std::visit([&uri_sources](const auto &resolved_item) {
             using T = std::decay_t<decltype(resolved_item)>;
-            
+
             if constexpr (std::is_same_v<T, Types::Song>) {
                 uri_sources.append(resolved_item.source.toLocalFile());
             }
@@ -67,7 +67,7 @@ AbstractMediaSequence::sources (const container &items)
 }
 
 template <typename MediaType, typename FieldType>
-QPersistentModelIndex 
+QPersistentModelIndex
 AbstractMediaSequence::find(FieldType MediaType::* member, const FieldType &needle) const
 {
     QReadLocker locker (&_lock());
@@ -90,7 +90,7 @@ template <media_sequence container>
 QList<QPersistentModelIndex>
 AbstractMediaSequence::batch_append(container items)
 {
-       
+
     if (items.empty()) return {};
 
     std::vector<Types::Any> valid_items;
@@ -121,7 +121,7 @@ AbstractMediaSequence::batch_append(container items)
     }
     endInsertRows();
 
-    QList<QPersistentModelIndex> indices; 
+    QList<QPersistentModelIndex> indices;
     indices.reserve(valid_items.size());
     for (int r = first_row; r <= last_row; ++r) {
         indices.emplace_back(index(r));
@@ -169,7 +169,7 @@ AbstractMediaSequence::pointed_to(const QPersistentModelIndex &idx, std::invocab
         } else {
             return callback(underlying_variant);
         }
-    } 
+    }
     // b: T is an alternative for Types::Any
     else {
         if (!std::holds_alternative<base_t>(underlying_variant)) return false;
@@ -185,4 +185,22 @@ AbstractMediaSequence::pointed_to(const QPersistentModelIndex &idx, std::invocab
             return callback(std::forward<decltype(extracted_value)>(extracted_value));
         }
     }
+}
+
+template <media_type T, sortable_field F>
+void
+AbstractMediaSequence::sort_by (F T::* field, bool descending)
+{
+    sort_rows([field](const Types::Any &item) -> std::optional<SortKey> {
+        const T *typed = std::get_if<T>(&item);
+        if (!typed) return std::nullopt;
+
+        if constexpr (std::is_convertible_v<F, QString>) {
+            return QString(typed->*field);
+        } else {
+            static_assert(std::is_integral_v<F>, "sort_by: unsupported field type");
+            if constexpr (std::is_signed_v<F>)           return qint64(typed->*field);
+            else                                         return quint64(typed->*field);
+        }
+    }, descending);
 }

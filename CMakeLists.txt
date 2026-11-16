@@ -69,7 +69,6 @@ endfunction()
 ## C++ sources
 module_sources(MEDIATYPES_SOURCES       "src/datamodels/mediatypes/*.cpp")
 module_sources(MEDIASEQUENCES_SOURCES   "src/datamodels/sequences/*.cpp")
-module_sources(MEDIATRANSFORMS_SOURCES  "src/transforms/media/*.cpp")
 module_sources(LYRICSMANIFEST_SOURCES   "src/presenters/lyrics/*.cpp")
 module_sources(PLAYERPRESENTER_SOURCES  "src/presenters/playerpresenter/*.cpp")
 module_sources(PLAYQUEUE_SOURCES        "src/presenters/playqueue/*.cpp")
@@ -81,6 +80,9 @@ module_sources(DEBUGTOOLS_SOURCES       "src/debug/*.cpp")
 module_sources(CONFIGURATION_SOURCES    "src/configuration/*.cpp")
 module_sources(DISKIO_SOURCES           "src/diskio/*.cpp")
 module_sources(SONGFACTORY_SOURCES      "src/ingest/songfactory/*.cpp")
+module_sources(MEDIAFILTER_SOURCES      "src/transforms/filter/*.cpp")
+module_sources(MEDIASORT_SOURCES        "src/transforms/sort/*.cpp")
+module_sources(MEDIASHUFFLE_SOURCES     "src/transforms/shuffle/*.cpp")
 
 ## QML files
 
@@ -151,12 +153,11 @@ target_link_libraries(mediasequences
     PUBLIC
         mediatypes
 
-
-
     PRIVATE
         Qt6::Core
-
         rolecompiler
+
+        mediasort
 
         locallibrary_in # for the shortcut in mediafilter_in
 )
@@ -166,37 +167,38 @@ target_include_directories(mediasequences
         src/datamodels/sequences # to make qmltyperegistrar happy
 )
 
-qt_add_qml_module (mediatransforms
+# --- Filters and transforms of media sequences
+
+qt_add_qml_module (mediafilter
     STATIC
-    URI Player.MediaTransforms
-    DEPENDENCIES
-        Player.MediaTypes # search_results.items won't stop lint fail without this
+    URI Player.MediaFilter
     SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/virtual/mediafilter.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/interfaces/qmlproxies/mediafilterproxy.hpp"
-        ${MEDIATRANSFORMS_SOURCES}
+        ${MEDIAFILTER_SOURCES}
     OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaTransforms"
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaFilter"
 )
 
-target_link_libraries(mediatransforms
+target_link_libraries(mediafilter
     PUBLIC
         mediafilter_in
         mediatypes
 
     PRIVATE
-        mediasequences
-
         locallibrary_in
+
+        mediatransformslogging
+        mediasequences
+        mediasort
 
         Qt6::Core
         Qt6::QmlIntegration
-
 )
 
-target_include_directories(mediatransforms
+target_include_directories(mediafilter
     PUBLIC
-        src/transforms/media
+        src/transforms/filter
     PRIVATE
         src/interfaces/qmlproxies # registrar resolves proxy headers by bare name
 )
@@ -204,6 +206,56 @@ target_include_directories(mediatransforms
 add_library(mediafilter_in INTERFACE)
 target_include_directories(mediafilter_in INTERFACE src/interfaces)
 target_link_libraries(mediafilter_in INTERFACE Qt6::Core mediatypes)
+
+qt_add_qml_module (mediasort
+    STATIC
+    URI Player.MediaSort
+    SOURCES
+        ${MEDIASORT_SOURCES}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaSort"
+)
+
+target_link_libraries(mediasort
+    PUBLIC
+        mediatypes
+
+    PRIVATE
+        Qt6::Core
+        Qt6::QmlIntegration
+)
+
+target_include_directories(mediasort
+    PUBLIC
+        src/transforms/sort
+)
+
+qt_add_qml_module (mediashuffle
+    STATIC
+    URI Player.MediaShuffle
+    SOURCES
+        ${MEDIASHUFFLE_SOURCES}
+    OUTPUT_DIRECTORY
+        "${CMAKE_CURRENT_BINARY_DIR}/Player/MediaShuffle"
+)
+
+target_link_libraries(mediashuffle
+    PUBLIC
+        mediatypes
+
+    PRIVATE
+        Qt6::Core
+        Qt6::QmlIntegration
+)
+
+target_include_directories(mediashuffle
+    PUBLIC
+        src/transforms/shuffle
+)
+
+add_library (mediatransformslogging STATIC src/transforms/logging/loggingcategory.cpp)
+target_link_libraries (mediatransformslogging PRIVATE Qt6::Core)
+target_include_directories (mediatransformslogging PUBLIC src/transforms/logging)
 
 # --- Pure I/O Tooling
 
@@ -504,9 +556,9 @@ target_link_libraries(playqueue
         audioengine_in # coordinates the progression and flow of the batch that's currently playing, controls what will play
 
         mediasequences
+        mediafilter
+        mediashuffle
         songfactory # qml can drop songs to the play queue graphically, needs to read them
-
-        mediatransforms
 
         rolecompiler
 )
@@ -704,7 +756,9 @@ target_link_libraries(${PROJECT_NAME}
         playqueue
         configuration
         mediatypes
-        mediatransforms
+        mediafilter
+        mediashuffle
+        mediasort
         rolecompiler
 
         covers # every executable that features its own cover storage will feature this

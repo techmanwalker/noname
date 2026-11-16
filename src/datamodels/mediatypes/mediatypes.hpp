@@ -53,7 +53,7 @@ namespace Types {
 
         bool is_valid () const;
 
-        bool operator==(const Song&) const = default; 
+        bool operator==(const Song&) const = default;
     };
 }
 
@@ -98,7 +98,7 @@ namespace Types {
     struct Directory : public base_media_container_ {
         Q_GADGET
         Q_PROPERTY(QString path MEMBER path)
-        
+
     public:
         QString path;
         bool is_valid () const;

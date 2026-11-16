@@ -2,9 +2,13 @@
 #include "rolecompiler.hpp" // Isolated completely to the implementation
 #include "mediatypes.hpp"
 
+#include "sort.hpp"
+
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <numeric>
+#include <vector>
 
 Q_LOGGING_CATEGORY(l_mediasequences, "mediasequences")
 
@@ -141,7 +145,7 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
     std::ranges::sort(indices, std::greater<size_t>());
     const auto dupes = std::ranges::unique(indices);
     indices.erase(dupes.begin(), dupes.end());
-    
+
     size_t i = 0;
     while (i < indices.size()) {
         size_t last_idx = indices[i];
@@ -154,7 +158,7 @@ AbstractMediaSequence::batch_remove(const QList<QPersistentModelIndex> &items)
         }
 
         beginRemoveRows(QModelIndex(), static_cast<int>(first_idx), static_cast<int>(last_idx));
-        
+
         {
             QWriteLocker locker (&m_d->m_lock);
             for (size_t k = i; k < j; ++k) {
@@ -179,6 +183,57 @@ AbstractMediaSequence::clear()
     }
     endResetModel();
     emit count_changed();
+}
+
+void
+AbstractMediaSequence::sort_rows (const SortProjection &project, bool descending)
+{
+    std::vector<qsizetype> new_row_of; // old row -> new row
+
+    emit layoutAboutToBeChanged();
+
+    {
+        QWriteLocker locker (&m_d->m_lock);
+        QList<Types::Any> &items = m_d->m_items;
+
+        std::vector<std::pair<qsizetype, SortKey>> keyed;
+        for (qsizetype row = 0; row < items.size(); ++row) {
+            if (std::optional<SortKey> key = project(items.at(row)))
+                keyed.emplace_back(row, std::move(*key));
+        }
+
+        // rows holding a sortable item: the only ones that get rewritten
+        std::vector<qsizetype> target_rows;
+        target_rows.reserve(keyed.size());
+        for (const auto &entry : keyed) target_rows.push_back(entry.first);
+
+        std::ranges::stable_sort(keyed, [descending](const auto &a, const auto &b) {
+            // one projection per call: both keys always hold the same alternative
+            return std::visit([&]<typename K>(const K &lhs) {
+                return MediaTransforms::field_less(lhs, std::get<K>(b.second), descending);
+            }, a.second);
+        });
+
+        new_row_of.resize(items.size());
+        std::iota(new_row_of.begin(), new_row_of.end(), qsizetype{0});
+
+        QList<Types::Any> reordered = items;
+        for (size_t i = 0; i < keyed.size(); ++i) {
+            reordered[target_rows[i]] = items.at(keyed[i].first);
+            new_row_of[keyed[i].first] = target_rows[i];
+        }
+        items = std::move(reordered);
+    }
+
+    // createIndex, not index(): index() takes the read lock via rowCount()
+    const QModelIndexList from = persistentIndexList();
+    QModelIndexList to;
+    to.reserve(from.size());
+    for (const QModelIndex &idx : from)
+        to.append(createIndex(static_cast<int>(new_row_of[idx.row()]), idx.column()));
+    changePersistentIndexList(from, to);
+
+    emit layoutChanged();
 }
 
 bool
@@ -259,7 +314,7 @@ QStringList
 AbstractMediaSequence::sources () const
 {
     QReadLocker locker (&m_d->m_lock);
-    
+
     // read sources for the private items list as is
     return sources<>(m_d->m_items);
 }

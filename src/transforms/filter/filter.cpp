@@ -1,9 +1,11 @@
-#include "filter.hpp"
 #include "abstractmediasequence.hpp"
-#include "virtual/mediafilter.hpp"
+#include "filter.hpp"
 #include "sort.hpp" // IWYU pragma: keep this provides prettifiers.tpp
 
+#include "virtual/mediafilter.hpp"
 #include "virtual/locallibrary.hpp" // IWYU pragma: keep for qobject_cast<LocalLibrary*>
+
+#include "l_mediatransforms.hpp"
 
 #include <QIdentityProxyModel>
 #include <QList>
@@ -16,7 +18,7 @@
 #include <unicode/utypes.h>
 
 // bridge icu and icu_<version> safely
-using namespace U_ICU_NAMESPACE; 
+using namespace U_ICU_NAMESPACE;
 
 class MediaFilterLIPrivate
 {
@@ -37,7 +39,7 @@ make_transliterator()
         "Any-Lower; Any-Latin; NFKD; [:Nonspacing Mark:] Remove", UTRANS_FORWARD, status));
 
     if (U_FAILURE(status) || !translit) {
-        qCWarning(l_mediasequences) << "ICU Transliterator failed to initialize:" << u_errorName(status);
+        qCWarning(l_mediatransforms) << "ICU Transliterator failed to initialize:" << u_errorName(status);
         return nullptr;
     }
     return translit;
@@ -46,12 +48,12 @@ make_transliterator()
 std::string
 nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> transliterator) {
     if (!transliterator) {
-        qCDebug(l_mediasequences) << "The transliterator pointer arrived nullptr. Returning original query.";
+        qCDebug(l_mediatransforms) << "The transliterator pointer arrived nullptr. Returning original query.";
         return input;
     }
     UnicodeString uText = UnicodeString::fromUTF8(input);
     transliterator->transliterate(uText);
-    
+
     std::string result;
     uText.toUTF8String(result);
     return result;
@@ -83,7 +85,7 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
 
     // Check if the passed object is our LocalLibrary singleton
     if (auto *localLib = qobject_cast<LocalLibrary*>(sourceModel)) {
-        
+
         all_songs = localLib->flattened(); // faster and dedicated
     } else if (auto *sourceSequence = qobject_cast<AbstractMediaSequence*>(sourceModel)) {
         // Filter its songs and traverse 1 level through its directories
@@ -92,17 +94,17 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
         auto [songs, directories] = sourceSequence->items_of_types<Types::Song, Types::Directory>();
 
         all_songs = std::move(songs);
-        
+
         for (const Types::Directory &dir : directories) {
             all_songs += dir.songs;
         }
     } else {
-        qCWarning(l_mediasequences) << "Invalid source model provided for search.";
+        qCWarning(l_mediatransforms) << "Invalid source model provided for search.";
         return {};
     }
 
     // Execute RapidFuzz search logic on 'all_songs' and return the list (...)
-    return search (query, all_songs); 
+    return search (query, all_songs);
 }
 
 search_response

@@ -15,7 +15,7 @@
 // Intended to end up showing in the Start page showing shortcuts to your favorite music.
 class PlaylistsListLI :
     public AbstractMediaSequence,
-    public BasicSequenceOps<PlaylistsListLI, Types::Playlist>, 
+    public BasicSequenceOps<PlaylistsListLI, Types::Playlist>,
     public PlaylistsList
 {
     Q_OBJECT
@@ -29,6 +29,7 @@ public:
     QList<Types::Playlist> items () const override;
 
     static QString file_path_by_name (const QString &name);
+    static QString name_by_file_path (const QString &path);
 
     bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Playlist &)> callback) override;
 

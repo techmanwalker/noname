@@ -21,7 +21,7 @@ class AbstractMediaSequencePrivate;
 template <typename Derived, typename T> class BasicSequenceOps; // typed facade, see basicsequenceops.hpp
 
 /**
-    @brief List of any form of playable media, enumerated in the Types:: namespace. 
+    @brief List of any form of playable media, enumerated in the Types:: namespace.
     This is not intended to be instantiated directly but rather to use one of the inherited classes.
 
     Inherited classes can restrict themselves to only hold 1 or more specified types and update
@@ -98,10 +98,14 @@ protected:
     // Returns false if either index is invalid, foreign to this model, or out of range.
     bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest);
 
+    // field: one of the struct members of T
+    template <media_type T, sortable_field F>
+    void sort_by (F T::* field, bool descending);
+
 private:
     // the typed facade is the only outsider allowed to reach the protected writers
     template <typename, typename> friend class BasicSequenceOps;
-    
+
     std::unique_ptr<AbstractMediaSequencePrivate> m_d;
 
     // Private reference bypasses to permit abstractmediasequence.tpp logic
@@ -114,9 +118,16 @@ private:
     std::optional<size_t> __row_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
     std::optional<std::reference_wrapper<Types::Any>>
                           __item_pointed_to_unlocked (const QPersistentModelIndex &idx) const;
-    
+
     template <typename... Ts> requires distinct_media_types<Ts...>
     std::tuple<QList<Ts>...> __items_of_types_unlocked () const;
+
+    // sort_by's type-erased core: sort.hpp stays an implementation detail of the .cpp
+    using SortKey        = std::variant<QString, qint64, quint64>;
+    using SortProjection = std::function<std::optional<SortKey>(const Types::Any &)>;
+
+    // nullopt from the projection: the item is not of the sorted type and keeps its row
+    void sort_rows (const SortProjection &project, bool descending);
 };
 
 #include "abstractmediasequence.tpp"

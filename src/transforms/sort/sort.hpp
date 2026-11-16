@@ -1,17 +1,15 @@
 #pragma once
 
 #include "mediatypes.hpp"
-#include <type_traits>
+#include "mediaconcepts.hpp"
 
 // Formatters, sorters, etc.
 
 namespace MediaTransforms {
+    template <sortable_field FieldType>
+    bool field_less (const FieldType &a, const FieldType &b, bool descending);
 
-    template <typename FieldType, media_type MediaType>
-    requires (
-        std::is_convertible_v<FieldType, QString>
-    ||  std::is_convertible_v<FieldType, quint64>
-    )
+    template <sortable_field FieldType, media_type MediaType>
     QList<MediaType> sort_by (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending = false);
 }
 

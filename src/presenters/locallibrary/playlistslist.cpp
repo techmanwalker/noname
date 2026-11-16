@@ -33,6 +33,13 @@ PlaylistsListLI::file_path_by_name(const QString &name)
     return directory().filePath(name);
 }
 
+QString
+PlaylistsListLI::name_by_file_path(const QString &path)
+{
+    return QFileInfo(path).fileName();
+}
+
+
 bool
 PlaylistsListLI::pointed_to(const QPersistentModelIndex &idx, std::function<bool (const Types::Playlist &)> callback)
 {
@@ -47,7 +54,7 @@ PlaylistsListLI::refresh ()
 
     // Every text file containing one path by line counts as a playlist
     QStringList playlist_files = diskio::list_dir(
-        directory().path(), 
+        directory().path(),
         true
     );
 
@@ -58,9 +65,9 @@ PlaylistsListLI::refresh ()
         const QStringList song_paths = diskio::read_lines(playlist_text).value_or({});
 
         pending.append(song_factory::batch_extract(
-            song_paths, 
+            song_paths,
             {
-                covers::default_cover_thumbnail_size, 
+                covers::default_cover_thumbnail_size,
                 true
             }
         ).then(this, [playlist_text, generation, this](QList<Types::Song> songs_of_playlist) {
@@ -78,7 +85,14 @@ PlaylistsListLI::refresh ()
     }
 
     // Finishes once every continuation above has run (or been cancelled).
-    return QtFuture::whenAll(pending.begin(), pending.end());
+    return QtFuture::whenAll(pending.begin(), pending.end()).then(this, [this, generation](QList<QFuture<void>> futures) -> void {
+        Q_UNUSED(futures)
+
+        if (generation != m_refresh_generation) return;
+
+        // sort at generation time
+        sort_by<Types::Playlist, QString> (&Types::Playlist::title, false);
+    });
 }
 
 QFuture<bool>
@@ -113,7 +127,7 @@ PlaylistsListLI::delete_playlists (const QStringList &names)
 
             for (const QString &name : names) {
                 if (!diskio::move_to_trash(file_path_by_name(name))) {
-                    qCDebug(l_locallibrary) << "Deleting playlist" << name << "failed."; 
+                    qCDebug(l_locallibrary) << "Deleting playlist" << name << "failed.";
                     all_succeeded = false;
                 }
             }

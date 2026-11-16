@@ -5,9 +5,15 @@
 #include "mediatypes.hpp"
 
 template <typename T>
-concept media_sequence = 
-    std::ranges::forward_range<T> && 
+concept media_sequence =
+    std::ranges::forward_range<T> &&
     media_type<typename T::value_type>;
+
+template <typename F>
+concept sortable_field =
+    std::is_convertible_v<F, QString>
+    ||  std::is_convertible_v<F, quint64>
+    ||  std::is_convertible_v<F, qint64>;
 
 template <typename... Ts>
 struct all_distinct : std::true_type {};

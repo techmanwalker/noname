@@ -6,7 +6,7 @@ import Player.Browser
 import Player.Listings
 import Player.LocalLibrary
 import Player.MediaTypes
-import Player.MediaTransforms
+import Player.MediaFilter
 import Player.PlayQueue
 import Player.Primitives
 

@@ -5,11 +5,20 @@
 
 namespace MediaTransforms {
 
-template <typename FieldType, media_type MediaType>
-requires (
-    std::is_convertible_v<FieldType, QString>
-||  std::is_convertible_v<FieldType, quint64>
-)
+template <sortable_field FieldType>
+bool
+field_less (const FieldType &a, const FieldType &b, bool descending)
+{
+    if constexpr (std::is_convertible_v<FieldType, QString>) {
+        // locale-aware compare, consistent with the "songs" role sort in defaultroles.hpp
+        const int cmp = a.localeAwareCompare(b);
+        return descending ? cmp > 0 : cmp < 0;
+    } else {
+        return descending ? a > b : a < b;
+    }
+}
+
+template <sortable_field FieldType, media_type MediaType>
 QList<MediaType>
 sort_by (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool descending)
 {
@@ -17,16 +26,7 @@ sort_by (FieldType MediaType::* member, QList<MediaType> list_to_sort, bool desc
 
     // sort in ascending or descending order depending on the FieldType
     std::ranges::sort(list_to_sort, [member, descending](const MediaType &a, const MediaType &b) {
-        const FieldType &field_a = a.*member;
-        const FieldType &field_b = b.*member;
-
-        if constexpr (std::is_convertible_v<FieldType, QString>) {
-            // locale-aware compare, consistent with the "songs" role sort in defaultroles.hpp
-            const int cmp = field_a.localeAwareCompare(field_b);
-            return descending ? cmp > 0 : cmp < 0;
-        } else {
-            return descending ? field_a > field_b : field_a < field_b;
-        }
+        return field_less(a.*member, b.*member, descending);
     });
 
     QList<MediaType> converted;
