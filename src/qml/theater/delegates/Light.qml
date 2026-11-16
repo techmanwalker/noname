@@ -24,9 +24,9 @@ QtObject {
     }
 
     // Backdrop lightness above which dark glyphs read better. Calibrated on rendered pixels.
-    readonly property real darkGlyphThreshold: 0.5
+    readonly property real darkGlyphThreshold: 0.59
     // inside ±margin neither polarity is clearly better, so follow the neighbours
-    readonly property real ambiguityMargin: 0.08
+    readonly property real ambiguityMargin: 0.06
 
     // multiplied backdrop lightness under bounds
     function backdropLightness (bounds: rect, background: Background, presenter: PlayerPresenter) : real {
@@ -56,7 +56,7 @@ QtObject {
         if (log_item_name && log_item_name !== "undefined") {
             console.log(
                 "Light mode for " + log_item_name + ":\n"
-            +   "bounds: " + Qt.rect(x, y, w, h).toString() + "\n"
+            +   "bounds: " + bounds.toString() + "\n"
             +   "multiplied backdrop L: " + l + "\n"
         //  +   "area ratio bounds/bg: " + bounds_background_ratio.toString() + "\n"
             +   "light mode picked: " + did_pick_light

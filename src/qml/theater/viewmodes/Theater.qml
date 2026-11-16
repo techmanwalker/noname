@@ -168,14 +168,8 @@ Row {
 
                 onClicked: root.immersive = !root.immersive
 
-                property rect globalBounds: ({
-                    x: metadataContainerBounds.x,
-                    y: metadataContainerBounds.y,
-                    width: metadataContainer.textContentWidth,
-                    height: metadataContainer.textContentHeight
-                })
-
-                lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+                // calculates its lightMode internally
+                background: root.background
             }
 
             Row {
@@ -184,8 +178,6 @@ Row {
                 visible: queueAndMetadata_s.visible && !queueAndMetadata_s.is_showing_no_tracks_placeholder
                 Layout.leftMargin: metadataContainer.Layout.leftMargin
                                    - (tabButtons.count > 0 ? tabButtons.itemAt(0).leftPadding : 0)
-
-                property bool lightMode: Light.lightModeWithPrior(queueAndMetadataTabsBounds.bounds, root.background, PlayerPresenter, metadataContainer.lightMode)
 
                 Repeater {
                     id: tabButtons
@@ -215,16 +207,11 @@ Row {
 
                         font.weight: queueAndMetadata_s.currentIndex === stackIndex ? Font.Medium : Font.Light
 
-                        lightMode: queueAndMetadataTabs.lightMode
+                        lightMode: metadataContainer.lightMode
 
                         onClicked: queueAndMetadata_s.currentIndex = stackIndex
                     }
                 }
-            }
-
-            SceneRect {
-                id: queueAndMetadataTabsBounds
-                target: queueAndMetadataTabs
             }
 
             // _s = "the stack"
@@ -382,11 +369,6 @@ Row {
             SceneRect {
                 id: queueAndMetadata_dBounds
                 target: queueAndMetadata_d
-            }
-
-            SceneRect {
-                id: metadataContainerBounds
-                target: metadataContainer
             }
         }
     } // rightCol_d
