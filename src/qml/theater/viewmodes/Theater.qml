@@ -299,14 +299,26 @@ Row {
 
                         playheadRowIdx: PlayQueue.playhead.row
 
-                        property rect globalBounds: Qt.rect(
+                        // metadata
+                        property rect leftGlobalBounds: Qt.rect(
                                 queueAndMetadata_cBounds.x + songCoverWidth,
                                 queueAndMetadata_cBounds.y,
                                 (queueAndMetadata_c.width / 2) - songCoverWidth, // 2nd half is mostly empty space
                                 Math.min(queueAndMetadata_c.contentHeight, queueAndMetadata_c.height)
                             )
 
-                        lightMode: Light.lightModeWithPrior(globalBounds, root.background, PlayerPresenter, metadataContainer.lightMode)
+                        property int estimateDurationLabelWidth: (Qt.application.font.pointSize * 4)
+
+                        // duration labels
+                        property rect rightGlobalBounds: Qt.rect(
+                                queueAndMetadata_cBounds.x + queueAndMetadata_c.width - (songLateralPadding * 2) - (estimateDurationLabelWidth),
+                                queueAndMetadata_cBounds.y,
+                                estimateDurationLabelWidth + songLateralPadding * 2,
+                                Math.min(queueAndMetadata_c.contentHeight, queueAndMetadata_c.height)
+                            )
+
+                        trackLeftLightMode:  Light.lightModeWithPrior(leftGlobalBounds, root.background, PlayerPresenter,  metadataContainer.lightMode)
+                        trackRightLightMode: Light.lightModeWithPrior(rightGlobalBounds, root.background, PlayerPresenter, metadataContainer.lightMode)
 
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 

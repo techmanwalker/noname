@@ -32,6 +32,8 @@ Item {
 
     // --- The governor picks the theming and sizes of the ghosts.
     property bool lightMode: false
+    property bool leftLightMode:  lightMode // only obeyed when in !cards mode
+    property bool rightLightMode: lightMode
     property real coverWidth:  cards ? Theme.sizes.cardCoverWidth  : Theme.sizes.rowTrackCoverWidth
     property real coverHeight: cards ? Theme.sizes.cardCoverHeight : Theme.sizes.rowTrackCoverHeight
 
@@ -144,10 +146,12 @@ Item {
 
                 card: root.cards
                 lightMode: root.lightMode
+                leftLightMode: !root.cards  ? root.leftLightMode  : root.lightMode
+                rightLightMode: !root.cards ? root.rightLightMode : root.lightMode
 
                 title: modelData.title
                 metadata: root.metadataOf(modelData)
-                
+
                 cover: modelData.cover
                 duration: modelData.duration_mmss
 

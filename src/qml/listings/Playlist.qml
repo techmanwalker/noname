@@ -13,6 +13,9 @@ AutoscrollListView {
 
     property bool lightMode: false
 
+    property bool trackLeftLightMode:  lightMode
+    property bool trackRightLightMode: lightMode
+
     property int playheadRowIdx: -1
 
     // The playing row rests below the top edge by 0.4x its own height
@@ -93,6 +96,9 @@ AutoscrollListView {
         acceptsDrop: rowMove.willMove
 
         lightMode: root.lightMode
+        leftLightMode:  root.trackLeftLightMode
+        rightLightMode: root.trackRightLightMode
+
         rowWidth: root.width - root.rightMargin
 
         coverWidth: root.songCoverWidth
@@ -115,7 +121,9 @@ AutoscrollListView {
 
         height: 80
 
-        lightMode: root.lightMode
+        lightMode:      root.lightMode
+        leftLightMode:  root.trackLeftLightMode
+        rightLightMode: root.trackRightLightMode
 
         // findBySource returns a different object from memory, hence comparing .row instead
         playing: playheadRowIdx >= 0 // qmllint disable
@@ -147,6 +155,6 @@ AutoscrollListView {
 
         policy: ScrollBar.AsNeeded
 
-        lightMode: root.lightMode
+        lightMode: root.trackRightLightMode
     }
 }

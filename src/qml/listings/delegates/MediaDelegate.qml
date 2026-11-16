@@ -9,8 +9,12 @@ Item {
     property bool card: false
     property bool lightMode: false
 
+    // for Row mode,ignored in Card mode
+    property bool leftLightMode:  lightMode // metadata
+    property bool rightLightMode: lightMode // duration
+
     property string title: qsTr("Untitled track")
-    
+
     property string metadata // printable metadata, its parent decides what the second line should contain
 
     property string duration // printable duration, ideally from <Song.duration_mmss>
@@ -79,7 +83,7 @@ Item {
     // right click
     TapHandler {
         acceptedButtons: Qt.RightButton
-        acceptedModifiers: Qt.NoModifier 
+        acceptedModifiers: Qt.NoModifier
         onTapped: root.rightClicked()
     }
 
@@ -107,7 +111,7 @@ Item {
         }
 
         Column {
-            Layout.fillWidth: true 
+            Layout.fillWidth: true
 
             Label {
                 id: firstLine
@@ -122,8 +126,8 @@ Item {
 
                 font.pointSize: root.card ? 14 : -1
                 font.weight: Font.Medium
-                
-                color: root.lightMode ? Theme.light.texts.secondaryText: Theme.dark.texts.secondaryText
+
+                color: (!root.card ? root.leftLightMode : root.lightMode) ? Theme.light.texts.secondaryText: Theme.dark.texts.secondaryText
             }
 
             Label {
@@ -139,7 +143,7 @@ Item {
 
                 visible: root.metadata !== ""
 
-                color: root.lightMode ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
+                color: (!root.card ? root.leftLightMode : root.lightMode) ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
             }
         }
 
@@ -150,7 +154,7 @@ Item {
 
             visible: !root.hideDuration
 
-            color: root.lightMode ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
+            color: (!root.card ? root.rightLightMode : root.lightMode) ? Theme.light.texts.tertiaryText: Theme.dark.texts.tertiaryText
 
             Layout.alignment: Qt.AlignBottom
         }
