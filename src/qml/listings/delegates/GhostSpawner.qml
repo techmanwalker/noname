@@ -202,7 +202,7 @@ Item {
         }
     }
 
-    // Only the default of cardWidth/cardHeight: the same card SongGrid sizes its cells with
+    // Only the default of cardWidth/cardHeight: the same card MediaGrid sizes its cells with
     TallestDummyCard {
         id: dummycard
         visible: false

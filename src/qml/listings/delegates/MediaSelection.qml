@@ -56,7 +56,7 @@ Item {
         menu.popup()
     }
 
-    SongContextMenu {
+    MediaContextMenu {
         id: menu
         selectedIndices: root.indices
 

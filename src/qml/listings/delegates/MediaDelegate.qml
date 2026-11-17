@@ -47,7 +47,7 @@ Item {
     signal ctrlClicked ();
     signal rightClicked ();
 
-    SongBackground {
+    MediaDelegateBackground {
         anchors.fill: parent
 
         playing: root.playing

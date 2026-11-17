@@ -35,7 +35,7 @@ ColumnLayout {
 
         text: fl_stack.currentIndex == 0 ? qsTr("Folders") : root.selectedDirectory.title;
     }
-    
+
     StackLayout {
         id: fl_stack
         Layout.fillWidth: true
@@ -101,7 +101,7 @@ ColumnLayout {
             }
         }
 
-        SongGrid {
+        MediaGrid {
             id: grid
             model: root.selectedDirectory.songs
 

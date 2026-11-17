@@ -5,7 +5,7 @@ import Player.Primitives
 // The press-and-hold drag gesture of a view's rows, carrying the view's selection. It owns
 // the gesture (arming, the Flickable lock, the pointer, the Esc cancel) and nothing about
 // what a release means: that is answered by whoever listens to released() (SingleRowMove
-// moves a lone row, SongGrid hands the tracks to a DropArea through a Drag).
+// moves a lone row, MediaGrid hands the tracks to a DropArea through a Drag).
 //
 // Per view, one SelectionDrag next to the view's MediaSelection. Per delegate, the two
 // handlers below, declared as direct children of the delegate root (as TapHandler and

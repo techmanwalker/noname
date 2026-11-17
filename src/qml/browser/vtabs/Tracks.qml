@@ -67,14 +67,14 @@ ColumnLayout {
         bottomPadding: 10
     }
 
-    // true while tracks are being dragged out of the grid (see SongGrid)
+    // true while tracks are being dragged out of the grid (see MediaGrid)
     readonly property alias isDragging: grid.isDragging
     readonly property alias isCarrying: grid.isCarrying
 
     // what the drag of tracks is tagged with, for a DropArea to listen for
     readonly property alias dragKey: grid.dragKey
 
-    SongGrid {
+    MediaGrid {
         id: grid
 
         model: root.displayedTracks

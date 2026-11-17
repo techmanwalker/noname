@@ -144,7 +144,7 @@ T.ApplicationWindow {
 
     Shortcut {
         sequences: Keyboard.bindings.backButton
-        // Esc cancels a drag of tracks instead (SongGrid). Both Esc shortcuts above step aside
+        // Esc cancels a drag of tracks instead (MediaGrid). Both Esc shortcuts above step aside
         // too: with the search bar focused, any of the three would make Esc ambiguous.
         enabled: !clearSearchShortcut.enabled && !leaveSearchShortcut.enabled && !browser.isDraggingTracks
         onActivated: backButton.click()

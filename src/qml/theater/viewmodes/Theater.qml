@@ -261,7 +261,6 @@ Row {
                         autoDetails = false
                         autoSwitchTo(root.tabs.placeholder);
                     } else if (currentIndex === root.tabs.placeholder) {
-                        console.log("Triggered branch to switch to Details.")
                         autoSwitchTo(root.tabs.queue);
                         awaitingMediaLoad = PlayQueue.count === 1;
                     } else if (autoDetails && PlayQueue.count > 1) {
