@@ -235,11 +235,39 @@ Row {
                 // default tab for the current count. Anything else is the user's own tab choice.
                 // (A `currentIndex:` binding can't express this: the first tab click assigns the
                 // property imperatively and destroys the binding.)
+
+                // Set while details is wanted but the media hasn't loaded yet. Any count change cancels it.
+                property bool awaitingMediaLoad: false   // details wanted once the media loads
+                property bool autoDetails: false         // currently on details because of an automatic switch
+                property bool applyingAutoSwitch: false
+
+                function autoSwitchTo (index) {
+                    applyingAutoSwitch = true
+                    currentIndex = index
+                    applyingAutoSwitch = false
+                }
+
+                // Any tab change not made by autoSwitchTo is manual, from any source.
+                onCurrentIndexChanged: {
+                    if (applyingAutoSwitch)
+                        return;
+                    awaitingMediaLoad = false
+                    autoDetails = false
+                }
+
                 function syncToQueueCount () {
-                    if (PlayQueue.count === 0)
-                        currentIndex = root.tabs.placeholder;
-                    else if (currentIndex === root.tabs.placeholder)
-                        currentIndex = PlayQueue.count === 1 && PlayerPresenter.isMediaLoaded ? root.tabs.details : root.tabs.queue;
+                    awaitingMediaLoad = false
+                    if (PlayQueue.count === 0) {
+                        autoDetails = false
+                        autoSwitchTo(root.tabs.placeholder);
+                    } else if (currentIndex === root.tabs.placeholder) {
+                        console.log("Triggered branch to switch to Details.")
+                        autoSwitchTo(root.tabs.queue);
+                        awaitingMediaLoad = PlayQueue.count === 1;
+                    } else if (autoDetails && PlayQueue.count > 1) {
+                        autoDetails = false
+                        autoSwitchTo(root.tabs.queue);
+                    }
                 }
 
                 Component.onCompleted: syncToQueueCount()
@@ -247,6 +275,18 @@ Row {
                 Connections {
                     target: PlayQueue
                     function onCountChanged () { queueAndMetadata_s.syncToQueueCount() }
+                }
+
+                Connections {
+                    target: PlayerPresenter
+
+                    function onMediaLoadedChanged () {
+                        if (!queueAndMetadata_s.awaitingMediaLoad || !PlayerPresenter.isMediaLoaded)
+                            return;
+                        queueAndMetadata_s.awaitingMediaLoad = false;
+                        queueAndMetadata_s.autoSwitchTo(root.tabs.details);
+                        queueAndMetadata_s.autoDetails = true;
+                    }
                 }
 
                 TabPage {
