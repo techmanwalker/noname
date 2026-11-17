@@ -3,14 +3,16 @@
 
 #include <memory>
 
-using configuration::conf_file_type;
+using configuration::setting;
 
-WindowGeometryLI::WindowGeometryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager) 
+WindowGeometryLI::WindowGeometryLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager)
     : QObject(parent),
       cm(std::move(confmanager))
 {
 
-    const auto lines = cm->read_lines(conf_file_type::window_geometry);
+    const auto lines = cm->fetch_setting(setting::window_geometry).value_or({});
+
+
 
     if (lines.size() == 2) {
         bool wOk = false, hOk = false;
@@ -38,8 +40,8 @@ WindowGeometryLI::poll_and_save_to_disk (int width, int height)
 
     m_size = {width, height};
 
-    cm->write_lines(
-        conf_file_type::window_geometry,
+    cm->write_setting(
+        setting::window_geometry,
         { QString::number(width), QString::number(height) }
     );
 }

@@ -40,8 +40,8 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
     // this is how we create an empty directory reference
     if (!dir_index_to_refresh.isValid() || !dir_index_opt.has_value()) {
         qCDebug(l_mediasequences) << "No snapshot in memory for this directory. Loading...";
-        
-        dir_index_to_refresh = 
+
+        dir_index_to_refresh =
             append(Types::Directory {
                 { .title=QUrl(dir_path).fileName() },
                 dir_path
@@ -57,9 +57,9 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
     }
 
     QFuture<QList<Types::Song>> extract_future = QtFuture::makeReadyValueFuture<QList<Types::Song>>({});
-    
+
     pointed_to<Types::Directory &>(
-        dir_index_to_refresh, 
+        dir_index_to_refresh,
         [&dir_path, &extract_future](Types::Directory &target_dir) -> void {
             // Recursively list files in directory
             QStringList files_in_path = diskio::list_dir(dir_path, true);
@@ -88,7 +88,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             qCDebug(l_mediasequences) << "Reading directory: " << target_dir.path;
 
             extract_future = song_factory::batch_extract (
-                not_yet_loaded, 
+                not_yet_loaded,
                 {covers::default_cover_thumbnail_size, true} /* enough for 1440p, can be tweaked any time later */
             );
         }
@@ -170,12 +170,12 @@ LocalLibraryLI::snapshot_known_directories ()
 {
     // This is a full refresh.
 
-    using ft = configuration::conf_file_type;
+    using st = configuration::setting;
 
     return take_snapshots(
-        cm->read_lines(
-            ft::known_music_directories
-        )
+        cm->fetch_setting(
+            st::known_music_directories
+        ).value_or({})
     ).then(this, [this]() {
         // trim up the massive thread memory burden created by the extraction
         malloc_trim(0);

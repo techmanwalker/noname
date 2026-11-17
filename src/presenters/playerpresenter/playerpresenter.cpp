@@ -38,7 +38,7 @@ PlayerPresenterLI::PlayerPresenterLI(
     connect (this, &PlayerPresenterLI::volume_changed,
              this, &PlayerPresenterLI::handle_volume_changed);
     // load volume from conf file
-    const auto lines = cm->read_lines(configuration::conf_file_type::volume);
+    const auto lines = cm->fetch_setting(configuration::setting::volume).value_or({});
 
     // only the volume value, nothing else
     if (lines.size() == 1) {
@@ -223,8 +223,8 @@ void
 PlayerPresenterLI::save_volume () const
 {
 
-    cm->write_lines(
-        configuration::conf_file_type::volume,
+    cm->write_setting (
+        configuration::setting::volume,
         { QString::number(volume()) }
     );
 

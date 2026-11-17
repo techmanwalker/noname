@@ -12,9 +12,9 @@ ShortcutsListLI::ShortcutsListLI(QObject *parent, std::shared_ptr<configuration:
 QFuture<void>
 ShortcutsListLI::read_conf_and_load ()
 {
-    using configuration::conf_file_type::shortcuts;
+    using configuration::setting::shortcuts;
 
-    auto shortcuts_song_paths = cm->read_lines(shortcuts);
+    auto shortcuts_song_paths = cm->fetch_setting(shortcuts).value_or({});
 
     return song_factory::batch_extract(shortcuts_song_paths, {covers::default_cover_thumbnail_size, true})
     .then(this, [this](QList<Types::Song> loaded_shortcuts) {

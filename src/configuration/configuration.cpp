@@ -12,31 +12,31 @@ namespace configuration {
 
 Q_LOGGING_CATEGORY(l_configuration, "memory.configuration");
 
-QUrl
-file (conf_file_type type)
+QString
+file (setting s)
 {
     QString conf_file_name;
 
-    switch (type) {
-        case conf_file_type::known_music_directories:
+    switch (s) {
+        case setting::known_music_directories:
             conf_file_name = "music_directories";
             break;
-        case conf_file_type::shortcuts:
+        case setting::shortcuts:
             conf_file_name = "shortcuts";
             break;
-        case conf_file_type::window_geometry:
+        case setting::window_geometry:
             conf_file_name = "window_geometry";
             break;
-        case conf_file_type::volume:
+        case setting::volume:
             conf_file_name = "volume";
     }
 
     // should not happen unless someone leaves an unhandled enum value
-    if (conf_file_name.isEmpty()) return QUrl();
+    if (conf_file_name.isEmpty()) return {};
 
     QDir conf_dir (standardpaths::dir(standardpaths::standard_dirs::configuration));
 
-    return QUrl::fromLocalFile(conf_dir.absoluteFilePath(conf_file_name));
+    return conf_dir.absoluteFilePath(conf_file_name);
 }
 
 // managerLI implementation
@@ -46,119 +46,17 @@ managerLI::managerLI(QObject *parent)
 {
 }
 
-QStringList
-managerLI::read_lines (conf_file_type type, bool unconditionally_refresh)
+std::optional<QStringList>
+managerLI::fetch_setting (setting s)
 {
-
-    if (unconditionally_refresh) {
-        return prolly_cache_lines (type, true); // unconditional, recache no matter what
-    }
-
-    // quick try to read before, flow stops here if file was already cached
-    {
-        QReadLocker locker(&m_lock);
-        if (m_last_content_acknowledged_for_file.contains(type)) {
-            return m_last_content_acknowledged_for_file.value(type);
-        }
-
-        // this locker is destroyed here, hence why scoped in braces
-    }
-
-    // if file was not present in cache, verify again with the trigger condition
-    // and safely trigger caching if not met
-    return prolly_cache_lines (type, !m_last_content_acknowledged_for_file.contains(type));
+    return diskio::read_lines(file(s));
 }
 
-QStringList
-managerLI::prolly_cache_lines (conf_file_type type, bool condition_to_trigger_recaching)
-{
-    // externally lock for reading + obbey a simple recache trigger
-    QWriteLocker locker (&m_lock);
-    if (condition_to_trigger_recaching) {
-        __cache_lines_unlocked(type);
-    }
-
-    // in both cases, fetch whatever is in cache
-    return m_last_content_acknowledged_for_file.value(type);
-}
-
-void
-managerLI::__cache_lines_unlocked (conf_file_type type)
-{
-    // unsafe to use as-is, read write locks must be externally managed
-
-    // open and read the conf file for the corresponding type line by line
-    // insert or overwrite, does not matter
-    m_last_content_acknowledged_for_file.insert(type, diskio::read_lines(file(type).toLocalFile()).value_or({}));
-
-    // qCInfo(l_configuration) << "File " << local_path << "was reloaded. Manually refresh or restart the program for changes to take effect.";
-}
 
 QFuture<bool>
-managerLI::write_lines (conf_file_type type, const QStringList &lines)
+managerLI::write_setting (setting s, const QStringList &lines)
 {
-    // immediately update cache, tryLock may last up to 10s but this is a write operation so nevermind
-    QWriteLocker locker (&m_lock);
-
-    // but the data write to disk still needs to be done off thread
-    auto future = __write_lines_to_disk_unlocked(type, lines);
-
-    // alter cache only if disk write succeeded
-    future.then(this, [this, type, lines](bool did_write_finish_successfully) {
-        QWriteLocker locker (&m_lock);
-
-        if (did_write_finish_successfully) {
-            // we are already here, update the cached lines
-            m_last_content_acknowledged_for_file.insert(type, lines);
-        } else {
-            // read whatever the other instance wrote 
-            __cache_lines_unlocked(type);
-        }
-    });
-
-    return future;
-}
-
-QFuture<bool>
-managerLI::__write_lines_to_disk_unlocked (conf_file_type type, const QStringList &lines)
-{
-    // no direct access to the "this" in case it dies
-
-    auto deferred_write = [](conf_file_type type, const QStringList &lines) -> bool {
-        QUrl file_uri = file(type);
-        if (file_uri.isEmpty()) return false;
-
-        QString local_path = file_uri.toLocalFile();
-
-        // lock file to sync multiple instances of the player
-        QLockFile lock_file (local_path + QStringLiteral(".lock"));
-
-        // try to acquire lock
-        if (!lock_file.tryLock(10000)) {
-            qCWarning(configuration::l_configuration) << "Failed to write to " << local_path << " because the file was locked for writing for more than 10 seconds.";
-            return false;
-        }
-
-        QFile file_object (local_path);
-
-        if (!file_object.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-            qCWarning(configuration::l_configuration) << "Failed to open " << local_path << " for writing. Aborting.";
-            lock_file.unlock();
-            return false;
-        }
-
-        QTextStream out(&file_object);
-        for (const QString& line : lines) {
-            out << line << "\n";
-        }
-
-        file_object.close();
-        lock_file.unlock(); // free external lock
-
-        return true;
-    };
-
-    return QtConcurrent::run(deferred_write, type, lines);
+    return diskio::write_lines(file(s), lines);
 }
 
 }
