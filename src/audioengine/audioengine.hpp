@@ -39,6 +39,7 @@ public:
     bool           is_a_song_loaded() const override;
 
     // transport
+    // ignored (cancelled future) while no track is loaded; stop() unloads A and drops B by itself.
     QFuture<void> play() override;
     QFuture<void> pause() override;
     QFuture<void> stop() override;
@@ -83,7 +84,6 @@ public slots:
     void on_load_settled(bool ok);
     void on_seek_settled(bool applied);
     void on_next_settled();
-    void on_stop_settled();
 
 private:
     std::unique_ptr<audio_internal_controller> m_internal;
@@ -94,7 +94,6 @@ private:
     double m_log_volume = 0;
 
     // Calls the decoder thread still owes a settlement for, one queue per group
-    pending_calls m_transport_calls;   // stop()
     pending_calls m_tape_calls;        // load(), unload()
     pending_calls m_position_calls;    // seek_to(), relative_seek()
     pending_calls m_next_calls;        // prepare_next_track(), undo_prepare_next_track()
@@ -104,6 +103,8 @@ private:
 
     template <typename Body> QFuture<void> dispatch (Body body);
     void start_seek (quint64 position_ms, QPromise<void> call);
+    void start_unload (QPromise<void> call);
+    bool refuse_without_track (QPromise<void> &call);   // transport, position and B all need an A
 
     bool catch_up_on_boundary_hit ();
     bool load_in_flight () const { return !m_tape_calls.empty(); }

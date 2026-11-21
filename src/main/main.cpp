@@ -182,6 +182,9 @@ main (int argc, char ** argv)
     QObject::connect(ae.get(), &audio_engine_LI::relative_seek_before_zero_performed,
             pq.get(), &PlayQueueLI::prev_at_end);
 
+    QObject::connect(ae.get(), &audio_engine_LI::track_changed,
+            pq.get(), &PlayQueueLI::handle_engine_track_changed);
+
     // read user's music directories, and load the music library as a whole
     ll->snapshot_known_directories();
 

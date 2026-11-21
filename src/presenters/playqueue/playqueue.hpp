@@ -89,6 +89,7 @@ public slots:
     QFuture<void> preload_next_track_whenever_possible ();
     QFuture<void> handle_tape_ran_out ();
     void handle_ab_boundary_crossed ();
+    void handle_engine_track_changed ();
 
 private slots:
     void handle_zero_item_count ();

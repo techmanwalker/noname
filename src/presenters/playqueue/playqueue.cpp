@@ -187,10 +187,7 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
 void
 PlayQueueLI::handle_zero_item_count ()
 {
-    if (item_count() == 0) {
-        (void) m_d->ae->unload();   // pauses and drops the tape itself
-        invalidate_playhead_();
-    }
+    if (item_count() == 0) (void) m_d->ae->stop();
 }
 
 QPersistentModelIndex
@@ -422,11 +419,12 @@ PlayQueueLI::handle_tape_ran_out()
 {
     qCDebug (l_mediasequences) << "The chain of preloaded songs has finished.";
 
-    if (!successor_of(playhead()).isValid()) {
-        return m_d->ae->pause();
-    }
+    const QPersistentModelIndex upcoming = successor_of(playhead());
 
-    return switch_to(successor_of(playhead()));
+    // nothing follows: stop() unloads A and drops B by itself
+    if (!upcoming.isValid()) return m_d->ae->stop();
+
+    return switch_to(upcoming, true);   // the RT thread paused the ring when the tape ran out
 }
 
 QPersistentModelIndex
@@ -521,4 +519,11 @@ PlayQueueLI::handle_ab_boundary_crossed ()
 #endif
 
     emit track_changed();
+}
+
+void
+PlayQueueLI::handle_engine_track_changed()
+{
+    // the playhead mirrors A: nothing loaded, nothing to point at
+    if (m_d->ae->current_track_source().isEmpty()) invalidate_playhead_();
 }

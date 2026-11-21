@@ -202,7 +202,7 @@ write_loop (const write_ctx<P> &c) requires playable_format<F>
             write_to_device(scratch, ch, got, c.pass.gain(), areas);
             feed_silence<S>(areas, ch, got, frames); // pad the underrun tail
 
-            check_boundary_hit(c.pass, c.pass.count_played(frames));
+            check_boundary_hit(c.pass, c.pass.count_played(got));   // delivered audio only, not the silence padding
         }
 
         end_chunk(c);

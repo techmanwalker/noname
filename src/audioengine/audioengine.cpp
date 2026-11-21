@@ -24,8 +24,6 @@ audio_engine_LI::audio_engine_LI(QObject *parent, audio_backend backend)
             this, &audio_engine_LI::on_seek_settled, Qt::QueuedConnection);
     connect(m_internal.get(), &audio_internal_controller::next_settled,
             this, &audio_engine_LI::on_next_settled, Qt::QueuedConnection);
-    connect(m_internal.get(), &audio_internal_controller::stop_settled,
-            this, &audio_engine_LI::on_stop_settled, Qt::QueuedConnection);
 
     /*  Explicit Qt::QueuedConnection, kept on purpose: these signals are emitted by
         rt_event_pump on the main thread (never from the RT callback), so thread safety no
@@ -79,6 +77,7 @@ QFuture<void>
 audio_engine_LI::play()
 {
     return dispatch([this] (QPromise<void> call) {
+        if (refuse_without_track(call)) return;
         m_internal->set_transport_paused(false);
         emit playback_state_changed();
         call.finish();
@@ -89,6 +88,7 @@ QFuture<void>
 audio_engine_LI::pause()
 {
     return dispatch([this] (QPromise<void> call) {
+        if (refuse_without_track(call)) return;
         m_internal->set_transport_paused(true);
         emit playback_state_changed();
         call.finish();
@@ -99,10 +99,38 @@ QFuture<void>
 audio_engine_LI::stop()
 {
     return dispatch([this] (QPromise<void> call) {
-        m_transport_calls.add(std::move(call));   // settles in on_stop_settled()
-        m_internal->stop();
-        emit playback_state_changed();
+        if (refuse_without_track(call)) return;
+
+        // first: it may catch up on a boundary hit, and B followed the A that is going away
+        undo_prepare_next_track();
+        start_unload(std::move(call));
     });
+}
+
+QFuture<void>
+audio_engine_LI::unload()
+{
+    return dispatch([this] (QPromise<void> call) { start_unload(std::move(call)); });
+}
+
+void
+audio_engine_LI::start_unload(QPromise<void> call)
+{
+    m_tape_calls.add(std::move(call));
+    m_internal->unload();
+
+    m_track_A_source.clear();
+    emit track_changed();
+    emit playback_state_changed();
+}
+
+// Transport, position and B all act on an A: without one the call is ignored
+bool
+audio_engine_LI::refuse_without_track(QPromise<void> &call)
+{
+    if (is_a_song_loaded()) return false;
+    abandon(call);
+    return true;
 }
 
 QFuture<void>
@@ -125,22 +153,11 @@ audio_engine_LI::load(const QUrl &source)
 }
 
 QFuture<void>
-audio_engine_LI::unload()
-{
-    return dispatch([this] (QPromise<void> call) {
-        m_tape_calls.add(std::move(call));
-        m_internal->unload();
-
-        m_track_A_source.clear();
-        emit track_changed();
-        emit playback_state_changed();
-    });
-}
-
-QFuture<void>
 audio_engine_LI::relative_seek(qint64 step_ms)
 {
     return dispatch([this, step_ms] (QPromise<void> call) {
+        if (refuse_without_track(call)) return;
+
         // Steps stack on the seek in flight: the clock has not moved yet
         const quint64 from        = m_seek_target.value_or(current_position_ms());
         const quint64 step_ms_abs = std::abs(step_ms);
@@ -160,6 +177,7 @@ QFuture<void>
 audio_engine_LI::seek_to(const quint64 position_ms)
 {
     return dispatch([this, position_ms] (QPromise<void> call) {
+        if (refuse_without_track(call)) return;
         start_seek(position_ms, std::move(call));
     });
 }
@@ -183,6 +201,9 @@ audio_engine_LI::prepare_next_track(const QUrl &source)
         // Designated against an A that no longer exists: on_boundary_hit() just cleared B, and the
         // track_changed handler prepares the new one.
         if (catch_up_on_boundary_hit()) { abandon(call); return; }
+
+        // B follows A: nothing to follow
+        if (refuse_without_track(call)) return;
 
         m_track_B_source = source;
         m_next_calls.add(std::move(call));
@@ -300,13 +321,6 @@ void
 audio_engine_LI::on_next_settled()
 {
     m_next_calls.settle_oldest(true);
-}
-
-void
-audio_engine_LI::on_stop_settled()
-{
-    if (m_transport_calls.last_one()) emit playback_state_changed();   // the tape is gone only now
-    m_transport_calls.settle_oldest(true);
 }
 
 // To reactively trigger the changes signals
