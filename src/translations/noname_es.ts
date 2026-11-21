@@ -85,7 +85,7 @@
 <context>
     <name>GhostSpawner</name>
     <message>
-        <location filename="../qml/listings/delegates/GhostSpawner.qml" line="50"/>
+        <location filename="../qml/listings/delegates/GhostSpawner.qml" line="52"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -117,22 +117,43 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="292"/>
+        <location filename="../qml/mainwindow/Main.qml" line="304"/>
         <source>Clear</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location filename="../qml/mainwindow/Main.qml" line="226"/>
+        <location filename="../qml/mainwindow/Main.qml" line="238"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
 </context>
 <context>
+    <name>MediaContextMenu</name>
+    <message>
+        <location filename="../qml/listings/delegates/MediaContextMenu.qml" line="19"/>
+        <source>Add to play queue</source>
+        <translation>Agregar a la cola</translation>
+    </message>
+    <message>
+        <location filename="../qml/listings/delegates/MediaContextMenu.qml" line="23"/>
+        <source>Clear selection</source>
+        <translation>Limpiar selección</translation>
+    </message>
+</context>
+<context>
     <name>MediaDelegate</name>
     <message>
-        <location filename="../qml/listings/delegates/MediaDelegate.qml" line="12"/>
+        <location filename="../qml/listings/delegates/MediaDelegate.qml" line="16"/>
         <source>Untitled track</source>
         <translation>Pista sin título</translation>
+    </message>
+</context>
+<context>
+    <name>MediaGrid</name>
+    <message>
+        <location filename="../qml/listings/MediaGrid.qml" line="80"/>
+        <source>Unknown Artist</source>
+        <translation>Artista desconocido</translation>
     </message>
 </context>
 <context>
@@ -196,7 +217,7 @@
 <context>
     <name>PlayQueueHeader</name>
     <message>
-        <location filename="../qml/theater/PlayQueueHeader.qml" line="48"/>
+        <location filename="../qml/theater/PlayQueueHeader.qml" line="62"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -215,7 +236,7 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/Playlist.qml" line="110"/>
+        <location filename="../qml/listings/Playlist.qml" line="116"/>
         <source>Unknown Artist</source>
         <translation>Artista desconocido</translation>
     </message>
@@ -327,14 +348,12 @@
         <translation type="vanished">Agregar a la cola de reproducción</translation>
     </message>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="19"/>
         <source>Add to play queue</source>
-        <translation>Agregar a la cola</translation>
+        <translation type="vanished">Agregar a la cola</translation>
     </message>
     <message>
-        <location filename="../qml/listings/delegates/SongContextMenu.qml" line="23"/>
         <source>Clear selection</source>
-        <translation>Limpiar selección</translation>
+        <translation type="vanished">Limpiar selección</translation>
     </message>
 </context>
 <context>
@@ -344,9 +363,8 @@
         <translation type="vanished">Artista desconocido</translation>
     </message>
     <message>
-        <location filename="../qml/listings/SongGrid.qml" line="80"/>
         <source>Unknown Artist</source>
-        <translation>Artista desconocido</translation>
+        <translation type="vanished">Artista desconocido</translation>
     </message>
 </context>
 <context>
@@ -356,27 +374,27 @@
         <translation type="vanished">No se está reproduciendo nada. Escoge una canción o arrastra un archivo de audio para reproducirlo.</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="298"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="324"/>
         <source>Queue</source>
         <translation>Lista</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="331"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="369"/>
         <source>Save as playlist (UUID name)</source>
         <translation>Guardar lista de reproducción (nombre por UUID)</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="338"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="376"/>
         <source>Remove from queue</source>
         <translation>Quitar de la cola</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="355"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="393"/>
         <source>Details</source>
         <translation>Detalles</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="346"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="384"/>
         <source>Clear queue</source>
         <translation>Vaciar cola</translation>
     </message>
@@ -385,7 +403,7 @@
         <translation type="vanished">Atrás</translation>
     </message>
     <message>
-        <location filename="../qml/theater/viewmodes/Theater.qml" line="273"/>
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="299"/>
         <source>No media playing right now. Browse or drag one or more audio files here to start playing.</source>
         <translation>No se está reproduciendo nada. Elige o arrastra uno o más archivos de audio aquí para comenzar a reproducirlos.</translation>
     </message>
