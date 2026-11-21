@@ -36,7 +36,7 @@ song_factory_impl::extraction_pool()
     static QThreadPool pool;
 
     // optionally throttle max thread count if ever needed
-    
+
     return &pool;
 }
 
@@ -44,16 +44,16 @@ song_factory_impl::extraction_pool()
     @brief Extract song metadata asynchronously and expose the
     result wrapped in a QFuture.
 
-    @note Supports .result() without blocking player events, as the extraction 
+    @note Supports .result() without blocking player events, as the extraction
           and QMediaPlayer lifecycle run entirely on a dedicated worker thread.
 */
-QFuture<Types::Song>
+QFuture<Types::Track>
 song_factory_impl::extract(const QUrl &source, attributes a)
 {
     // delegate instantiation and execution to Qt thread pool
-    return QtConcurrent::run(extraction_pool(), [source, a](QPromise<Types::Song> &promise) {
+    return QtConcurrent::run(extraction_pool(), [source, a](QPromise<Types::Track> &promise) {
         song_factory_impl worker(source);
-        Types::Song result = worker.execute_extraction(promise, a);
+        Types::Track result = worker.execute_extraction(promise, a);
 
         if (!promise.isCanceled()) {
             if (!result.is_valid()) {
@@ -67,11 +67,11 @@ song_factory_impl::extract(const QUrl &source, attributes a)
     });
 }
 
-QList<QFuture<Types::Song>>
+QList<QFuture<Types::Track>>
 song_factory_impl::progressive_extract (const QList<QUrl> &sources, attributes a)
 {
     // Read the metadata of the sources one by one in parallel, you can do something as soon as one extraction finishes
-    QList<QFuture<Types::Song>> requests;
+    QList<QFuture<Types::Track>> requests;
     requests.reserve(sources.size());
 
     for (const QUrl &source : sources) {
@@ -81,23 +81,23 @@ song_factory_impl::progressive_extract (const QList<QUrl> &sources, attributes a
     return requests;
 }
 
-QFuture<QList<Types::Song>>
+QFuture<QList<Types::Track>>
 song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
 {
     auto requests = progressive_extract(sources, a);
 
-    // Wait for all songs in the list to finish metadata extraction
+    // Wait for all tracks in the list to finish metadata extraction
 
     return QtFuture::whenAll(
         requests.begin(),
         requests.end()
     )
-    .then([](QList<QFuture<Types::Song>> finished) {
-        QList<Types::Song> extracted_songs_ready_to_append;
+    .then([](QList<QFuture<Types::Track>> finished) {
+        QList<Types::Track> extracted_tracks_ready_to_append;
 
-        extracted_songs_ready_to_append.reserve(finished.size());
+        extracted_tracks_ready_to_append.reserve(finished.size());
 
-        for (QFuture<Types::Song> &f : finished) {
+        for (QFuture<Types::Track> &f : finished) {
             // ignore cancelled future instead of throwing the entire batch
             if (f.isCanceled()) {
                 continue;
@@ -105,7 +105,7 @@ song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
 
             // truly exceptional metadata extraction failures
             try {
-                extracted_songs_ready_to_append.append(f.takeResult());
+                extracted_tracks_ready_to_append.append(f.takeResult());
             } catch (const std::exception &e) {
                 qCWarning(l_songfactory) << "Skipping one song in batch: extraction failed with" << e.what();
             } catch (...) {
@@ -113,14 +113,14 @@ song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
             }
         }
 
-        return extracted_songs_ready_to_append;
+        return extracted_tracks_ready_to_append;
     });
 }
 
-Types::Song
-song_factory_impl::execute_extraction(QPromise<Types::Song> &promise, attributes a)
+Types::Track
+song_factory_impl::execute_extraction(QPromise<Types::Track> &promise, attributes a)
 {
-    Types::Song song;
+    Types::Track song;
 
     if (promise.isCanceled()) {
         return {};

@@ -17,7 +17,7 @@ ShortcutsListLI::read_conf_and_load ()
     auto shortcuts_song_paths = cm->fetch_setting(shortcuts).value_or({});
 
     return song_factory::batch_extract(shortcuts_song_paths, {covers::default_cover_thumbnail_size, true})
-    .then(this, [this](QList<Types::Song> loaded_shortcuts) {
+    .then(this, [this](QList<Types::Track> loaded_shortcuts) {
         batch_append(std::move(loaded_shortcuts));
     });
 }

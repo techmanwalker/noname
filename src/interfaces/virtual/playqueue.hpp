@@ -29,10 +29,10 @@ public:
 
     virtual void clear () = 0;
 
-    virtual bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) const = 0;
+    virtual bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Track &)> callback) const = 0;
 
     virtual QPersistentModelIndex find_by_source (const QUrl &needle) = 0;
-    virtual std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const = 0;
+    virtual std::optional<Types::Track> query_metadata_for_source (const QUrl &needle) const = 0;
 
     virtual QFuture<void> batch_append (const QList<QUrl> &sources) = 0;
 
@@ -40,7 +40,7 @@ public:
     virtual bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest) = 0;
 
     virtual QFuture<void> respawn_queue (const QStringList &sources) = 0;
-    virtual void respawn_queue (QList<Types::Song> songs) = 0;
+    virtual void respawn_queue (QList<Types::Track> tracks) = 0;
 
     virtual QFuture<void> batch_remove (const QList<QPersistentModelIndex> &indices) = 0;
 

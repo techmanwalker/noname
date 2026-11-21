@@ -61,15 +61,15 @@ item_count (State &s)
     return Access::source(s).rowCount();
 }
 
-QList<Types::Song>
+QList<Types::Track>
 items (State &s)
 {
-    QList<Types::Song> in_source_order = Access::source(s).items();
+    QList<Types::Track> in_source_order = Access::source(s).items();
 
     const MediaTransforms::ShuffleProxy &view = Access::view(s);
     if (!view.shuffled()) return in_source_order;
 
-    QList<Types::Song> presented;
+    QList<Types::Track> presented;
     presented.reserve(in_source_order.size());
     for (int row = 0; row < view.rowCount(); ++row) {
         presented.append(in_source_order.at(view.mapToSource(view.index(row, 0)).row()));
@@ -80,16 +80,16 @@ items (State &s)
 QPersistentModelIndex
 find_by_source (State &s, const QUrl &source)
 {
-    return to_projected(s, Access::source(s).find(&Types::Song::source, source));
+    return to_projected(s, Access::source(s).find(&Types::Track::source, source));
 }
 
 bool
 pointed_to (State &s, const QPersistentModelIndex &projected,
-            const std::function<bool(const Types::Song &)> &callback)
+            const std::function<bool(const Types::Track &)> &callback)
 {
     // mapToSource is the identity while unshuffled and the permutation while shuffled,
     // so this one call is the source's pointed_to in both modes
-    return Access::source(s).pointed_to<const Types::Song &>(
+    return Access::source(s).pointed_to<const Types::Track &>(
         QPersistentModelIndex(Access::view(s).mapToSource(projected)), callback);
 }
 
@@ -102,15 +102,15 @@ clear (State &s)
 }
 
 void
-batch_append (State &s, QList<Types::Song> songs)
+batch_append (State &s, QList<Types::Track> tracks)
 {
-    Access::source(s).batch_append(std::move(songs));
+    Access::source(s).batch_append(std::move(tracks));
 }
 
 void
-spawn (State &s, QList<Types::Song> songs)
+spawn (State &s, QList<Types::Track> tracks)
 {
-    batch_append(s, std::move(songs));
+    batch_append(s, std::move(tracks));
     Access::view(s).reshuffle(); // no-op while unshuffled
 }
 

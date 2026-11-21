@@ -77,7 +77,7 @@ Item {
         // gesture and must not change what stays highlighted or what the context menu
         // would act on.
         rows = selection.indices.slice(0, maxSelectedItems)
-        items = rows.map(r => selection.songAt(r))
+        items = rows.map(r => selection.trackAt(r))
         sources = selection.sourcesFor(selection.indices) // only the ghosts are capped
 
         // last: this is what locks the view and dims the rows

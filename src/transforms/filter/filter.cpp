@@ -75,7 +75,7 @@ MediaFilterLI::MediaFilterLI()
 search_response
 MediaFilterLI::search(const QString &query, QObject *sourceModel)
 {
-    QList<Types::Song> all_songs;
+    QList<Types::Track> all_tracks;
 
     // Interface-backed QML singletons (LocalLibrary, and any future ones) are now
     // exposed through a QIdentityProxyModel, not the real object — unwrap first.
@@ -86,32 +86,32 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
     // Check if the passed object is our LocalLibrary singleton
     if (auto *localLib = qobject_cast<LocalLibrary*>(sourceModel)) {
 
-        all_songs = localLib->flattened(); // faster and dedicated
+        all_tracks = localLib->flattened(); // faster and dedicated
     } else if (auto *sourceSequence = qobject_cast<AbstractMediaSequence*>(sourceModel)) {
-        // Filter its songs and traverse 1 level through its directories
+        // Filter its tracks and traverse 1 level through its directories
         // the player does not support more than one level at the moment
 
-        auto [songs, directories] = sourceSequence->items_of_types<Types::Song, Types::Directory>();
+        auto [tracks, directories] = sourceSequence->items_of_types<Types::Track, Types::Directory>();
 
-        all_songs = std::move(songs);
+        all_tracks = std::move(tracks);
 
         for (const Types::Directory &dir : directories) {
-            all_songs += dir.songs;
+            all_tracks += dir.tracks;
         }
     } else {
         qCWarning(l_mediatransforms) << "Invalid source model provided for search.";
         return {};
     }
 
-    // Execute RapidFuzz search logic on 'all_songs' and return the list (...)
-    return search (query, all_songs);
+    // Execute RapidFuzz search logic on 'all_tracks' and return the list (...)
+    return search (query, all_tracks);
 }
 
 search_response
-MediaFilterLI::search (const QString &query, const QList<Types::Song> &song_list)
+MediaFilterLI::search (const QString &query, const QList<Types::Track> &song_list)
 {
     if (query.isEmpty()) {
-        return {sort_by (&Types::Song::title, song_list), -1};
+        return {sort_by (&Types::Track::title, song_list), -1};
     }
 
     using rankable_item = std::pair<qsizetype, double>;
@@ -140,14 +140,14 @@ MediaFilterLI::search (const QString &query, const QList<Types::Song> &song_list
     std::ranges::sort(rankable, std::greater<>{}, &rankable_item::second);
 
     // Map the ranked results back to the original song objects
-    QList<Types::Song> matching_songs;
-    matching_songs.reserve(static_cast<qsizetype>(rankable.size()));
+    QList<Types::Track> matching_tracks;
+    matching_tracks.reserve(static_cast<qsizetype>(rankable.size()));
 
     for (const rankable_item &ranked : rankable) {
-        matching_songs.append(song_list.at(ranked.first));
+        matching_tracks.append(song_list.at(ranked.first));
     }
 
-    return {matching_songs, high_score};
+    return {matching_tracks, high_score};
 }
 
 }

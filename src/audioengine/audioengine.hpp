@@ -36,7 +36,7 @@ public:
     quint64        current_position_ms() const override;
     quint8         current_volume()      const override;
     playback_state get_playback_state() const override;
-    bool           is_a_song_loaded() const override;
+    bool           is_a_track_loaded() const override;
 
     // transport
     // ignored (cancelled future) while no track is loaded; stop() unloads A and drops B by itself.

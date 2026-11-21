@@ -7,25 +7,25 @@
 #include "songfactory.hpp"
 #include <malloc.h>
 
-QList<Types::Song>
+QList<Types::Track>
 LocalLibraryLI::flattened () const
 {
     auto dirs= items<Types::Directory>();
 
-    QList<Types::Song> flattened_directories_songs;
-    flattened_directories_songs.reserve(dirs.size());
+    QList<Types::Track> flattened_directories_tracks;
+    flattened_directories_tracks.reserve(dirs.size());
 
     for (const Types::Directory &dir : dirs) { // quick conversion to avoid more boilerplate
-        flattened_directories_songs.append(dir.songs);
+        flattened_directories_tracks.append(dir.tracks);
     }
 
-    return flattened_directories_songs;
+    return flattened_directories_tracks;
 }
 
 QStringList
 LocalLibraryLI::flattened_sources () const
 {
-    return AbstractMediaSequence::sources<QList<Types::Song>>(flattened());
+    return AbstractMediaSequence::sources<QList<Types::Track>>(flattened());
 }
 
 QFuture<void>
@@ -56,7 +56,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             << "This is a fatal error. Aborting.";
     }
 
-    QFuture<QList<Types::Song>> extract_future = QtFuture::makeReadyValueFuture<QList<Types::Song>>({});
+    QFuture<QList<Types::Track>> extract_future = QtFuture::makeReadyValueFuture<QList<Types::Track>>({});
 
     pointed_to<Types::Directory &>(
         dir_index_to_refresh,
@@ -64,10 +64,10 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             // Recursively list files in directory
             QStringList files_in_path = diskio::list_dir(dir_path, true);
 
-            // filter only songs that don't exist already in found_dir.songs
+            // filter only tracks that don't exist already in found_dir.tracks
             QSet<QUrl> already_loaded;
-            already_loaded.reserve(target_dir.songs.size());
-            for (const Types::Song &existing_song : std::as_const(target_dir.songs)) {
+            already_loaded.reserve(target_dir.tracks.size());
+            for (const Types::Track &existing_song : std::as_const(target_dir.tracks)) {
                 already_loaded.insert(existing_song.source);
             }
 
@@ -94,24 +94,24 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
         }
     );
 
-    // Ask song_factory to extract the metadata of songs, all at once
-    return extract_future.then(this, [this, dir_index_to_refresh](QList<Types::Song> songs) {
+    // Ask song_factory to extract the metadata of tracks, all at once
+    return extract_future.then(this, [this, dir_index_to_refresh](QList<Types::Track> tracks) {
 
             //  re-resolve the target directory in case it has been modified in anyway while pointed_to remained unlocked
             auto did_execute = pointed_to<Types::Directory &>(
                 dir_index_to_refresh,
-                [&songs](Types::Directory &target_dir) -> bool {
-                    target_dir.songs.reserve(target_dir.songs.size() + songs.size());
+                [&tracks](Types::Directory &target_dir) -> bool {
+                    target_dir.tracks.reserve(target_dir.tracks.size() + tracks.size());
 
-                    // source -> position in target_dir.songs, kept in sync as we append
+                    // source -> position in target_dir.tracks, kept in sync as we append
                     QHash<QUrl, qsizetype> index_of;
-                    index_of.reserve(target_dir.songs.size() + songs.size());
-                    for (qsizetype i = 0; i < target_dir.songs.size(); ++i) {
-                        index_of.insert(target_dir.songs.at(i).source, i);
+                    index_of.reserve(target_dir.tracks.size() + tracks.size());
+                    for (qsizetype i = 0; i < target_dir.tracks.size(); ++i) {
+                        index_of.insert(target_dir.tracks.at(i).source, i);
                     }
 
                     // recheck if each track was truly not added yet; if so, overwrite it
-                    for (Types::Song &song : songs) {
+                    for (Types::Track &song : tracks) {
                         // A song with empty source is considered invalid
                         if (!song.is_valid()) {
                             continue;
@@ -119,10 +119,10 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
 
                         auto it = index_of.constFind(song.source);
                         if (it != index_of.constEnd()) {
-                            target_dir.songs[it.value()] = std::move(song);
+                            target_dir.tracks[it.value()] = std::move(song);
                         } else {
-                            index_of.insert(song.source, target_dir.songs.size());
-                            target_dir.songs.append(std::move(song));
+                            index_of.insert(song.source, target_dir.tracks.size());
+                            target_dir.tracks.append(std::move(song));
                         }
                     }
 
@@ -137,7 +137,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
             }
         })
         .onFailed(this, [this] {
-            qCWarning(l_mediasequences) << "Batch song load failed for a directory; its songs list was left unchanged.";
+            qCWarning(l_mediasequences) << "Batch song load failed for a directory; its tracks list was left unchanged.";
         });
 }
 

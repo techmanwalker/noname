@@ -9,9 +9,9 @@
 #include <memory>
 
 // Intended to end up showing in the Start page showing shortcuts to your favorite music.
-class ShortcutsListLI : 
+class ShortcutsListLI :
     public AbstractMediaSequence,
-    public BasicSequenceOps<ShortcutsListLI, Types::Song>,
+    public BasicSequenceOps<ShortcutsListLI, Types::Track>,
     public ShortcutsList
 {
     Q_OBJECT
@@ -21,10 +21,10 @@ public:
     explicit ShortcutsListLI(QObject *parent, std::shared_ptr<configuration::manager> confmanager);
 
     // Intended to any type of item to be shown on shortcuts
-    // but the player currently only supports raw songs, will be undone later when
+    // but the player currently only supports raw tracks, will be undone later when
     // actual album support is added
 
-    USING_SEQUENCE_OPS(ShortcutsListLI, Types::Song);
+    USING_SEQUENCE_OPS(ShortcutsListLI, Types::Track);
     using AbstractMediaSequence::clear;
 
     // shorthand

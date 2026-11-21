@@ -7,19 +7,19 @@
 
 namespace song_factory {
 
-QFuture<Types::Song> 
+QFuture<Types::Track>
 extract(const QUrl &source, attributes a)
 {
     return song_factory_impl::extract(source, a);
 }
 
-QList<QFuture<Types::Song>>
+QList<QFuture<Types::Track>>
 progressive_extract (const QList<QUrl> &sources, attributes a)
 {
     return song_factory_impl::progressive_extract(sources, a);
 }
 
-QFuture<QList<Types::Song>>
+QFuture<QList<Types::Track>>
 batch_extract (const QList<QUrl> &sources, attributes a)
 {
     return song_factory_impl::batch_extract(sources, a);

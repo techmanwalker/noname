@@ -9,7 +9,7 @@
 Q_DECLARE_LOGGING_CATEGORY(l_mediatypes)
 
 namespace Types {
-    struct Song {
+    struct Track {
         Q_GADGET
 
         Q_PROPERTY(QString title MEMBER title)
@@ -53,7 +53,7 @@ namespace Types {
 
         bool is_valid () const;
 
-        bool operator==(const Song&) const = default;
+        bool operator==(const Track&) const = default;
     };
 }
 
@@ -61,7 +61,7 @@ struct base_media_container_ {
     Q_GADGET
 
     Q_PROPERTY(QString title MEMBER title)
-    Q_PROPERTY(QList<Types::Song> songs MEMBER songs)
+    Q_PROPERTY(QList<Types::Track> tracks MEMBER tracks)
     Q_PROPERTY(QUrl cover READ firstcover)
     Q_PROPERTY(quint64 duration READ duration)
 
@@ -69,7 +69,7 @@ struct base_media_container_ {
 
 public:
     QString            title;
-    QList<Types::Song> songs;
+    QList<Types::Track> tracks;
 
     // cover of the first element
     QUrl firstcover () const;
@@ -104,7 +104,7 @@ namespace Types {
         bool is_valid () const;
     };
 
-    using Any = std::variant<Types::Song, Types::Album, Types::Playlist, Types::Directory>;
+    using Any = std::variant<Types::Track, Types::Album, Types::Playlist, Types::Directory>;
 }
 
 template <typename T>

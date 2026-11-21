@@ -13,7 +13,7 @@
 
 class PlayQueueProxy
     : public QIdentityProxyModel,
-      public ListProxyBase<PlayQueueProxy, PlayQueue, Types::Song, &PlayQueue::item_count>
+      public ListProxyBase<PlayQueueProxy, PlayQueue, Types::Track, &PlayQueue::item_count>
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(PlayQueue)
@@ -55,9 +55,9 @@ public:
         return call_or(QtFuture::makeReadyVoidFuture(), &PlayQueue::batch_append, sources);
     }
 
-    Q_INVOKABLE void respawnQueue(const QList<Types::Song> &songs) {
+    Q_INVOKABLE void respawnQueue(const QList<Types::Track> &tracks) {
         if (!iface()) return;
-        iface()->respawn_queue(songs);
+        iface()->respawn_queue(tracks);
     }
 
     Q_INVOKABLE void respawnQueue(const QStringList &sources) {
@@ -81,7 +81,7 @@ public:
         iface()->batch_remove(qpindices);
     }
 
-    Q_INVOKABLE Types::Song itemAt(int idx) const { return item_at(idx); }
+    Q_INVOKABLE Types::Track itemAt(int idx) const { return item_at(idx); }
 
     // rows arrive in THIS proxy's space; map down before crossing the interface
     Q_INVOKABLE bool move (int from, int to) {

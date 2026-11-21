@@ -15,7 +15,7 @@ ColumnLayout {
 
     required property SearchBar searchBarItem
 
-    property list<song> displayedTracks
+    property list<track> displayedTracks
     property real searchHighScore: -1
 
     Connections {
@@ -46,7 +46,7 @@ ColumnLayout {
 
         text: !root.searchBarItem.clearable ? qsTr("Tracks") : qsTr("Search results")
 
-        Layout.bottomMargin: grid.songCoverHeight / 16
+        Layout.bottomMargin: grid.trackCoverHeight / 16
     }
 
     Connections {
@@ -84,8 +84,8 @@ ColumnLayout {
 
         reuseItems: true
 
-        onSongClicked: function(clicked_song: song) {
-            PlayQueue.switchTo(clicked_song.source)
+        onTrackClicked: function(clicked_track: track) {
+            PlayQueue.switchTo(clicked_track.source)
         }
 
         additionalMenuActions: [

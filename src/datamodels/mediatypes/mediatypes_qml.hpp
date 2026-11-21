@@ -8,10 +8,10 @@
 
 namespace Types {
 
-struct SongForeign {
+struct TrackForeign {
     Q_GADGET
-    QML_FOREIGN(Types::Song)
-    QML_VALUE_TYPE(song)
+    QML_FOREIGN(Types::Track)
+    QML_VALUE_TYPE(track)
 };
 
 struct AlbumForeign {

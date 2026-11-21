@@ -17,7 +17,7 @@ Item {
 
     property string metadata // printable metadata, its parent decides what the second line should contain
 
-    property string duration // printable duration, ideally from <Song.duration_mmss>
+    property string duration // printable duration, ideally from <Track.duration_mmss>
 
     property url cover: ""
 

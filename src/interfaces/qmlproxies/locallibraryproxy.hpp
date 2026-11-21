@@ -22,7 +22,7 @@ public:
     Q_INVOKABLE QFuture<void> snapshot_known_directories() {
         return call_or(QtFuture::makeReadyVoidFuture(), &LocalLibrary::snapshot_known_directories);
     }
-    Q_INVOKABLE QList<Types::Song> flattened() const {
+    Q_INVOKABLE QList<Types::Track> flattened() const {
         return call(&LocalLibrary::flattened);
     }
     Q_INVOKABLE QStringList flattenedSources() const {

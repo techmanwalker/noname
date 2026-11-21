@@ -39,7 +39,7 @@ public:
     QPersistentModelIndex playhead() const override;
 
     // all items
-    QList<Types::Song> items() const;
+    QList<Types::Track> items() const;
 
     // or their sources
     QList<QUrl> sources() const;
@@ -47,7 +47,7 @@ public:
     int item_count () const override;
 
     // controls
-    [[nodiscard]] QFuture<void> switch_to (const Types::Song &song, bool play_afterwards = false);
+    [[nodiscard]] QFuture<void> switch_to (const Types::Track &song, bool play_afterwards = false);
     [[nodiscard]] QFuture<void> switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) override;
     [[nodiscard]] QFuture<void> switch_to (size_t idx, bool play_afterwards = false) override;
     [[nodiscard]] QFuture<void> switch_to (const QUrl &source) override;
@@ -59,10 +59,10 @@ public:
 
     void clear () override;
 
-    bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) const override;
+    bool pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Track &)> callback) const override;
 
     QPersistentModelIndex find_by_source (const QUrl &needle) override;
-    std::optional<Types::Song> query_metadata_for_source (const QUrl &needle) const override;
+    std::optional<Types::Track> query_metadata_for_source (const QUrl &needle) const override;
 
     QFuture<void> batch_append (const QList<QUrl> &sources) override;
 
@@ -71,7 +71,7 @@ public:
 
     QFuture<void> spawn_queue   (const QStringList &sources);
     QFuture<void> respawn_queue (const QStringList &sources) override;
-    void respawn_queue (QList<Types::Song> songs) override;
+    void respawn_queue (QList<Types::Track> tracks) override;
 
     QFuture<bool> save_as_playlist_to_disk (const QString &name) override;
 

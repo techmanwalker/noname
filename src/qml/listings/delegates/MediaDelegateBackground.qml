@@ -6,7 +6,7 @@ import Player.Primitives
 Item {
     id: root
 
-    // Inyectados desde Song.qml o el componente llamador
+    // Inyectados desde Track.qml o el componente llamador
     property bool playing: false
     property bool hovered: false
     property bool selected: false
@@ -30,8 +30,8 @@ Item {
 
                 PropertyChanges {
                     background.color: root.lightMode ?
-                        Theme.light.elementbg.songPlayingSelected :
-                        Theme.dark.elementbg.songPlayingSelected
+                        Theme.light.elementbg.trackPlayingSelected :
+                        Theme.dark.elementbg.trackPlayingSelected
                 }
 
                 when: root.playing && root.selected
@@ -42,8 +42,8 @@ Item {
 
                 PropertyChanges {
                     background.color: root.lightMode ?
-                        Theme.light.elementbg.songPlaying :
-                        Theme.dark.elementbg.songPlaying
+                        Theme.light.elementbg.trackPlaying :
+                        Theme.dark.elementbg.trackPlaying
                 }
 
                 when: root.playing
@@ -54,8 +54,8 @@ Item {
 
                 PropertyChanges {
                     background.color: root.lightMode ?
-                        Theme.light.elementbg.songSelected :
-                        Theme.dark.elementbg.songSelected
+                        Theme.light.elementbg.trackSelected :
+                        Theme.dark.elementbg.trackSelected
                 }
 
                 when: root.selected
@@ -66,8 +66,8 @@ Item {
 
                 PropertyChanges {
                     background.color: root.lightMode ?
-                        Theme.light.elementbg.songHovered :
-                        Theme.dark.elementbg.songHovered
+                        Theme.light.elementbg.trackHovered :
+                        Theme.dark.elementbg.trackHovered
                 }
 
                 when: root.hovered
@@ -81,7 +81,7 @@ Item {
         id: noiseEffect
         source: background
         anchors.fill: background
-        visible: false 
+        visible: false
         intensity: root.playing ? .04 : 0
     }
 
@@ -89,7 +89,7 @@ Item {
         id: edgeFadeEffect
         source: noiseEffect.outputSource
         anchors.fill: parent
-        
+
         // map to the item bounds
         outerLeftStop.x: root.outer_leftstop
         outerLeftStop.y: 0

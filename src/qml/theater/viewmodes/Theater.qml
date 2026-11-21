@@ -58,12 +58,12 @@ Row {
 
     // ── Layout ─────────────────────────────────────────────────────────────
 
-    property real songCoverWidth: 48
-    property real songCoverHeight: songCoverWidth
-    property real songInnerSpacing: 8
-    property real songFadePadding: 20
+    property real trackCoverWidth: 48
+    property real trackCoverHeight: trackCoverWidth
+    property real trackInnerSpacing: 8
+    property real trackFadePadding: 20
 
-    spacing: root.songCoverWidth
+    spacing: root.trackCoverWidth
 
     // Left column: cover + controls
     ColumnLayout {
@@ -154,7 +154,7 @@ Row {
             property int scrollBarWidth: Theme.sizes.scrollBarWidth
             width: (leftCol.width * .6) + (scrollBarWidth * 6)
 
-            spacing: root.songCoverHeight * .2
+            spacing: root.trackCoverHeight * .2
 
             PlayQueueHeader {
                 id: metadataContainer
@@ -163,7 +163,7 @@ Row {
                 album:  root.stateModel.album
 
                 Layout.fillWidth: true
-                Layout.leftMargin: 15 // playlist song lateral padding
+                Layout.leftMargin: 15 // playlist track lateral padding
                 Layout.rightMargin: Layout.leftMargin
 
                 onClicked: root.immersive = !root.immersive
@@ -329,20 +329,20 @@ Row {
                         anchors.fill: parent
 
                         model: PlayQueue
-                        songAt: (row) => PlayQueue.itemAt(row)
+                        trackAt: (row) => PlayQueue.itemAt(row)
 
                         scrollBarWidth: rightCol.scrollBarWidth
 
                         clip: true
-                        reuseItems: true // tons of songs moving
+                        reuseItems: true // tons of tracks moving
 
                         playheadRowIdx: PlayQueue.playhead.row
 
                         // metadata
                         property rect leftGlobalBounds: Qt.rect(
-                                queueAndMetadata_cBounds.x + songCoverWidth,
+                                queueAndMetadata_cBounds.x + trackCoverWidth,
                                 queueAndMetadata_cBounds.y,
-                                (queueAndMetadata_c.width / 2) - songCoverWidth, // 2nd half is mostly empty space
+                                (queueAndMetadata_c.width / 2) - trackCoverWidth, // 2nd half is mostly empty space
                                 Math.min(queueAndMetadata_c.contentHeight, queueAndMetadata_c.height)
                             )
 
@@ -350,9 +350,9 @@ Row {
 
                         // duration labels
                         property rect rightGlobalBounds: Qt.rect(
-                                queueAndMetadata_cBounds.x + queueAndMetadata_c.width - (songLateralPadding * 2) - (estimateDurationLabelWidth),
+                                queueAndMetadata_cBounds.x + queueAndMetadata_c.width - (trackLateralPadding * 2) - (estimateDurationLabelWidth),
                                 queueAndMetadata_cBounds.y,
-                                estimateDurationLabelWidth + songLateralPadding * 2,
+                                estimateDurationLabelWidth + trackLateralPadding * 2,
                                 Math.min(queueAndMetadata_c.contentHeight, queueAndMetadata_c.height)
                             )
 
@@ -361,7 +361,7 @@ Row {
 
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 
-                        onSongClicked: (song) => PlayQueue.playhead = PlayQueue.findBySource(song.source)
+                        onTrackClicked: (track) => PlayQueue.playhead = PlayQueue.findBySource(track.source)
 
                         additionalMenuActions: [
 

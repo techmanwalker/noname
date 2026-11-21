@@ -4,16 +4,16 @@
 #include <QLoggingCategory>
 
 QJsonObject
-debug::serialize (const Types::Song &song)
+debug::serialize (const Types::Track &track)
 {
     QJsonObject out;
 
-    out["title"] = song.title;
-    out["artist"] = song.artist;
-    out["album"] = song.album;
-    out["duration"] = static_cast<qint64>(song.duration);
-    out["source"] = song.source.toString();
-    out["cover"] = song.coveruri().toString();
+    out["title"] = track.title;
+    out["artist"] = track.artist;
+    out["album"] = track.album;
+    out["duration"] = static_cast<qint64>(track.duration);
+    out["source"] = track.source.toString();
+    out["cover"] = track.coveruri().toString();
 
     return out;
 }
@@ -27,13 +27,13 @@ debug::serialize (const Types::Album &album)
     out["artist"] = album.artist;
     out["duration"] = static_cast<qint64>(album.duration());
 
-    QJsonArray songs;
+    QJsonArray tracks;
 
-    for (const auto &song : album.songs) {
-        songs.append(serialize(song));
+    for (const auto &track : album.tracks) {
+        tracks.append(serialize(track));
     }
 
-    out["songs"] = songs;
+    out["tracks"] = tracks;
 
     return out;
 }
@@ -46,13 +46,13 @@ debug::serialize (const Types::Directory &dir)
     out["path"] = dir.path;
     out["name"] = dir.title;
 
-    QJsonArray songs;
+    QJsonArray tracks;
 
-    for (const auto &song : dir.songs) {
-        songs.append(serialize(song));
+    for (const auto &track : dir.tracks) {
+        tracks.append(serialize(track));
     }
 
-    out["songs"] = songs;
+    out["tracks"] = tracks;
 
     return out;
 }
@@ -77,7 +77,7 @@ debug::serialize (const QList<QUrl> &uris)
     for (const auto &uri : uris) {
         out.append(uri.toString());
     }
-    
+
     return out;
 }
 

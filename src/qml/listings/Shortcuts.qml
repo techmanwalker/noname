@@ -19,7 +19,7 @@ ListView {
 
     clip: true
 
-    signal songClicked (song clicked_song)
+    signal trackClicked (track clicked_track)
 
     // selection
     property alias selectedIndices: selection.indices
@@ -38,7 +38,7 @@ ListView {
         width: dummycard.width
         height: dummycard.height
 
-        required property song model
+        required property track model
         required property int  index
 
         title: model.title
@@ -56,7 +56,7 @@ ListView {
 
         onClicked: {
             selection.clear() // a plain click drops the multi-selection
-            root.songClicked(model)
+            root.trackClicked(model)
         }
         onCtrlClicked: selection.toggle(index)
         onRightClicked: selection.openMenuFor(index)

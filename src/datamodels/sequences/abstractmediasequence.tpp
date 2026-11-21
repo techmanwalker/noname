@@ -57,7 +57,7 @@ AbstractMediaSequence::sources (const container &items)
         std::visit([&uri_sources](const auto &resolved_item) {
             using T = std::decay_t<decltype(resolved_item)>;
 
-            if constexpr (std::is_same_v<T, Types::Song>) {
+            if constexpr (std::is_same_v<T, Types::Track>) {
                 uri_sources.append(resolved_item.source.toLocalFile());
             }
         }, Types::Any{item});
@@ -97,7 +97,7 @@ AbstractMediaSequence::batch_append(container items)
     valid_items.reserve(items.size());
 
     for (auto &item : items) {
-        if constexpr (std::is_same_v<std::decay_t<decltype(item)>, Types::Song>) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(item)>, Types::Track>) {
             if (!item.is_valid()) {
                 continue;
             }

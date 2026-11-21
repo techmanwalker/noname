@@ -9,7 +9,7 @@
 #include "mediatypes.hpp"
 
 namespace Types {
-    struct Song;
+    struct Track;
 }
 
 /*  Vocabulary, shared by everything in src/audioengine:
@@ -61,20 +61,20 @@ public:
     // volume
     virtual QFuture<void> set_volume(quint8 volume_percent) = 0;
 
-    // no Types::Song below this point; the engine only sees sources
-    QFuture<void> load (const Types::Song &song)
+    // no Types::Track below this point; the engine only sees sources
+    QFuture<void> load (const Types::Track &song)
     {
         if (!song.is_valid()) return QtFuture::makeReadyVoidFuture();
         return load(song.source);
     }
-    QFuture<void> prepare_next_track(const Types::Song &song) { return prepare_next_track(song.source); }
+    QFuture<void> prepare_next_track(const Types::Track &song) { return prepare_next_track(song.source); }
 
     virtual const QUrl & current_track_source()       const = 0;   // A
     virtual const QUrl & next_track_prepared_source() const = 0;   // B
     virtual quint64     current_position_ms() const = 0;
     virtual quint8      current_volume()      const = 0;
     virtual playback_state get_playback_state() const = 0;
-    virtual bool is_a_song_loaded() const = 0;
+    virtual bool is_a_track_loaded() const = 0;
 };
 
 inline constexpr const char* audio_engine_iid = interface_iid<"audio_engine">.buf;

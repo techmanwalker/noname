@@ -50,15 +50,15 @@ QPersistentModelIndex successor_of (State &s, const QModelIndex &projected); // 
 // --- readers
 bool                  shuffled       (State &s);
 int                   item_count     (State &s);                     // always the source's
-QList<Types::Song>    items          (State &s);                     // projected order
+QList<Types::Track>    items          (State &s);                     // projected order
 QPersistentModelIndex find_by_source (State &s, const QUrl &source); // projected index
 bool pointed_to (State &s, const QPersistentModelIndex &projected,
-                 const std::function<bool(const Types::Song &)> &callback);
+                 const std::function<bool(const Types::Track &)> &callback);
 
 // --- writers
 void clear        (State &s);                                      // the view follows implicitly
-void batch_append (State &s, QList<Types::Song> songs);            // lands at the end of both lists
-void spawn        (State &s, QList<Types::Song> songs);            // append, then reshuffle
+void batch_append (State &s, QList<Types::Track> tracks);            // lands at the end of both lists
+void spawn        (State &s, QList<Types::Track> tracks);            // append, then reshuffle
 bool move_item    (State &s, const QPersistentModelIndex &src, const QPersistentModelIndex &dest);
 void batch_remove (State &s, const QList<QPersistentModelIndex> &source_indices); // view follows implicitly
 

@@ -15,11 +15,11 @@ Item {
 
     property list<int> indices: []
 
-    // How a row becomes a song. Defaults to a JS list; item models (the play queue)
+    // How a row becomes a track. Defaults to a JS list; item models (the play queue)
     // override it, since `model[row]` doesn't work on them.
-    property var songAt: (row) => root.model[row]
+    property var trackAt: (row) => root.model[row]
 
-    property var sourcesOf: (row) => [root.songAt(row).source]
+    property var sourcesOf: (row) => [root.trackAt(row).source]
 
     property alias extraActions: menu.extraActions
 

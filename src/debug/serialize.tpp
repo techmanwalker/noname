@@ -13,7 +13,7 @@ serialize (const QFuture<MediaType> &future_unit)
     bool finished = future_unit.isFinished();
 
     out["finished"] = finished;
-    out["value"] = 
+    out["value"] =
         finished ?
             serialize(future_unit.result()) :
             QJsonObject {};
@@ -53,8 +53,8 @@ serialize (const T &unit)
 {
     QJsonObject out;
 
-    if (std::holds_alternative<Types::Song>(unit)) {
-        out = serialize(std::get<Types::Song>(unit));
+    if (std::holds_alternative<Types::Track>(unit)) {
+        out = serialize(std::get<Types::Track>(unit));
     }
     if (std::holds_alternative<Types::Album>(unit)) {
         out = serialize(std::get<Types::Album>(unit));

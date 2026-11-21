@@ -14,15 +14,15 @@ ColumnLayout {
     property var lists: PlaylistsList
 
     // expose to Theater
-    property real songInnerSpacing: 8
-    property real songFadePadding: 10
-    property real songLateralPadding: 15
+    property real trackInnerSpacing: 8
+    property real trackFadePadding: 10
+    property real trackLateralPadding: 15
 
     // to display the tracklist, title and more
     property playlist selectedPlaylist
 
     signal backButtonClicked_r () // from top to down in the hierarchy, marked
-    signal songClicked (song clicked_song)
+    signal trackClicked (track clicked_track)
 
     onBackButtonClicked_r: {
         pl_stack.currentIndex = 0
@@ -48,8 +48,8 @@ ColumnLayout {
         model: root.lists
 
         // a row is a playlist; its sources are those of its tracks
-        songAt:    (row) => PlaylistsList.itemAt(row)
-        sourcesOf: (row) => PlaylistsList.itemAt(row).songs.map(s => s.source)
+        trackAt:    (row) => PlaylistsList.itemAt(row)
+        sourcesOf: (row) => PlaylistsList.itemAt(row).tracks.map(s => s.source)
 
         extraActions: [
             T.Action {
@@ -64,7 +64,7 @@ ColumnLayout {
             }
         ]
     }
-    
+
     StackLayout {
         id: pl_stack
         Layout.fillWidth: true
@@ -93,11 +93,11 @@ ColumnLayout {
                 dragKey: root.dragKey
                 rowWidth: pl.width
 
-                metadataOf: (playlist) => qsTr("%n track(s)", "number of tracks in this playlist", playlist.songs.length)
+                metadataOf: (playlist) => qsTr("%n track(s)", "number of tracks in this playlist", playlist.tracks.length)
             }
 
             delegate: MediaDelegate {
-                id: song
+                id: track
 
                 required property playlist model
                 required property int index
@@ -108,12 +108,12 @@ ColumnLayout {
 
                 title:      model.title
                 cover:      model.cover
-                metadata:   qsTr("%n track(s)", "number of tracks in this playlist", model.songs.length)
+                metadata:   qsTr("%n track(s)", "number of tracks in this playlist", model.tracks.length)
                 duration:   model.duration_mmss
 
-                innerSpacing:   root.songInnerSpacing
-                fadePadding:    root.songFadePadding
-                lateralPadding: root.songLateralPadding
+                innerSpacing:   root.trackInnerSpacing
+                fadePadding:    root.trackFadePadding
+                lateralPadding: root.trackLateralPadding
 
                 showSeparator: true
 
@@ -123,8 +123,8 @@ ColumnLayout {
 
                 opacity: selectionDrag.carries(index) ? 0.4 : 1
 
-                SelectionDrag.Arm   { controller: selectionDrag; row: song.index }
-                SelectionDrag.Track { controller: selectionDrag; row: song.index }
+                SelectionDrag.Arm   { controller: selectionDrag; row: track.index }
+                SelectionDrag.Track { controller: selectionDrag; row: track.index }
 
                 onClicked: {
                     selection.clear()
@@ -143,16 +143,16 @@ ColumnLayout {
         Playlist {
             id: openPlaylist
 
-            model: root.selectedPlaylist.songs
+            model: root.selectedPlaylist.tracks
 
-            maxDraggedSongs: root.maxDraggedRows
+            maxDraggedTracks: root.maxDraggedRows
             dragKey: root.dragKey
 
-            onSongClicked: (clicked_song) => {
+            onTrackClicked: (clicked_track) => {
                 // every tab manages click behavior on their own, Browser doesn't
 
                 PlayQueue.respawnQueue(model)
-                PlayQueue.playhead = PlayQueue.findBySource(clicked_song.source)
+                PlayQueue.playhead = PlayQueue.findBySource(clicked_track.source)
             }
         }
     }

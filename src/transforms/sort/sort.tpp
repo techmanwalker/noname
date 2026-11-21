@@ -10,7 +10,7 @@ bool
 field_less (const FieldType &a, const FieldType &b, bool descending)
 {
     if constexpr (std::is_convertible_v<FieldType, QString>) {
-        // locale-aware compare, consistent with the "songs" role sort in defaultroles.hpp
+        // locale-aware compare, consistent with the "tracks" role sort in defaultroles.hpp
         const int cmp = a.localeAwareCompare(b);
         return descending ? cmp > 0 : cmp < 0;
     } else {

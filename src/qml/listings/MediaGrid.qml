@@ -9,21 +9,21 @@ import Player.Primitives
 GridView {
     id: root
 
-    // model: the current folder model with members name, song
-    property real songCoverWidth:  Theme.sizes.cardCoverWidth
-    property real songCoverHeight: Theme.sizes.cardCoverHeight
+    // model: the current folder model with members name, track
+    property real trackCoverWidth:  Theme.sizes.cardCoverWidth
+    property real trackCoverHeight: Theme.sizes.cardCoverHeight
 
     property int  scrollBarWidth:  Theme.sizes.scrollBarWidth
 
     property bool lightMode: false
 
-    property real songLateralPadding: (songCoverWidth / 12)
-    property real songVerticalPadding: (songCoverWidth / 12)
+    property real trackLateralPadding: (trackCoverWidth / 12)
+    property real trackVerticalPadding: (trackCoverWidth / 12)
 
-    cellWidth: dummycard.width + songLateralPadding
-    cellHeight: dummycard.height + songVerticalPadding
+    cellWidth: dummycard.width + trackLateralPadding
+    cellHeight: dummycard.height + trackVerticalPadding
 
-    signal songClicked(song clicked_song)
+    signal trackClicked(track clicked_track)
 
     // selection
     property alias selectedIndices: selection.indices
@@ -37,7 +37,7 @@ GridView {
     // drag
     // The ghost spawner should handle excessively big selections by showing
     // "+N more…"
-    property real maxDraggedSongs: Infinity
+    property real maxDraggedTracks: Infinity
 
     // Tags this grid's drags, so a DropArea can tell them from other drags (file drops)
     readonly property string dragKey: "noname/tracks"
@@ -58,37 +58,37 @@ GridView {
 
     // Every cell keeps its padding so cards stay uniform; the trailing gutter of
     // the last column/row is cancelled here instead of in the delegate.
-    rightMargin: scrollbar.logicalWidth - songLateralPadding
-    bottomMargin: -songVerticalPadding
+    rightMargin: scrollbar.logicalWidth - trackLateralPadding
+    bottomMargin: -trackVerticalPadding
 
     delegate: Item {
         id: delegateRoot
 
-        required property song modelData
+        required property track modelData
         required property int index
 
         width: GridView.view.cellWidth
         height: GridView.view.cellHeight
 
-        // song card
+        // track card
         MediaDelegate {
-            property alias songItem: delegateRoot.modelData
+            property alias trackItem: delegateRoot.modelData
 
             card: true
 
-            title: songItem.title
-            metadata: (songItem.artist.length > 0 ? songItem.artist : qsTr ("Unknown Artist"))
-                + (songItem.album.length > 0 ? " · " + songItem.album : "")
-            cover: songItem.cover
-            duration: songItem.duration_mmss
+            title: trackItem.title
+            metadata: (trackItem.artist.length > 0 ? trackItem.artist : qsTr ("Unknown Artist"))
+                + (trackItem.album.length > 0 ? " · " + trackItem.album : "")
+            cover: trackItem.cover
+            duration: trackItem.duration_mmss
 
-            coverWidth: root.songCoverWidth
-            coverHeight: root.songCoverHeight
+            coverWidth: root.trackCoverWidth
+            coverHeight: root.trackCoverHeight
 
             anchors.fill: parent
-            anchors.leftMargin: LayoutMirroring.enabled ? root.songLateralPadding : 0
-            anchors.rightMargin: LayoutMirroring.enabled ? 0 : root.songLateralPadding
-            anchors.bottomMargin: root.songVerticalPadding
+            anchors.leftMargin: LayoutMirroring.enabled ? root.trackLateralPadding : 0
+            anchors.rightMargin: LayoutMirroring.enabled ? 0 : root.trackLateralPadding
+            anchors.bottomMargin: root.trackVerticalPadding
 
             // to visually mark it selected
             selected: selection.isSelected(delegateRoot.index)
@@ -101,7 +101,7 @@ GridView {
 
             onClicked: {
                 selection.clear() // a plain click drops the multi-selection
-                root.songClicked(songItem)
+                root.trackClicked(trackItem)
             }
             onCtrlClicked: selection.toggle(delegateRoot.index)
             onRightClicked: selection.openMenuFor(delegateRoot.index)
@@ -112,7 +112,7 @@ GridView {
         id: selectionDrag
         view: root
         selection: selection
-        maxSelectedItems: root.maxDraggedSongs
+        maxSelectedItems: root.maxDraggedTracks
         cancelSequences: [StandardKey.Cancel]
     }
 
@@ -122,18 +122,18 @@ GridView {
         dragKey: root.dragKey
         lightMode: root.lightMode
 
-        coverWidth: root.songCoverWidth
-        coverHeight: root.songCoverHeight
-        cardColumnSpacing: root.songLateralPadding
-        cardRowSpacing: root.songVerticalPadding
+        coverWidth: root.trackCoverWidth
+        coverHeight: root.trackCoverHeight
+        cardColumnSpacing: root.trackLateralPadding
+        cardRowSpacing: root.trackVerticalPadding
     }
 
     TallestDummyCard {
         id: dummycard
         visible: false
 
-        coverWidth: root.songCoverWidth
-        coverHeight: root.songCoverHeight
+        coverWidth: root.trackCoverWidth
+        coverHeight: root.trackCoverHeight
     }
 
     ScrollBar.vertical: AccessibleScrollBar {

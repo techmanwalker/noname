@@ -11,7 +11,7 @@
 namespace debug {
     void print (const QLoggingCategory &cat, const QJsonValue &val);
 
-    QJsonObject serialize(const Types::Song &song);
+    QJsonObject serialize(const Types::Track &track);
     QJsonObject serialize(const Types::Album &album);
     QJsonObject serialize(const Types::Directory &dir);
     template <media_type T>

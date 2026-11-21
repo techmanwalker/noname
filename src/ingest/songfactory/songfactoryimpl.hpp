@@ -16,23 +16,23 @@ namespace covers::live {
 class song_factory_impl : public QObject
 {
     Q_OBJECT
-    
+
 public:
     // logging
     static const QLoggingCategory &l_songfactory();
 
     // Never touch each other's instances' signals or members
     // Invoked as song_factory::extract(url, cover_provider);
-    static QFuture<Types::Song> extract(const QUrl &source, attributes a);
-    
+    static QFuture<Types::Track> extract(const QUrl &source, attributes a);
+
     static void teardown ();
 
     static
-    QList<QFuture<Types::Song>>
+    QList<QFuture<Types::Track>>
     progressive_extract (const QList<QUrl> &sources, attributes a);
 
     static
-    QFuture<QList<Types::Song>>
+    QFuture<QList<Types::Track>>
     batch_extract (const QList<QUrl> &sources, attributes a);
 
 private:
@@ -40,9 +40,9 @@ private:
     song_factory_impl(const QUrl &source);
 
     // Internally executes the extraction synchronously (to be called from worker threads, cancellable promise)
-    Types::Song execute_extraction(QPromise<Types::Song> &promise, attributes a);
+    Types::Track execute_extraction(QPromise<Types::Track> &promise, attributes a);
 
-    // Dedicated thread pool to load hundreds of songs
+    // Dedicated thread pool to load hundreds of tracks
     static QThreadPool* extraction_pool();
 
     QUrl m_source;

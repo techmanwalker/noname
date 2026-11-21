@@ -6,12 +6,12 @@
 
 template <media_sequence container>
 PlaylistSequence::PlaylistSequence(
-    container songs,
+    container tracks,
     QObject *parent
-) 
+)
     : AbstractMediaSequence(parent, container_roles)
 {
-    batch_append(std::move(songs));
+    batch_append(std::move(tracks));
 }
 
 template <media_sequence container>

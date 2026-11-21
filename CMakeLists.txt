@@ -302,7 +302,7 @@ target_link_libraries(configuration_in INTERFACE Qt6::Core)
 
 # --- Data ingest - data and metadata preprocessing
 
-# The Song factory - enables extracting metadata, media and covers from songs themselves
+# The Song factory - enables extracting metadata, media and covers from tracks themselves
 # performs direct I/O with audio files
 
 add_library(songfactory STATIC
@@ -428,7 +428,7 @@ target_link_libraries (locallibrary
         diskio
         configuration_in
         rolecompiler
-        songfactory # local library interface, needs to load the songs metadata
+        songfactory # local library interface, needs to load the tracks metadata
 
         rapidfuzz::rapidfuzz
 
@@ -558,7 +558,7 @@ target_link_libraries(playqueue
         mediasequences
         mediafilter
         mediashuffle
-        songfactory # qml can drop songs to the play queue graphically, needs to read them
+        songfactory # qml can drop tracks to the play queue graphically, needs to read them
 
         rolecompiler
 )

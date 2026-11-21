@@ -128,7 +128,7 @@ audio_engine_LI::start_unload(QPromise<void> call)
 bool
 audio_engine_LI::refuse_without_track(QPromise<void> &call)
 {
-    if (is_a_song_loaded()) return false;
+    if (is_a_track_loaded()) return false;
     abandon(call);
     return true;
 }
@@ -282,7 +282,7 @@ audio_engine_LI::get_playback_state() const
 }
 
 bool
-audio_engine_LI::is_a_song_loaded() const
+audio_engine_LI::is_a_track_loaded() const
 {
     return !m_track_A_source.isEmpty();
 }

@@ -23,13 +23,13 @@ ColumnLayout {
 
         Layout.fillWidth: true
 
-        onSongClicked: (song) => {
-            PlayQueue.switchTo(song.source)
+        onTrackClicked: (track) => {
+            PlayQueue.switchTo(track.source)
         }
     }
 
     // absorb spacer
     Item {
-        Layout.fillHeight: true 
+        Layout.fillHeight: true
     }
 }

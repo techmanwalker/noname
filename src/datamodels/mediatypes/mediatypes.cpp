@@ -23,7 +23,7 @@ printable_time (quint64 ms)
     quint64 mm = total_seconds / 60 - hh * 60;
     quint8  ss = total_seconds % 60;
 
-    return 
+    return
         (hh > 0 ? QString::number(hh) + ":" : "") +
         (mm < 10 && hh > 0 ? "0" : "") + QString::number(mm) + ":" +
         (ss < 10 ? "0" : "") + QString::number(ss);
@@ -67,7 +67,7 @@ isBase64Url (const QByteArray &s)
 quint64
 base_media_container_::duration() const {
     quint64 total = 0;
-    for (const Types::Song &s : songs)
+    for (const Types::Track &s : tracks)
         total += s.duration;
     return total;
 }
@@ -80,35 +80,35 @@ base_media_container_::duration_mmss() const {
 QUrl
 base_media_container_::firstcover() const
 {
-    if (songs.size() == 0) return {};
+    if (tracks.size() == 0) return {};
 
-    return songs.at(0).coveruri();
+    return tracks.at(0).coveruri();
 }
 
 namespace Types {
-    
+
 // validity semantics
 
 bool
-Song::is_valid () const
+Track::is_valid () const
 {
     return !source.isEmpty();
 }
 
 QUrl
-Song::coveruri() const
+Track::coveruri() const
 {
     return covers::schema + source_base64();
 }
 
 QString
-Song::duration_mmss () const
+Track::duration_mmss () const
 {
     return printable_time(duration);
 }
 
 QByteArray
-Song::source_base64() const
+Track::source_base64() const
 {
     return toBase64Url(source);
 }

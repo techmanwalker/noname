@@ -55,7 +55,7 @@ PlayerPresenterLI::PlayerPresenterLI(
 }
 
 // Getters block
-const Types::Song & PlayerPresenterLI::current_track() const {
+const Types::Track & PlayerPresenterLI::current_track() const {
     Q_ASSERT_X(m_current_track.source == ae->current_track_source(), "PlayerPresenterLI::current_track",
     "The current playing track reported is not the track audio engine is playing.");
 
@@ -64,7 +64,7 @@ const Types::Song & PlayerPresenterLI::current_track() const {
 
 quint64 PlayerPresenterLI::position_ms()     const { return ae->current_position_ms();  }
 quint8  PlayerPresenterLI::volume()          const { return ae->current_volume();       }
-bool    PlayerPresenterLI::is_media_loaded() const { return ae->is_a_song_loaded();     }
+bool    PlayerPresenterLI::is_media_loaded() const { return ae->is_a_track_loaded();     }
 
 double
 PlayerPresenterLI::lightness_of_ring (covers::lightness::lightness_types ring) const
@@ -96,7 +96,7 @@ struct luma_computation_results {
 }
 
 QFuture<void>
-PlayerPresenterLI::recompute_lightness_levels(const Types::Song &backdrop_source)
+PlayerPresenterLI::recompute_lightness_levels(const Types::Track &backdrop_source)
 {
     if (!m_lightness_awareness) return QtFuture::makeReadyVoidFuture();
 
@@ -286,7 +286,7 @@ PlayerPresenterLI::toggle_play_pause() const
 }
 
 QFuture<void>
-PlayerPresenterLI::load(Types::Song &song) const
+PlayerPresenterLI::load(Types::Track &song) const
 {
     return ae->load(song);
 }

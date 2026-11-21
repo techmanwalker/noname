@@ -70,13 +70,13 @@ PlaylistsListLI::refresh ()
                 covers::default_cover_thumbnail_size,
                 true
             }
-        ).then(this, [playlist_text, generation, this](QList<Types::Song> songs_of_playlist) {
+        ).then(this, [playlist_text, generation, this](QList<Types::Track> tracks_of_playlist) {
             if (generation != m_refresh_generation) return; // a newer refresh superseded this one
 
             // song_factory reads the metadata for each path
             Types::Playlist playlist {
                 QFileInfo(playlist_text).baseName(),
-                std::move(songs_of_playlist),
+                std::move(tracks_of_playlist),
             };
 
             // load into memory

@@ -25,7 +25,7 @@ class LyricsManifest;
 class PlayQueue;
 
 namespace Types {
-    struct Song;
+    struct Track;
 }
 
 /**
@@ -70,7 +70,7 @@ public:
     Q_ENUM(PlaybackState)
 
     // Getters
-    const Types::Song & current_track () const override;
+    const Types::Track & current_track () const override;
     quint64 position_ms() const override;
     quint8 volume() const override;
     PlaybackState playback_state() const override;
@@ -96,7 +96,7 @@ public:
     QFuture<void> toggle_mute () const override;
 
     // Call forwardings
-    QFuture<void> load(Types::Song &song) const override;
+    QFuture<void> load(Types::Track &song) const override;
 
     // transport
     QFuture<void> play()  const override;
@@ -128,7 +128,7 @@ public slots:
     void handle_volume_changed();
 
 private slots:
-    QFuture<void> recompute_lightness_levels(const Types::Song &backdrop_source);
+    QFuture<void> recompute_lightness_levels(const Types::Track &backdrop_source);
 
 private:
     std::shared_ptr<configuration::manager> cm; // configuration
@@ -140,7 +140,7 @@ private:
     std::atomic_bool m_slider_pressed {false};
 
     // do not access these directly from outside, these are guarded
-    Types::Song m_current_track;
+    Types::Track m_current_track;
 
     covers::lightness::cover_rings m_cover_lightness_rings;
     covers::lightness::lightness_table  m_cover_lightness_table;

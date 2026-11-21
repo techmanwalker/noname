@@ -19,7 +19,7 @@ ResizableButton {
     // Map state -> icon
     function getRepeatIcon(mode : int) : string {
         switch (mode) {
-            case RepeatButton.RepeatMode.RepeatSingle:    return "media-playlist-repeat-song";
+            case RepeatButton.RepeatMode.RepeatSingle:    return "media-playlist-repeat-track";
             case RepeatButton.RepeatMode.RepeatAllTracks: return "media-playlist-repeat";
             case RepeatButton.RepeatMode.Off:             return "media-repeat-none";
             default:                                      return "media-repeat-none";
@@ -34,7 +34,7 @@ ResizableButton {
         // (0+1)%3 = 1 -> (1+1)%3 = 2 -> (2+1)%3 = 0 ... and so on
         root.currentMode = (root.currentMode + 1) % 3;
     }
-    
+
     // Hovered tooltip
     Hint {
         visible: root.hovered

@@ -6,7 +6,7 @@ import Player.Primitives
 
 Column {
     id: root
-    required property song model
+    required property track model
 
     required property bool lightMode
 

@@ -142,7 +142,7 @@ Item {
             model: root.carried
 
             MediaDelegate {
-                required property var modelData // a song, or whatever metadataOf understands
+                required property var modelData // a track, or whatever metadataOf understands
 
                 card: root.cards
                 lightMode: root.lightMode

@@ -29,18 +29,18 @@ QList<QUrl> string_file_paths_to_qurllist (const sl &sources)
 }
 
 template <list_of_sources sl>
-QList<QFuture<Types::Song>>
+QList<QFuture<Types::Track>>
 progressive_extract (const sl &sources, attributes a)
 {
 
     return progressive_extract(
-        string_file_paths_to_qurllist(sources), 
+        string_file_paths_to_qurllist(sources),
         a
     );
 }
 
 template <list_of_sources sl>
-QFuture<QList<Types::Song>>
+QFuture<QList<Types::Track>>
 batch_extract (const sl &sources, attributes a)
 {
 

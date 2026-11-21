@@ -30,23 +30,23 @@ AutoscrollListView {
     property int scrollBarWidth: Theme.sizes.scrollBarWidth
 
     // expose to Theater
-    readonly property int songCoverWidth:     Theme.sizes.rowTrackCoverWidth
-    readonly property int songCoverHeight:    Theme.sizes.rowTrackCoverWidth
-    readonly property int songInnerSpacing:   songCoverWidth / 8
-    readonly property int songFadePadding:    Theme.sizes.rowTrackFadePadding
-    readonly property int songLateralPadding: Theme.sizes.rowTrackLateralPadding
+    readonly property int trackCoverWidth:     Theme.sizes.rowTrackCoverWidth
+    readonly property int trackCoverHeight:    Theme.sizes.rowTrackCoverWidth
+    readonly property int trackInnerSpacing:   trackCoverWidth / 8
+    readonly property int trackFadePadding:    Theme.sizes.rowTrackFadePadding
+    readonly property int trackLateralPadding: Theme.sizes.rowTrackLateralPadding
 
     // Right padding reserves space for the scrollbar so it appears
     // to float outside the list content without overlapping it
     rightMargin: scrollbar.logicalWidth
 
-    signal songClicked(song clicked_song)
+    signal trackClicked(track clicked_track)
 
     // This list only reports the gesture; committing the move is the consumer's job.
     signal moveRequested(int from, int to)
 
     // Most rows a drag carries. 1: a lone row is a reorder, as in the queue.
-    property real maxDraggedSongs: 1
+    property real maxDraggedTracks: 1
 
     // Tags this list's drags for a DropArea. Empty: nothing takes them.
     property string dragKey
@@ -57,7 +57,7 @@ AutoscrollListView {
     // selection
     property alias selectedIndices: mediaSelection.indices
     property alias additionalMenuActions: mediaSelection.extraActions
-    property alias songAt: mediaSelection.songAt
+    property alias trackAt: mediaSelection.trackAt
 
     MediaSelection {
         id: mediaSelection
@@ -68,7 +68,7 @@ AutoscrollListView {
         id: mediaDrag
         view: root
         selection: mediaSelection
-        maxSelectedItems: root.maxDraggedSongs
+        maxSelectedItems: root.maxDraggedTracks
         cancelSequences: root.dragKey !== "" ? [StandardKey.Cancel] : []
     }
 
@@ -101,14 +101,14 @@ AutoscrollListView {
 
         rowWidth: root.width - root.rightMargin
 
-        coverWidth: root.songCoverWidth
-        coverHeight: root.songCoverHeight
+        coverWidth: root.trackCoverWidth
+        coverHeight: root.trackCoverHeight
     }
 
     delegate: MediaDelegate {
-        id: song
+        id: track
 
-        required property song modelData
+        required property track modelData
         required property int index
 
         title:      modelData.title
@@ -137,12 +137,12 @@ AutoscrollListView {
 
         opacity: mediaDrag.carries(index) ? 0.4 : 1
 
-        SelectionDrag.Arm   { controller: mediaDrag; row: song.index }
-        SelectionDrag.Track { controller: mediaDrag; row: song.index }
+        SelectionDrag.Arm   { controller: mediaDrag; row: track.index }
+        SelectionDrag.Track { controller: mediaDrag; row: track.index }
 
         onClicked: {
             mediaSelection.clear() // a plain click drops the multi-selection
-            root.songClicked(modelData)
+            root.trackClicked(modelData)
         }
         onCtrlClicked: mediaSelection.toggle(index)
         onRightClicked: mediaSelection.openMenuFor(index)

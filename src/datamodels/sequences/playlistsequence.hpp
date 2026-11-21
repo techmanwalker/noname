@@ -7,7 +7,7 @@
 
 // AbstractMediaSequence MUST stay the first base: the QML prototype is resolved from it
 class PlaylistSequence : public AbstractMediaSequence,
-                         public BasicSequenceOps<PlaylistSequence, Types::Song>
+                         public BasicSequenceOps<PlaylistSequence, Types::Track>
 {
     Q_OBJECT
     QML_ANONYMOUS
@@ -17,16 +17,16 @@ public:
 
     template <media_sequence container>
     explicit PlaylistSequence(
-        container songs,
+        container tracks,
         QObject  *parent = nullptr
     );
 
     // both bases declare these names, so the leaf picks the typed ones
-    USING_SEQUENCE_OPS(PlaylistSequence, Types::Song);
+    USING_SEQUENCE_OPS(PlaylistSequence, Types::Track);
 
     // expose, supported
     using AbstractMediaSequence::clear;
-    using AbstractMediaSequence::batch_remove; 
+    using AbstractMediaSequence::batch_remove;
     using AbstractMediaSequence::move_item;
 
     /// clear and repopulate this playlist in one step

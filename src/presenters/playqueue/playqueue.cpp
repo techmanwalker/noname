@@ -57,7 +57,7 @@ PlayQueueLI::PlayQueueLI (
 PlayQueueLI::~PlayQueueLI() = default;
 
 
-QList<Types::Song>
+QList<Types::Track>
 PlayQueueLI::items () const
 {
     return sequence::items(m_d->state); // projected order
@@ -68,7 +68,7 @@ PlayQueueLI::sources() const
 {
     QList<QUrl> uris;
 
-    for (Types::Song item : items()) {
+    for (Types::Track item : items()) {
         uris.append(std::move(item.source));
     }
 
@@ -90,7 +90,7 @@ PlayQueueLI::clear ()
 QFuture<void>
 PlayQueueLI::batch_append (const QList<QUrl> &sources)
 {
-    return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Song> to_append) {
+    return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Track> to_append) {
         sequence::batch_append(m_d->state, std::move(to_append));
     });
 
@@ -107,7 +107,7 @@ PlayQueueLI::spawn_queue(const QStringList &sources)
         uri_sources.emplace_back(QUrl::fromLocalFile(source));
     }
 
-    return song_factory::batch_extract(uri_sources, {}).then(this, [this] (QList<Types::Song> to_spawn) {
+    return song_factory::batch_extract(uri_sources, {}).then(this, [this] (QList<Types::Track> to_spawn) {
         sequence::spawn(m_d->state, std::move(to_spawn));
 
         // the reshuffle emits nothing the queue listens to: QML must re-read the playhead
@@ -141,11 +141,11 @@ PlayQueueLI::respawn_queue (const QStringList &sources)
 }
 
 void
-PlayQueueLI::respawn_queue(QList<Types::Song> songs)
+PlayQueueLI::respawn_queue(QList<Types::Track> tracks)
 {
     clear();
 
-    sequence::spawn(m_d->state, std::move(songs));
+    sequence::spawn(m_d->state, std::move(tracks));
     emit track_changed();
 }
 
@@ -197,7 +197,7 @@ PlayQueueLI::playhead () const
 
 #ifndef QT_NO_DEBUG
     QUrl at_head;
-    pointed_to(m_playhead, [&at_head](const Types::Song &song) { at_head = song.source; return true; });
+    pointed_to(m_playhead, [&at_head](const Types::Track &song) { at_head = song.source; return true; });
 
     QUrl actually_playing = m_d->ae->current_track_source();
 
@@ -223,9 +223,9 @@ PlayQueueLI::move_playhead_(const QPersistentModelIndex &to, bool play_afterward
 {
     if (!to.isValid()) return QtFuture::makeReadyVoidFuture();
 
-    Types::Song at_playhead {};
+    Types::Track at_playhead {};
 
-    bool executed = pointed_to(to, [&at_playhead](const Types::Song &prolly_requested) {
+    bool executed = pointed_to(to, [&at_playhead](const Types::Track &prolly_requested) {
         at_playhead = prolly_requested;
         return true;
     });
@@ -260,10 +260,10 @@ PlayQueueLI::invalidate_playhead_()
 }
 
 QFuture<void>
-PlayQueueLI::switch_to(const Types::Song &song, bool play_afterwards)
+PlayQueueLI::switch_to(const Types::Track &song, bool play_afterwards)
 {
     sequence::clear(m_d->state);
-    sequence::batch_append(m_d->state, QList<Types::Song>{song});
+    sequence::batch_append(m_d->state, QList<Types::Track>{song});
 
     return move_playhead_(index(0, 0), play_afterwards);
 }
@@ -278,8 +278,8 @@ PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
     }
 
     // false: song was not valid
-    Types::Song destination {};
-    bool success = pointed_to(song, [this, song, &destination, play_afterwards](const Types::Song &prolly_song) {
+    Types::Track destination {};
+    bool success = pointed_to(song, [this, song, &destination, play_afterwards](const Types::Track &prolly_song) {
         destination = prolly_song;
         return true;
     });
@@ -305,7 +305,7 @@ PlayQueueLI::switch_to (const QUrl &source)
 {
     return song_factory::extract(source, {}).then(
         this,
-        [this](Types::Song song) {
+        [this](Types::Track song) {
             (void) switch_to(std::move(song), true);
         }
     );
@@ -399,8 +399,8 @@ PlayQueueLI::preload_next_track_whenever_possible ()
         return m_d->ae->undo_prepare_next_track();
     }
 
-    Types::Song target {};
-    const bool found = pointed_to(upcoming, [&target](const Types::Song &song_item) {
+    Types::Track target {};
+    const bool found = pointed_to(upcoming, [&target](const Types::Track &song_item) {
         target = song_item;
         return true;
     });
@@ -417,7 +417,7 @@ PlayQueueLI::preload_next_track_whenever_possible ()
 QFuture<void>
 PlayQueueLI::handle_tape_ran_out()
 {
-    qCDebug (l_mediasequences) << "The chain of preloaded songs has finished.";
+    qCDebug (l_mediasequences) << "The chain of preloaded tracks has finished.";
 
     const QPersistentModelIndex upcoming = successor_of(playhead());
 
@@ -433,15 +433,15 @@ PlayQueueLI::find_by_source(const QUrl &needle)
     return QPersistentModelIndex(mapFromSource(sequence::find_by_source(m_d->state, needle)));
 }
 
-std::optional<Types::Song>
+std::optional<Types::Track>
 PlayQueueLI::query_metadata_for_source(const QUrl &needle) const
 {
-    std::optional<Types::Song> result = std::nullopt;
+    std::optional<Types::Track> result = std::nullopt;
 
     const bool success = sequence::pointed_to(
         m_d->state,
         sequence::find_by_source(m_d->state, needle),
-        [&result](const Types::Song &prolly_song) {
+        [&result](const Types::Track &prolly_song) {
             result = prolly_song;
             return true;
         }
@@ -492,7 +492,7 @@ PlayQueueLI::set_shuffle (bool enabled)
 }
 
 bool
-PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Song &)> callback) const
+PlayQueueLI::pointed_to (const QPersistentModelIndex &idx, std::function<bool(const Types::Track &)> callback) const
 {
     return sequence::pointed_to(m_d->state, QPersistentModelIndex(mapToSource(idx)), callback);
 }

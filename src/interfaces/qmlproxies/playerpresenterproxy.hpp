@@ -28,7 +28,7 @@ public:
     };
     Q_ENUM(PlaybackState)
 
-    Q_PROPERTY(Types::Song currentTrack READ current_track NOTIFY trackChanged)
+    Q_PROPERTY(Types::Track currentTrack READ current_track NOTIFY trackChanged)
 
     Q_PROPERTY(QString title       READ title       NOTIFY trackChanged FINAL)
     Q_PROPERTY(QString artist      READ artist      NOTIFY trackChanged FINAL)
@@ -61,7 +61,7 @@ public:
         forward(SIGNAL(lightness_awareness_changed()), SIGNAL(lightnessAwarenessChanged()));
     }
 
-    Types::Song current_track() const { return call(&PlayerPresenter::current_track); }
+    Types::Track current_track() const { return call(&PlayerPresenter::current_track); }
 
     // todo: use covers::lightness::default_lightness_value as the fallback
     double cover_nuclear_lightness() const { return call_or(0.5, &PlayerPresenter::cover_nuclear_lightness); }
@@ -77,7 +77,7 @@ public:
         call(&PlayerPresenter::set_lightness_awareness_enabled, enabled);
     }
 
-    // a default Types::Song yields empty fields when no presenter is injected
+    // a default Types::Track yields empty fields when no presenter is injected
     QString title()       const { return call(&PlayerPresenter::current_track).title; }
     QString artist()      const { return call(&PlayerPresenter::current_track).artist; }
     QString album()       const { return call(&PlayerPresenter::current_track).album; }

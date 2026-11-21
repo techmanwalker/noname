@@ -7,7 +7,7 @@
 #include <QtCore>
 
 namespace Types {
-    struct Song;
+    struct Track;
 }
 
 class PlayerPresenter
@@ -23,7 +23,7 @@ public:
 
     virtual ~PlayerPresenter () = default;
 
-    virtual const Types::Song & current_track () const = 0;
+    virtual const Types::Track & current_track () const = 0;
     virtual quint64 position_ms() const = 0;
     virtual quint8 volume() const = 0;
     virtual PlaybackState playback_state() const = 0;
@@ -60,7 +60,7 @@ public:
     // sequencing
     virtual QFuture<void> next()  const = 0;
     virtual QFuture<void> prev()  const = 0;
-    virtual QFuture<void> load(Types::Song &song) const = 0;
+    virtual QFuture<void> load(Types::Track &song) const = 0;
 
     // volume
     virtual QFuture<void> set_volume (quint8 volume) const = 0; // from 0 to 100

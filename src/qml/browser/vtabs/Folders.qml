@@ -14,15 +14,15 @@ ColumnLayout {
     property var directories: LocalLibrary
 
     // expose to Theater
-    property real songInnerSpacing: 8
-    property real songFadePadding: 10
-    property real songLateralPadding: 15
+    property real trackInnerSpacing: 8
+    property real trackFadePadding: 10
+    property real trackLateralPadding: 15
 
     // to display the tracklist, title and more
     property directory selectedDirectory
 
     signal backButtonClicked_r () // from top to down in the hierarchy, marked
-    signal songClicked (song clicked_song)
+    signal trackClicked (track clicked_track)
 
     onBackButtonClicked_r: {
         fl_stack.currentIndex = 0
@@ -57,13 +57,13 @@ ColumnLayout {
                 // a playlist stands for all of its tracks
                 sourcesOf: (row) => {
                     const out = []
-                    root.directories[row].songs.forEach(s => out.push(s.source))
+                    root.directories[row].tracks.forEach(s => out.push(s.source))
                     return out
                 }
             }
 
             delegate: MediaDelegate {
-                id: song
+                id: track
 
                 required property directory model
                 required property int index
@@ -74,12 +74,12 @@ ColumnLayout {
 
                 title:      model.title
                 cover:      model.cover
-                metadata:   qsTr("%n track(s)", "number of tracks in this directory", model.songs.length) + " · " + model.path
+                metadata:   qsTr("%n track(s)", "number of tracks in this directory", model.tracks.length) + " · " + model.path
                 duration:   model.duration_mmss
 
-                innerSpacing:   root.songInnerSpacing
-                fadePadding:    root.songFadePadding
-                lateralPadding: root.songLateralPadding
+                innerSpacing:   root.trackInnerSpacing
+                fadePadding:    root.trackFadePadding
+                lateralPadding: root.trackLateralPadding
 
                 showSeparator: true
 
@@ -103,12 +103,12 @@ ColumnLayout {
 
         MediaGrid {
             id: grid
-            model: root.selectedDirectory.songs
+            model: root.selectedDirectory.tracks
 
             reuseItems: true
 
-            onSongClicked: function(clicked_song: song) {
-                PlayQueue.switchTo(clicked_song.source)
+            onTrackClicked: function(clicked_track: track) {
+                PlayQueue.switchTo(clicked_track.source)
             }
 
             additionalMenuActions: [
