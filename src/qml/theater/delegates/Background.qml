@@ -147,7 +147,9 @@ Item {
         source: root.source
         fillMode: Image.PreserveAspectCrop
         visible: false
-        sourceSize: Qt.size(512, 512)
+
+        // as big as it could ever be
+        sourceSize: Qt.size(Screen.height > 0 ? Screen.width / Screen.height * 512 : 512, 512)
 
         mipmap: true
     }
