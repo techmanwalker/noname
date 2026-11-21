@@ -34,6 +34,7 @@ public:
     void set_transport_paused(bool paused);
     void stop();
     void load(const QUrl &source);
+    void unload();
 
     // B: the file the decoder opens as soon as it has read A's file to the end; B's samples
     // then follow A's in the ring. Absent = the tape runs out where A's samples end.
@@ -53,9 +54,13 @@ public:
     void boundary_settled();
 
 signals:
-    void seeked();
-    void load_failed(const QUrl &source, const QString &reason);   // a file could not be opened (load, or B at the gapless handoff)
-    void load_settled(bool loaded);   // a load() job finished, true = the decoder holds the file. Emitted from the decoder thread
+    void load_failed(const QUrl &source, const QString &reason);
+    // The four below are emitted from the decoder thread
+    void load_settled(bool ok);        // a load()/unload() job ended. true = it ran (load: the decoder holds the file); false = superseded, or the open failed
+    void seek_settled(bool applied);   // a seek_to() job ended. false = superseded, stale epoch, or the seek failed
+    void next_settled();               // a prepare_B()/undo_prepare_B() job ran
+    void stop_settled();               // stop(): the decoder dropped the tape
+
     void boundary_hit();   // emitted by rt_event_pump (this thread): A's samples ended, B follows
     void tape_ran_out();   // emitted by rt_event_pump (this thread): A's samples ended, no B
 
@@ -75,6 +80,11 @@ private:
     rt_event_pump *m_rt_pump = nullptr;
 
     std::atomic<uint64_t> m_load_generation { 0 };   // load() calls so far: a job older than this is superseded
+
+    template <typename Job> void queue_tape_job (Job job);
+    void clear_device_buffer ();
+
+    std::atomic<uint64_t> m_seek_generation { 0 };   // seek_to() calls so far: a job older than this is superseded
 };
 
 #include "logging/prettyerrors.tpp" // IWYU pragma: keep

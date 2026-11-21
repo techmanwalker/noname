@@ -149,7 +149,7 @@ PlayQueueLI::respawn_queue(QList<Types::Song> songs)
     emit track_changed();
 }
 
-void
+QFuture<void>
 PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
 {
     QList<QPersistentModelIndex> mapped_indices;
@@ -178,19 +178,17 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
 
     sequence::batch_remove(m_d->state, mapped_indices);
 
-    if (!playhead_doomed) return;
+    if (!playhead_doomed) return QtFuture::makeReadyVoidFuture();
 
     // no survivor behind the playhead (or none at all): fall back to the first row
-    switch_to(index(heir_row < rowCount() ? heir_row : 0, 0), false);
+    return switch_to(index(heir_row < rowCount() ? heir_row : 0, 0), false);
 }
 
 void
 PlayQueueLI::handle_zero_item_count ()
 {
     if (item_count() == 0) {
-        m_d->ae->stop();
-        m_d->ae->unload();
-
+        (void) m_d->ae->unload();   // pauses and drops the tape itself
         invalidate_playhead_();
     }
 }
@@ -222,10 +220,11 @@ PlayQueueLI::set_playhead_(const QPersistentModelIndex &to)
     preload_next_track_whenever_possible();
 }
 
-void
+// must never fail while load returns QFuture<void>
+QFuture<void>
 PlayQueueLI::move_playhead_(const QPersistentModelIndex &to, bool play_afterwards)
 {
-    if (!to.isValid()) return;
+    if (!to.isValid()) return QtFuture::makeReadyVoidFuture();
 
     Types::Song at_playhead {};
 
@@ -241,21 +240,18 @@ PlayQueueLI::move_playhead_(const QPersistentModelIndex &to, bool play_afterward
     );
 
     QFuture<void> loaded = m_d->ae->load(at_playhead);
-    set_playhead_(to);
+        set_playhead_(to);
 
-#ifndef QT_NO_DEBUG
-    // fresh confirmation
-    (void) playhead(); // sentinel: asserts if the playhead landed on the wrong spot
-#endif
+    #ifndef QT_NO_DEBUG
+        (void) playhead();   // sentinel: asserts if the playhead landed on the wrong spot
+    #endif
 
     emit track_changed();
 
-    // wait for loaded, a newer load cancels this so a superseded request never starts playback
-    if (play_afterwards) {
-        loaded.then(this, [this] { m_d->ae->play(); });
-    }
+    if (!play_afterwards) return loaded;
 
-    return;
+    // a newer load cancels `loaded`, so a superseded request never starts playback
+    return loaded.then(this, [this] { m_d->ae->play(); });
 }
 
 void
@@ -266,61 +262,65 @@ PlayQueueLI::invalidate_playhead_()
     emit track_changed();
 }
 
-void
+QFuture<void>
 PlayQueueLI::switch_to(const Types::Song &song, bool play_afterwards)
 {
     sequence::clear(m_d->state);
     sequence::batch_append(m_d->state, QList<Types::Song>{song});
 
-    move_playhead_(index(0, 0), play_afterwards);
+    return move_playhead_(index(0, 0), play_afterwards);
 }
 
-bool
+QFuture<void>
 PlayQueueLI::switch_to(const QPersistentModelIndex &song, bool play_afterwards)
 {
-    if (!song.isValid() || song.model() != this) return false;
+    if (!song.isValid() || song.model() != this) return QtFuture::makeReadyValueFuture(false);
 
     if (song == playhead()) {
-        if (play_afterwards) m_d->ae->play();
-        return true;
+        return play_afterwards ? m_d->ae->play() : QtFuture::makeReadyVoidFuture();
     }
 
-    return pointed_to(song, [this, song, play_afterwards](const Types::Song &prolly_song) -> bool {
-        move_playhead_(song, play_afterwards);
-                return true;
-
+    // false: song was not valid
+    Types::Song destination {};
+    bool success = pointed_to(song, [this, song, &destination, play_afterwards](const Types::Song &prolly_song) {
+        destination = prolly_song;
         return true;
     });
+
+    if (!success || !destination.is_valid()) {
+        return QtFuture::makeReadyVoidFuture();
+    }
+
+    return move_playhead_(song, play_afterwards);
 }
 
-bool
+QFuture<void>
 PlayQueueLI::switch_to(size_t idx, bool play_afterwards)
 {
     // rowCount() is a non-negative int, so once idx is below it the cast to int is lossless
-    if (idx >= static_cast<size_t>(rowCount())) return false;
+    if (idx >= static_cast<size_t>(rowCount())) return QtFuture::makeReadyVoidFuture();
 
     return switch_to(index(static_cast<int>(idx), 0), play_afterwards);
 }
 
-void
-PlayQueueLI::switch_to (const QUrl &source){
-    song_factory::extract(source, {}).then(
+QFuture<void>
+PlayQueueLI::switch_to (const QUrl &source)
+{
+    return song_factory::extract(source, {}).then(
         this,
         [this](Types::Song song) {
-            if (song.is_valid()) {
-                switch_to(std::move(song), true);
-            }
+            (void) switch_to(std::move(song), true);
         }
     );
 }
 
-void
+QFuture<void>
 PlayQueueLI::qml_switch_to(const QModelIndex &song)
 {
-    switch_to(QPersistentModelIndex(song), true);
+    return switch_to(QPersistentModelIndex(song), true);
 }
 
-bool
+QFuture<void>
 PlayQueueLI::next ()
 {
     QPersistentModelIndex current = playhead();
@@ -338,11 +338,11 @@ PlayQueueLI::next ()
     }
 }
 
-bool
+QFuture<void>
 PlayQueueLI::prev (bool play_afterwards)
 {
     int last_index = rowCount() - 1;
-    if (last_index < 0) return false;
+    if (last_index < 0) return QtFuture::makeReadyValueFuture(false);
 
     if (!playhead().isValid() || playhead().row() == 0) {
         return switch_to(index(last_index, 0));
@@ -351,73 +351,82 @@ PlayQueueLI::prev (bool play_afterwards)
     return switch_to(index(playhead().row() - 1, 0), play_afterwards);
 }
 
-bool
+QFuture<void>
 PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
 {
     // step back
     QUrl prolly_not_the_same_track = m_d->ae->current_track_source();
-    prev();
 
-    auto playhead_item_ref = query_metadata_for_source(m_d->ae->current_track_source());
+    return prev().then(this, [this, prolly_not_the_same_track, play_afterwards, stepback_ms]() -> void {
+        auto playhead_item_ref = query_metadata_for_source(m_d->ae->current_track_source());
 
-    if (!playhead_item_ref.has_value()) {
-        qCDebug(l_mediasequences) << "Current playing track not found on the queue.";
-        return false;
-    }
+        if (!playhead_item_ref.has_value()) {
+            qCDebug(l_mediasequences) << "Current playing track not found on the queue.";
+            return;
+        }
 
-    if (prolly_not_the_same_track == playhead_item_ref->source) {
-        // still same track
+        QFuture<void> seek_future;
 
-        // seek back to beginning
-        m_d->ae->seek_to(0);
-        if (play_afterwards) m_d->ae->play();
+        if (prolly_not_the_same_track == playhead_item_ref->source) {
+            // still same track, seek back to beginning
+            seek_future = m_d->ae->seek_to(0);
+        }
 
-        // never truly switched
-        return false;
-    }
+        Q_ASSERT_X(m_d->ae->current_track_source() == playhead_item_ref.value().source,
+            "PlayQueueLI::prev_at_end",
+            "The supposed playhead track reference is not the current track according to audio_engine."
+        );
 
-    Q_ASSERT_X(m_d->ae->current_track_source() == playhead_item_ref.value().source,
-        "PlayQueueLI::prev_at_end",
-        "The supposed playhead track reference is not the current track according to audio_engine."
-    );
+        quint64 track_duration = playhead_item_ref.value().duration;
 
-    quint64 track_duration = playhead_item_ref.value().duration;
+        if (stepback_ms < track_duration) {
+            seek_future = m_d->ae->seek_to(track_duration - stepback_ms);
+        } else [[unlikely]] {
+            seek_future = m_d->ae->seek_to(0);
+        }
 
-    if (stepback_ms < track_duration) {
-        m_d->ae->seek_to(track_duration - stepback_ms);
-    } else [[unlikely]] {
-        m_d->ae->seek_to(0);
-    }
-
-    if (play_afterwards) m_d->ae->play();
-
-    return true;
+        seek_future.then(this, [this, play_afterwards]() {
+            if (play_afterwards) {
+                m_d->ae->play();
+            }
+        });
+    });
 }
 
-void
+QFuture<void>
 PlayQueueLI::preload_next_track_whenever_possible ()
 {
     const QPersistentModelIndex upcoming = successor_of(playhead());
 
-    if (!upcoming.isValid()) m_d->ae->undo_prepare_next_track();
+    if (!upcoming.isValid()) {
+        return m_d->ae->undo_prepare_next_track();
+    }
 
-    pointed_to(upcoming, [this](const Types::Song &song_item) {
-        if (m_d->ae->next_track_prepared_source() == song_item.source) return true;
-
-        m_d->ae->prepare_next_track(song_item);
-        qCDebug (l_mediasequences) << "Next song was successfully preloaded to play next.";
+    Types::Song target {};
+    const bool found = pointed_to(upcoming, [&target](const Types::Song &song_item) {
+        target = song_item;
         return true;
+    });
+
+    // nothing to do: not found, or already prepared
+    if (!found || m_d->ae->next_track_prepared_source() == target.source)
+        return QtFuture::makeReadyVoidFuture();
+
+    return m_d->ae->prepare_next_track(target).then(this, [] {
+        qCDebug(l_mediasequences) << "Next song was successfully preloaded to play next.";
     });
 }
 
-void
+QFuture<void>
 PlayQueueLI::handle_tape_ran_out()
 {
     qCDebug (l_mediasequences) << "The chain of preloaded songs has finished.";
 
-    if (!switch_to(successor_of(playhead()), true)) {
-        m_d->ae->pause();
+    if (!successor_of(playhead()).isValid()) {
+        return m_d->ae->pause();
     }
+
+    return switch_to(successor_of(playhead()));
 }
 
 QPersistentModelIndex

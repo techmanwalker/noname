@@ -123,8 +123,9 @@ main (int argc, char ** argv)
     // boot ae to immediately load and play the first track when cli11 kicks in
     auto ae = std::make_shared<audio_engine_LI> (nullptr, backend);
     if (!first_track_source.isEmpty()) {
-        ae->load(first_track_source);
-        ae->play();
+        ae->load(first_track_source).then(ae.get(), [&ae] () {
+            ae->play();
+        });
     }
 
     using MediaTransforms::MediaFilterLI;

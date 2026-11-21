@@ -3,6 +3,10 @@
 #include "soundio/backends.hpp"
 
 #include <QFuture>
+#include <QThread>
+
+#include <memory>
+#include <optional>
 
 #include <soundio/soundio.h>
 
@@ -13,15 +17,15 @@ audio_engine_LI::audio_engine_LI(QObject *parent, audio_backend backend)
     : QObject(parent),
       m_internal(std::make_unique<audio_internal_controller>(this, backend))
 {
-    connect(m_internal.get(), &audio_internal_controller::seeked,
-            this, &audio_engine_LI::seek_finished);
-
-    connect(m_internal.get(), &audio_internal_controller::load_failed,
-            this, &audio_engine_LI::load_failed);
-
     // emitted from the decoder thread, delivered here
     connect(m_internal.get(), &audio_internal_controller::load_settled,
             this, &audio_engine_LI::on_load_settled, Qt::QueuedConnection);
+    connect(m_internal.get(), &audio_internal_controller::seek_settled,
+            this, &audio_engine_LI::on_seek_settled, Qt::QueuedConnection);
+    connect(m_internal.get(), &audio_internal_controller::next_settled,
+            this, &audio_engine_LI::on_next_settled, Qt::QueuedConnection);
+    connect(m_internal.get(), &audio_internal_controller::stop_settled,
+            this, &audio_engine_LI::on_stop_settled, Qt::QueuedConnection);
 
     /*  Explicit Qt::QueuedConnection, kept on purpose: these signals are emitted by
         rt_event_pump on the main thread (never from the RT callback), so thread safety no
@@ -38,31 +42,67 @@ audio_engine_LI::audio_engine_LI(QObject *parent, audio_backend backend)
             this, &audio_engine_LI::handle_track_changed);
 }
 
+// Every public call lands here. The promise is made on the caller's thread, the body runs on the
+// engine's, one call at a time: whichever reaches the engine last wins. The body must settle
+// `call`: finish it, abandon() it, or hand it to a pending_calls group.
+template <typename Body>
+QFuture<void>
+audio_engine_LI::dispatch (Body body)
+{
+    QPromise<void> promise;
+    promise.start();
+    QFuture<void> future = promise.future();
+
+    auto run = [this, body = std::move(body)] (QPromise<void> call) mutable {
+        if (m_internal) body(std::move(call));
+        else            abandon(call);   // after teardown()
+    };
+
+    if (QThread::currentThread() == thread()) {
+        run(std::move(promise));
+    } else {
+        // shared_ptr: the functor has to be copyable, a QPromise is not
+        QMetaObject::invokeMethod(this, [run, call = std::make_shared<QPromise<void>>(std::move(promise))] () mutable {
+            run(std::move(*call));
+        }, Qt::QueuedConnection);
+    }
+    return future;
+}
+
 void
 audio_engine_LI::teardown ()
 {
     m_internal.reset();
 }
 
-void
+QFuture<void>
 audio_engine_LI::play()
 {
-    m_internal->set_transport_paused(false);
-    emit playback_state_changed();
+    return dispatch([this] (QPromise<void> call) {
+        m_internal->set_transport_paused(false);
+        emit playback_state_changed();
+        call.finish();
+    });
 }
 
-void
+QFuture<void>
 audio_engine_LI::pause()
 {
-    m_internal->set_transport_paused(true);
-    emit playback_state_changed();
+    return dispatch([this] (QPromise<void> call) {
+        m_internal->set_transport_paused(true);
+        emit playback_state_changed();
+        call.finish();
+    });
 }
 
-void
+QFuture<void>
 audio_engine_LI::stop()
 {
-    m_internal->stop();
-    emit playback_state_changed();
+    return dispatch([this] (QPromise<void> call) {
+        m_transport_calls.add(std::move(call));   // settles in on_stop_settled()
+        m_internal->stop();
+        emit playback_state_changed();
+    });
 }
 
 QFuture<void>
@@ -70,92 +110,117 @@ audio_engine_LI::load(const QUrl &source)
 {
     if (source.isEmpty()) return {};   // a default-constructed future is cancelled
 
-    m_current_transaction_id++;
+    return dispatch([this, source] (QPromise<void> call) {
+        // before anything below can catch up on a hit of the old tape
+        m_tape_calls.add(std::move(call));
 
-    // before anything below can catch up on a hit of the old tape
-    m_load_promises.emplace_back();
-    m_load_promises.back().start();
-    QFuture<void> loaded = m_load_promises.back().future();
+        // The decoder decides between rewind and reopen: it knows what is actually open
+        m_internal->load(source);
 
-    // The decoder decides between rewind and reopen: it knows what is actually open
-    m_internal->load(source);
+        m_track_A_source = source;
+        undo_prepare_next_track();
 
-    m_track_A_source = source;
-    undo_prepare_next_track();
-
-    emit track_changed();
-    return loaded;
+        emit track_changed();
+    });
 }
 
-void
-audio_engine_LI::prepare_next_track(const QUrl &source)
-{
-    // Designated against an A that no longer exists: on_boundary_hit() just cleared B, and the
-    // track_changed handler prepares the new one.
-    if (catch_up_on_boundary_hit()) return;
-    m_track_B_source = source;
-    m_internal->prepare_B(source);
-}
-
-void
-audio_engine_LI::undo_prepare_next_track()
-{
-    if (catch_up_on_boundary_hit()) return;
-    m_track_B_source.clear();
-    m_internal->undo_prepare_B();
-}
-
-void
+QFuture<void>
 audio_engine_LI::unload()
 {
-    m_current_transaction_id++;
-    stop();
+    return dispatch([this] (QPromise<void> call) {
+        m_tape_calls.add(std::move(call));
+        m_internal->unload();
 
-    m_track_A_source.clear();
-    emit track_changed();
+        m_track_A_source.clear();
+        emit track_changed();
+        emit playback_state_changed();
+    });
 }
 
-void
+QFuture<void>
 audio_engine_LI::relative_seek(qint64 step_ms)
 {
-    quint64 current_position = current_position_ms();
-    quint64 step_ms_abs = std::abs(step_ms);
+    return dispatch([this, step_ms] (QPromise<void> call) {
+        // Steps stack on the seek in flight: the clock has not moved yet
+        const quint64 from        = m_seek_target.value_or(current_position_ms());
+        const quint64 step_ms_abs = std::abs(step_ms);
 
-    // do not go before 0, avoid wrapping to huge value
-    if (step_ms < 0 && current_position < step_ms_abs) {
-        emit relative_seek_before_zero_performed(step_ms_abs, true);
-        return;
-    }
+        // do not go before 0, avoid wrapping to huge value
+        if (step_ms < 0 && from < step_ms_abs) {
+            emit relative_seek_before_zero_performed(step_ms_abs, true);
+            call.finish();
+            return;
+        }
 
-    seek_to(current_position + step_ms);
+        start_seek(from + step_ms, std::move(call));
+    });
+}
+
+QFuture<void>
+audio_engine_LI::seek_to(const quint64 position_ms)
+{
+    return dispatch([this, position_ms] (QPromise<void> call) {
+        start_seek(position_ms, std::move(call));
+    });
 }
 
 void
-audio_engine_LI::seek_to(const quint64 position_ms)
+audio_engine_LI::start_seek(quint64 position_ms, QPromise<void> call)
 {
-    // Computed against track A . If the boundary hit was overdue it has just been
+    // Computed against track A. If the boundary hit was overdue it has just been
     // consumed: that A is gone, drop the request, the UI re-derives from track_changed.
-    if (catch_up_on_boundary_hit()) return;
+    if (catch_up_on_boundary_hit()) { abandon(call); return; }
 
+    m_seek_target = position_ms;
+    m_position_calls.add(std::move(call));
     m_internal->seek_to(position_ms);
 }
 
-void
+QFuture<void>
+audio_engine_LI::prepare_next_track(const QUrl &source)
+{
+    return dispatch([this, source] (QPromise<void> call) {
+        // Designated against an A that no longer exists: on_boundary_hit() just cleared B, and the
+        // track_changed handler prepares the new one.
+        if (catch_up_on_boundary_hit()) { abandon(call); return; }
+
+        m_track_B_source = source;
+        m_next_calls.add(std::move(call));
+        m_internal->prepare_B(source);
+    });
+}
+
+QFuture<void>
+audio_engine_LI::undo_prepare_next_track()
+{
+    return dispatch([this] (QPromise<void> call) {
+        if (catch_up_on_boundary_hit()) { abandon(call); return; }
+
+        m_track_B_source.clear();
+        m_next_calls.add(std::move(call));
+        m_internal->undo_prepare_B();
+    });
+}
+
+QFuture<void>
 audio_engine_LI::set_volume(quint8 volume_percent)
 {
-    if (volume_percent > 100) volume_percent = 100;
+    return dispatch([this, volume_percent] (QPromise<void> call) {
+        const quint8 percent = std::min<quint8>(volume_percent, 100);
 
-    if (volume_percent == 0) {
-        m_log_volume = -std::numeric_limits<double>::infinity();
-    } else {
-        double amplitude = std::pow(static_cast<double>(volume_percent) / 100.0, 3.0);
-        m_log_volume = 20.0 * std::log10(amplitude);
-    }
+        if (percent == 0) {
+            m_log_volume = -std::numeric_limits<double>::infinity();
+        } else {
+            double amplitude = std::pow(static_cast<double>(percent) / 100.0, 3.0);
+            m_log_volume = 20.0 * std::log10(amplitude);
+        }
 
-    float hw_multiplier = (volume_percent == 0) ? 0.0f : static_cast<float>(std::pow(10.0, m_log_volume / 20.0));
-    m_internal->set_volume_multiplier(hw_multiplier);
+        float hw_multiplier = (percent == 0) ? 0.0f : static_cast<float>(std::pow(10.0, m_log_volume / 20.0));
+        m_internal->set_volume_multiplier(hw_multiplier);
 
-    emit volume_changed();
+        emit volume_changed();
+        call.finish();
+    });
 }
 
 quint8
@@ -204,28 +269,44 @@ audio_engine_LI::is_a_song_loaded() const
 void
 audio_engine_LI::handle_track_changed()
 {
+    m_seek_target.reset();
     emit duration_changed();
     emit seek_finished(); // to 0
     emit playback_state_changed();
 }
 
 void
-audio_engine_LI::on_load_settled(bool loaded)
+audio_engine_LI::on_load_settled(bool ok)
 {
-    Q_ASSERT(!m_load_promises.empty());
-    if (m_load_promises.empty()) return;
-
-    QPromise<void> promise = std::move(m_load_promises.front());
-    m_load_promises.pop_front();
-
-    if (!loaded) promise.future().cancel();   // superseded, or the open failed (load_failed says why)
-    promise.finish();
-
     // track_changed went out before the decoder was ready: state and position are only true now
-    if (m_load_promises.empty()) {
+    if (m_tape_calls.last_one()) {
         emit playback_state_changed();
         emit seek_finished();
     }
+    m_tape_calls.settle_oldest(ok);   // cancelled: superseded, or the open failed (load_failed says why)
+}
+
+void
+audio_engine_LI::on_seek_settled(bool applied)
+{
+    if (m_position_calls.last_one()) {
+        m_seek_target.reset();
+        emit seek_finished();   // one per burst, whatever happened to the last one
+    }
+    m_position_calls.settle_oldest(applied);   // cancelled: superseded, stale epoch, or the seek failed
+}
+
+void
+audio_engine_LI::on_next_settled()
+{
+    m_next_calls.settle_oldest(true);
+}
+
+void
+audio_engine_LI::on_stop_settled()
+{
+    if (m_transport_calls.last_one()) emit playback_state_changed();   // the tape is gone only now
+    m_transport_calls.settle_oldest(true);
 }
 
 // To reactively trigger the changes signals

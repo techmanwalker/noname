@@ -11,22 +11,21 @@
 class PlayQueue
 {
 
-public: 
+public:
     virtual ~PlayQueue () = default;
 
     virtual int item_count () const = 0;
 
     virtual QPersistentModelIndex playhead () const = 0;
 
-    virtual void switch_to (const QUrl &source) = 0;
-    virtual bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) = 0;
-    virtual bool switch_to (size_t index, bool play_afterwards = false) = 0;
+    virtual QFuture<void> switch_to (const QUrl &source) = 0;
+    virtual QFuture<void> switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) = 0;
+    virtual QFuture<void> switch_to (size_t index, bool play_afterwards = false) = 0;
 
-    virtual bool next () = 0;
-    virtual bool prev (bool play_afterwards = false) = 0;
-
+    virtual QFuture<void> next () = 0;
+    virtual QFuture<void> prev (bool play_afterwards = false) = 0;
     // play the previous track, but seek backward from the end
-    virtual bool prev_at_end (quint64 stepback_ms, bool play_afterwards = false) = 0;
+    virtual QFuture<void> prev_at_end (quint64 stepback_ms, bool play_afterwards = false) = 0;
 
     virtual void clear () = 0;
 
@@ -39,11 +38,11 @@ public:
 
     // Move an item and rearrange the rest
     virtual bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest) = 0;
-    
+
     virtual QFuture<void> respawn_queue (const QStringList &sources) = 0;
     virtual void respawn_queue (QList<Types::Song> songs) = 0;
 
-    virtual void batch_remove (const QList<QPersistentModelIndex> &indices) = 0;
+    virtual QFuture<void> batch_remove (const QList<QPersistentModelIndex> &indices) = 0;
 
     virtual bool shuffled () const = 0;
     virtual void set_shuffle (bool enabled) = 0;

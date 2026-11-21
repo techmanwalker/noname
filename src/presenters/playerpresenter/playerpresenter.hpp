@@ -88,27 +88,28 @@ public:
 
     double backdrop_lightness_for_rect (QRect rect) const override;
 
-    void seek_to (quint64 position_ms) const override;
-    void relative_seek (qint64 ms) const override;
+    QFuture<void> seek_to (quint64 position_ms) const override;
+    QFuture<void> relative_seek (qint64 ms) const override;
 
-    void set_volume (quint8 volume) const override;
-    void raise_lower_volume (qint8 step) const override;
-    void toggle_mute () const override;
+    QFuture<void> set_volume (quint8 volume) const override;
+    QFuture<void> raise_lower_volume (qint8 step) const override;
+    QFuture<void> toggle_mute () const override;
 
     // Call forwardings
-    void load(Types::Song &song) const override;
+    QFuture<void> load(Types::Song &song) const override;
 
-    // Playback controls
-    void play()  const override;
-    void pause() const override;
-    void stop()  const override;
-    void next()  const override;
-    void prev()  const override;
+    // transport
+    QFuture<void> play()  const override;
+    QFuture<void> pause() const override;
+    QFuture<void> stop()  const override;
 
-    void toggle_play_pause () const override;
+    QFuture<void> next()  const override;
+    QFuture<void> prev()  const override;
+
+    QFuture<void> toggle_play_pause () const override;
 
     // save volume level to disk on demand
-    void save_volume () const override;
+    QFuture<bool> save_volume () const override;
 
 signals:
     // Needed signals for QML to be reactive

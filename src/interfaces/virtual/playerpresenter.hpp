@@ -45,27 +45,28 @@ public:
     // get the lightness of the pixels behind this rect from the cover
     virtual double backdrop_lightness_for_rect (QRect rect) const = 0;
 
-    virtual void seek_to(quint64 position_ms) const = 0;
+    // transport
+    virtual QFuture<void> play()  const = 0;
+    virtual QFuture<void> pause() const = 0;
+    virtual QFuture<void> stop()  const = 0;
+    virtual QFuture<void> toggle_play_pause () const = 0;
 
+    // position
+    virtual QFuture<void> seek_to(quint64 position_ms) const = 0;
     // respect to current pos
     // + seeks forward, - seeks back
-    virtual void relative_seek (qint64 ms) const = 0;
+    virtual QFuture<void> relative_seek (qint64 ms) const = 0;
 
-    virtual void set_volume (quint8 volume) const = 0; // from 0 to 100
-    virtual void raise_lower_volume (qint8 step) const = 0; // relative to current volume
-    virtual void toggle_mute () const = 0; // unmute: set to last non zero value
+    // sequencing
+    virtual QFuture<void> next()  const = 0;
+    virtual QFuture<void> prev()  const = 0;
+    virtual QFuture<void> load(Types::Song &song) const = 0;
 
-    virtual void play()  const = 0;
-    virtual void pause() const = 0;
-    virtual void stop()  const = 0;
-    virtual void next()  const = 0;
-    virtual void prev()  const = 0;
-
-    virtual void toggle_play_pause () const = 0;
-
-    virtual void load(Types::Song &song) const = 0;
-
-    virtual void save_volume () const = 0;
+    // volume
+    virtual QFuture<void> set_volume (quint8 volume) const = 0; // from 0 to 100
+    virtual QFuture<void> raise_lower_volume (qint8 step) const = 0; // relative to current volume
+    virtual QFuture<void> toggle_mute () const = 0; // unmute: set to last non zero value
+    virtual QFuture<bool> save_volume () const = 0;
 };
 
 inline constexpr const char* PlayerPresenter_iid = interface_iid<"PlayerPresenter">.buf;

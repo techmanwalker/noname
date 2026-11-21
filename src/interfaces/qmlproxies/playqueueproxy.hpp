@@ -112,7 +112,7 @@ public slots:
         iface()->switch_to(source);
     }
 
-    bool next()  { return call(&PlayQueue::next); }
-    bool prev()  { return call(&PlayQueue::prev, false); }
+    void next()  { call(&PlayQueue::next); }
+    void prev()  { call(&PlayQueue::prev, false); }
     void clear() { call(&PlayQueue::clear); }
 };

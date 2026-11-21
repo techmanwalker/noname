@@ -167,14 +167,14 @@ PlayerPresenterLI::playback_state() const
 }
 
 
-void
+QFuture<void>
 PlayerPresenterLI::seek_to(quint64 position_ms) const
 {
     // If we touch this code path, it means that the user has moved the playhead manually.
-    ae->seek_to(position_ms);
+    return ae->seek_to(position_ms);
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::relative_seek(qint64 ms) const
 {
     // upper clamp only, the engine clamps for step resulting in negative position
@@ -188,42 +188,41 @@ PlayerPresenterLI::relative_seek(qint64 ms) const
          current_position + ms_abs < current_position); // wrap around, ms > 0
 
     if (over_max_limit) {
-        next();
-        return;
+        return next();
     }
 
-    ae->relative_seek(ms);
+    return ae->relative_seek(ms);
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::set_volume(quint8 volume) const
 {
-    ae->set_volume(volume);
+    return ae->set_volume(volume);
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::raise_lower_volume(qint8 step) const
 {
     // volume() + step is computed in int (integer promotion): range -128..327, no overflow
     const int target_volume = volume() + step;
 
     // the audioengine already clamps the target percent but needs quint8
-    set_volume(static_cast<quint8>(std::clamp(target_volume, 0, 100)));
+    return set_volume(static_cast<quint8>(std::clamp(target_volume, 0, 100)));
 }
 
-void
+QFuture<void>
 PlayerPresenterLI:: toggle_mute() const
 {
-    set_volume(
+    return set_volume(
         volume() > 0 ? 0 : m_last_nonzero_volume
     );
 }
 
-void
+QFuture<bool>
 PlayerPresenterLI::save_volume () const
 {
 
-    cm->write_setting (
+    return cm->write_setting (
         configuration::setting::volume,
         { QString::number(volume()) }
     );
@@ -233,35 +232,35 @@ PlayerPresenterLI::save_volume () const
 // --- Playback controls ---
 
 // Proxies for QML to be able to perform play, pause and more actions
-void
+QFuture<void>
 PlayerPresenterLI::play() const {
     if (!pq->playhead().isValid() && pq->item_count() >= 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
         pq->switch_to(0);
     }
 
-    ae->play();
+    return ae->play();
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::pause() const
 {
-    ae->pause();
+    return ae->pause();
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::stop() const
 {
-    ae->stop();
+    return ae->stop();
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::next() const
 {
-    pq->next();
+    return pq->next();
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::prev() const
 {
     if (
@@ -270,27 +269,26 @@ PlayerPresenterLI::prev() const
         // the only track in queue
         (pq->playhead().row() == 0 && pq->item_count() == 1)
     ) {
-        ae->seek_to(0); // start over
-        return;
+        return ae->seek_to(0);
     }
 
-    pq->prev();
+    return pq->prev();
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::toggle_play_pause() const
 {
     if (playback_state() == PlaybackState::playing) {
-        pause();
+        return pause();
     } else {
-        play();
+        return play();
     }
 }
 
-void
+QFuture<void>
 PlayerPresenterLI::load(Types::Song &song) const
 {
-    ae->load(song);
+    return ae->load(song);
 }
 
 // --- Signal handlers

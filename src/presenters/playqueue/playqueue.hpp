@@ -47,16 +47,15 @@ public:
     int item_count () const override;
 
     // controls
-    void switch_to (const Types::Song &song, bool play_afterwards = false);
-    bool switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) override;
-    bool switch_to (size_t idx, bool play_afterwards = false) override;
-    void qml_switch_to (const QModelIndex &index);
+    [[nodiscard]] QFuture<void> switch_to (const Types::Song &song, bool play_afterwards = false);
+    [[nodiscard]] QFuture<void> switch_to (const QPersistentModelIndex &song, bool play_afterwards = false) override;
+    [[nodiscard]] QFuture<void> switch_to (size_t idx, bool play_afterwards = false) override;
+    [[nodiscard]] QFuture<void> switch_to (const QUrl &source) override;
+    QFuture<void> qml_switch_to (const QModelIndex &index);
 
-    void switch_to (const QUrl &source) override;
-
-    bool next () override;
-    bool prev (bool play_afterwards = false) override;
-    bool prev_at_end (quint64 stepback_ms, bool play_afterwards = false) override;
+    QFuture<void> next () override;
+    QFuture<void> prev (bool play_afterwards = false) override;
+    QFuture<void> prev_at_end (quint64 stepback_ms, bool play_afterwards = false) override;
 
     void clear () override;
 
@@ -78,7 +77,7 @@ public:
 
     bool move_item (const QPersistentModelIndex &src, const QPersistentModelIndex &dest) override;
 
-    void batch_remove (const QList<QPersistentModelIndex> &indices) override;
+    QFuture<void> batch_remove (const QList<QPersistentModelIndex> &indices) override;
 
 signals:
     // to qml
@@ -87,8 +86,8 @@ signals:
     void shuffle_changed ();
 
 public slots:
-    void preload_next_track_whenever_possible ();
-    void handle_tape_ran_out ();
+    QFuture<void> preload_next_track_whenever_possible ();
+    QFuture<void> handle_tape_ran_out ();
     void handle_ab_boundary_crossed ();
 
 private slots:
@@ -104,7 +103,7 @@ private:
     QPersistentModelIndex m_playhead;
 
     void set_playhead_  (const QPersistentModelIndex &to); // leaves the engine intact
-    void move_playhead_ (const QPersistentModelIndex &to, bool play_afterwards); // invokes ae->load
+    [[nodiscard]] QFuture<void> move_playhead_ (const QPersistentModelIndex &to, bool play_afterwards); // invokes ae->load
     void invalidate_playhead_ ();
 
     std::unique_ptr<PlayQueueLIPrivate> m_d;

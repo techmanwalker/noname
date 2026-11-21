@@ -134,9 +134,6 @@ audio_internal_controller::audio_internal_controller(QObject *parent, audio_back
     connect(m_audio_decoding_thread, &QThread::started,
             m_decoder_worker, &audio_decode_worker::start_decoding);
 
-    connect(m_decoder_worker, &audio_decode_worker::seeked,
-            this, &audio_internal_controller::seeked);
-
     connect(m_decoder_worker, &audio_decode_worker::song_load_failed,
             this, &audio_internal_controller::load_failed);
 
@@ -147,17 +144,6 @@ audio_internal_controller::~audio_internal_controller()
 {
     m_ring->cancel_blocking_push();
 
-    // stop the soundio callback first, the buffer ring must outlive it
-    if (m_outstream) {
-        soundio_outstream_destroy(m_outstream);
-        m_outstream = nullptr;
-    }
-
-    // the callback can no longer post. drop the pump BEFORE the ring (and the eventfd
-    // it listens on) is destroyed: that happens after this body, with m_ring.
-    delete m_rt_pump;
-    m_rt_pump = nullptr;
-
     // safely destroy
     QMetaObject::invokeMethod(m_decoder_worker, [worker = m_decoder_worker]() {
         delete worker;
@@ -167,6 +153,17 @@ audio_internal_controller::~audio_internal_controller()
 
     m_audio_decoding_thread->quit();
     m_audio_decoding_thread->wait();
+
+    // the decoder goes first because its queued jobs still touch m_outstream
+    if (m_outstream) {
+        soundio_outstream_destroy(m_outstream);
+        m_outstream = nullptr;
+    }
+
+    // the callback can no longer post. drop the pump BEFORE the ring (and the eventfd
+    // it listens on) is destroyed: that happens after this body, with m_ring.
+    delete m_rt_pump;
+    m_rt_pump = nullptr;
 
     if (m_device) soundio_device_unref(m_device);
     if (m_soundio) soundio_destroy(m_soundio);
@@ -184,31 +181,49 @@ audio_internal_controller::stop()
     m_ring->set_paused(true);
     m_ring->cancel_blocking_push();
 
-    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::clean, Qt::BlockingQueuedConnection);
-
-    m_ring->reset_cancel();
+    QMetaObject::invokeMethod(m_decoder_worker, [this] {
+        m_decoder_worker->clean();
+        m_ring->reset_cancel();
+        emit stop_settled();
+    }, Qt::QueuedConnection);
 }
 
 void
 audio_internal_controller::load(const QUrl &source)
+{
+    queue_tape_job([this, source] {
+        m_decoder_worker->load(source);   // clean/rewind left the ring empty
+        return m_decoder_worker->is_song_loaded();
+    });
+}
+
+void
+audio_internal_controller::unload()
+{
+    m_ring->set_paused(true);
+    queue_tape_job([this] { m_decoder_worker->clean(); return true; });
+}
+
+// A newer tape call is queued behind this job and resets the decoder and ring all the same: skip it.
+// The cancel flag stays up for that one.
+template <typename Job>
+void
+audio_internal_controller::queue_tape_job (Job job)
 {
     const uint64_t generation = m_load_generation.fetch_add(1, std::memory_order_acq_rel) + 1;
 
     // frees a decoder blocked in push_blocking, or the job below would queue behind it
     m_ring->cancel_blocking_push();
 
-    QMetaObject::invokeMethod(m_decoder_worker, [this, source, generation] {
-        // A newer load is queued behind this one and resets the decoder and ring all the same: skip the open.
-        // The cancel flag stays up for it
+    QMetaObject::invokeMethod(m_decoder_worker, [this, generation, job = std::move(job)] {
         if (generation != m_load_generation.load(std::memory_order_acquire)) {
             emit load_settled(false);
             return;
         }
 
-        m_decoder_worker->load(source);   // clean/rewind left the ring empty
+        const bool ok = job();
         m_ring->reset_cancel();
-
-        emit load_settled(m_decoder_worker->is_song_loaded());
+        emit load_settled(ok);
     }, Qt::QueuedConnection);
 }
 
@@ -217,6 +232,7 @@ audio_internal_controller::prepare_B(const QUrl &source)
 {
     QMetaObject::invokeMethod(m_decoder_worker, [this, source]() {
         m_decoder_worker->prepare_B(source);
+        emit next_settled();
     }, Qt::QueuedConnection);
 }
 
@@ -225,6 +241,7 @@ audio_internal_controller::undo_prepare_B()
 {
     QMetaObject::invokeMethod(m_decoder_worker, [this]() {
         m_decoder_worker->undo_prepare_B();
+        emit next_settled();
     }, Qt::QueuedConnection);
 }
 
@@ -232,19 +249,30 @@ void
 audio_internal_controller::seek_to(uint64_t position_ms)
 {
     // The epoch this seek is issued under: the decoder refuses it if a ceremony ran since
-    const uint64_t epoch = m_ring->boundary_snapshot().epoch;
+    const uint64_t epoch      = m_ring->boundary_snapshot().epoch;
+    const uint64_t generation = m_seek_generation.fetch_add(1, std::memory_order_acq_rel) + 1;
 
     m_ring->cancel_blocking_push();
-    m_ring->begin_seek();
+    m_ring->begin_seek();   // the device is muted from here, on the caller's thread
 
-    if (m_outstream) {
-        int err = soundio_outstream_clear_buffer(m_outstream);
-        if (err != 0 && err != SoundIoErrorIncompatibleBackend) {
-            qCWarning(l_soundio) << "soundio_outstream_clear_buffer failed with exit code" << err << ":" << soundio_strerror(err);
-        }
-    }
+    QMetaObject::invokeMethod(m_decoder_worker, [this, position_ms, epoch, generation] {
+        // A newer seek is queued behind this one and lands where the user ended up: skip the work
+        const bool superseded = generation != m_seek_generation.load(std::memory_order_acquire);
 
-    QMetaObject::invokeMethod(m_decoder_worker, &audio_decode_worker::seek, Qt::QueuedConnection, position_ms, epoch);
+        if (!superseded) clear_device_buffer();
+        emit seek_settled(m_decoder_worker->seek(position_ms, epoch, superseded));
+    }, Qt::QueuedConnection);
+}
+
+// Any thread (libsoundio allows it); can round-trip to the audio server, so never the GUI thread
+void
+audio_internal_controller::clear_device_buffer ()
+{
+    if (!m_outstream) return;
+
+    const int err = soundio_outstream_clear_buffer(m_outstream);
+    if (err != 0 && err != SoundIoErrorIncompatibleBackend)
+        qCWarning(l_soundio) << "soundio_outstream_clear_buffer failed with exit code" << err << ":" << soundio_strerror(err);
 }
 
 void

@@ -34,9 +34,9 @@ public slots:
     // ffmpeg decoding timer, triggers decode_step() repeatedly
     void start_decoding ();
 
-    // trigger to flush and start reading from some other timestamp
-    // epoch: boundary_snapshot().epoch when the request was issued (see audioringbuffer.hpp)
-    void seek (uint64_t position_ms, uint64_t epoch);
+    // superseded: a newer seek is queued behind this one. Nothing is repositioned, but the
+    // seek that began it still has to end. true = the position was applied
+    bool seek (uint64_t position_ms, uint64_t epoch, bool superseded);
 
     // clean the buffer
     void clean ();
@@ -58,8 +58,6 @@ private slots:
 
 signals:
     void song_load_failed (QUrl source, QString err);   // the file that failed to open, and why
-
-    void seeked();
 
 private:
 
@@ -101,7 +99,7 @@ private:
     AVFormatContext *fmt_ctx = nullptr;
     AVCodecContext *codec_ctx = nullptr;
     SwrContext *swr_ctx = nullptr;
-    
+
     QTimer *m_decode_timer = nullptr;
 
     std::atomic_bool m_song_loaded {false};
@@ -116,7 +114,7 @@ private:
     mutable std::mutex m_B_mutex;
 
     // Closes FFmpeg contexts without clearing the ring buffer
-    void close_ffmpeg_contexts(); 
+    void close_ffmpeg_contexts();
 
     // A's file is fully in the ring: hand over to B or end the tape. Returns the next timer interval.
     int on_end_of_A ();
@@ -130,7 +128,7 @@ private:
     // the ring plays out what it holds. Pass true when nothing was ever played (failed load: the ring
     // was just reset, there is no tape to end).
     void abandon_decoding (bool do_not_mark_end_of_tape = false);
-    
+
     // Opens a new file and prepares SwrContext (essentially the FFmpeg parts of your current load() method)
     bool open_file_internal(const QUrl &source);
 

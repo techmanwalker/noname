@@ -3,12 +3,13 @@
 #include "virtual/audioengine.hpp"
 
 #include "bridgecontroller/internalcontroller.hpp"
-
-#include <deque>
+#include "bridgecontroller/pendingcalls.hpp"
 
 #include <QLoggingCategory>
 #include <QPromise>
 #include <QFuture>
+
+#include <optional>
 
 enum class audio_backend;
 
@@ -29,30 +30,34 @@ class audio_engine_LI : public QObject, public audio_engine
 public:
     explicit audio_engine_LI (QObject *parent, audio_backend backend);
 
-    void play() override;
-    void pause() override;
-    void stop() override;
-    void unload() override;
-    void seek_to(const quint64 position_ms) override;
-    void relative_seek (qint64 step_ms) override;
-    void set_volume(quint8 volume_percent) override;
-    // keep audio_engine's Types::Song overloads visible through audio_engine_LI
-    // (declaring the overrides below would otherwise hide them)
-    using audio_engine::load;
-    using audio_engine::prepare_next_track;
-
-    // Returns at once. A is set and track_changed is out before it returns; the future finishes when
-    // the decoder holds the file, and is cancelled if superseded by a newer load or the file failed to open
-    QFuture<void> load(const QUrl &source) override;
-    void prepare_next_track(const QUrl &source) override;
-    void undo_prepare_next_track() override;
-
-    const QUrl & current_track_source()       const override;
-    const QUrl & next_track_prepared_source() const override;
-    quint64     current_position_ms() const override;
-    quint8      current_volume()      const override;
+    // state
+    const QUrl &   current_track_source()       const override;
+    const QUrl &   next_track_prepared_source() const override;
+    quint64        current_position_ms() const override;
+    quint8         current_volume()      const override;
     playback_state get_playback_state() const override;
-    bool is_a_song_loaded() const override;
+    bool           is_a_song_loaded() const override;
+
+    // transport
+    QFuture<void> play() override;
+    QFuture<void> pause() override;
+    QFuture<void> stop() override;
+
+    // tape (a)
+    // todo: load needs to return false when the load fails
+    QFuture<void> load(const QUrl &source) override;
+    QFuture<void> unload() override;
+
+    // next (b)
+    QFuture<void> prepare_next_track(const QUrl &source) override;
+    QFuture<void> undo_prepare_next_track() override;
+
+    // position
+    QFuture<void> seek_to(const quint64 position_ms) override;
+    QFuture<void> relative_seek (qint64 step_ms) override;
+
+    // volume
+    QFuture<void> set_volume(quint8 volume_percent) override;
 
     // The RT thread hit the boundary: B becomes A. Also runs early via catch_up_on_boundary_hit().
     void on_boundary_hit();
@@ -75,7 +80,10 @@ signals:
 
 public slots:
     void handle_track_changed();
-    void on_load_settled(bool loaded);
+    void on_load_settled(bool ok);
+    void on_seek_settled(bool applied);
+    void on_next_settled();
+    void on_stop_settled();
 
 private:
     std::unique_ptr<audio_internal_controller> m_internal;
@@ -84,13 +92,19 @@ private:
     QUrl m_track_B_source;   // B as the engine prepared it; on_boundary_hit() asks the decoder which file it really opened for B
 
     double m_log_volume = 0;
-    uint64_t m_current_transaction_id = 0;
 
-    // The RT thread already hit the boundary but on_boundary_hit() has not run yet (it is queued):
-    // run it now. true = it ran, so the request being served was issued against an A that is gone.
+    // Calls the decoder thread still owes a settlement for, one queue per group
+    pending_calls m_transport_calls;   // stop()
+    pending_calls m_tape_calls;        // load(), unload()
+    pending_calls m_position_calls;    // seek_to(), relative_seek()
+    pending_calls m_next_calls;        // prepare_next_track(), undo_prepare_next_track()
+
+    // Where the seeks in flight end up: the clock has not moved yet
+    std::optional<quint64> m_seek_target;
+
+    template <typename Body> QFuture<void> dispatch (Body body);
+    void start_seek (quint64 position_ms, QPromise<void> call);
+
     bool catch_up_on_boundary_hit ();
-
-    // One per load() in flight, settled in issue order (the decoder runs them FIFO)
-    std::deque<QPromise<void>> m_load_promises;
-    bool load_in_flight () const { return !m_load_promises.empty(); }
+    bool load_in_flight () const { return !m_tape_calls.empty(); }
 };

@@ -333,7 +333,7 @@ audio_decode_worker::is_song_loaded () const
     return m_song_loaded.load();
 }
 
-void 
+void
 audio_decode_worker::load(const QUrl &source) {
     // The decoder is already on this exact source: rewind instead of reopening.
     if (m_song_loaded && fmt_ctx && source == m_open_source) {
@@ -544,16 +544,14 @@ audio_decode_worker::reopen_A_at (const audio_ring_buffer::rt_quiesce &quiesce, 
     return false;
 }
 
-void
-audio_decode_worker::seek(uint64_t position_ms, uint64_t epoch)
+bool
+audio_decode_worker::seek(uint64_t position_ms, uint64_t epoch, bool superseded)
 {
-    rewind_in_place(position_ms, epoch);
+    const bool applied = !superseded && rewind_in_place(position_ms, epoch);
 
     // mark seek as complete so actual audio playback can safely resume
     m_ring.end_seek();
-
-    // Exactly one completion per request, whatever happened to it
-    emit seeked();
+    return applied;
 }
 
 void

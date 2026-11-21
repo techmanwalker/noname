@@ -41,16 +41,25 @@ public:
 
     virtual ~audio_engine() = default;
 
-    virtual void play() = 0;
-    virtual void pause() = 0;
-    virtual void stop() = 0;
-    virtual void unload() = 0;
-    virtual void seek_to(const quint64 position_ms) = 0;
-    virtual void relative_seek (qint64 step_ms) = 0; // + advances, - goes back
-    virtual void set_volume(quint8 volume_percent) = 0;
-    virtual QFuture<void> load(const QUrl &source) = 0;       // designates A
-    virtual void prepare_next_track(const QUrl &source) = 0;  // designates B
-    virtual void undo_prepare_next_track() = 0;               // drops B
+    // transport
+    virtual QFuture<void> play() = 0;
+    virtual QFuture<void> pause() = 0;
+    virtual QFuture<void> stop() = 0;
+
+    // designates or drops A
+    virtual QFuture<void> load(const QUrl &source) = 0;
+    virtual QFuture<void> unload() = 0;
+
+    // designates or drops B
+    virtual QFuture<void> prepare_next_track(const QUrl &source) = 0;
+    virtual QFuture<void> undo_prepare_next_track() = 0;
+
+    // position
+    virtual QFuture<void> seek_to(const quint64 position_ms) = 0;
+    virtual QFuture<void> relative_seek (qint64 step_ms) = 0; // + advances, - goes back
+
+    // volume
+    virtual QFuture<void> set_volume(quint8 volume_percent) = 0;
 
     // no Types::Song below this point; the engine only sees sources
     QFuture<void> load (const Types::Song &song)
@@ -58,7 +67,7 @@ public:
         if (!song.is_valid()) return QtFuture::makeReadyVoidFuture();
         return load(song.source);
     }
-    void prepare_next_track(const Types::Song &song) { prepare_next_track(song.source); }
+    QFuture<void> prepare_next_track(const Types::Song &song) { return prepare_next_track(song.source); }
 
     virtual const QUrl & current_track_source()       const = 0;   // A
     virtual const QUrl & next_track_prepared_source() const = 0;   // B
