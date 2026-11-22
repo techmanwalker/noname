@@ -239,12 +239,14 @@ main (int argc, char ** argv)
     engine.loadFromModule("Player.App", "Main");
 
     if (engine.rootObjects().isEmpty()) {
+        cs->teardown();
         song_factory::teardown();
         ae->teardown();
         return -1;
     }
 
     const int exitcode = app.exec();
+    cs->teardown();
     song_factory::teardown();
     ae->teardown();
     return exitcode;

@@ -141,6 +141,39 @@ find_video_stream (const AVFormatContext *fmt_ctx)
     return nullptr;
 }
 
+struct stoppable_runner {
+    void           *inner;   // the JxlResizableParallelRunnerMake() runner
+    std::stop_token stop;
+};
+
+struct forwarded_call {
+    void                  *jxl;
+    JxlParallelRunInit     init;
+    JxlParallelRunFunction func;
+    const std::stop_token &stop;
+};
+
+JxlParallelRetCode
+run_unless_stopped (void *opaque, void *jxl, JxlParallelRunInit init,
+                    JxlParallelRunFunction func, uint32_t start, uint32_t end)
+{
+    auto &r = *static_cast<stoppable_runner *>(opaque);
+    forwarded_call call { jxl, init, func, r.stop };
+
+    const JxlParallelRetCode rc = JxlResizableParallelRunner(r.inner, &call,
+        [] (void *o, size_t threads) {
+            auto &c = *static_cast<forwarded_call *>(o);
+            return c.init(c.jxl, threads);
+        },
+        [] (void *o, uint32_t i, size_t thread) {
+            auto &c = *static_cast<forwarded_call *>(o);
+            if (!c.stop.stop_requested()) c.func(c.jxl, i, thread);
+        },
+        start, end);
+
+    return r.stop.stop_requested() ? JXL_PARALLEL_RET_RUNNER_ERROR : rc;
+}
+
 } // namespace
 
 /* Runs sws_scale without ever letting swscale touch the QImage allocation.
@@ -519,12 +552,14 @@ read_jpegxl(const QString &path)
     return image.copy();
 }
 
-bool
-write_jpegxl(const QString &path, QImage image, QImage::Format format)
+std::optional<std::vector<uint8_t>>
+encode_jpegxl(const QImage &image, QImage::Format format, std::stop_token stop)
 {
+    if (stop.stop_requested()) return std::nullopt;
+
     if (image.isNull()) {
-        qCWarning(l_coverprovider) << "refusing to write a null thumbnail for " << path;
-        return false;
+        qCWarning(l_coverprovider) << "refusing to encode a null thumbnail";
+        return std::nullopt;
     }
 
     const QImage converted_buffer = image.format() == format
@@ -547,16 +582,17 @@ write_jpegxl(const QString &path, QImage image, QImage::Format format)
 
     auto enc = JxlEncoderMake(nullptr);
     if (!enc) {
-        qCWarning(l_coverprovider) << "failed to create JxlEncoder for" << path;
-        return false;
+        qCWarning(l_coverprovider) << "failed to create JxlEncoder";
+        return std::nullopt;
     }
 
     auto runner = JxlResizableParallelRunnerMake(nullptr);
+    stoppable_runner stoppable { runner.get(), stop };
     if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
-            JxlResizableParallelRunner, runner.get()))
+            run_unless_stopped, &stoppable))
     {
-        qCWarning(l_coverprovider) << "failed to set parallel runner for" << path;
-        return false;
+        qCWarning(l_coverprovider) << "failed to set parallel runner";
+        return std::nullopt;
     }
 
     JxlBasicInfo basic_info;
@@ -570,15 +606,15 @@ write_jpegxl(const QString &path, QImage image, QImage::Format format)
     basic_info.uses_original_profile = JXL_FALSE;
 
     if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
-        qCWarning(l_coverprovider) << "JxlEncoderSetBasicInfo failed for" << path;
-        return false;
+        qCWarning(l_coverprovider) << "JxlEncoderSetBasicInfo failed";
+        return std::nullopt;
     }
 
     JxlColorEncoding color_encoding;
     JxlColorEncodingSetToSRGB(&color_encoding, /*is_gray=*/JXL_FALSE);
     if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
-        qCWarning(l_coverprovider) << "JxlEncoderSetColorEncoding failed for" << path;
-        return false;
+        qCWarning(l_coverprovider) << "JxlEncoderSetColorEncoding failed";
+        return std::nullopt;
     }
 
     JxlEncoderFrameSettings *frame_settings = JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
@@ -600,8 +636,11 @@ write_jpegxl(const QString &path, QImage image, QImage::Format format)
                                                    packed.data(),
                                                    bytes))
     {
-        qCWarning(l_coverprovider) << "JxlEncoderAddImageFrame failed for" << path;
-        return false;
+        if (!stop.stop_requested()) {
+            qCWarning(l_coverprovider) << "JxlEncoderAddImageFrame failed";
+        }
+
+        return std::nullopt;
     }
 
     JxlEncoderCloseInput(enc.get());
@@ -625,11 +664,29 @@ write_jpegxl(const QString &path, QImage image, QImage::Format format)
     }
 
     if (status != JXL_ENC_SUCCESS) {
-        qCWarning(l_coverprovider) << "JxlEncoderProcessOutput failed for" << path;
-        return false;
+        if (!stop.stop_requested()) {
+            qCWarning(l_coverprovider) << "JxlEncoderProcessOutput failed";
+        }
+
+        return std::nullopt;
     }
 
     compressed.resize(next_out - compressed.data());
+    return compressed;
+}
+
+bool
+write_jpegxl(const QString &path, QImage image, QImage::Format format, std::stop_token stop)
+{
+    const auto encoded = encode_jpegxl(image, format, stop);
+    if (!encoded) {
+        if (!stop.stop_requested()) {
+            qCWarning(l_coverprovider) << "failed to encode JPEG XL for" << path;
+        }
+
+        return false;
+    }
+    const std::vector<uint8_t> &compressed = *encoded;
 
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {

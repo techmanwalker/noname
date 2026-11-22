@@ -2,6 +2,11 @@
 
 #include <QImage>
 
+#include <cstdint>
+#include <optional>
+#include <stop_token>
+#include <vector>
+
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
@@ -33,6 +38,12 @@ QImage decode_video_frame_at_fraction(const QString &local_path, double fraction
 QImage decode_cover_ffmpeg(const uchar *data, size_t size, QImage::Format out_format);
 
 QImage read_jpegxl  (const QString &path);
-bool   write_jpegxl (const QString &path, QImage image, QImage::Format format);
+
+// No I/O. Nullopt on failure or when stop is requested, including mid-encode.
+std::optional<std::vector<uint8_t>>
+encode_jpegxl (const QImage &image, QImage::Format format, std::stop_token stop);
+
+// encode_jpegxl + file write. Once an encoded buffer exists, the write always completes.
+bool   write_jpegxl (const QString &path, QImage image, QImage::Format format, std::stop_token stop);
 
 }

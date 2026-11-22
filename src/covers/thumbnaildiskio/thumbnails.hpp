@@ -5,6 +5,8 @@
 #include <QLoggingCategory>
 #include <QString>
 
+#include <stop_token>
+
 // covers::disk: thumbnails and persistent caching on non volatile media
 
 namespace covers::disk {
@@ -37,7 +39,12 @@ fetch_thumbnail (
 QFuture<void>
 write_thumbnail (
     const QUrl &media_source,
-    QImage thumbnail
+    QImage thumbnail,
+    std::stop_token stop
 );
+
+// drop queued writes and wait for the in-flight ones; call after tripping the stop source
+void
+teardown ();
 
 }

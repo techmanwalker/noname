@@ -44,6 +44,15 @@ cover_storage_LI::~cover_storage_LI ()
     m_response_pool.waitForDone();
 }
 
+void
+cover_storage_LI::teardown ()
+{
+    // order matters: resolves feed store(), which feeds the thumbnail pool
+    m_stop.request_stop();
+    m_response_pool.waitForDone(); // queued tasks drain instantly: they see the stop and only deliver finished()
+    covers::disk::teardown();      // queued writes dropped, in-flight encodes abort
+}
+
 cover_storage_LI::cache_slot
 cover_storage_LI::slot_for (const QUrl &media_source, const QSize &size)
 {
@@ -99,7 +108,10 @@ cover_storage_LI::lookup_source (const QUrl &media_source)
         return img;
     }
 
+    if (m_stop.stop_requested()) return QImage();
+
     qCDebug (l_coverprovider) << "Trying to make a thumbnail." << media_source;
+
     // try decoding a video frame, if possible
     img = make_thumbnail(media_source);
     if (!img.isNull())
@@ -146,7 +158,7 @@ cover_storage_LI::store (
     bool save_to_disk_cache
 )
 {
-    if (disabled) return false;
+    if (disabled || m_stop.stop_requested()) return false;
 
     if (!cover_from_metadata.canConvert<QImage>()) {
         return false;
@@ -171,7 +183,7 @@ cover_storage_LI::store (
 
     // cheapest test first: the file check costs a mkpath and a stat
     if (save_to_disk_cache && !disk::thumbnail_file_exists(media_source, img.size())) {
-        covers::disk::write_thumbnail(media_source, img);
+        covers::disk::write_thumbnail(media_source, img, m_stop.get_token());
     }
 
     return true;
@@ -193,9 +205,9 @@ cover_storage_LI::resolve_blocking (
     const QSize &requestedSize,
     const std::function<bool()> &stale)
 {
-    demote_this_thread();
+    if (m_stop.stop_requested() || media_source.isEmpty()) return QImage();
 
-    if (media_source.isEmpty()) return QImage();
+    demote_this_thread();
 
     // No usable size (invalid, or 0 on a side) means full resolution, spelled {0, 0} from here on
     const QSize target = requestedSize.isEmpty() ? QSize(0, 0) : requestedSize;
@@ -205,9 +217,10 @@ cover_storage_LI::resolve_blocking (
     QImage img = lookup_memory(media_source, target);
     const bool already_cached = !img.isNull();
 
+    if (img.isNull() && m_stop.stop_requested()) return QImage();
     if (img.isNull()) img = lookup_disk(media_source, target);
 
-    if (img.isNull() && stale && stale()) return QImage();
+    if (img.isNull() && (m_stop.stop_requested() || (stale && stale()))) return QImage();
     if (img.isNull()) img = lookup_source(media_source);
 
     if (img.isNull()) {
@@ -215,6 +228,9 @@ cover_storage_LI::resolve_blocking (
     } else if (target.isEmpty()) {
         qCDebug(l_coverprovider) << "Full res resource returned by not specifying a requestedSize..";
     } else {
+        // last exit before the heaviest CPU step
+        if (m_stop.stop_requested()) return QImage();
+
         // The transforms: crop largest aspect + resize = center crop and rescale.
         // The center bit comes because crop_largest_aspect fits the largest centered N:M rect.
         // Skipped when the image already is exactly the requested size (every cache hit).

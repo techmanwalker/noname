@@ -13,6 +13,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <stop_token>
 
 #include "virtual/coverstorage.hpp"
 
@@ -53,6 +54,9 @@ public:
 
     bool disabled = false; // quickly respond with empty QImages effectively disabling responses
 
+    // Stop all cover work (resolves, decodes, encodes). Call once, after the event loop ends.
+    void teardown ();
+
     QFuture<QImage> resolve (const QUrl &media_source, const QSize &requestedSize) override;
 
 private:
@@ -77,6 +81,8 @@ private:
     // later request = higher priority: the newest track's covers run first, stale ones sink
     std::atomic<int> m_request_seq { 0 };
     int next_priority() { return m_request_seq.fetch_add(1, std::memory_order_relaxed); }
+
+    std::stop_source m_stop; // tripped by teardown(); checked at every checkpoint, passed to disk writes
 };
 
 }

@@ -66,11 +66,12 @@ fetch_thumbnail (
     );
 }
 
-// Write the thumbnail for whatever size thumbnail is
+// stop aborts the encode, even mid-way; once an encoded buffer exists the write always completes
 QFuture<void>
 write_thumbnail (
     const QUrl &media_source,
-    QImage thumbnail
+    QImage thumbnail,
+    std::stop_token stop
 )
 {
     return QtConcurrent::run(
@@ -78,7 +79,8 @@ write_thumbnail (
         &codecs::write_jpegxl,
         thumbnail_file_path(media_source.toLocalFile(), thumbnail.size()),
         std::move(thumbnail),
-        pixelformat_qimage
+        pixelformat_qimage,
+        std::move(stop)
     );
 }
 
@@ -86,8 +88,8 @@ void
 teardown ()
 {
     QThreadPool *pool = thumbnail_pool();
-    pool->clear();          // drop anything queued but not yet started
-    pool->waitForDone();    // let whatever's already encoding finish naturally
+    pool->clear();          // queued, never started: dropped
+    pool->waitForDone();    // in-flight encodes already saw the stop; a write in progress finishes
 }
 
 }
