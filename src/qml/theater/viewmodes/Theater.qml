@@ -358,6 +358,7 @@ Row {
 
                         trackLeftLightMode:  Light.lightModeWithPrior(leftGlobalBounds, root.background, PlayerPresenter,  metadataContainer.lightMode)
                         trackRightLightMode: Light.lightModeWithPrior(rightGlobalBounds, root.background, PlayerPresenter, metadataContainer.lightMode)
+                        lightMode: trackLeftLightMode
 
                         onMoveRequested: (from, to) => PlayQueue.move(from, to)
 

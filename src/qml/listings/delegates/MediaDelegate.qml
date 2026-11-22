@@ -30,8 +30,6 @@ Item {
     property bool hideDuration
     property bool showSeparator
 
-    property bool playing
-
     required property bool selected // governed by its container list
 
     property int lateralPadding: card ? 0 : Theme.sizes.rowTrackLateralPadding
@@ -50,14 +48,11 @@ Item {
     MediaDelegateBackground {
         anchors.fill: parent
 
-        playing: root.playing
         hovered: hover.hovered
         selected: root.selected
 
-        outer_leftstop:   0
         inner_leftstop:   root.fadePadding               / Math.max(1, root.width)
         inner_rightstop: (root.width - root.fadePadding) / Math.max(1, root.width)
-        outer_rightstop:  1
 
         lightMode: root.lightMode
     }

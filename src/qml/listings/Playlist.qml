@@ -11,6 +11,8 @@ import Player.Primitives
 AutoscrollListView {
     id: root
 
+    property size rowSize: Qt.size (Math.max(width - rightMargin, 120), 80)
+
     property bool lightMode: false
 
     property bool trackLeftLightMode:  lightMode
@@ -23,6 +25,7 @@ AutoscrollListView {
     focusPosition: ListView.Beginning
     focusMarginRatio: 0.4
     autoscrollCooldownMs: Animations.scroll.playlist.cooldown
+    autoscrollPaged: true
 
     // a drag never makes the ListView "move", so userInteracting is blind to it
     autoscrollEnabled: !mediaDrag.armed
@@ -105,6 +108,46 @@ AutoscrollListView {
         coverHeight: root.trackCoverHeight
     }
 
+    // A glide is never restarted mid-way; it finishes and then re-aims (see onFinished below)
+    onFocusFollowed: if (!playheadGlide.running) playheadGlide.start()
+
+    MediaDelegateBackground {
+        id: playheadBackground
+
+        // Not a content item by default: parent it there so it scrolls with the rows
+        parent: root.contentItem
+
+        width:  root.rowSize.width
+        height: root.rowSize.height
+
+        // Rides the playhead row in content space. The focus margin brings the row to
+        // the pin; where the scroll can't (cooldown, drag, clamped ends) it stays on the row.
+        visible: root.playheadRowIdx >= 0
+
+        readonly property real slotY: Math.max(root.playheadRowIdx, 0) * (root.rowSize.height + root.spacing)
+
+        Component.onCompleted: y = slotY
+
+        // Same transition as the scroll, started by the same call (focusFollowed). While the
+        // scroll carries the row to the pin, both move by the same amount and the highlight is still.
+        NumberAnimation {
+            id: playheadGlide
+            target: playheadBackground
+            property: "y"
+            to: playheadBackground.slotY
+            duration: root.autoscrollDurationMs
+            easing.type: root.autoscrollEasing
+
+            onFinished: if (playheadBackground.y !== playheadBackground.slotY) restart()
+        }
+
+        playing: true
+        lightMode: root.lightMode
+
+        inner_leftstop:   Theme.sizes.rowTrackFadePadding                       / Math.max(1, root.width)
+        inner_rightstop: (root.rowSize.width - Theme.sizes.rowTrackFadePadding) / Math.max(1, root.width)
+    }
+
     delegate: MediaDelegate {
         id: track
 
@@ -117,17 +160,12 @@ AutoscrollListView {
             + (modelData.album.length > 0 ? " · " + modelData.album : "")
         duration:   modelData.duration_mmss
 
-        width: root.width - root.rightMargin
-
-        height: 80
+        width:  root.rowSize.width
+        height: root.rowSize.height
 
         lightMode:      root.lightMode
         leftLightMode:  root.trackLeftLightMode
         rightLightMode: root.trackRightLightMode
-
-        // findBySource returns a different object from memory, hence comparing .row instead
-        playing: playheadRowIdx >= 0 // qmllint disable
-            && index === playheadRowIdx // qmllint disable
 
         showSeparator: true
 
