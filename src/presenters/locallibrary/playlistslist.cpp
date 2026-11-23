@@ -67,7 +67,7 @@ PlaylistsListLI::refresh ()
         pending.append(song_factory::batch_extract(
             song_paths,
             {
-                covers::default_cover_thumbnail_size,
+                covers::default_cover_card_size.width(),
                 true
             }
         ).then(this, [playlist_text, generation, this](QList<Types::Track> tracks_of_playlist) {

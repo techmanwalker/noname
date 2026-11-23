@@ -45,6 +45,13 @@ public:
 
     bool is_cached (const QUrl &media_source, QSize size);
 
+    // Runtime memory cache budget, in bytes. Clamped up to memory_budget_min();
+    // shrinking evicts the least recently used entries right away.
+    // Returns the budget actually applied.
+    qsizetype set_memory_budget (qsizetype requested_bytes);
+    qsizetype memory_budget () const { return m_budget.load(std::memory_order_relaxed); }
+    static qsizetype memory_budget_min (); // default-size thumbnails
+
     /*  Blocking resolution chain: memory cache -> disk cache -> decode from
     registered source. Called from a worker thread only
     (cover_image_response::run()) — never the GUI thread. */
@@ -76,6 +83,9 @@ private:
 
     static constexpr qsizetype SHARD_COUNT = 16;
     std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;
+
+    QMutex m_budget_lock;                // concurrent setters can't leave shards at mixed budgets
+    std::atomic<qsizetype> m_budget { 0 };
 
     QThreadPool m_response_pool; // dedicated so cover decoding never queues behind (or blocks) song_factory's metadata scan
 

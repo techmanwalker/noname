@@ -23,6 +23,9 @@ public:
 
     // Exposed forwarding calls
     bool store(const QUrl &media_source, const QVariant &cover_from_metadata, bool save_to_disk_cache = true);
+    qsizetype set_memory_budget(qsizetype requested_bytes);
+    qsizetype memory_budget() const;
+    static qsizetype memory_budget_min();
 
 private:
     std::shared_ptr<covers::live::cover_storage_LI> m_real;

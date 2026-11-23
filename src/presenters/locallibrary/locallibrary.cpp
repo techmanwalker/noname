@@ -89,7 +89,7 @@ LocalLibraryLI::take_snapshot (const QString &dir_path)
 
             extract_future = song_factory::batch_extract (
                 not_yet_loaded,
-                {covers::default_cover_thumbnail_size, true} /* enough for 1440p, can be tweaked any time later */
+                {covers::default_cover_card_size.width(), true} /* enough for 1440p, can be tweaked any time later */
             );
         }
     );

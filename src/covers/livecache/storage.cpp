@@ -14,25 +14,37 @@
 
 namespace covers::live {
 
+namespace {
+
+// fewer thrashes during scrolling
+qsizetype min_budget()
+{
+    static const qsizetype rowthumb_cost = QImage(
+        default_cover_rowthumb_size,
+        pixelformat_qimage
+    ).sizeInBytes();
+
+    static const qsizetype card_cost = QImage(
+        default_cover_card_size,
+        pixelformat_qimage
+    ).sizeInBytes();
+
+    static const qsizetype backdrop_cost = QImage(
+        default_cover_background_size,
+        pixelformat_qimage
+    ).sizeInBytes();
+
+    return 2048 * rowthumb_cost + 256 * card_cost + 64 * backdrop_cost;
+}
+}
 
 cover_storage_LI::cover_storage_LI()
     : QQuickAsyncImageProvider()
 {
-    // You MUST increase this total budget. 96 is not enough to prevent
-    // thrashing during scrolling. Let's allocate enough for ~1000 thumbnails.
-    static const qsizetype thumbnail_cost = QImage(
-        default_cover_thumbnail_size,
-        default_cover_thumbnail_size,
-        pixelformat_qimage
-    ).sizeInBytes();
-
-    const qsizetype total_budget = 1024 * thumbnail_cost;
-    const qsizetype budget_per_shard = total_budget / SHARD_COUNT;
-
-    for (auto& shard : m_shards) {
+    for (auto& shard : m_shards)
         shard = std::make_unique<cache_shard>();
-        shard->cache.setMaxCost(budget_per_shard);
-    }
+
+    set_memory_budget(min_budget());
 
     // leave cores for the GUI, render, decoder and RT threads
     m_response_pool.setMaxThreadCount(std::max(2, QThread::idealThreadCount() / 2));
@@ -271,6 +283,29 @@ cover_storage_LI::is_cached(const QUrl &media_source, QSize size)
 
     QMutexLocker locker(&slot.shard.lock);
     return slot.shard.cache.contains(slot.key);
+}
+
+qsizetype
+cover_storage_LI::memory_budget_min ()
+{
+    return min_budget();
+}
+
+qsizetype
+cover_storage_LI::set_memory_budget (qsizetype requested_bytes)
+{
+    QMutexLocker guard(&m_budget_lock);
+
+    const qsizetype applied = std::max(requested_bytes, min_budget());
+    const qsizetype per_shard = applied / SHARD_COUNT;
+
+    for (auto &shard : m_shards) {
+        QMutexLocker locker(&shard->lock);
+        shard->cache.setMaxCost(per_shard); // trims LRU here if shrinking
+    }
+
+    m_budget.store(applied, std::memory_order_relaxed);
+    return applied;
 }
 
 }
