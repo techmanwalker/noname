@@ -623,7 +623,7 @@ encode_jpegxl(const QImage &image, QImage::Format format, std::stop_token stop)
     // Requested settings
     JxlEncoderSetFrameDistance(frame_settings, 1.0f);                 // distance = 1
     JxlEncoderFrameSettingsSetOption(frame_settings,
-                                     JXL_ENC_FRAME_SETTING_EFFORT, 7); // effort = 7
+                                     JXL_ENC_FRAME_SETTING_EFFORT, 2); // effort = 2
 
     JxlPixelFormat pixel_format = {
         4,                      // num_channels (RGBA)
