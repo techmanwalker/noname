@@ -20,6 +20,7 @@ extern "C" {
 
 #include <QFile>
 #include <QImage>
+#include <QSaveFile>
 
 #include <algorithm>
 #include <cstring>
@@ -688,20 +689,20 @@ write_jpegxl(const QString &path, QImage image, QImage::Format format, std::stop
     }
     const std::vector<uint8_t> &compressed = *encoded;
 
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    // temp file + rename: readers never see a partial thumbnail, even after a crash
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
         qCWarning(l_coverprovider) << "failed to open thumbnail for writing" << path
                                 << file.errorString();
         return false;
     }
 
     if (file.write(reinterpret_cast<const char*>(compressed.data()),
-                   qint64(compressed.size())) != qint64(compressed.size()))
+                   qint64(compressed.size())) != qint64(compressed.size()) || !file.commit())
     {
         qCWarning(l_coverprovider) << "failed to write JPEG XL data" << path
                                 << file.errorString();
-        file.remove();
-        return false;
+        return false;   // QSaveFile discards its temp file
     }
 
     return true;

@@ -69,9 +69,10 @@ private:
     cache_slot slot_for (const QUrl &media_source, const QSize &size);
 
     // The three places a cover can come from, cheapest first. A miss is a null QImage.
-    QImage lookup_memory (const QUrl &media_source, const QSize &size);
-    QImage lookup_disk   (const QUrl &media_source, const QSize &size);
-    QImage lookup_source (const QUrl &media_source);
+    QImage lookup_memory  (const QUrl &media_source, const QSize &size);
+    QImage lookup_disk    (const QUrl &media_source, const QSize &size);
+    QImage lookup_pending (const QUrl &media_source, const QSize &size);
+    QImage lookup_source  (const QUrl &media_source);
 
     static constexpr qsizetype SHARD_COUNT = 16;
     std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;

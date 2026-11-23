@@ -7,6 +7,8 @@
 
 #include <QDir>
 #include <QFile>
+#include <QHash>
+#include <QMutex>
 #include <QThreadPool>
 
 #include <QtConcurrent/QtConcurrent>
@@ -29,6 +31,20 @@ thumbnail_pool ()
     (void) configured;
 
     return &pool;
+}
+
+// writes queued or encoding right now, by file path (payload_and_size hash + extension).
+// The image is the buffer the writer holds: no extra memory.
+struct pending_writes {
+    QMutex lock;
+    QHash<QString, QImage> images;
+};
+
+pending_writes &
+pending ()
+{
+    static pending_writes p;
+    return p;
 }
 
 } // anonymous
@@ -71,6 +87,19 @@ fetch_thumbnail (
     return codecs::read_jpegxl(thumbnail_file_path(media_source, target_size));
 }
 
+QImage
+pending_thumbnail (
+    const QUrl &media_source,
+    QSize target_size
+)
+{
+    const QString path = thumbnail_file_path(media_source, target_size);
+
+    pending_writes &p = pending();
+    QMutexLocker locker(&p.lock);
+    return p.images.value(path);
+}
+
 // stop aborts the encode, even mid-way; once an encoded buffer exists the write always completes
 QFuture<void>
 write_thumbnail (
@@ -79,14 +108,28 @@ write_thumbnail (
     std::stop_token stop
 )
 {
-    return QtConcurrent::run(
-        thumbnail_pool(),
-        &codecs::write_jpegxl,
-        thumbnail_file_path(media_source, thumbnail.size()),
-        std::move(thumbnail),
-        pixelformat_qimage,
-        std::move(stop)
-    );
+    const QString path = thumbnail_file_path(media_source, thumbnail.size());
+    if (path.isEmpty()) return {};
+
+    {
+        pending_writes &p = pending();
+        QMutexLocker locker(&p.lock);
+
+        // queued or encoding already: that write lands this very image
+        if (p.images.contains(path)) return {};
+
+        p.images.insert(path, thumbnail);
+    }
+
+    return QtConcurrent::run(thumbnail_pool(),
+        [path, image = std::move(thumbnail), stop = std::move(stop)]() mutable {
+            codecs::write_jpegxl(path, std::move(image), pixelformat_qimage, std::move(stop));
+
+            // after the file is committed, so a miss here always finds it on disk
+            pending_writes &p = pending();
+            QMutexLocker locker(&p.lock);
+            p.images.remove(path);
+        });
 }
 
 void

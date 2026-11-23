@@ -36,6 +36,14 @@ fetch_thumbnail (
     QSize target_size
 );
 
+// The image of a write queued or encoding right now (null if none): the pixels the file
+// will contain, usable instead of decoding the source again.
+[[nodiscard]] QImage
+pending_thumbnail (
+    const QUrl &media_source,
+    QSize target_size
+);
+
 QFuture<void>
 write_thumbnail (
     const QUrl &media_source,

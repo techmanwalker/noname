@@ -95,6 +95,17 @@ cover_storage_LI::lookup_disk (const QUrl &media_source, const QSize &size)
 }
 
 QImage
+cover_storage_LI::lookup_pending (const QUrl &media_source, const QSize &size)
+{
+    QImage img = covers::disk::pending_thumbnail(media_source, size);
+
+    if (!img.isNull())
+        qCDebug(l_coverprovider) << "Stored/overwritten from a write in progress.";
+
+    return img;
+}
+
+QImage
 cover_storage_LI::lookup_source (const QUrl &media_source)
 {
     const QByteArray local_path = media_source.toLocalFile().toUtf8();
@@ -218,6 +229,7 @@ cover_storage_LI::resolve_blocking (
     const bool already_cached = !img.isNull();
 
     if (img.isNull() && m_stop.stop_requested()) return QImage();
+    if (img.isNull()) img = lookup_pending(media_source, target);
     if (img.isNull()) img = lookup_disk(media_source, target);
 
     if (img.isNull() && (m_stop.stop_requested() || (stale && stale()))) return QImage();
