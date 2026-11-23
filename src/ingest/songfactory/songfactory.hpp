@@ -4,8 +4,6 @@
 
 #include "mediatypes.hpp"
 
-struct attributes;
-
 namespace covers::live {
     class cover_provider;
 }
@@ -21,25 +19,25 @@ concept list_of_sources =
      std::is_same_v<std::ranges::range_value_t<T>, QUrl>);
 
 // A single file
-QFuture<Types::Track> extract(const QUrl &source, attributes a);
+QFuture<Types::Track> extract(const QUrl &source);
 
 
 template <list_of_sources sl>
 QList<QFuture<Types::Track>>
-progressive_extract (const sl &sources, attributes a);
+progressive_extract (const sl &sources);
 
 // Any type of list of sources, wait for them all to finish extracting
 template <list_of_sources sl>
 QFuture<QList<Types::Track>>
-batch_extract (const sl &sources, attributes a);
+batch_extract (const sl &sources);
 
 // non template overloads to hide songfactoryimpl.hpp
 
 QList<QFuture<Types::Track>>
-progressive_extract (const QList<QUrl> &sources, attributes a);
+progressive_extract (const QList<QUrl> &sources);
 
 QFuture<QList<Types::Track>>
-batch_extract (const QList<QUrl> &sources, attributes a);
+batch_extract (const QList<QUrl> &sources);
 
 void teardown ();
 

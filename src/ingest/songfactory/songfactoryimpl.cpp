@@ -48,12 +48,12 @@ song_factory_impl::extraction_pool()
           and QMediaPlayer lifecycle run entirely on a dedicated worker thread.
 */
 QFuture<Types::Track>
-song_factory_impl::extract(const QUrl &source, attributes a)
+song_factory_impl::extract(const QUrl &source)
 {
     // delegate instantiation and execution to Qt thread pool
-    return QtConcurrent::run(extraction_pool(), [source, a](QPromise<Types::Track> &promise) {
+    return QtConcurrent::run(extraction_pool(), [source](QPromise<Types::Track> &promise) {
         song_factory_impl worker(source);
-        Types::Track result = worker.execute_extraction(promise, a);
+        Types::Track result = worker.execute_extraction(promise);
 
         if (!promise.isCanceled()) {
             if (!result.is_valid()) {
@@ -68,23 +68,23 @@ song_factory_impl::extract(const QUrl &source, attributes a)
 }
 
 QList<QFuture<Types::Track>>
-song_factory_impl::progressive_extract (const QList<QUrl> &sources, attributes a)
+song_factory_impl::progressive_extract (const QList<QUrl> &sources)
 {
     // Read the metadata of the sources one by one in parallel, you can do something as soon as one extraction finishes
     QList<QFuture<Types::Track>> requests;
     requests.reserve(sources.size());
 
     for (const QUrl &source : sources) {
-        requests.append(song_factory_impl::extract(source, a));
+        requests.append(song_factory_impl::extract(source));
     }
 
     return requests;
 }
 
 QFuture<QList<Types::Track>>
-song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
+song_factory_impl::batch_extract (const QList<QUrl> &sources)
 {
-    auto requests = progressive_extract(sources, a);
+    auto requests = progressive_extract(sources);
 
     // Wait for all tracks in the list to finish metadata extraction
 
@@ -118,7 +118,7 @@ song_factory_impl::batch_extract (const QList<QUrl> &sources, attributes a)
 }
 
 Types::Track
-song_factory_impl::execute_extraction(QPromise<Types::Track> &promise, attributes a)
+song_factory_impl::execute_extraction(QPromise<Types::Track> &promise)
 {
     Types::Track song;
 

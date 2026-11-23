@@ -64,24 +64,21 @@ PlaylistsListLI::refresh ()
     for (const QString &playlist_text : playlist_files) {
         const QStringList song_paths = diskio::read_lines(playlist_text).value_or({});
 
-        pending.append(song_factory::batch_extract(
-            song_paths,
-            {
-                covers::default_cover_card_size.width(),
-                true
+        pending.append(song_factory::batch_extract(song_paths).then(
+            this,
+            [playlist_text, generation, this](QList<Types::Track> tracks_of_playlist) {
+                if (generation != m_refresh_generation) return; // a newer refresh superseded this one
+
+                // song_factory reads the metadata for each path
+                Types::Playlist playlist {
+                    QFileInfo(playlist_text).baseName(),
+                    std::move(tracks_of_playlist),
+                };
+
+                // load into memory
+                append(std::move(playlist));
             }
-        ).then(this, [playlist_text, generation, this](QList<Types::Track> tracks_of_playlist) {
-            if (generation != m_refresh_generation) return; // a newer refresh superseded this one
-
-            // song_factory reads the metadata for each path
-            Types::Playlist playlist {
-                QFileInfo(playlist_text).baseName(),
-                std::move(tracks_of_playlist),
-            };
-
-            // load into memory
-            append(std::move(playlist));
-        }));
+        ));
     }
 
     // Finishes once every continuation above has run (or been cancelled).

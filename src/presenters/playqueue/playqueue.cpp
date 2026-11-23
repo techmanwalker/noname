@@ -90,7 +90,7 @@ PlayQueueLI::clear ()
 QFuture<void>
 PlayQueueLI::batch_append (const QList<QUrl> &sources)
 {
-    return song_factory::batch_extract(sources, {}).then(this, [this] (QList<Types::Track> to_append) {
+    return song_factory::batch_extract(sources).then(this, [this] (QList<Types::Track> to_append) {
         sequence::batch_append(m_d->state, std::move(to_append));
     });
 
@@ -107,7 +107,7 @@ PlayQueueLI::spawn_queue(const QStringList &sources)
         uri_sources.emplace_back(QUrl::fromLocalFile(source));
     }
 
-    return song_factory::batch_extract(uri_sources, {}).then(this, [this] (QList<Types::Track> to_spawn) {
+    return song_factory::batch_extract(uri_sources).then(this, [this] (QList<Types::Track> to_spawn) {
         sequence::spawn(m_d->state, std::move(to_spawn));
 
         // the reshuffle emits nothing the queue listens to: QML must re-read the playhead
@@ -303,7 +303,7 @@ PlayQueueLI::switch_to(size_t idx, bool play_afterwards)
 QFuture<void>
 PlayQueueLI::switch_to (const QUrl &source)
 {
-    return song_factory::extract(source, {}).then(
+    return song_factory::extract(source).then(
         this,
         [this](Types::Track song) {
             (void) switch_to(std::move(song), true);

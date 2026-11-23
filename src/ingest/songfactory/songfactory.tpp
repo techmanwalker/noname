@@ -1,6 +1,5 @@
 #pragma once
 
-#include "attributesstruct.hpp"
 #include "songfactory.hpp"
 
 namespace song_factory {
@@ -30,23 +29,21 @@ QList<QUrl> string_file_paths_to_qurllist (const sl &sources)
 
 template <list_of_sources sl>
 QList<QFuture<Types::Track>>
-progressive_extract (const sl &sources, attributes a)
+progressive_extract (const sl &sources)
 {
 
     return progressive_extract(
-        string_file_paths_to_qurllist(sources),
-        a
+        string_file_paths_to_qurllist(sources)
     );
 }
 
 template <list_of_sources sl>
 QFuture<QList<Types::Track>>
-batch_extract (const sl &sources, attributes a)
+batch_extract (const sl &sources)
 {
 
     return batch_extract(
-        string_file_paths_to_qurllist(sources),
-        a
+        string_file_paths_to_qurllist(sources)
     );
 }
 
