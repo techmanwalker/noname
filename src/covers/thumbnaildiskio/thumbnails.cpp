@@ -25,6 +25,8 @@ QThreadPool *
 thumbnail_pool ()
 {
     static QThreadPool pool;
+    static const bool configured = (pool.setMaxThreadCount(2), true);   // ~55 MB per encode
+    (void) configured;
 
     return &pool;
 }
@@ -37,7 +39,12 @@ thumbnail_file_path (
     QSize target_size
 )
 {
+    // a path-only QUrl hashes differently from file:///… and would silently miss every cache
+    Q_ASSERT_X(!media_source.scheme().isEmpty(), "covers::disk::thumbnail_file_path",
+               "URL must contain a scheme");
+
     QString fs_file_hash = covers::hash::payload_and_size(toBase64Url(media_source), target_size);
+
     if (fs_file_hash.isEmpty()) return QString();
 
     QDir thumb_dir (dir(standardpaths::standard_dirs::thumbnails));
@@ -61,9 +68,7 @@ fetch_thumbnail (
     QSize target_size
 )
 {
-    return codecs::read_jpegxl(
-        thumbnail_file_path(media_source.toLocalFile(), target_size)
-    );
+    return codecs::read_jpegxl(thumbnail_file_path(media_source, target_size));
 }
 
 // stop aborts the encode, even mid-way; once an encoded buffer exists the write always completes
@@ -77,7 +82,7 @@ write_thumbnail (
     return QtConcurrent::run(
         thumbnail_pool(),
         &codecs::write_jpegxl,
-        thumbnail_file_path(media_source.toLocalFile(), thumbnail.size()),
+        thumbnail_file_path(media_source, thumbnail.size()),
         std::move(thumbnail),
         pixelformat_qimage,
         std::move(stop)

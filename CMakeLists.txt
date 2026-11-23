@@ -489,6 +489,10 @@ target_include_directories(covers
         src/covers
 )
 
+target_compile_definitions(covers
+    PRIVATE QT_NO_URL_CAST_FROM_STRING
+)
+
 add_library(coverstorage_in INTERFACE)
 target_include_directories(coverstorage_in INTERFACE src/interfaces)
 target_link_libraries(coverstorage_in INTERFACE Qt6::Core Qt6::Gui)
