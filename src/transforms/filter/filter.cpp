@@ -144,7 +144,7 @@ MediaFilterLI::MediaFilterLI()
 {
 }
 
-QFuture<search_response>
+search_job
 MediaFilterLI::search(const QString &query, QObject *sourceModel)
 {
     // Everything touching sourceModel stays on the calling thread;
@@ -174,7 +174,7 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
         }
     } else {
         qCWarning(l_mediatransforms) << "Invalid source model provided for search.";
-        return QtFuture::makeReadyValueFuture(search_response{});
+        return {QtFuture::makeReadyValueFuture(search_response{}), {}};
     }
 
     // Execute RapidFuzz search logic on 'all_tracks' and return the list (...)
@@ -191,29 +191,32 @@ struct Transliterated {
 // Stage 1 (queued): the only code that touches a transliterator
 void
 transliterate (TransliteratorPool &translits, QPromise<Transliterated> &promise,
-                const QString &query, const QList<Types::Track> &tracks)
+               std::stop_token stop, const QString &query, const QList<Types::Track> &tracks)
 {
-    if (promise.isCanceled()) return;
+    Transliterated out; // stays empty if stopped
 
-    auto lease = translits.acquire();
-    Transliterator *translit = lease.get();
+    if (!stop.stop_requested()) {
+        auto lease = translits.acquire();
+        Transliterator *translit = lease.get();
 
-    Transliterated out;
-    out.query = nfkd_and_translit(query.toStdString(), translit);
-    out.titles.reserve(static_cast<size_t>(tracks.size()));
+        out.query = nfkd_and_translit(query.toStdString(), translit);
+        out.titles.reserve(static_cast<size_t>(tracks.size()));
 
-    for (const Types::Track &track : tracks) {
-        if (promise.isCanceled()) return;
-        out.titles.push_back(nfkd_and_translit(track.title.toStdString(), translit));
-    }
+        for (const Types::Track &track : tracks) {
+            if (stop.stop_requested()) { out = {}; break; }
+            out.titles.push_back(nfkd_and_translit(track.title.toStdString(), translit));
+        }
+    } // lease released here, before any scoring starts
 
+    // Always exactly one result: stage 2 relies on it
     promise.addResult(std::move(out));
-} // lease released here, before any scoring starts
+}
 
 search_response
-rank_tracks (QFuture<Transliterated> parent, const QList<Types::Track> &song_list)
+rank_tracks (const Transliterated &clean, const QList<Types::Track> &song_list, std::stop_token stop)
 {
-    const Transliterated clean = parent.takeResult();
+    // Stop is monotonic: empty titles imply stop_requested(), so this also guards the indexing below
+    if (stop.stop_requested()) return {};
 
     using rankable_item = std::pair<qsizetype, double>;
     std::vector<rankable_item> rankable;
@@ -225,7 +228,8 @@ rank_tracks (QFuture<Transliterated> parent, const QList<Types::Track> &song_lis
 
     // Execute search directly against the flattened song list
     for (qsizetype i = 0; i < song_list.size(); ++i) {
-        if (parent.isCanceled()) return {};
+        if (stop.stop_requested()) return {};
+
         double score = scorer.similarity(clean.titles[static_cast<size_t>(i)].c_str(), score_thresh);
 
         if (score >= score_thresh) {
@@ -250,26 +254,30 @@ rank_tracks (QFuture<Transliterated> parent, const QList<Types::Track> &song_lis
 
 } // namespace
 
-QFuture<search_response>
+search_job
 MediaFilterLI::search (const QString &query, const QList<Types::Track> &song_list)
 {
     // Tasks own their (implicitly shared) copies; `state` outlives them via ~MediaFilterLIPrivate
     auto *state = m_internal.get();
+    std::stop_source source;
 
     // Nothing to transliterate: skip the queue
     if (query.isEmpty()) {
-        return QtConcurrent::run(&state->score_pool, [song_list] {
-            return search_response{sort_by (&Types::Track::title, song_list), -1};
-        });
+        return {QtConcurrent::run(&state->score_pool, [song_list] {
+                    return search_response{sort_by (&Types::Track::title, song_list), -1};
+                }),
+                std::move(source)};
     }
 
-    return QtConcurrent::run(&state->translit_pool,
-               [state, query, song_list](QPromise<Transliterated> &promise) {
-                   transliterate(state->translits, promise, query, song_list);
-               })
-        .then(&state->score_pool, [song_list](QFuture<Transliterated> parent) {
-            return rank_tracks(std::move(parent), song_list);
+    auto future = QtConcurrent::run(&state->translit_pool,
+                      [state, query, song_list, stop = source.get_token()](QPromise<Transliterated> &promise) {
+                          transliterate(state->translits, promise, stop, query, song_list);
+                      })
+        .then(&state->score_pool, [song_list, stop = source.get_token()](const Transliterated &clean) {
+            return rank_tracks(clean, song_list, stop);
         });
+
+    return {std::move(future), std::move(source)};
 }
 
 }

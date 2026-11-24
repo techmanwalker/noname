@@ -4,6 +4,8 @@
 #include <QList>
 #include <QtQmlIntegration>
 
+#include <stop_token>
+
 #include "mediatypes.hpp"
 
 struct search_response {
@@ -17,6 +19,13 @@ public:                                      // Q_GADGET leaves you in private
     double high_score {}; // softer threshold
 };
 
+// The future is never cancelled, so it always completes with exactly one result
+// (empty if stopped). Cancel through `stop` only.
+struct search_job {
+    QFuture<search_response> future;
+    std::stop_source stop;
+};
+
 class MediaFilter
 {
 
@@ -24,5 +33,5 @@ public:
     virtual ~MediaFilter () = default;
 
     // Must be called from the thread that owns sourceModel
-    virtual QFuture<search_response> search (const QString &query, QObject *sourceModel) = 0;
+    virtual search_job search (const QString &query, QObject *sourceModel) = 0;
 };

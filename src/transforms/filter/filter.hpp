@@ -14,8 +14,8 @@ class MediaFilterLI : public MediaFilter
 public:
     explicit MediaFilterLI();
 
-    QFuture<search_response> search (const QString &query, QObject *sourceModel) override;
-    QFuture<search_response> search (const QString &query, const QList<Types::Track> &song_list);
+    search_job search (const QString &query, QObject *sourceModel) override;
+    search_job search (const QString &query, const QList<Types::Track> &song_list);
 
 private:
 

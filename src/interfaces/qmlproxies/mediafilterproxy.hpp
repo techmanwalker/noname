@@ -21,13 +21,11 @@ public:
     // The result arrives through searchFinished; the id lets QML discard stale answers
     Q_INVOKABLE quint64 search(const QString &query, QObject *containerModel) {
         const quint64 id = ++m_lastRequestId;
-        auto future = call(&MediaFilter::search, query, containerModel);
-        m_inflight.insert(id, future);
-        future.then(this, [this, id](const search_response &response) {
-            m_inflight.remove(id);
-            QMetaObject::invokeMethod(this, [this, id, response] {
-                emit searchFinished(id, response);
-            }, Qt::QueuedConnection);
+        auto job = call(&MediaFilter::search, query, containerModel);
+        m_inflight.insert(id, job.stop);
+        job.future.then(this, [this, id](const search_response &response) {
+            if (!m_inflight.remove(id)) return;   // cancelled: never emit
+            emit searchFinished(id, response);
         });
         return id;
     }
@@ -36,7 +34,7 @@ public:
     Q_INVOKABLE void cancelSearch(quint64 id) {
         const auto it = m_inflight.find(id);
         if (it == m_inflight.end()) return;
-        it->cancelChain();
+        it->request_stop();
         m_inflight.erase(it);
     }
 
@@ -45,5 +43,5 @@ signals:
 
 private:
     quint64 m_lastRequestId {};
-    QHash<quint64, QFuture<search_response>> m_inflight;
+    QHash<quint64, std::stop_source> m_inflight;
 };
