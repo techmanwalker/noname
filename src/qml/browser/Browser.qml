@@ -25,6 +25,8 @@ RowLayout {
     readonly property bool aPlaylistIsOpen:  activeVtab === vtabs.playlists && playlistsitem.aPlaylistIsOpen
     readonly property bool aDirectoryIsOpen: activeVtab === vtabs.folders   && foldersitem.aDirectoryIsOpen
 
+    readonly property alias searching: tracksitem.searching
+
     // tracks are being dragged out of the Tracks grid; Esc cancels that (see Main)
     readonly property bool isDraggingTracks: tracksitem.isDragging || playlistsitem.isDragging
 
@@ -34,7 +36,7 @@ RowLayout {
     // Vertical tabs switch and window decorations for bigscreen
     ColumnLayout {
         id: vtabsCol
-        
+
         Layout.minimumHeight: 0
 
         ArrangementList {
@@ -138,7 +140,7 @@ RowLayout {
                             break
                         }
                     }
-                
+
                 }
             }
         }

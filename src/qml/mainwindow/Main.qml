@@ -215,7 +215,6 @@ T.ApplicationWindow {
 
         opacity: (activeView.currentIndex === 0 || !stack_player.immersive || navbar_hover.hovered) ? 1 : 0
 
-
         HoverHandler {
             id: navbar_hover
         }
@@ -276,6 +275,13 @@ T.ApplicationWindow {
                         }
                     }
                 }
+            }
+
+            LoadingIndicator {
+                Layout.preferredWidth:  implicitWidth  * .7
+                Layout.preferredHeight: implicitHeight * .7
+
+                visible: browser.searching
             }
         }
 

@@ -18,11 +18,31 @@ ColumnLayout {
     property list<track> displayedTracks
     property real searchHighScore: -1
 
+    // Id of the latest request, 0 once it has been answered
+    property real pendingSearch: 0
+    readonly property bool searching: pendingSearch !== 0
+
+    function requestSearch(query: string) {
+        if (searching)
+            MediaFilter.cancelSearch(pendingSearch)
+        pendingSearch = MediaFilter.search(query, LocalLibrary)
+    }
+
+    Connections {
+        target: MediaFilter
+
+        function onSearchFinished(requestId, response) {
+            if (requestId !== root.pendingSearch) return
+            root.pendingSearch = 0
+            root.displayedTracks = response.items
+        }
+    }
+
     Connections {
         target: LocalLibrary
 
         function onRefreshFinished() {
-            root.displayedTracks = MediaFilter.search("", LocalLibrary).items;
+            root.requestSearch("");
             libraryChanges.enabled = true; // start reacting to dataChanged from now on
             target = null; // one-shot: stop listening after the first refresh completes
         }
@@ -35,7 +55,7 @@ ColumnLayout {
 
         function onDataChanged() {
             if (root.searchBarItem.text === "") {
-                root.displayedTracks = MediaFilter.search("", LocalLibrary).items;
+                root.requestSearch("");
             }
         }
     }
@@ -53,16 +73,14 @@ ColumnLayout {
         target: root.searchBarItem
 
         function onTextChanged() {
-            let response = MediaFilter.search(root.searchBarItem.text, LocalLibrary);
-            root.displayedTracks =  response.items
-            root.searchHighScore =  response.highScore
+            root.requestSearch(root.searchBarItem.text);
         }
     }
 
     // soft threshold
     BigThinLabel {
         text: qsTr("The track you are looking for is likely not in your Library.")
-        visible: root.searchHighScore > 0 && root.searchHighScore < 85
+        visible: !root.searching && root.searchHighScore > 0 && root.searchHighScore < 85
         topPadding: 5
         bottomPadding: 10
     }

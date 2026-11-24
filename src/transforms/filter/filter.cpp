@@ -9,8 +9,14 @@
 
 #include <QIdentityProxyModel>
 #include <QList>
+#include <QMutex>
+#include <QPromise>
+#include <QSemaphore>
+#include <QThreadPool>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include <memory>
+#include <vector>
 
 #include <rapidfuzz/fuzz.hpp>
 #include <unicode/translit.h>
@@ -20,22 +26,13 @@
 // bridge icu and icu_<version> safely
 using namespace U_ICU_NAMESPACE;
 
-class MediaFilterLIPrivate
-{
-public:
-    std::shared_ptr<Transliterator> translit;
-
-    MediaFilterLIPrivate (decltype(translit) transliterator)
-        : translit(std::move(transliterator)) {}
-};
-
 namespace {
 
-std::shared_ptr<Transliterator>
+std::unique_ptr<Transliterator>
 make_transliterator()
 {
     UErrorCode status = U_ZERO_ERROR;
-    std::shared_ptr<Transliterator> translit(Transliterator::createInstance(
+    std::unique_ptr<Transliterator> translit(Transliterator::createInstance(
         "Any-Lower; Any-Latin; NFKD; [:Nonspacing Mark:] Remove", UTRANS_FORWARD, status));
 
     if (U_FAILURE(status) || !translit) {
@@ -46,7 +43,7 @@ make_transliterator()
 }
 
 std::string
-nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> transliterator) {
+nfkd_and_translit(const std::string& input, Transliterator *transliterator) {
     if (!transliterator) {
         qCDebug(l_mediatransforms) << "The transliterator pointer arrived nullptr. Returning original query.";
         return input;
@@ -59,7 +56,82 @@ nfkd_and_translit(const std::string& input, std::shared_ptr<Transliterator> tran
     return result;
 }
 
+// ICU transliterators are not thread-safe: a Lease is the only way to touch one,
+// and it is exclusive until destroyed.
+class TransliteratorPool
+{
+public:
+    class Lease
+    {
+    public:
+        Lease(TransliteratorPool &pool, std::unique_ptr<Transliterator> translit)
+            : m_pool(pool), m_translit(std::move(translit)) {}
+        ~Lease() { m_pool.release(std::move(m_translit)); }
+
+        Lease(const Lease &) = delete;
+        Lease &operator=(const Lease &) = delete;
+
+        Transliterator *get() const { return m_translit.get(); }
+
+    private:
+        TransliteratorPool &m_pool;
+        std::unique_ptr<Transliterator> m_translit;
+    };
+
+    explicit TransliteratorPool(int count) : m_available(count)
+    {
+        for (int i = 0; i < count; ++i)
+            m_free.push_back(make_transliterator());
+    }
+
+    // Blocks while every instance is leased
+    Lease acquire()
+    {
+        m_available.acquire();
+        QMutexLocker lock(&m_mutex);
+        auto translit = std::move(m_free.back());
+        m_free.pop_back();
+        return Lease(*this, std::move(translit));
+    }
+
+private:
+    void release(std::unique_ptr<Transliterator> translit)
+    {
+        {
+            QMutexLocker lock(&m_mutex);
+            m_free.push_back(std::move(translit));
+        }
+        m_available.release();
+    }
+
+    QSemaphore m_available;
+    QMutex m_mutex;
+    std::vector<std::unique_ptr<Transliterator>> m_free;
+};
+
 } // namespace
+
+class MediaFilterLIPrivate
+{
+public:
+    static constexpr int translit_concurrency = 2;
+
+    MediaFilterLIPrivate() : translits(translit_concurrency)
+    {
+        translit_pool.setMaxThreadCount(translit_concurrency);
+    }
+
+    // Tasks borrow `translits`, and stage 1 schedules stage 2: wait in pipeline order
+    ~MediaFilterLIPrivate()
+    {
+        translit_pool.waitForDone();
+        score_pool.waitForDone();
+    }
+
+    TransliteratorPool translits;
+    QThreadPool translit_pool; // the queue: FIFO, one transliterator per worker
+    QThreadPool score_pool;    // scoring: not bounded by the transliterators
+};
 
 
 namespace MediaTransforms
@@ -68,13 +140,15 @@ namespace MediaTransforms
 // The Search proxy
 
 MediaFilterLI::MediaFilterLI()
-    : m_internal ( std::make_shared<MediaFilterLIPrivate>(make_transliterator()) )
+    : m_internal ( std::make_shared<MediaFilterLIPrivate>() )
 {
 }
 
-search_response
+QFuture<search_response>
 MediaFilterLI::search(const QString &query, QObject *sourceModel)
 {
+    // Everything touching sourceModel stays on the calling thread;
+    // only the track snapshot goes to a worker.
     QList<Types::Track> all_tracks;
 
     // Interface-backed QML singletons (LocalLibrary, and any future ones) are now
@@ -100,35 +174,59 @@ MediaFilterLI::search(const QString &query, QObject *sourceModel)
         }
     } else {
         qCWarning(l_mediatransforms) << "Invalid source model provided for search.";
-        return {};
+        return QtFuture::makeReadyValueFuture(search_response{});
     }
 
     // Execute RapidFuzz search logic on 'all_tracks' and return the list (...)
     return search (query, all_tracks);
 }
 
-search_response
-MediaFilterLI::search (const QString &query, const QList<Types::Track> &song_list)
+namespace {
+
+struct Transliterated {
+    std::string query;
+    std::vector<std::string> titles;
+};
+
+// Stage 1 (queued): the only code that touches a transliterator
+void
+transliterate (TransliteratorPool &translits, QPromise<Transliterated> &promise,
+                const QString &query, const QList<Types::Track> &tracks)
 {
-    if (query.isEmpty()) {
-        return {sort_by (&Types::Track::title, song_list), -1};
+    if (promise.isCanceled()) return;
+
+    auto lease = translits.acquire();
+    Transliterator *translit = lease.get();
+
+    Transliterated out;
+    out.query = nfkd_and_translit(query.toStdString(), translit);
+    out.titles.reserve(static_cast<size_t>(tracks.size()));
+
+    for (const Types::Track &track : tracks) {
+        if (promise.isCanceled()) return;
+        out.titles.push_back(nfkd_and_translit(track.title.toStdString(), translit));
     }
+
+    promise.addResult(std::move(out));
+} // lease released here, before any scoring starts
+
+search_response
+rank_tracks (QFuture<Transliterated> parent, const QList<Types::Track> &song_list)
+{
+    const Transliterated clean = parent.takeResult();
 
     using rankable_item = std::pair<qsizetype, double>;
     std::vector<rankable_item> rankable;
 
-    // Clean query once using the local transliterator instance
-    const std::string clean_keywords = nfkd_and_translit(query.toStdString(), m_internal->translit);
-    rapidfuzz::fuzz::CachedPartialRatio<char> scorer(clean_keywords.c_str());
+    rapidfuzz::fuzz::CachedPartialRatio<char> scorer(clean.query.c_str());
     const double score_thresh = 50.0;
 
     double high_score {-1};
 
     // Execute search directly against the flattened song list
     for (qsizetype i = 0; i < song_list.size(); ++i) {
-        // Pass transPtr to process text instantly without initialization overhead
-        const std::string clean_title = nfkd_and_translit(song_list.at(i).title.toStdString(), m_internal->translit);
-        double score = scorer.similarity(clean_title.c_str(), score_thresh);
+        if (parent.isCanceled()) return {};
+        double score = scorer.similarity(clean.titles[static_cast<size_t>(i)].c_str(), score_thresh);
 
         if (score >= score_thresh) {
             if (score > high_score) high_score = score;
@@ -148,6 +246,30 @@ MediaFilterLI::search (const QString &query, const QList<Types::Track> &song_lis
     }
 
     return {matching_tracks, high_score};
+}
+
+} // namespace
+
+QFuture<search_response>
+MediaFilterLI::search (const QString &query, const QList<Types::Track> &song_list)
+{
+    // Tasks own their (implicitly shared) copies; `state` outlives them via ~MediaFilterLIPrivate
+    auto *state = m_internal.get();
+
+    // Nothing to transliterate: skip the queue
+    if (query.isEmpty()) {
+        return QtConcurrent::run(&state->score_pool, [song_list] {
+            return search_response{sort_by (&Types::Track::title, song_list), -1};
+        });
+    }
+
+    return QtConcurrent::run(&state->translit_pool,
+               [state, query, song_list](QPromise<Transliterated> &promise) {
+                   transliterate(state->translits, promise, query, song_list);
+               })
+        .then(&state->score_pool, [song_list](QFuture<Transliterated> parent) {
+            return rank_tracks(std::move(parent), song_list);
+        });
 }
 
 }

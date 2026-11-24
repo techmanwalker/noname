@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QFuture>
 #include <QList>
 #include <QtQmlIntegration>
 
@@ -22,5 +23,6 @@ class MediaFilter
 public:
     virtual ~MediaFilter () = default;
 
-    virtual search_response search (const QString &query, QObject *sourceModel) = 0;
+    // Must be called from the thread that owns sourceModel
+    virtual QFuture<search_response> search (const QString &query, QObject *sourceModel) = 0;
 };

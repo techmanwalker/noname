@@ -43,6 +43,7 @@ QtObject {
         required final property ScrollbarPalette scrollbar
         required final property ElementBackgroundPalette elementbg
         required final property color iconColor
+        required final property color loadingColor
     }
 
     component ItemSizes: QtObject {
@@ -55,6 +56,7 @@ QtObject {
         required final property int rowTrackLateralPadding
 
         required final property int scrollBarWidth
+        required final property int loadingStrokeWidth
     }
 
     final readonly property Palette dark: Palette {
@@ -89,7 +91,8 @@ QtObject {
 
             folder: "#1f1f1f"
         }
-        iconColor: "black"
+        iconColor: "white"
+        loadingColor: "white"
     }
 
     final readonly property Palette light: Palette {
@@ -125,6 +128,7 @@ QtObject {
             folder: "#a0a0a0"
         }
         iconColor: "white"
+        loadingColor: "white"
     }
 
     final readonly property ItemSizes sizes: ItemSizes {
@@ -137,5 +141,6 @@ QtObject {
         rowTrackLateralPadding: 15
 
         scrollBarWidth: 4
+        loadingStrokeWidth: 4
     }
 }
