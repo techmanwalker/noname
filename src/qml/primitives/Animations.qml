@@ -19,6 +19,10 @@ QtObject {
         required final property int release
     }
 
+    component PageSwitch: QtObject {
+        required final property int duration
+    }
+
     final readonly property ScrollDurations scroll: ScrollDurations {
         lyrics: ScrollDuration {
             transition: 125
@@ -33,5 +37,9 @@ QtObject {
     final readonly property DraggingTimes dragging: DraggingTimes {
         threshold: 300
         release: 250
+    }
+
+    final readonly property PageSwitch pageswitch: PageSwitch {
+        duration: 125
     }
 }

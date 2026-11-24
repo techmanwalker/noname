@@ -147,7 +147,15 @@ T.ApplicationWindow {
         // Esc cancels a drag of tracks instead (MediaGrid). Both Esc shortcuts above step aside
         // too: with the search bar focused, any of the three would make Esc ambiguous.
         enabled: !clearSearchShortcut.enabled && !leaveSearchShortcut.enabled && !browser.isDraggingTracks
-        onActivated: backButton.click()
+        onActivated: root.goBack()
+    }
+
+    // what "back" does on the current page; both navbar projections and Esc call it
+    function goBack() {
+        if (activeView.currentIndex === 1)
+            stack_player.backButtonClicked_r();
+        else if (root.inVtabWBackButton)
+            browser.backButtonClicked_r();
     }
 
     Component.onCompleted: {
@@ -181,193 +189,113 @@ T.ApplicationWindow {
         }
     }
 
-    StackLayout {
+    FrameStack {
         id: activeView
+
+        duration: Animations.pageswitch.duration
 
         onCurrentIndexChanged: Light.invalidate()
 
         anchors.fill: parent
 
-        anchors.topMargin: currentIndex === 0 ? windexRow.height : 0
+        // A page and its navbar projection travel together as one frame.
+        Frame {
+            id: browserFrame
 
-        Browser {
-            id: browser
-            onRequestTheaterMode: activeView.currentIndex = 1
+            slot: 0
 
-            searchBar: searchBox
-        }
+            Browser {
+                id: browser
+                onRequestTheaterMode: activeView.currentIndex = 1
 
-        Player {
-            id: stack_player
+                searchBar: searchBox
 
-            background: bg
-
-            onBackToBrowser: activeView.currentIndex = 0
-        }
-    }
-
-    RowLayout {
-        id: navbar
-
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-
-        opacity: (activeView.currentIndex === 0 || !stack_player.immersive || navbar_hover.hovered) ? 1 : 0
-
-        HoverHandler {
-            id: navbar_hover
-        }
-
-        RowLayout {
-            Layout.maximumWidth: browser.vtabsColWidth - searchBox.leftPadding
-
-            ResizableButton {
-                id: backButton
-                iconName: "arrow-left"
-
-                visible: activeView.currentIndex === 1 || // we are in the player
-                    (activeView.currentIndex === 0 && ( // we are in the browser
-                        browser.aPlaylistIsOpen ||
-                        browser.aDirectoryIsOpen
-                    ))
-
-                Layout.alignment: Qt.AlignVCenter
-
-                text: qsTr("Back")
-
-                leftPadding: 20
-                rightPadding: leftPadding
-                topPadding: 12
-                bottomPadding: topPadding
-
-                magnify: true
-
-                spacing: 12
-
-                lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(backButtonBounds.bounds, bg, PlayerPresenter)
-
-                onClicked: {
-
-                    if (activeView.currentIndex === 1) { // if we are in the player
-                        stack_player.backButtonClicked_r()
-                    } else {
-                        if (root.inVtabWBackButton) { // playlists vtab
-                            browser.backButtonClicked_r()
-                    }}
-                }
+                anchors.fill: parent
+                anchors.topMargin: browserNavbar.reservedHeight
             }
 
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+            Navbar {
+                id: browserNavbar
 
-                TapHandler {
-                    onDoubleTapped: windex.toggleMaximize_b()
-                }
-
-                DragHandler {
-                    target: null
-
-                    onActiveChanged: {
-                        if (active) {
-                            root.startSystemMove();
-                        }
-                    }
-                }
-            }
-
-            LoadingIndicator {
-                Layout.preferredWidth:  implicitWidth  * .7
-                Layout.preferredHeight: implicitHeight * .7
-
-                visible: browser.searching
-            }
-        }
-
-        RowLayout {
-            id: windexRow
-
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-
-            SearchBar {
-                id: searchBox
-
-                Layout.preferredWidth: width
-                Layout.preferredHeight: height
-
-                Layout.alignment: Qt.AlignVCenter
-
-                onTextEdited: browser.activeVtab = browser.vtabs.tracks
-
-                // to still take space
-                enabled: activeView.currentIndex === 0
-                opacity: enabled ? 1 : 0
-            }
-
-            ResizableButton {
-                text: qsTr("Clear")
-                onClicked: searchBox.clearQuery()
-
-                leftPadding: searchBox.leftPadding / 2
-                rightPadding: searchBox.rightPadding / 2
-
-                visible: searchBox.visible && searchBox.clearable
-
-                filled: true
-
-                magnify: false
-
-                Layout.preferredHeight: searchBox.height
-                Layout.alignment: Qt.AlignVCenter
-            }
-        }
-
-        Item {
-            id: navbarFiller
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            TapHandler {
-                onDoubleTapped: windex.toggleMaximize_b()
-            }
-
-            DragHandler {
-                target: null
-
-                onActiveChanged: {
-                    if (active) {
-                        root.startSystemMove();
-                    }
-                }
-            }
-        }
-
-        Row {
-            Layout.alignment: Qt.AlignVCenter
-
-            WindowDecorations {
-                id: windex
                 window: root
+                background: bg
 
-                Layout.fillWidth: true
+                backVisible: browser.aPlaylistIsOpen || browser.aDirectoryIsOpen
+                loading: browser.searching
+                leadingWidth: browser.vtabsColWidth - searchBox.leftPadding
 
-                anchors.verticalCenter: parent.verticalCenter
+                onBackClicked: root.goBack()
 
-                lightMode: activeView.currentIndex !== 0 && Light.lightModeForBounds(windexBounds.bounds, bg, PlayerPresenter) // context is everything
+                // the one SearchBar, still reachable everywhere by id
+                SearchBar {
+                    id: searchBox
+
+                    Layout.preferredWidth: width
+                    Layout.preferredHeight: height
+
+                    Layout.alignment: Qt.AlignVCenter
+
+                    onTextEdited: browser.activeVtab = browser.vtabs.tracks
+
+                    // input only on the browser page; it stays visible while sliding out
+                    enabled: activeView.currentIndex === 0
+                }
+
+                ResizableButton {
+                    text: qsTr("Clear")
+                    onClicked: searchBox.clearQuery()
+
+                    leftPadding: searchBox.leftPadding / 2
+                    rightPadding: searchBox.rightPadding / 2
+
+                    visible: searchBox.visible && searchBox.clearable
+
+                    filled: true
+
+                    magnify: false
+
+                    Layout.preferredHeight: searchBox.height
+                    Layout.alignment: Qt.AlignVCenter
+                }
             }
         }
-    }
 
-    SceneRect {
-        id: windexBounds
-        target: windex
-    }
+        Frame {
+            id: playerFrame
 
-    SceneRect {
-        id: backButtonBounds
-        target: backButton
+            slot: 1
+
+            Player {
+                id: stack_player
+
+                anchors.fill: parent
+
+                background: bg
+
+                onBackToBrowser: activeView.currentIndex = 0
+            }
+
+            Navbar {
+                id: playerNavbar
+
+                window: root
+                background: bg
+
+                adaptive: true
+                autoHide: stack_player.immersive
+                backVisible: true
+                loading: browser.searching
+                leadingWidth: browser.vtabsColWidth - searchBox.leftPadding
+
+                onBackClicked: root.goBack()
+
+                // same footprint as the search area, so both projections lay out identically
+                Item {
+                    Layout.preferredWidth: searchBox.width
+                    Layout.preferredHeight: searchBox.height
+                }
+            }
+        }
     }
 
     ResizeHandles {}
