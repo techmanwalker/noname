@@ -38,7 +38,7 @@ public:
 
     Q_PROPERTY(quint8  volume      READ volume      WRITE  set_volume      NOTIFY volumeChanged)
 
-    Q_PROPERTY(bool isMediaLoaded  READ is_media_loaded NOTIFY mediaLoadedChanged)
+    Q_PROPERTY(bool isMediaLoaded  READ is_media_loaded NOTIFY trackChanged)
 
     Q_PROPERTY(PlaybackState playbackState READ playback_state NOTIFY playbackStateChanged)
 
@@ -52,12 +52,11 @@ public:
     Q_PROPERTY(double coverPonderedLightness READ cover_pondered_lightness     NOTIFY lightnessLevelsChanged)
 
     explicit PlayerPresenterProxy(QObject *parent = nullptr) : QObject(parent) {
-        forward(SIGNAL(track_changed()),             SIGNAL(trackChanged()));
-        forward(SIGNAL(lightness_levels_changed()),  SIGNAL(lightnessLevelsChanged()));
-        forward(SIGNAL(volume_changed()),            SIGNAL(volumeChanged()));
-        forward(SIGNAL(playback_state_changed()),    SIGNAL(playbackStateChanged()));
-        forward(SIGNAL(media_loaded_changed()),      SIGNAL(mediaLoadedChanged()));
-        forward(SIGNAL(seek_finished()),             SIGNAL(seekFinished()));
+        forward(SIGNAL(track_changed()),               SIGNAL(trackChanged()));
+        forward(SIGNAL(lightness_levels_changed()),    SIGNAL(lightnessLevelsChanged()));
+        forward(SIGNAL(volume_changed()),              SIGNAL(volumeChanged()));
+        forward(SIGNAL(playback_state_changed()),      SIGNAL(playbackStateChanged()));
+        forward(SIGNAL(seek_finished()),               SIGNAL(seekFinished()));
         forward(SIGNAL(lightness_awareness_changed()), SIGNAL(lightnessAwarenessChanged()));
     }
 
@@ -113,7 +112,6 @@ signals:
     void positionChanged();
     void volumeChanged();
     void playbackStateChanged();
-    void mediaLoadedChanged();
     void lightnessLevelsChanged();
     void seekFinished();
     void lightnessAwarenessChanged();

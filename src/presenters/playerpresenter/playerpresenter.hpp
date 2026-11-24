@@ -116,7 +116,6 @@ signals:
     void track_changed();
     void volume_changed();
     void playback_state_changed();
-    void media_loaded_changed();
     void lightness_levels_changed();
     void seek_finished();
     void lightness_awareness_changed();

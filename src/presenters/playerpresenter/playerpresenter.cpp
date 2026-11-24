@@ -317,7 +317,6 @@ PlayerPresenterLI::handle_track_changed()
 
     // Suddenly awake the QML declarative tree
     emit track_changed();
-    emit media_loaded_changed();
 
     recompute_lightness_levels(m_current_track);
 }
