@@ -3,13 +3,9 @@
 #include "virtual/audioengine.hpp"
 
 #include "bridgecontroller/internalcontroller.hpp"
-#include "bridgecontroller/pendingcalls.hpp"
 
 #include <QLoggingCategory>
-#include <QPromise>
 #include <QFuture>
-
-#include <optional>
 
 enum class audio_backend;
 
@@ -60,17 +56,14 @@ public:
     // volume
     QFuture<void> set_volume(quint8 volume_percent) override;
 
-    // The RT thread hit the boundary: B becomes A. Also runs early via catch_up_on_boundary_hit().
-    void on_boundary_hit();
-    void on_tape_ran_out();   // the boundary was hit with no B behind it
-
-    void teardown (); // called by its governor &Q*Application::abouToQuit to safely destroy the impl
+    void teardown ();
 
 signals:
     void seek_finished();
     void load_failed(const QUrl &source, const QString &reason);   // forwarded from the decoder
     void duration_changed();
     void track_changed();
+    void media_loaded_changed();   // A went from empty to loaded or back
     void tape_ran_out();
     void playback_state_changed();
     void volume_changed();
@@ -79,33 +72,6 @@ signals:
     // exposure
     void ab_boundary_crossed ();
 
-public slots:
-    void handle_track_changed();
-    void on_load_settled(bool ok);
-    void on_seek_settled(bool applied);
-    void on_next_settled();
-
 private:
     std::unique_ptr<audio_internal_controller> m_internal;
-
-    QUrl m_track_A_source;   // A (empty: nothing loaded)
-    QUrl m_track_B_source;   // B as the engine prepared it; on_boundary_hit() asks the decoder which file it really opened for B
-
-    double m_log_volume = 0;
-
-    // Calls the decoder thread still owes a settlement for, one queue per group
-    pending_calls m_tape_calls;        // load(), unload()
-    pending_calls m_position_calls;    // seek_to(), relative_seek()
-    pending_calls m_next_calls;        // prepare_next_track(), undo_prepare_next_track()
-
-    // Where the seeks in flight end up: the clock has not moved yet
-    std::optional<quint64> m_seek_target;
-
-    template <typename Body> QFuture<void> dispatch (Body body);
-    void start_seek (quint64 position_ms, QPromise<void> call);
-    void start_unload (QPromise<void> call);
-    bool refuse_without_track (QPromise<void> &call);   // transport, position and B all need an A
-
-    bool catch_up_on_boundary_hit ();
-    bool load_in_flight () const { return !m_tape_calls.empty(); }
 };
