@@ -9,8 +9,6 @@
 
 #include "listproxybase.hpp"
 
-#include <memory>
-
 class PlayQueueProxy
     : public QIdentityProxyModel,
       public ListProxyBase<PlayQueueProxy, PlayQueue, Types::Track, &PlayQueue::item_count>

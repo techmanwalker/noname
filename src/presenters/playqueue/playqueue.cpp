@@ -184,12 +184,6 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
     return switch_to(index(heir_row < rowCount() ? heir_row : 0, 0), false);
 }
 
-void
-PlayQueueLI::handle_zero_item_count ()
-{
-    if (item_count() == 0) (void) m_d->ae->stop();
-}
-
 QPersistentModelIndex
 PlayQueueLI::playhead () const
 {
@@ -414,19 +408,6 @@ PlayQueueLI::preload_next_track_whenever_possible ()
     });
 }
 
-QFuture<void>
-PlayQueueLI::handle_tape_ran_out()
-{
-    qCDebug (l_mediasequences) << "The chain of preloaded tracks has finished.";
-
-    const QPersistentModelIndex upcoming = successor_of(playhead());
-
-    // nothing follows: stop() unloads A and drops B by itself
-    if (!upcoming.isValid()) return m_d->ae->stop();
-
-    return switch_to(upcoming, true);   // the RT thread paused the ring when the tape ran out
-}
-
 QPersistentModelIndex
 PlayQueueLI::find_by_source(const QUrl &needle)
 {
@@ -503,6 +484,8 @@ PlayQueueLI::save_as_playlist_to_disk (const QString &name)
     return m_d->pl->save_playlist_to_disk(name, sources());
 }
 
+// Handlers
+
 void
 PlayQueueLI::handle_ab_boundary_crossed ()
 {
@@ -519,6 +502,25 @@ PlayQueueLI::handle_ab_boundary_crossed ()
 #endif
 
     emit track_changed();
+}
+
+QFuture<void>
+PlayQueueLI::handle_tape_ran_out()
+{
+    qCDebug (l_mediasequences) << "The chain of preloaded tracks has finished.";
+
+    const QPersistentModelIndex upcoming = successor_of(playhead());
+
+    // nothing follows: stop() unloads A and drops B by itself
+    if (!upcoming.isValid()) return m_d->ae->stop();
+
+    return switch_to(upcoming, true);   // the RT thread paused the ring when the tape ran out
+}
+
+void
+PlayQueueLI::handle_zero_item_count ()
+{
+    if (item_count() == 0) (void) m_d->ae->stop();
 }
 
 void
