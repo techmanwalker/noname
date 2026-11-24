@@ -38,7 +38,7 @@ Item {
         function onCountChanged () {
             if (PlayQueue.count === 0) {
                 root.immersive = false;
-            } 
+            }
         }
     }
 
@@ -69,14 +69,11 @@ Item {
                 immersive: root.immersive
                 availableHeight: root.height
 
-                onImmersiveChanged: {
-                    root.immersive = immersive
-                }
-
                 onSwitchToLyricsViewRequested: stack.currentIndex = 1
+                onImmersiveToggleRequested: root.immersive = !root.immersive
             }
         }
-        
+
         Lyrics {
             id: lyrics
 
@@ -85,7 +82,7 @@ Item {
             onSwitchToPlayerViewRequested: stack.currentIndex = 0
 
             background: root.background
-            immersive: fsp.immersive
+            immersive: root.immersive
         }
     }
 

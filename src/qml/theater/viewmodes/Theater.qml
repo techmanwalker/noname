@@ -54,7 +54,9 @@ Row {
         availableHeight - controlsHeight - verticalPadding
     ))
 
-    signal switchToLyricsViewRequested () // request
+    // request
+    signal switchToLyricsViewRequested ()
+    signal immersiveToggleRequested ()
 
     // ── Layout ─────────────────────────────────────────────────────────────
 
@@ -166,7 +168,7 @@ Row {
                 Layout.leftMargin: 15 // playlist track lateral padding
                 Layout.rightMargin: Layout.leftMargin
 
-                onClicked: root.immersive = !root.immersive
+                onClicked: root.immersiveToggleRequested()
 
                 // calculates its lightMode internally
                 background: root.background
