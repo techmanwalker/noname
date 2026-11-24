@@ -238,7 +238,7 @@ Row {
                 // (A `currentIndex:` binding can't express this: the first tab click assigns the
                 // property imperatively and destroys the binding.)
 
-                // Set while details is wanted but the media hasn't loaded yet. Any count change cancels it.
+                // Armed at startup and while the queue is empty; the 0 -> >0 transition is the wait. Any other count change cancels it.
                 property bool awaitingMediaLoad: false   // details wanted once the media loads
                 property bool autoDetails: false         // currently on details because of an automatic switch
                 property bool applyingAutoSwitch: false
@@ -257,21 +257,48 @@ Row {
                     autoDetails = false
                 }
 
+                function armMediaLoadWait () {
+                    awaitingMediaLoad = true
+                }
+
                 function syncToQueueCount () {
-                    awaitingMediaLoad = false
                     if (PlayQueue.count === 0) {
                         autoDetails = false
+                        armMediaLoadWait()
                         autoSwitchTo(root.tabs.placeholder);
                     } else if (currentIndex === root.tabs.placeholder) {
-                        autoSwitchTo(root.tabs.queue);
-                        awaitingMediaLoad = PlayQueue.count === 1;
-                    } else if (autoDetails && PlayQueue.count > 1) {
-                        autoDetails = false
-                        autoSwitchTo(root.tabs.queue);
+                        autoSwitchTo(root.tabs.queue);  // 0 -> >0 is the wait, keep it armed
+                    } else {
+                        awaitingMediaLoad = false
+                        if (autoDetails && PlayQueue.count > 1) {
+                            autoDetails = false
+                            autoSwitchTo(root.tabs.queue);
+                        }
                     }
                 }
 
-                Component.onCompleted: syncToQueueCount()
+                function syncToMediaState () {
+                    if (!PlayerPresenter.isMediaLoaded) {
+                        // automatic details has nothing to show anymore
+                        if (autoDetails) {
+                            autoDetails = false
+                            autoSwitchTo(root.tabs.queue);
+                        }
+                        return;
+                    }
+                    if (!awaitingMediaLoad)
+                        return;
+                    awaitingMediaLoad = false;
+                    if (PlayQueue.count !== 1)
+                        return;
+                    autoSwitchTo(root.tabs.details);
+                    autoDetails = true;
+                }
+
+                Component.onCompleted: {
+                    armMediaLoadWait()
+                    syncToQueueCount()
+                }
 
                 Connections {
                     target: PlayQueue
@@ -281,12 +308,11 @@ Row {
                 Connections {
                     target: PlayerPresenter
 
-                    function onMediaLoadedChanged () {
-                        if (!queueAndMetadata_s.awaitingMediaLoad || !PlayerPresenter.isMediaLoaded)
-                            return;
-                        queueAndMetadata_s.awaitingMediaLoad = false;
-                        queueAndMetadata_s.autoSwitchTo(root.tabs.details);
-                        queueAndMetadata_s.autoDetails = true;
+                    function onTrackChanged () {
+                        if (!PlayerPresenter.isMediaLoaded && root.immersive) {
+                            root.immersiveToggleRequested()
+                        }
+                        queueAndMetadata_s.syncToMediaState()
                     }
                 }
 
