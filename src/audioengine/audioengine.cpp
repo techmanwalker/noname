@@ -278,7 +278,7 @@ audio_engine_LI::get_playback_state() const
 {
     using ps = audio_engine_LI::playback_state;
     if (!m_internal->is_song_loaded()) return ps::stopped;
-    return m_internal->is_paused() ? ps::stopped : ps::playing;
+    return m_internal->is_paused() ? ps::paused : ps::playing;
 }
 
 bool
