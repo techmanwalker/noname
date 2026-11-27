@@ -124,21 +124,28 @@ AutoscrollListView {
         // the pin; where the scroll can't (cooldown, drag, clamped ends) it stays on the row.
         visible: root.playheadRowIdx >= 0
 
-        readonly property real slotY: Math.max(root.playheadRowIdx, 0) * (root.rowSize.height + root.spacing)
+        // Where the highlight is, in rows. It glides toward the playhead row, so everything
+        // below derives its pixel position from the list's real geometry.
+        property real row: 0
 
-        Component.onCompleted: y = slotY
+        // Not row * stride: the ListView lays out lazily from the first visible row, so rows
+        // removed above the viewport move originY instead of the visible rows.
+        y: root.originY + (root.headerItem ? root.headerItem.height : 0)
+           + row * (root.rowSize.height + root.spacing)
+
+        Component.onCompleted: row = Math.max(root.playheadRowIdx, 0)
 
         // Same transition as the scroll, started by the same call (focusFollowed). While the
         // scroll carries the row to the pin, both move by the same amount and the highlight is still.
         NumberAnimation {
             id: playheadGlide
             target: playheadBackground
-            property: "y"
-            to: playheadBackground.slotY
+            property: "row"
+            to: Math.max(root.playheadRowIdx, 0)
             duration: root.autoscrollDurationMs
             easing.type: root.autoscrollEasing
 
-            onFinished: if (playheadBackground.y !== playheadBackground.slotY) restart()
+            onFinished: if (playheadBackground.row !== to) restart()
         }
 
         playing: true

@@ -303,7 +303,6 @@ Row {
                 Connections {
                     target: PlayQueue
                     function onCountChanged () { queueAndMetadata_s.syncToQueueCount() }
-                    function onPlayheadMoved () { console.log("QML read:", PlayQueue.playhead.row, "count", PlayQueue.count) }
                 }
 
                 Connections {
