@@ -1,4 +1,5 @@
 
+#include <QFuture>
 #include <QGuiApplication>
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
@@ -109,7 +110,7 @@ main (int argc, char ** argv)
 
             // preempt first song with default settings
             // do not wait for metadata to be read
-            first_track_source  = QUrl::fromLocalFile(QString::fromStdString(cli.remaining()[0]));
+            first_track_source  = QUrl::fromUserInput(QString::fromStdString(cli.remaining()[0]));
 
             // morph std::vector<std::string> -> QStringList
             std::ranges::transform (cli.remaining(), std::back_inserter(arg_paths), &QString::fromStdString);
@@ -122,10 +123,12 @@ main (int argc, char ** argv)
 
     // boot ae to immediately load and play the first track when cli11 kicks in
     auto ae = std::make_shared<audio_engine_LI> (nullptr, backend);
+    auto ae_firstload = QtFuture::makeReadyVoidFuture();
     if (!first_track_source.isEmpty()) {
-        ae->load(first_track_source).then(ae.get(), [&ae] () {
+        // a failed or superseded load ends cancelled: settle either way, the queue still has to start
+        ae_firstload = ae->load(first_track_source).then(ae.get(), [&ae] () {
             ae->play();
-        });
+        }).onCanceled([] {});
     }
 
     using MediaTransforms::MediaFilterLI;
@@ -146,15 +149,20 @@ main (int argc, char ** argv)
 
     pp->set_lightness_awareness_enabled(!disable_lightness_awareness);
 
-    pq->spawn_queue(arg_paths).then([&pp, &pq]() {
-        // load the remaining, the switch should be automagic
-        int c = pq->item_count();
+    pq->spawn_queue(arg_paths)
+        .then(&app, [ae_firstload] { return ae_firstload; }).unwrap() // waits without blocking
+        .then(&app, [pq] {
+            return pq->item_count() > 0
+                ? pq->switch_to(pq->index(0, 0))
+                : QtFuture::makeReadyVoidFuture();
+        }).unwrap()
+        .then(&app, [pq, pp] {
+            const int c = pq->item_count();
+            qCDebug(l_main) << c << QLatin1StringView("track") + (c == 1 ? "" : "s") << "loaded from command line.";
 
-        qCDebug(l_main) << c << QLatin1StringView("track") + (c == 1 ? "" : "s") << "loaded from command line.";
-
-        // no matter if a track was preempted or not
-        pp->handle_track_changed();
-    });
+            // no matter if a track was preempted or not
+            pp->handle_track_changed();
+        });
 
     // bind concrete<->concrete signals
     QObject::connect(ae.get(), &audio_engine_LI::track_changed,

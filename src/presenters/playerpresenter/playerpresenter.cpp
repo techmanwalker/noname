@@ -55,12 +55,8 @@ PlayerPresenterLI::PlayerPresenterLI(
 }
 
 // Getters block
-const Types::Track & PlayerPresenterLI::current_track() const {
-    Q_ASSERT_X(m_current_track.source == ae->current_track_source(), "PlayerPresenterLI::current_track",
-    "The current playing track reported is not the track audio engine is playing.");
-
-    return m_current_track;
-}
+// Last snapshot published by handle_track_changed(); may lag the engine by design.
+const Types::Track & PlayerPresenterLI::current_track() const { return m_current_track; }
 
 quint64 PlayerPresenterLI::position_ms()     const { return ae->current_position_ms();  }
 quint8  PlayerPresenterLI::volume()          const { return ae->current_volume();       }
@@ -234,7 +230,7 @@ PlayerPresenterLI::save_volume () const
 // Proxies for QML to be able to perform play, pause and more actions
 QFuture<void>
 PlayerPresenterLI::play() const {
-    if (!pq->playhead().isValid() && pq->item_count() >= 0) {
+    if (!pq->playhead().isValid() && pq->item_count() > 0) {
         // if the playhead does not point to anything, play what's next (which is the beginning)
         pq->switch_to(0);
     }
@@ -296,24 +292,11 @@ PlayerPresenterLI::load(Types::Track &song) const
 void
 PlayerPresenterLI::handle_track_changed()
 {
-    QUrl current_track_source = ae->current_track_source();
+    const QUrl current_track_source = ae->current_track_source();
 
-    // get the song struct from the play queue
+    // the queue may not know this track yet (startup): keep the source, metadata empty
     m_current_track = pq->query_metadata_for_source(current_track_source).value_or({});
-
-    // if not matched, this is a race condition or someone forgot to update this
-    Q_ASSERT_X (
-        ae->current_track_source() == m_current_track.source,
-        "PlayerPresenterLI::handle_track_changed",
-        std::string(
-            std::string("The player presenter current track metadata was not updated. ") +
-            std::string("audio_engine reports the track ae is ") +
-            ae->current_track_source().toString().toStdString() +
-            std::string(" while the presenter internal struct is ") +
-            (!m_current_track.source.isEmpty() ? m_current_track.source.toString().toStdString() : "{empty}")
-
-        ).data()
-    );
+    m_current_track.source = current_track_source;
 
     // Suddenly awake the QML declarative tree
     emit track_changed();

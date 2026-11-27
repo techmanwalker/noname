@@ -184,23 +184,26 @@ PlayQueueLI::batch_remove(const QList<QPersistentModelIndex> &indices)
     return switch_to(index(heir_row < rowCount() ? heir_row : 0, 0), false);
 }
 
+// Last position the queue bound; may lag the engine until handle_ab_boundary_crossed() runs.
 QPersistentModelIndex
-PlayQueueLI::playhead () const
-{
-    if (!m_playhead.isValid()) return {};
+PlayQueueLI::playhead () const { return m_playhead; }
 
+// Call only right after the queue itself bound the playhead. No-op in release.
+void
+PlayQueueLI::assert_playhead_in_sync_ () const
+{
 #ifndef QT_NO_DEBUG
+    if (!m_playhead.isValid()) return;
+
     QUrl at_head;
     pointed_to(m_playhead, [&at_head](const Types::Track &song) { at_head = song.source; return true; });
 
-    QUrl actually_playing = m_d->ae->current_track_source();
+    const QUrl actually_playing = m_d->ae->current_track_source();
 
-    Q_ASSERT_X(at_head == actually_playing, "PlayQueueLI::playhead",
-        QStringLiteral("The track at the projected playhead is not the track the audio engine is playing. Expected %1, got %2 and playhead points to row %3.")
+    Q_ASSERT_X(at_head == actually_playing, "PlayQueueLI::assert_playhead_in_sync_",
+        QStringLiteral("Playhead track is not the engine's track. Expected %1, got %2 (row %3).")
             .arg(actually_playing.toString(), at_head.toString(), QString::number(m_playhead.row())).toUtf8().constData());
 #endif
-
-    return m_playhead;
 }
 
 void
@@ -230,12 +233,15 @@ PlayQueueLI::move_playhead_(const QPersistentModelIndex &to, bool play_afterward
         "Attempted to move playhead, but the index pointed to an invalid position."
     );
 
-    QFuture<void> loaded = m_d->ae->load(at_playhead);
-        set_playhead_(to);
+    // unbound playhead + engine already holds this very track (CLI preempt): adopt it, don't decode again
+    const bool engine_has_it = !m_playhead.isValid() &&
+                               at_playhead.source == m_d->ae->current_track_source();
 
-    #ifndef QT_NO_DEBUG
-        (void) playhead();   // sentinel: asserts if the playhead landed on the wrong spot
-    #endif
+    QFuture<void> loaded = engine_has_it ? QtFuture::makeReadyVoidFuture()
+                                         : m_d->ae->load(at_playhead);
+    set_playhead_(to);
+
+    assert_playhead_in_sync_(); // asserts if the playhead landed on the wrong spot
 
     emit track_changed();
 
@@ -498,7 +504,7 @@ PlayQueueLI::handle_ab_boundary_crossed ()
 #ifndef QT_NO_DEBUG
     Q_ASSERT_X(m_playhead.isValid(), "PlayQueueLI::handle_ab_boundary_crossed",
             "The engine crossed to B, but the queue has no successor to follow it.");
-    (void) playhead(); // sentinel: asserts if the playhead landed on the wrong spot
+    assert_playhead_in_sync_(); // asserts if the playhead landed on the wrong spotg spot
 #endif
 
     emit track_changed();

@@ -106,6 +106,7 @@ private:
     void set_playhead_  (const QPersistentModelIndex &to); // leaves the engine intact
     [[nodiscard]] QFuture<void> move_playhead_ (const QPersistentModelIndex &to, bool play_afterwards); // invokes ae->load
     void invalidate_playhead_ ();
+    void assert_playhead_in_sync_ () const; // debug sentinel
 
     std::unique_ptr<PlayQueueLIPrivate> m_d;
 };
