@@ -48,6 +48,11 @@ QtObject {
         return presenter.backdropLightnessForRect(Qt.rect(x, y, w, h)) * multiplier;
     }
 
+    function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter) : bool {
+        return root.backdropLightness(bounds, background, presenter) > root.darkGlyphThreshold;
+    }
+
+    /* with logs
     function lightModeForBounds (bounds: rect, background: Background, presenter: PlayerPresenter, log_item_name: string) : bool {
         const l = root.backdropLightness(bounds, background, presenter);
 
@@ -66,6 +71,7 @@ QtObject {
 
         return did_pick_light;      // NaN is false: white glyphs, as before
     }
+    */
 
     function lightModeWithPrior (bounds: rect, background: Background, presenter: PlayerPresenter, prior: bool) : bool {
         const l = root.backdropLightness(bounds, background, presenter);

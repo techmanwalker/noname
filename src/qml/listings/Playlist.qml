@@ -173,6 +173,8 @@ AutoscrollListView {
 
         selected: mediaSelection.isSelected(index)
 
+        onSelectedChanged: console.log("index " + index + " is now " + (selected ? "selected" : "not selected"))
+
         opacity: mediaDrag.carries(index) ? 0.4 : 1
 
         SelectionDrag.Arm   { controller: mediaDrag; row: track.index }
