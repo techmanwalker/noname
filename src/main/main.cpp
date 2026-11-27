@@ -39,6 +39,9 @@
 
 #include "backendstrings.hpp"
 
+#include "loghooks/ffmpeg/hook.hpp"
+#include "loghooks/taglib/hook.hpp"
+
 Q_LOGGING_CATEGORY(l_main, "app")
 
 int
@@ -56,8 +59,14 @@ main (int argc, char ** argv)
     QCoreApplication::setApplicationName( name_qstr );
 
     QLoggingCategory::setFilterRules(
-        "coverprovider.debug=false"
+        "coverprovider.debug=false\n"
+        "taglib.debug=false\n"
+        "ffmpeg.debug=false\n"
     );
+
+    // log hooks
+    ffmpeg_log::install();
+    taglib_log::install();
 
     // whether to react to cover lightness
     bool disable_lightness_awareness = false;
@@ -197,9 +206,9 @@ main (int argc, char ** argv)
 
     // load shortcuts and user-defined playlists to display
     sl->read_conf_and_load();
-    pl->refresh().then(&app, [&pl]() {
+    pl->refresh();/*.then(&app, [&pl]() {
         debug::dump_list_model(l_main(), *pl, "PlaylistsList", true);
-    });
+    });*/
 
     // invoke the track_changed handlers if needed
     lm->load_current_track_lyrics();

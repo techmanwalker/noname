@@ -1,12 +1,13 @@
 #include "decode/worker.hpp"
 #include "ringbuffer/ringbuffer.hpp"
-#include "logging/l_audioengine.hpp"
 
 #include <cerrno>
 #include <optional>
 
 #include <QLoggingCategory>
 #include <QThread>
+
+#include "ffmpeg/hook.hpp"
 
 extern "C" {
 #include <libavutil/frame.h>

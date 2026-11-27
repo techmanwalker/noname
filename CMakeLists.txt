@@ -83,6 +83,8 @@ module_sources(SONGFACTORY_SOURCES      "src/ingest/songfactory/*.cpp")
 module_sources(MEDIAFILTER_SOURCES      "src/transforms/filter/*.cpp")
 module_sources(MEDIASORT_SOURCES        "src/transforms/sort/*.cpp")
 module_sources(MEDIASHUFFLE_SOURCES     "src/transforms/shuffle/*.cpp")
+module_sources(TAGLIBLOGHOOK_SOURCES    "src/main/loghooks/taglib/*.cpp")
+module_sources(FFMPEGLOGHOOK_SOURCES    "src/main/loghooks/ffmpeg/*.cpp")
 
 ## QML files
 
@@ -106,6 +108,20 @@ set_source_files_properties(
 
 module_sources(FRAGMENT_SHADERS "src/shaders/*.frag")
 
+## Process hooks
+
+## Some libraries do per process stuff.
+add_library(taglibloghook STATIC ${TAGLIBLOGHOOK_SOURCES})
+target_link_libraries(taglibloghook PRIVATE Qt6::Core)
+target_include_directories(taglibloghook
+    PRIVATE src/main/loghooks/taglib
+    PUBLIC src/main/loghooks)
+
+add_library(ffmpegloghook STATIC ${FFMPEGLOGHOOK_SOURCES})
+target_link_libraries(ffmpegloghook PRIVATE Qt6::Core)
+target_include_directories(ffmpegloghook
+    PRIVATE src/main/loghooks/ffmpeg
+    PUBLIC src/main/loghooks)
 
 ### C++ Modules
 
@@ -318,6 +334,7 @@ target_link_libraries(songfactory
         TagLib::tag
 
         mediatypes
+        taglibloghook
 )
 
 target_include_directories(songfactory
@@ -382,6 +399,8 @@ target_link_libraries(audioengine
         FFmpeg::avformat
         FFmpeg::avutil
         FFmpeg::swresample
+
+        ffmpegloghook
 )
 
 target_include_directories(audioengine
@@ -482,6 +501,8 @@ target_link_libraries(covers
         FFmpeg::avformat
         FFmpeg::avutil
         FFmpeg::swscale
+
+        ffmpegloghook
 )
 
 target_include_directories(covers
@@ -773,6 +794,10 @@ target_link_libraries(${PROJECT_NAME}
 
         debugtools # printing
         constexprstrings # string baking
+
+        # per process log hooks
+        taglibloghook
+        ffmpegloghook
 )
 
 qt_add_qml_module(mainwindow
