@@ -316,24 +316,27 @@ Row {
                     }
                 }
 
+                component PlaceholderLabel: Label {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment:   Text.AlignVCenter
+
+                    wrapMode: Text.WordWrap
+
+                    // MediumLabel
+                    font.pointSize: 13
+                    font.weight: Font.Medium
+                }
+
                 TabPage {
                     name: "placeholder"
                     title: ""   // required by TabPage; this page never gets a button
 
-                    Label {
+                    PlaceholderLabel {
                         id: queueAndMetadata_p
+
                         anchors.fill: parent
 
                         text: qsTr("No media playing right now. Browse or drag one or more audio files here to start playing.")
-
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment:   Text.AlignVCenter
-
-                        wrapMode: Text.WordWrap
-
-                        // MediumLabel
-                        font.pointSize: 13
-                        font.weight: Font.Medium
 
                         property rect globalBounds: Qt.rect(
                                 queueAndMetadata_pBounds.x + (queueAndMetadata_pBounds.width  - contentWidth)  / 2,
@@ -422,16 +425,39 @@ Row {
                     title: qsTr("Details")
                     iconName: "tag-properties"
 
-                    TrackDetails {
-                        id: queueAndMetadata_d
+                    StackLayout {
+                        id: queueAndMetadata_d_s
 
-                        leftPadding: metadataContainer.Layout.leftMargin
+                        anchors.fill: parent
 
-                        model: root.stateModel.currentTrack
+                        currentIndex: PlayerPresenter.isMediaLoaded ? 1 : 0
 
-                        lightMode: Light.lightModeWithPrior(queueAndMetadata_dBounds.bounds, root.background, PlayerPresenter, metadataContainer.lightMode)
+                        PlaceholderLabel {
+                            id: queueAndMetadata_d_p
 
-                        spacing: 10
+                            text: qsTr("You have %n queued tracks. (For n=1: Add more tracks from the selector or click Play to play only this track) (For n>1: Press Play to start your queue.).", "Count of tracks in the play queue", PlayQueue.count)
+
+                            property rect globalBounds: Qt.rect(
+                                    queueAndMetadata_d_pBounds.x + (queueAndMetadata_d_pBounds.width  - contentWidth)  / 2,
+                                    queueAndMetadata_d_pBounds.y + (queueAndMetadata_d_pBounds.height - contentHeight) / 2,
+                                    contentWidth, contentHeight
+                                )
+
+                            property bool lightMode: Light.lightModeForBounds(globalBounds, root.background, PlayerPresenter)
+
+                            color: lightMode ? Theme.light.texts.primaryText : Theme.dark.texts.primaryText
+                        }
+
+                        TrackDetails {
+                            id: queueAndMetadata_d_c
+                            leftPadding: metadataContainer.Layout.leftMargin
+
+                            model: root.stateModel.currentTrack
+
+                            lightMode: Light.lightModeWithPrior(queueAndMetadata_d_cBounds.bounds, root.background, PlayerPresenter, metadataContainer.lightMode)
+
+                            spacing: 10
+                        }
                     }
                 }
             }
@@ -447,8 +473,13 @@ Row {
             }
 
             SceneRect {
-                id: queueAndMetadata_dBounds
-                target: queueAndMetadata_d
+                id: queueAndMetadata_d_pBounds
+                target: queueAndMetadata_d_p
+            }
+
+            SceneRect {
+                id: queueAndMetadata_d_cBounds
+                target: queueAndMetadata_d_c
             }
         }
     } // rightCol_d

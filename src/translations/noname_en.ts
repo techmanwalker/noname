@@ -46,4 +46,16 @@
         </translation>
     </message>
 </context>
+<context>
+    <name>Theater</name>
+    <message numerus="yes">
+        <location filename="../qml/theater/viewmodes/Theater.qml" line="438"/>
+        <source>You have %n queued tracks. (For n=1: Add more tracks from the selector or click Play to play only this track) (For n&gt;1: Press Play to start your queue.).</source>
+        <comment>Count of tracks in the play queue</comment>
+        <translation>
+            <numerusform>You have %n queued track. Add more tracks from the selector or click Play to listen to just this one.</numerusform>
+            <numerusform>You have %n queued tracks. Press Play to start your queue.</numerusform>
+        </translation>
+    </message>
+</context>
 </TS>
