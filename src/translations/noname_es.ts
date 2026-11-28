@@ -404,7 +404,7 @@
         <location filename="../qml/theater/viewmodes/Theater.qml" line="438"/>
         <source>You have %n queued tracks. (For n=1: Add more tracks from the selector or click Play to play only this track) (For n&gt;1: Press Play to start your queue.).</source>
         <comment>Count of tracks in the play queue</comment>
-        <translation type="unfinished">
+        <translation>
             <numerusform>Tienes %n pista en cola. Agrega más desde el selector de pistas o, para reproducir solo esta, presiona Reproducir.</numerusform>
             <numerusform>Tienes %n pistas en cola. Pulsa Reproducir para iniciar.</numerusform>
         </translation>
@@ -490,7 +490,7 @@
         <location filename="../qml/theater/viewmodes/TrackDetails.qml" line="51"/>
         <source>&lt;b&gt;Sample rate:&lt;/b&gt; %1 Hz</source>
         <extracomment>%1 is the number of audio channels</extracomment>
-        <translation>&lt;b&gt;Tasa de muestreo&lt;/b&gt; %1 Hz</translation>
+        <translation type="unfinished">&lt;b&gt;Tasa de muestreo:&lt;/b&gt; %1 Hz</translation>
     </message>
     <message>
         <location filename="../qml/theater/viewmodes/TrackDetails.qml" line="57"/>
