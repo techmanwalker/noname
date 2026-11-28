@@ -101,7 +101,7 @@ PlayerPresenterLI::recompute_lightness_levels(const Types::Track &backdrop_sourc
     m_lightness_values_future.cancel();
     const quint64 epoch = ++m_lightness_values_epoch;
 
-    m_lightness_values_future = cp->resolve(backdrop_source.source, {256, 256});
+    m_lightness_values_future = cp->resolve(backdrop_source.source, {0, 256});
 
     return m_lightness_values_future.then([epoch](QImage thumbnail) {
         using namespace covers::lightness;

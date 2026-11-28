@@ -60,6 +60,24 @@ crop_largest_aspect(const QImage &image, double aspect_w, double aspect_h)
     return src.copy(crop_x, crop_y, crop_w, crop_h);
 }
 
+QSize
+scaled_size (QSize source, QSize requested) noexcept
+{
+    if (requested.isNull() || (requested.width() > 0 && requested.height() > 0))
+        return requested.isNull() ? source : requested;
+
+    // exactly one side open; source is a non-null image, so no division by zero
+    if (requested.width() > 0) {
+        return { requested.width(),
+                 std::max(1, static_cast<int>(std::lround(
+                     double(source.height()) * requested.width() / source.width()))) };
+    }
+
+    return { std::max(1, static_cast<int>(std::lround(
+                 double(source.width()) * requested.height() / source.height()))),
+             requested.height() };
+}
+
 QImage
 lanczos_resize(const QImage &image, size_t width, size_t height)
 {

@@ -47,6 +47,7 @@ pending_thumbnail (
 QFuture<void>
 write_thumbnail (
     const QUrl &media_source,
+    QSize key_size,
     QImage thumbnail,
     std::stop_token stop
 );

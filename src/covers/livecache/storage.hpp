@@ -81,6 +81,10 @@ private:
     QImage lookup_pending (const QUrl &media_source, const QSize &size);
     QImage lookup_source  (const QUrl &media_source);
 
+    // `key_size` is the size a cover is looked up by; it is not the image's size when a side is open
+    bool store_at (const QUrl &media_source, const QSize &key_size, const QImage &img,
+                   bool save_to_disk_cache = true);
+
     static constexpr qsizetype SHARD_COUNT = 16;
     std::array<std::unique_ptr<cache_shard>, SHARD_COUNT> m_shards;
 

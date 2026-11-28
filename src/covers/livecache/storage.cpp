@@ -30,7 +30,9 @@ qsizetype min_budget()
     ).sizeInBytes();
 
     static const qsizetype backdrop_cost = QImage(
-        default_cover_background_size,
+        // do NOT set directly default_cover_background_size
+        QSize(default_cover_background_size.height(),
+              default_cover_background_size.height()),
         pixelformat_qimage
     ).sizeInBytes();
 
@@ -181,18 +183,20 @@ cover_storage_LI::store (
     bool save_to_disk_cache
 )
 {
-    if (disabled || m_stop.stop_requested()) return false;
+    if (!cover_from_metadata.canConvert<QImage>()) return false;
 
-    if (!cover_from_metadata.canConvert<QImage>()) {
-        return false;
-    }
+    // stored under the image's own size
+    const QImage img = cover_from_metadata.value<QImage>();
+    return store_at(media_source, img.size(), img, save_to_disk_cache);
+}
 
-    QImage img = cover_from_metadata.value<QImage>();
-    if (img.isNull()) {
-        return false;
-    }
+bool
+cover_storage_LI::store_at (const QUrl &media_source, const QSize &key_size, const QImage &img,
+                            bool save_to_disk_cache)
+{
+    if (disabled || m_stop.stop_requested() || img.isNull()) return false;
 
-    const cache_slot slot = slot_for(media_source, img.size());
+    const cache_slot slot = slot_for(media_source, key_size);
 
     {
         // lock only this specific shard
@@ -205,8 +209,8 @@ cover_storage_LI::store (
     } // shard lock released immediately
 
     // cheapest test first: the file check costs a mkpath and a stat
-    if (save_to_disk_cache && !disk::thumbnail_file_exists(media_source, img.size())) {
-        covers::disk::write_thumbnail(media_source, img, m_stop.get_token());
+    if (save_to_disk_cache && !disk::thumbnail_file_exists(media_source, key_size)) {
+        covers::disk::write_thumbnail(media_source, key_size, img, m_stop.get_token());
     }
 
     return true;
@@ -232,8 +236,8 @@ cover_storage_LI::resolve_blocking (
 
     demote_this_thread();
 
-    // No usable size (invalid, or 0 on a side) means full resolution, spelled {0, 0} from here on
-    const QSize target = requestedSize.isEmpty() ? QSize(0, 0) : requestedSize;
+    // 0 (or less) on a side leaves it to the cover's aspect ratio; {0, 0} is full resolution
+    const QSize target { std::max(0, requestedSize.width()), std::max(0, requestedSize.height()) };
 
     // Lookups, cheapest first; the first one that finds something wins.
     // A memory hit is already finished: exactly the right size and already stored.
@@ -249,7 +253,7 @@ cover_storage_LI::resolve_blocking (
 
     if (img.isNull()) {
         qCDebug(l_coverprovider) << "No image resolved.";
-    } else if (target.isEmpty()) {
+    } else if (target.isNull()) {
         qCDebug(l_coverprovider) << "Full res resource returned by not specifying a requestedSize..";
     } else {
         // last exit before the heaviest CPU step
@@ -258,16 +262,19 @@ cover_storage_LI::resolve_blocking (
         // The transforms: crop largest aspect + resize = center crop and rescale.
         // The center bit comes because crop_largest_aspect fits the largest centered N:M rect.
         // Skipped when the image already is exactly the requested size (every cache hit).
-        if (img.size() != target) {
-            img = transform::crop_largest_aspect(img, target.width(), target.height());
+        const QSize final_size = transform::scaled_size(img.size(), target);
+        if (img.size() != final_size) {
+            // both sides given: crop to their aspect first; with a side open the cover's aspect stays
+            if (!target.isEmpty())
+                img = transform::crop_largest_aspect(img, target.width(), target.height());
             img = transform::lanczos_resize(img,
-                                            static_cast<size_t>(target.width()),
-                                            static_cast<size_t>(target.height()));
+                                            static_cast<size_t>(final_size.width()),
+                                            static_cast<size_t>(final_size.height()));
         }
 
-        // The single store, after the transforms: the next request at this size is a memory hit.
+        // keyed by the request, not by img.size(): they differ when a side is open
         if (!already_cached) {
-            store(media_source, img);
+            store_at(media_source, target, img);
         }
 
         qCDebug(l_coverprovider) << "Returned an image of size " << img.width() << "x" << img.height();

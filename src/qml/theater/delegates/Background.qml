@@ -148,8 +148,8 @@ Item {
         fillMode: Image.PreserveAspectCrop
         visible: false
 
-        // as big as it could ever be
-        sourceSize: Qt.size(Screen.height > 0 ? Screen.width / Screen.height * 512 : 512, 512)
+        // 0 = follow the cover's aspect ratio
+        sourceSize: Qt.size(0, 512)
 
         mipmap: true
     }

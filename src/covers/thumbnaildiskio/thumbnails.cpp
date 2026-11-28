@@ -104,11 +104,12 @@ pending_thumbnail (
 QFuture<void>
 write_thumbnail (
     const QUrl &media_source,
+    QSize key_size,
     QImage thumbnail,
     std::stop_token stop
 )
 {
-    const QString path = thumbnail_file_path(media_source, thumbnail.size());
+    const QString path = thumbnail_file_path(media_source, key_size);
     if (path.isEmpty()) return {};
 
     {
