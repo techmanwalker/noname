@@ -39,6 +39,15 @@ to_projected (State &s, const QModelIndex &source)
 }
 
 QPersistentModelIndex
+predecessor_of (State &s, const QModelIndex &projected)
+{
+    const MediaTransforms::ShuffleProxy &view = Access::view(s);
+    if (!projected.isValid() || projected.row() - 1 < 0) return {};
+
+    return QPersistentModelIndex(view.index(projected.row() - 1, 0));
+}
+
+QPersistentModelIndex
 successor_of (State &s, const QModelIndex &projected)
 {
     const MediaTransforms::ShuffleProxy &view = Access::view(s);

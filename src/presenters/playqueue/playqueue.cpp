@@ -320,37 +320,27 @@ PlayQueueLI::qml_switch_to(const QModelIndex &song)
 QFuture<void>
 PlayQueueLI::next ()
 {
-    QPersistentModelIndex current = playhead();
-    if (!current.isValid()) {
-        // switch to first track
-        return switch_to(0, true);
-    };
-
-    const QPersistentModelIndex upcoming = successor_of(current);
-    if (upcoming.isValid()) {
-        return switch_to(upcoming, true);
-    } else {
-        // go back to first track
-        return switch_to(index(0, 0));
+    QPersistentModelIndex upcoming = successor_of(playhead());
+    if (!upcoming.isValid()) {
+        // equivalent
+        handle_tape_ran_out();
     }
+
+    return switch_to(upcoming, true);
 }
 
 QFuture<void>
 PlayQueueLI::prev (bool play_afterwards)
 {
-    int last_index = rowCount() - 1;
-    if (last_index < 0) return QtFuture::makeReadyValueFuture(false);
-
-    if (!playhead().isValid() || playhead().row() == 0) {
-        return switch_to(index(last_index, 0));
-    }
-
-    return switch_to(index(playhead().row() - 1, 0), play_afterwards);
+    return switch_to(predecessor_of(playhead()), play_afterwards);
 }
 
 QFuture<void>
 PlayQueueLI::prev_at_end(quint64 stepback_ms, bool play_afterwards)
 {
+    if (!predecessor_of(playhead()).isValid()) {
+        return m_d->ae->seek_to(0);
+    }
     // step back
     QUrl prolly_not_the_same_track = m_d->ae->current_track_source();
 
@@ -443,6 +433,16 @@ QModelIndex
 PlayQueueLI::to_sequence (const QModelIndex &mine) const
 {
     return sequence::to_source(m_d->state, mapToSource(mine));
+}
+
+QPersistentModelIndex
+PlayQueueLI::predecessor_of (const QPersistentModelIndex &mine) const
+{
+    // the predecessor of an invalid playhead is the last item
+    // a negative index is never valid
+    if (!m_playhead.isValid()) return QPersistentModelIndex (index (item_count() - 1, 0));
+
+    return QPersistentModelIndex(mapFromSource(sequence::predecessor_of(m_d->state, mapToSource(mine))));
 }
 
 QPersistentModelIndex

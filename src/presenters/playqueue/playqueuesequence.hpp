@@ -43,9 +43,10 @@ QAbstractItemModel *projection (State &s);
 void on_count_changed (State &s, const QObject *context, std::function<void()> callback);
 
 // --- index translation
-QModelIndex           to_source    (State &s, const QModelIndex &projected);
-QPersistentModelIndex to_projected (State &s, const QModelIndex &source);
-QPersistentModelIndex successor_of (State &s, const QModelIndex &projected); // in the projected order
+QModelIndex           to_source      (State &s, const QModelIndex &projected);
+QPersistentModelIndex to_projected   (State &s, const QModelIndex &source);
+QPersistentModelIndex predecessor_of (State &s, const QModelIndex &projected);
+QPersistentModelIndex successor_of   (State &s, const QModelIndex &projected); // in the projected order
 
 // --- readers
 bool                  shuffled       (State &s);

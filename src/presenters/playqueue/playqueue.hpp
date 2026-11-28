@@ -98,8 +98,9 @@ private:
     // PlayQueueLI space -> source space (the identity hop, then the sequence namespace's)
     QModelIndex to_sequence (const QModelIndex &mine) const;
 
-    // what comes after `mine` in the order the user *sees*
-    QPersistentModelIndex successor_of (const QPersistentModelIndex &mine) const;
+    // what comes after or before `mine` in the order the user *sees*
+    QPersistentModelIndex predecessor_of (const QPersistentModelIndex &mine) const;
+    QPersistentModelIndex successor_of   (const QPersistentModelIndex &mine) const;
 
     QPersistentModelIndex m_playhead;
 
