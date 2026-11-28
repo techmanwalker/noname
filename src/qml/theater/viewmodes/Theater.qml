@@ -454,7 +454,13 @@ Row {
 
                             model: root.stateModel.currentTrack
 
-                            lightMode: Light.lightModeWithPrior(queueAndMetadata_d_cBounds.bounds, root.background, PlayerPresenter, metadataContainer.lightMode)
+                            // the rows, not the page the StackLayout stretches the Column to
+                            property rect textBounds: Qt.rect(
+                                    queueAndMetadata_d_cBounds.x, queueAndMetadata_d_cBounds.y,
+                                    implicitWidth, implicitHeight
+                                )
+
+                            lightMode: Light.lightModeWithPrior(textBounds, root.background, PlayerPresenter, metadataContainer.lightMode)
 
                             spacing: 10
                         }
